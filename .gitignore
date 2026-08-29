@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-ssr
+coverage
+.vite
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+playwright-report
+test-results
+runner/.cherry-runner
+
+
+# no Claude-named artifacts in the public repo (kept local in the spec pack)
+CLAUDE.md
+docs/spec-pack/CLAUDE.md
+docs/spec-pack/harness/CLAUDE.md
+docs/release/e2e-results.json

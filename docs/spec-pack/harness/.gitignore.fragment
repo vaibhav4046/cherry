@@ -1,0 +1,14 @@
+# Cherry local-only files
+.env
+.env.*
+!.env.example
+.cherry-runner/
+.cherry-local/
+*.cherry-workspace.local.json
+*.cherry-proof.local.json
+*.local.sqlite
+*.local.sqlite-shm
+*.local.sqlite-wal
+coverage/
+playwright-report/
+test-results/

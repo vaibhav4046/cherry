@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "tests": [
+    {
+      "id": "required-files",
+      "severity": "blocking",
+      "type": "file",
+      "description": "Every file referenced by SKILL.md exists."
+    },
+    {
+      "id": "skill-frontmatter",
+      "severity": "blocking",
+      "type": "schema",
+      "description": "SKILL.md has valid name and description fields, and its name matches the parent directory."
+    },
+    {
+      "id": "no-unresolved-template-markers",
+      "severity": "error",
+      "type": "content",
+      "description": "Generated release artifacts contain no unresolved template token."
+    }
+  ]
+}

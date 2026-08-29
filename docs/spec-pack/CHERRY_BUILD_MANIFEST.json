@@ -1,0 +1,315 @@
+{
+  "schemaVersion": "1.0.0",
+  "product": "Cherry",
+  "preparedAt": "2026-08-29T00:00:00Z",
+  "releaseVerdicts": [
+    "RELEASE_CANDIDATE",
+    "NOT_RELEASE_CANDIDATE"
+  ],
+  "rules": {
+    "requiredGatePolicy": "Every gate with required=true must have status=passed and a non-empty evidencePath before RELEASE_CANDIDATE.",
+    "claimGatePolicy": "A capability claim may be enabled only when every gate listing that claim in requiredForClaims is passed.",
+    "noFakeProduct": true,
+    "coreRequiresPaidService": false,
+    "coreRequiresProviderCredential": false
+  },
+  "gates": [
+    {
+      "id": "clean_install",
+      "title": "Clean install from lockfile",
+      "required": true,
+      "requiredForClaims": [
+        "reproducible-build"
+      ],
+      "commandHint": "Use the lockfile's clean-install command in a clean checkout.",
+      "acceptance": "Install exits zero without uncommitted lockfile changes or undocumented manual patches.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "typecheck",
+      "title": "Strict typecheck",
+      "required": true,
+      "requiredForClaims": [
+        "release-candidate"
+      ],
+      "commandHint": "npm run typecheck",
+      "acceptance": "Exit zero with no ignored new Cherry errors.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "lint",
+      "title": "Lint",
+      "required": true,
+      "requiredForClaims": [
+        "release-candidate"
+      ],
+      "commandHint": "npm run lint",
+      "acceptance": "Exit zero or explicitly documented pre-existing non-Cherry warnings with no release-risk errors.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "unit_integration_tests",
+      "title": "Unit, component, and integration tests",
+      "required": true,
+      "requiredForClaims": [
+        "release-candidate",
+        "verified-product"
+      ],
+      "commandHint": "npm run test",
+      "acceptance": "All Cherry and protected Enough regression tests pass; no focused/skipped release-critical test remains.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "manual_golden_journey",
+      "title": "Provider-free manual golden journey",
+      "required": true,
+      "requiredForClaims": [
+        "zero-dollar-core",
+        "manual-fallback"
+      ],
+      "commandHint": "npm run test:e2e -- e2e/cherry/golden-manual.spec.ts",
+      "acceptance": "Fresh user completes workspace, mission, lesson, evidence, SkillGraph, approval, artifact, fail/repair/pass, memory, export, proof, clear/import without a model provider.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "webmcp_tool_aperture",
+      "title": "State-aware WebMCP Tool Aperture",
+      "required": true,
+      "requiredForClaims": [
+        "webmcp-native"
+      ],
+      "commandHint": "Run WebMCP unit/eval suite and current supported-client inspection.",
+      "acceptance": "Correct tools register/unregister by state, runtime validation/cancellation works, tool calls mutate the same persisted state, and unsupported clients retain complete manual operation.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "youtube_compliance",
+      "title": "Permitted YouTube lesson flow",
+      "required": true,
+      "requiredForClaims": [
+        "watch-to-skill"
+      ],
+      "commandHint": "Run Watch tests and inspect player/network behavior.",
+      "acceptance": "Official visible iframe is used; no arbitrary caption/media scraping or re-hosting occurs; transcript/manual fallback and unavailable states work.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "schema_validation",
+      "title": "Canonical schema validation",
+      "required": true,
+      "requiredForClaims": [
+        "portable-formats"
+      ],
+      "commandHint": "Validate all schemas and release fixtures against JSON Schema Draft 2020-12.",
+      "acceptance": "Schemas parse and valid fixtures pass while invalid/stale/oversized fixtures fail with expected errors.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "skill_export_validation",
+      "title": "Agent Skill and target export validation",
+      "required": true,
+      "requiredForClaims": [
+        "portable-agent-skills",
+        "codex-target",
+        "claude-code-target"
+      ],
+      "commandHint": "Compile a real bundle, reopen it, validate SKILL.md/frontmatter/tree/references, and execute scripts/verify.mjs.",
+      "acceptance": "Directory/name constraints, references, hashes, policy/eval files, and target install docs are valid; verification script exits non-zero on a tampered bundle.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "workspace_round_trip",
+      "title": "Workspace export/import round trip",
+      "required": true,
+      "requiredForClaims": [
+        "user-owned-portability"
+      ],
+      "commandHint": "Run export/import canonical comparison test.",
+      "acceptance": "After export, local deletion, and import, canonical domain state, revisions, provenance, approvals, artifacts, and proof remain equivalent.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "proof_recomputation",
+      "title": "Proof receipt recomputation",
+      "required": true,
+      "requiredForClaims": [
+        "recomputable-proof"
+      ],
+      "commandHint": "Recompute all artifact and receipt hashes and test tampering.",
+      "acceptance": "Original receipt verifies; one-byte mutation fails; UI calls it tamper-evident rather than signed.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "security_red_team",
+      "title": "Security and prompt-injection red-team tests",
+      "required": true,
+      "requiredForClaims": [
+        "secure-by-design"
+      ],
+      "commandHint": "Run security fixtures and browser sandbox/runner tests.",
+      "acceptance": "Untrusted instruction, XSS, exfiltration, unsafe import, stale approval, secret leakage, and shipped runner traversal/command cases are rejected or safely contained.",
+      "evidencePath": "docs/release/CHERRY_SECURITY_AUDIT.md",
+      "status": "not_run"
+    },
+    {
+      "id": "secret_scan",
+      "title": "Source, build, log, export, and history secret scan",
+      "required": true,
+      "requiredForClaims": [
+        "safe-credential-boundary"
+      ],
+      "commandHint": "Run repository secret scanner plus client-bundle/export inspection.",
+      "acceptance": "No live credential or private key is present; core starts with optional variables blank.",
+      "evidencePath": "docs/release/CHERRY_SECURITY_AUDIT.md",
+      "status": "not_run"
+    },
+    {
+      "id": "artifact_sandbox",
+      "title": "Generated artifact isolation",
+      "required": true,
+      "requiredForClaims": [
+        "safe-artifact-preview"
+      ],
+      "commandHint": "Run malicious preview E2E fixtures.",
+      "acceptance": "Preview cannot read Cherry origin/storage, navigate parent, open popups, submit forms, or access external network; errors remain visible.",
+      "evidencePath": "docs/release/CHERRY_SECURITY_AUDIT.md",
+      "status": "not_run"
+    },
+    {
+      "id": "accessibility",
+      "title": "Accessibility verification",
+      "required": true,
+      "requiredForClaims": [
+        "accessible-product"
+      ],
+      "commandHint": "Run axe tests plus keyboard, focus, zoom/reflow, reduced-motion manual checks.",
+      "acceptance": "Golden journey works keyboard-only; blocking WCAG 2.2 AA issues are fixed; graph has a list/outline alternative.",
+      "evidencePath": "docs/release/CHERRY_ACCESSIBILITY_AUDIT.md",
+      "status": "not_run"
+    },
+    {
+      "id": "responsive_visual_qa",
+      "title": "Responsive and visual consistency review",
+      "required": true,
+      "requiredForClaims": [
+        "android-ready-pwa",
+        "production-ui"
+      ],
+      "commandHint": "Capture and review every primary route at 390×844, 834×1194, 1280×800, and 1440×1024.",
+      "acceptance": "No overflow, clipping, dead states, inconsistent tokens, unreadable graph/transcript, or compressed-desktop mobile layout remains.",
+      "evidencePath": "docs/release/CHERRY_VISUAL_QA.md",
+      "status": "not_run"
+    },
+    {
+      "id": "pwa_offline",
+      "title": "PWA and offline/local resilience",
+      "required": true,
+      "requiredForClaims": [
+        "installable-pwa",
+        "local-first"
+      ],
+      "commandHint": "Run installability, service-worker update, offline local read/edit/export, and storage-recovery tests.",
+      "acceptance": "Static shell installs where supported; private data is not improperly cached; local work/export survives network loss.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "production_build",
+      "title": "Production build and preview smoke",
+      "required": true,
+      "requiredForClaims": [
+        "release-candidate"
+      ],
+      "commandHint": "npm run build, serve production output, and run route smoke tests.",
+      "acceptance": "Build exits zero; deep links, CSP, assets, PWA, and primary routes work with no release-blocking console/network errors.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "no_fake_product",
+      "title": "No fake or dead release capability",
+      "required": true,
+      "requiredForClaims": [
+        "golden-product"
+      ],
+      "commandHint": "Scan source/UI/fixtures and inspect every primary control.",
+      "acceptance": "Every shipped primary control operates on real state; samples are explicit/importable; no fake activity/progress/transcript/runner/sync/verification/proof or dead navigation exists.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "public_repo_docs_license",
+      "title": "Public repository, documentation, and licence",
+      "required": true,
+      "requiredForClaims": [
+        "open-source"
+      ],
+      "commandHint": "Inspect repository root and clean-clone setup.",
+      "acceptance": "Source, setup, architecture, privacy/security, compatibility, zero-dollar boundaries, and an explicit open-source licence are visible and accurate.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "deployment_smoke",
+      "title": "Live deployment smoke test",
+      "required": true,
+      "requiredForClaims": [
+        "live-product",
+        "challenge-submission"
+      ],
+      "commandHint": "Deploy to approved zero-cost host and test from a fresh browser profile.",
+      "acceptance": "Public URL loads, deep links and PWA assets work, headers/CSP are active, and the manual golden journey begins without private developer state.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "local_runner",
+      "title": "Local Runner security, recovery, and scheduling",
+      "required": false,
+      "requiredForClaims": [
+        "local-autonomy",
+        "scheduled-local-runs"
+      ],
+      "commandHint": "Run runner unit/integration/E2E tests, restart recovery, and adapter diagnostics.",
+      "acceptance": "Loopback-only pairing, exact-origin CORS, approved roots/executables, no shell strings, timeout/cancel/retry/restart, output redaction, and deterministic post-provider verification pass.",
+      "evidencePath": "docs/release/CHERRY_RELEASE_EVIDENCE.md",
+      "status": "not_run"
+    },
+    {
+      "id": "native_mcp_bridge",
+      "title": "Native MCP bridge",
+      "required": false,
+      "requiredForClaims": [
+        "claude-code-live-bridge",
+        "codex-live-bridge"
+      ],
+      "commandHint": "Run stdio MCP integration tests with current clients or official inspector.",
+      "acceptance": "Narrow tools call shared domain services, cannot grant approval or read unrelated files/env, and install docs match current hosts.",
+      "evidencePath": "docs/release/CHERRY_COMPATIBILITY_MATRIX.md",
+      "status": "not_run"
+    },
+    {
+      "id": "encrypted_sync",
+      "title": "Optional encrypted sync and authorization",
+      "required": false,
+      "requiredForClaims": [
+        "cross-device-sync"
+      ],
+      "commandHint": "Run client-side encryption, conflict, RLS, cross-user denial, pause/offline tests.",
+      "acceptance": "Only ciphertext reaches provider, passphrase/key remains local, RLS denies cross-user access, conflicts are explicit, and local mode remains authoritative.",
+      "evidencePath": "docs/release/CHERRY_SECURITY_AUDIT.md",
+      "status": "not_run"
+    }
+  ]
+}

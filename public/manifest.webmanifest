@@ -1,0 +1,17 @@
+{
+  "name": "Cherry Studio",
+  "short_name": "Cherry",
+  "description": "The user-owned apprenticeship, memory, mission and verification layer for AI agents.",
+  "start_url": "/studio",
+  "display": "standalone",
+  "background_color": "#ffe3ec",
+  "theme_color": "#ffe3ec",
+  "icons": [
+    {
+      "src": "/cherry.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json.schemastore.org/design-tokens.json",
+  "name": "Black Cherry OS",
+  "version": "1.0.0",
+  "color": {
+    "canvas": {"value": "#09070A", "type": "color"},
+    "canvasRaised": {"value": "#0F0A0D", "type": "color"},
+    "surface1": {"value": "#151014", "type": "color"},
+    "surface2": {"value": "#1D151A", "type": "color"},
+    "surface3": {"value": "#281A21", "type": "color"},
+    "borderSubtle": {"value": "rgba(255,255,255,0.07)", "type": "color"},
+    "borderDefault": {"value": "rgba(255,255,255,0.12)", "type": "color"},
+    "borderStrong": {"value": "rgba(255,255,255,0.20)", "type": "color"},
+    "textPrimary": {"value": "#FFF8FA", "type": "color"},
+    "textSecondary": {"value": "#D0C2C8", "type": "color"},
+    "textTertiary": {"value": "#95878E", "type": "color"},
+    "cherryPrimary": {"value": "#FF4F78", "type": "color"},
+    "cherryStrong": {"value": "#E93262", "type": "color"},
+    "cherryDeep": {"value": "#7A1738", "type": "color"},
+    "raspberry": {"value": "#B92355", "type": "color"},
+    "success": {"value": "#58D6A3", "type": "color"},
+    "warning": {"value": "#FFC968", "type": "color"},
+    "danger": {"value": "#FF6B73", "type": "color"},
+    "info": {"value": "#7DB9FF", "type": "color"},
+    "focus": {"value": "#FF87A4", "type": "color"},
+    "provenanceHuman": {"value": "#E6D6FF", "type": "color"},
+    "provenanceTranscript": {"value": "#8CC8FF", "type": "color"},
+    "provenanceVisual": {"value": "#FF9DB4", "type": "color"},
+    "provenanceRepository": {"value": "#93E7C2", "type": "color"},
+    "provenanceAgent": {"value": "#FFD889", "type": "color"}
+  },
+  "space": {
+    "1": {"value": "4px", "type": "dimension"},
+    "2": {"value": "8px", "type": "dimension"},
+    "3": {"value": "12px", "type": "dimension"},
+    "4": {"value": "16px", "type": "dimension"},
+    "5": {"value": "20px", "type": "dimension"},
+    "6": {"value": "24px", "type": "dimension"},
+    "8": {"value": "32px", "type": "dimension"},
+    "10": {"value": "40px", "type": "dimension"},
+    "12": {"value": "48px", "type": "dimension"},
+    "16": {"value": "64px", "type": "dimension"}
+  },
+  "radius": {
+    "xs": {"value": "6px", "type": "dimension"},
+    "sm": {"value": "10px", "type": "dimension"},
+    "md": {"value": "14px", "type": "dimension"},
+    "lg": {"value": "20px", "type": "dimension"},
+    "pill": {"value": "999px", "type": "dimension"}
+  },
+  "motion": {
+    "fast": {"value": "140ms", "type": "duration"},
+    "standard": {"value": "220ms", "type": "duration"},
+    "deliberate": {"value": "360ms", "type": "duration"},
+    "easeStandard": {"value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "type": "cubicBezier"},
+    "easeEmphasized": {"value": "cubic-bezier(0.16, 1, 0.3, 1)", "type": "cubicBezier"}
+  },
+  "layout": {
+    "sidebarWidth": {"value": "232px", "type": "dimension"},
+    "inspectorWidth": {"value": "336px", "type": "dimension"},
+    "contentMax": {"value": "1440px", "type": "dimension"},
+    "touchTargetMin": {"value": "44px", "type": "dimension"}
+  },
+  "typography": {
+    "fontSans": {"value": "Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif", "type": "fontFamily"},
+    "fontMono": {"value": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace", "type": "fontFamily"}
+  }
+}

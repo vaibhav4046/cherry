@@ -1,0 +1,1553 @@
+{
+  "schemaVersion": "1.0.0",
+  "exportId": "ws-01M1779YFZAAPS0H3EDQFP2T93",
+  "exportedAt": "2026-08-29T16:58:04.159Z",
+  "workspace": {
+    "id": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+    "name": "EXAMPLE — Learn a landing page workflow",
+    "revision": 1,
+    "createdAt": "2026-08-29T16:58:04.116Z",
+    "updatedAt": "2026-08-29T16:58:04.116Z",
+    "description": "Shipped example workspace. Safe to delete. Everything in it was produced by real Cherry operations."
+  },
+  "missions": [
+    {
+      "id": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "title": "Build a landing snippet the lesson way",
+      "objective": "Learn the transferable process from a permitted lesson and produce an accessible landing snippet with proof.",
+      "definitionOfDone": [
+        "index.html exists with an h1",
+        "Verification passes with zero blocking failures"
+      ],
+      "constraints": [],
+      "nonGoals": [],
+      "agentRole": "Generalist assistant",
+      "allowedToolIds": [],
+      "requiredMemoryIds": [],
+      "riskLevel": "low",
+      "state": "COMPLETE",
+      "stateHistory": [
+        {
+          "from": null,
+          "to": "DRAFT",
+          "at": "2026-08-29T16:58:04.127Z",
+          "actorType": "human"
+        },
+        {
+          "from": "DRAFT",
+          "to": "LEARNING",
+          "at": "2026-08-29T16:58:04.132Z",
+          "actorType": "human"
+        },
+        {
+          "from": "LEARNING",
+          "to": "PLANNING",
+          "at": "2026-08-29T16:58:04.144Z",
+          "actorType": "human"
+        },
+        {
+          "from": "PLANNING",
+          "to": "AWAITING_APPROVAL",
+          "at": "2026-08-29T16:58:04.148Z",
+          "actorType": "human"
+        },
+        {
+          "from": "AWAITING_APPROVAL",
+          "to": "EXECUTING",
+          "at": "2026-08-29T16:58:04.148Z",
+          "actorType": "human"
+        },
+        {
+          "from": "EXECUTING",
+          "to": "VERIFYING",
+          "at": "2026-08-29T16:58:04.152Z",
+          "actorType": "human"
+        },
+        {
+          "from": "VERIFYING",
+          "to": "COMPLETE",
+          "at": "2026-08-29T16:58:04.154Z",
+          "actorType": "human"
+        }
+      ],
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "skillGraphId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "artifactSetId": "as-01M1779YFNPC786DV5GM8VSH9J",
+      "revision": 10,
+      "createdAt": "2026-08-29T16:58:04.127Z",
+      "updatedAt": "2026-08-29T16:58:04.154Z"
+    }
+  ],
+  "missionTasks": [],
+  "lessons": [
+    {
+      "id": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "title": "Accessible landing pages (example lesson)",
+      "videoId": null,
+      "canonicalUrl": null,
+      "creator": null,
+      "kind": "manual",
+      "durationSeconds": null,
+      "permissionAcknowledgedAt": null,
+      "coverageCriteria": [
+        {
+          "label": "Setup and structure",
+          "startSeconds": 0,
+          "endSeconds": 120,
+          "id": "seg-01M1779YFA3Y8RBKAKQMFKPP24",
+          "satisfiedByObservationIds": []
+        }
+      ],
+      "lastPositionSeconds": 0,
+      "transcriptSource": "user_text",
+      "transcriptImportedAt": "2026-08-29T16:58:04.134Z",
+      "revision": 3,
+      "createdAt": "2026-08-29T16:58:04.129Z",
+      "updatedAt": "2026-08-29T16:58:04.138Z"
+    }
+  ],
+  "transcriptSegments": [
+    {
+      "id": "seg-01M1779YF66ZCYDAF3QANQ9EE3",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "index": 2,
+      "startSeconds": 80,
+      "endSeconds": 84,
+      "text": "The page heading must be a real h1, not styled text",
+      "source": "user_text"
+    },
+    {
+      "id": "seg-01M1779YF6B8QS6VAKJKVHRXC0",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "index": 1,
+      "startSeconds": 40,
+      "endSeconds": 44,
+      "text": "Wrap the visible content in a main landmark",
+      "source": "user_text"
+    },
+    {
+      "id": "seg-01M1779YF6C7H6ESFRZKW1D8YK",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "index": 0,
+      "startSeconds": 5,
+      "endSeconds": 9,
+      "text": "Start from a blank index.html file",
+      "source": "user_text"
+    },
+    {
+      "id": "seg-01M1779YF6FGY6BTD0GV07KVKD",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "index": 3,
+      "startSeconds": 120,
+      "endSeconds": 125,
+      "text": "Check the result with an accessibility pass before shipping",
+      "source": "user_text"
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-01M1779YF8YBBDSHQQDZFTRH0V",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "timestampSeconds": 40,
+      "kind": "visual",
+      "text": "Presenter drags content inside a main element",
+      "transferability": "transferable",
+      "uncertainty": "confident",
+      "evidenceId": null,
+      "createdAt": "2026-08-29T16:58:04.136Z",
+      "updatedAt": "2026-08-29T16:58:04.136Z",
+      "actorType": "human"
+    },
+    {
+      "id": "obs-01M1779YF9H08DX0SGF7ZJ4C1X",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "timestampSeconds": 80,
+      "kind": "spoken",
+      "text": "A real h1 matters for screen readers and SEO",
+      "transferability": "transferable",
+      "uncertainty": "confident",
+      "evidenceId": null,
+      "createdAt": "2026-08-29T16:58:04.137Z",
+      "updatedAt": "2026-08-29T16:58:04.137Z",
+      "actorType": "human"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-01M1779YFBT563SP4TC3KD26V8",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "lessonId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "sourceType": "transcript",
+      "sourceUri": null,
+      "sourceTitle": null,
+      "sourceCreator": null,
+      "timestampSeconds": null,
+      "claim": "Semantic landmarks (main, h1) are the transferable core of the lesson",
+      "provenanceMethod": "user_typed",
+      "trust": "reviewed",
+      "confidence": 0.9,
+      "transferability": "transferable",
+      "usedByNodeIds": [],
+      "revision": 2,
+      "createdAt": "2026-08-29T16:58:04.139Z",
+      "updatedAt": "2026-08-29T16:58:04.140Z",
+      "history": [
+        {
+          "at": "2026-08-29T16:58:04.139Z",
+          "action": "created",
+          "actorType": "human",
+          "summary": "Evidence recorded"
+        },
+        {
+          "at": "2026-08-29T16:58:04.140Z",
+          "action": "trust_changed",
+          "actorType": "human",
+          "summary": "Trust set to reviewed"
+        }
+      ]
+    }
+  ],
+  "skillGraphs": [
+    {
+      "schemaVersion": "1.0.0",
+      "id": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "name": "Accessible landing snippet",
+      "slug": "accessible-landing-snippet",
+      "purpose": "Build small landing snippets with semantic landmarks and verified accessibility basics.",
+      "version": "0.1.0",
+      "revision": 1,
+      "status": "approved",
+      "triggers": [],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "nodes": [
+        {
+          "id": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+          "kind": "build",
+          "title": "Write index.html with landmarks",
+          "goal": "Create the page with main and a real h1",
+          "instructions": [],
+          "requires": [],
+          "produces": [],
+          "allowedToolIds": [],
+          "evidenceIds": [],
+          "memorySelectors": [],
+          "assertionIds": [],
+          "humanGateIds": [],
+          "onFailure": {
+            "strategy": "stop"
+          },
+          "position": {
+            "x": 80,
+            "y": 80
+          }
+        },
+        {
+          "id": "sv-01M1779YFDS9M9091FQGNMS7DW",
+          "kind": "verification",
+          "title": "Run deterministic checks",
+          "goal": "File, DOM, hash, and accessibility assertions pass",
+          "instructions": [],
+          "requires": [],
+          "produces": [],
+          "allowedToolIds": [],
+          "evidenceIds": [],
+          "memorySelectors": [],
+          "assertionIds": [],
+          "humanGateIds": [],
+          "onFailure": {
+            "strategy": "stop"
+          },
+          "position": {
+            "x": 80,
+            "y": 220
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "sv-01M1779YFDBT04M6M2ZBJ74T4J",
+          "source": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+          "target": "sv-01M1779YFDS9M9091FQGNMS7DW",
+          "type": "dependency"
+        }
+      ],
+      "tools": [],
+      "knowledge": [],
+      "memoryPolicy": {
+        "allowedScopes": [
+          "mission",
+          "workspace"
+        ],
+        "allowedSensitivity": [
+          "public",
+          "private"
+        ],
+        "requireApproval": true,
+        "selectors": []
+      },
+      "guardrails": [],
+      "humanGates": [
+        {
+          "id": "sv-01M1779YFD7B1TAHR85GWYPK9G",
+          "title": "Approve this skill before execution",
+          "reason": "Execution requires an exact-revision human approval",
+          "requiredRevisionType": "skillgraph",
+          "action": "approve"
+        }
+      ],
+      "evaluations": [
+        {
+          "id": "sv-01M1779YFD3K5C1VF4AZ0EN5C0",
+          "name": "Skill graph is structurally valid",
+          "type": "graph",
+          "severity": "blocking",
+          "config": {
+            "check": "structure"
+          }
+        }
+      ],
+      "targets": [
+        "agent-skills",
+        "codex",
+        "claude-code"
+      ],
+      "approvedRevision": 1,
+      "approvedBy": "user",
+      "approvedAt": "2026-08-29T16:58:04.146Z",
+      "createdAt": "2026-08-29T16:58:04.141Z",
+      "updatedAt": "2026-08-29T16:58:04.146Z",
+      "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac"
+    }
+  ],
+  "skillVersions": [
+    {
+      "id": "sv-01M1779YFECM78Q3Z4R7D223YW",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "skillGraphId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "revision": 1,
+      "version": "0.1.0",
+      "status": "draft",
+      "snapshot": {
+        "schemaVersion": "1.0.0",
+        "id": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+        "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+        "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+        "name": "Accessible landing snippet",
+        "slug": "accessible-landing-snippet",
+        "purpose": "Build small landing snippets with semantic landmarks and verified accessibility basics.",
+        "version": "0.1.0",
+        "revision": 1,
+        "status": "draft",
+        "triggers": [],
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "nodes": [
+          {
+            "id": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+            "kind": "build",
+            "title": "Write index.html with landmarks",
+            "goal": "Create the page with main and a real h1",
+            "instructions": [],
+            "requires": [],
+            "produces": [],
+            "allowedToolIds": [],
+            "evidenceIds": [],
+            "memorySelectors": [],
+            "assertionIds": [],
+            "humanGateIds": [],
+            "onFailure": {
+              "strategy": "stop"
+            },
+            "position": {
+              "x": 80,
+              "y": 80
+            }
+          },
+          {
+            "id": "sv-01M1779YFDS9M9091FQGNMS7DW",
+            "kind": "verification",
+            "title": "Run deterministic checks",
+            "goal": "File, DOM, hash, and accessibility assertions pass",
+            "instructions": [],
+            "requires": [],
+            "produces": [],
+            "allowedToolIds": [],
+            "evidenceIds": [],
+            "memorySelectors": [],
+            "assertionIds": [],
+            "humanGateIds": [],
+            "onFailure": {
+              "strategy": "stop"
+            },
+            "position": {
+              "x": 80,
+              "y": 220
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "sv-01M1779YFDBT04M6M2ZBJ74T4J",
+            "source": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+            "target": "sv-01M1779YFDS9M9091FQGNMS7DW",
+            "type": "dependency"
+          }
+        ],
+        "tools": [],
+        "knowledge": [],
+        "memoryPolicy": {
+          "allowedScopes": [
+            "mission",
+            "workspace"
+          ],
+          "allowedSensitivity": [
+            "public",
+            "private"
+          ],
+          "requireApproval": true,
+          "selectors": []
+        },
+        "guardrails": [],
+        "humanGates": [
+          {
+            "id": "sv-01M1779YFD7B1TAHR85GWYPK9G",
+            "title": "Approve this skill before execution",
+            "reason": "Execution requires an exact-revision human approval",
+            "requiredRevisionType": "skillgraph",
+            "action": "approve"
+          }
+        ],
+        "evaluations": [
+          {
+            "id": "sv-01M1779YFD3K5C1VF4AZ0EN5C0",
+            "name": "Skill graph is structurally valid",
+            "type": "graph",
+            "severity": "blocking",
+            "config": {
+              "check": "structure"
+            }
+          }
+        ],
+        "targets": [
+          "agent-skills",
+          "codex",
+          "claude-code"
+        ],
+        "approvedRevision": null,
+        "approvedBy": null,
+        "approvedAt": null,
+        "createdAt": "2026-08-29T16:58:04.141Z",
+        "updatedAt": "2026-08-29T16:58:04.141Z",
+        "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac"
+      },
+      "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac",
+      "changeSummary": "Initial draft",
+      "createdAt": "2026-08-29T16:58:04.141Z",
+      "actorType": "human"
+    },
+    {
+      "id": "sv-01M1779YFKRREKTAQYEQKV0ZNY",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "skillGraphId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "revision": 1,
+      "version": "0.1.0",
+      "status": "approved",
+      "snapshot": {
+        "schemaVersion": "1.0.0",
+        "id": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+        "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+        "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+        "name": "Accessible landing snippet",
+        "slug": "accessible-landing-snippet",
+        "purpose": "Build small landing snippets with semantic landmarks and verified accessibility basics.",
+        "version": "0.1.0",
+        "revision": 1,
+        "status": "approved",
+        "triggers": [],
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "nodes": [
+          {
+            "id": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+            "kind": "build",
+            "title": "Write index.html with landmarks",
+            "goal": "Create the page with main and a real h1",
+            "instructions": [],
+            "requires": [],
+            "produces": [],
+            "allowedToolIds": [],
+            "evidenceIds": [],
+            "memorySelectors": [],
+            "assertionIds": [],
+            "humanGateIds": [],
+            "onFailure": {
+              "strategy": "stop"
+            },
+            "position": {
+              "x": 80,
+              "y": 80
+            }
+          },
+          {
+            "id": "sv-01M1779YFDS9M9091FQGNMS7DW",
+            "kind": "verification",
+            "title": "Run deterministic checks",
+            "goal": "File, DOM, hash, and accessibility assertions pass",
+            "instructions": [],
+            "requires": [],
+            "produces": [],
+            "allowedToolIds": [],
+            "evidenceIds": [],
+            "memorySelectors": [],
+            "assertionIds": [],
+            "humanGateIds": [],
+            "onFailure": {
+              "strategy": "stop"
+            },
+            "position": {
+              "x": 80,
+              "y": 220
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "sv-01M1779YFDBT04M6M2ZBJ74T4J",
+            "source": "sv-01M1779YFD0D90B0VP6YE8FMSB",
+            "target": "sv-01M1779YFDS9M9091FQGNMS7DW",
+            "type": "dependency"
+          }
+        ],
+        "tools": [],
+        "knowledge": [],
+        "memoryPolicy": {
+          "allowedScopes": [
+            "mission",
+            "workspace"
+          ],
+          "allowedSensitivity": [
+            "public",
+            "private"
+          ],
+          "requireApproval": true,
+          "selectors": []
+        },
+        "guardrails": [],
+        "humanGates": [
+          {
+            "id": "sv-01M1779YFD7B1TAHR85GWYPK9G",
+            "title": "Approve this skill before execution",
+            "reason": "Execution requires an exact-revision human approval",
+            "requiredRevisionType": "skillgraph",
+            "action": "approve"
+          }
+        ],
+        "evaluations": [
+          {
+            "id": "sv-01M1779YFD3K5C1VF4AZ0EN5C0",
+            "name": "Skill graph is structurally valid",
+            "type": "graph",
+            "severity": "blocking",
+            "config": {
+              "check": "structure"
+            }
+          }
+        ],
+        "targets": [
+          "agent-skills",
+          "codex",
+          "claude-code"
+        ],
+        "approvedRevision": 1,
+        "approvedBy": "user",
+        "approvedAt": "2026-08-29T16:58:04.146Z",
+        "createdAt": "2026-08-29T16:58:04.141Z",
+        "updatedAt": "2026-08-29T16:58:04.146Z",
+        "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac"
+      },
+      "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac",
+      "changeSummary": "Revision approved by user",
+      "createdAt": "2026-08-29T16:58:04.146Z",
+      "actorType": "human"
+    }
+  ],
+  "memories": [
+    {
+      "schemaVersion": "1.0.0",
+      "id": "mem-01M1779YFXKW1F270Y5RHY77PK",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "projectId": null,
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "runId": null,
+      "type": "procedure",
+      "title": "Landing snippets always get main + h1",
+      "content": "When building landing snippets, wrap content in a main landmark and use a real h1 before any styling work.",
+      "status": "approved",
+      "scope": "workspace",
+      "sensitivity": "private",
+      "confidence": 0.6,
+      "tags": [],
+      "provenance": [
+        {
+          "id": "mem-01M1779YFX5EWN1T9FQFE4Y2KP",
+          "sourceType": "video-transcript",
+          "sourceId": null,
+          "uri": null,
+          "trust": "reviewed",
+          "capturedAt": "2026-08-29T16:58:04.157Z",
+          "description": "Example lesson transcript, 0:40–1:20"
+        }
+      ],
+      "derivedFromMemoryIds": [],
+      "supersedesId": null,
+      "supersededById": null,
+      "revision": 2,
+      "approvedRevision": 1,
+      "approvedBy": "user",
+      "approvedAt": "2026-08-29T16:58:04.158Z",
+      "expiresAt": null,
+      "reviewAt": null,
+      "lastUsedAt": null,
+      "useCount": 0,
+      "createdAt": "2026-08-29T16:58:04.157Z",
+      "updatedAt": "2026-08-29T16:58:04.158Z"
+    }
+  ],
+  "memoryVersions": [
+    {
+      "id": "mem-01M1779YFYG2S4MG26KJ0FNW8P",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "memoryId": "mem-01M1779YFXKW1F270Y5RHY77PK",
+      "revision": 1,
+      "snapshot": {
+        "schemaVersion": "1.0.0",
+        "id": "mem-01M1779YFXKW1F270Y5RHY77PK",
+        "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+        "projectId": null,
+        "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+        "runId": null,
+        "type": "procedure",
+        "title": "Landing snippets always get main + h1",
+        "content": "When building landing snippets, wrap content in a main landmark and use a real h1 before any styling work.",
+        "status": "proposed",
+        "scope": "workspace",
+        "sensitivity": "private",
+        "confidence": 0.6,
+        "tags": [],
+        "provenance": [
+          {
+            "id": "mem-01M1779YFX5EWN1T9FQFE4Y2KP",
+            "sourceType": "video-transcript",
+            "sourceId": null,
+            "uri": null,
+            "trust": "reviewed",
+            "capturedAt": "2026-08-29T16:58:04.157Z",
+            "description": "Example lesson transcript, 0:40–1:20"
+          }
+        ],
+        "derivedFromMemoryIds": [],
+        "supersedesId": null,
+        "supersededById": null,
+        "revision": 1,
+        "approvedRevision": null,
+        "approvedBy": null,
+        "approvedAt": null,
+        "expiresAt": null,
+        "reviewAt": null,
+        "lastUsedAt": null,
+        "useCount": 0,
+        "createdAt": "2026-08-29T16:58:04.157Z",
+        "updatedAt": "2026-08-29T16:58:04.157Z"
+      },
+      "changeSummary": "Proposed",
+      "createdAt": "2026-08-29T16:58:04.157Z"
+    },
+    {
+      "id": "mem-01M1779YFZWRSK0Y10BKXQS8KG",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "memoryId": "mem-01M1779YFXKW1F270Y5RHY77PK",
+      "revision": 2,
+      "snapshot": {
+        "schemaVersion": "1.0.0",
+        "id": "mem-01M1779YFXKW1F270Y5RHY77PK",
+        "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+        "projectId": null,
+        "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+        "runId": null,
+        "type": "procedure",
+        "title": "Landing snippets always get main + h1",
+        "content": "When building landing snippets, wrap content in a main landmark and use a real h1 before any styling work.",
+        "status": "approved",
+        "scope": "workspace",
+        "sensitivity": "private",
+        "confidence": 0.6,
+        "tags": [],
+        "provenance": [
+          {
+            "id": "mem-01M1779YFX5EWN1T9FQFE4Y2KP",
+            "sourceType": "video-transcript",
+            "sourceId": null,
+            "uri": null,
+            "trust": "reviewed",
+            "capturedAt": "2026-08-29T16:58:04.157Z",
+            "description": "Example lesson transcript, 0:40–1:20"
+          }
+        ],
+        "derivedFromMemoryIds": [],
+        "supersedesId": null,
+        "supersededById": null,
+        "revision": 2,
+        "approvedRevision": 1,
+        "approvedBy": "user",
+        "approvedAt": "2026-08-29T16:58:04.158Z",
+        "expiresAt": null,
+        "reviewAt": null,
+        "lastUsedAt": null,
+        "useCount": 0,
+        "createdAt": "2026-08-29T16:58:04.157Z",
+        "updatedAt": "2026-08-29T16:58:04.158Z"
+      },
+      "changeSummary": "approved by user",
+      "createdAt": "2026-08-29T16:58:04.158Z"
+    }
+  ],
+  "approvals": [
+    {
+      "id": "ap-01M1779YFHN4051QZV9VH7X0RG",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "objectType": "skillgraph",
+      "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "objectRevision": 1,
+      "decision": "approved",
+      "requestedAt": "2026-08-29T16:58:04.145Z",
+      "requestedBy": "user",
+      "requestReason": "Example: review the drafted skill",
+      "decidedBy": "user",
+      "decidedAt": "2026-08-29T16:58:04.146Z",
+      "contentHash": "2241fc93fd9e2094fc8cc1f1f9f2b76699017a1208944802c116cd09800ad30b"
+    }
+  ],
+  "artifactSets": [
+    {
+      "id": "as-01M1779YFNPC786DV5GM8VSH9J",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "name": "Landing snippet artifacts",
+      "entryPath": "index.html",
+      "revision": 2,
+      "createdAt": "2026-08-29T16:58:04.149Z",
+      "updatedAt": "2026-08-29T16:58:04.151Z"
+    }
+  ],
+  "artifactFiles": [
+    {
+      "id": "af-01M1779YFQ8SH8FTBCGNVVKCK7",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "artifactSetId": "as-01M1779YFNPC786DV5GM8VSH9J",
+      "path": "index.html",
+      "mediaType": "text/html",
+      "content": "<html lang=\"en\"><head><title>Example landing snippet</title></head><body><main><h1>Ship with landmarks</h1><p>Produced inside the Cherry example workspace.</p></main></body></html>",
+      "sizeBytes": 180,
+      "sha256": "a708d8038db0f54982927a03d7074a885c11fb6b5b2cdfff118e85a07406133e",
+      "revision": 1,
+      "createdAt": "2026-08-29T16:58:04.151Z",
+      "updatedAt": "2026-08-29T16:58:04.151Z",
+      "updatedBy": "human"
+    }
+  ],
+  "artifactVersions": [
+    {
+      "id": "af-01M1779YFQ2ND4Z5Q4AJB5D5SE",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "artifactFileId": "af-01M1779YFQ8SH8FTBCGNVVKCK7",
+      "artifactSetId": "as-01M1779YFNPC786DV5GM8VSH9J",
+      "path": "index.html",
+      "revision": 1,
+      "content": "<html lang=\"en\"><head><title>Example landing snippet</title></head><body><main><h1>Ship with landmarks</h1><p>Produced inside the Cherry example workspace.</p></main></body></html>",
+      "sha256": "a708d8038db0f54982927a03d7074a885c11fb6b5b2cdfff118e85a07406133e",
+      "sizeBytes": 180,
+      "createdAt": "2026-08-29T16:58:04.151Z",
+      "changeSummary": "Example artifact"
+    }
+  ],
+  "verifications": [
+    {
+      "id": "vr-01M1779YFSHC0W62BGSMEPY0EV",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "skillGraphId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "skillGraphRevision": 1,
+      "artifactSetId": "as-01M1779YFNPC786DV5GM8VSH9J",
+      "startedAt": "2026-08-29T16:58:04.153Z",
+      "finishedAt": "2026-08-29T16:58:04.153Z",
+      "status": "passed",
+      "results": [
+        {
+          "id": "vr-01M1779YFS04P1HJCVR6D3QHWN",
+          "name": "Skill graph is structurally valid",
+          "type": "graph",
+          "severity": "blocking",
+          "startedAt": "2026-08-29T16:58:04.153Z",
+          "finishedAt": "2026-08-29T16:58:04.153Z",
+          "status": "passed",
+          "evidence": [
+            "Graph structurally valid: 2 nodes, 1 edges, acyclic dependencies"
+          ]
+        }
+      ],
+      "blockingFailures": 0,
+      "totalAssertions": 1,
+      "repairedFromVerificationId": null
+    }
+  ],
+  "runs": [],
+  "proofEvents": [
+    {
+      "id": "pe-01M1779YEYGC566D5HJF0EGPJX",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 1,
+      "type": "workspace.created",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.126Z",
+      "objectType": "workspace",
+      "objectId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "summary": "Workspace \"EXAMPLE — Learn a landing page workflow\" created"
+    },
+    {
+      "id": "pe-01M1779YF0GZJD94FTS0HEM7HN",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 2,
+      "type": "mission.created",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.128Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission \"Build a landing snippet the lesson way\" created",
+      "payload": {
+        "objective": "Learn the transferable process from a permitted lesson and produce an accessible landing snippet with proof.",
+        "definitionOfDone": [
+          "index.html exists with an h1",
+          "Verification passes with zero blocking failures"
+        ]
+      }
+    },
+    {
+      "id": "pe-01M1779YF2NWTKKBFMC18CBZW4",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 3,
+      "type": "lesson.loaded",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.130Z",
+      "objectType": "lesson",
+      "objectId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "summary": "Lesson \"Accessible landing pages (example lesson)\" loaded (manual)",
+      "payload": {
+        "kind": "manual",
+        "videoId": null
+      }
+    },
+    {
+      "id": "pe-01M1779YF35HWFZ7HJTBNPETC1",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 4,
+      "type": "mission.updated",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.131Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+      "payload": {
+        "fields": [
+          "lessonId"
+        ]
+      }
+    },
+    {
+      "id": "pe-01M1779YF51MS8DGDWZQFY4CAX",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 5,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.133Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved DRAFT to LEARNING",
+      "payload": {
+        "from": "DRAFT",
+        "to": "LEARNING",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YF7BBG0SYADN7YF3PFD",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 6,
+      "type": "lesson.transcript_imported",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.135Z",
+      "objectType": "lesson",
+      "objectId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+      "summary": "Transcript imported (4 segments, source: user_text)",
+      "payload": {
+        "segmentCount": 4,
+        "source": "user_text",
+        "format": "plain"
+      }
+    },
+    {
+      "id": "pe-01M1779YF8TWTWXBK03EFYYA1W",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 7,
+      "type": "observation.recorded",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.136Z",
+      "objectType": "observation",
+      "objectId": "obs-01M1779YF8YBBDSHQQDZFTRH0V",
+      "summary": "visual observation at 40s: Presenter drags content inside a main element",
+      "payload": {
+        "kind": "visual",
+        "timestampSeconds": 40
+      }
+    },
+    {
+      "id": "pe-01M1779YF94N61REFGV9J8FV95",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 8,
+      "type": "observation.recorded",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.137Z",
+      "objectType": "observation",
+      "objectId": "obs-01M1779YF9H08DX0SGF7ZJ4C1X",
+      "summary": "spoken observation at 80s: A real h1 matters for screen readers and SEO",
+      "payload": {
+        "kind": "spoken",
+        "timestampSeconds": 80
+      }
+    },
+    {
+      "id": "pe-01M1779YFBPTR5MNZGXPDRCGA0",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 9,
+      "type": "evidence.added",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.139Z",
+      "objectType": "evidence",
+      "objectId": "ev-01M1779YFBT563SP4TC3KD26V8",
+      "summary": "Evidence added: Semantic landmarks (main, h1) are the transferable core of the lesson",
+      "payload": {
+        "sourceType": "transcript",
+        "trust": "untrusted"
+      }
+    },
+    {
+      "id": "pe-01M1779YFD1F6GSYNC0YRQM4SW",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 10,
+      "type": "evidence.trust_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.141Z",
+      "objectType": "evidence",
+      "objectId": "ev-01M1779YFBT563SP4TC3KD26V8",
+      "summary": "Evidence trust changed to reviewed",
+      "payload": {
+        "from": "untrusted",
+        "to": "reviewed"
+      }
+    },
+    {
+      "id": "pe-01M1779YFF5Q1ZG11NP2DVK6S7",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 12,
+      "type": "mission.updated",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.143Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+      "payload": {
+        "fields": [
+          "skillGraphId"
+        ]
+      }
+    },
+    {
+      "id": "pe-01M1779YFFC24GSZQ1D09RJGXF",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 11,
+      "type": "skillgraph.drafted",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.143Z",
+      "objectType": "skillgraph",
+      "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "summary": "SkillGraph \"Accessible landing snippet\" drafted with 2 nodes",
+      "payload": {
+        "revision": 1,
+        "nodeCount": 2
+      }
+    },
+    {
+      "id": "pe-01M1779YFGH5R512GT4M32GDPG",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 13,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.144Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved LEARNING to PLANNING",
+      "payload": {
+        "from": "LEARNING",
+        "to": "PLANNING",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YFJRQEVTR0W9CKW2MP5",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 14,
+      "type": "skillgraph.approval_requested",
+      "actorType": "agent",
+      "occurredAt": "2026-08-29T16:58:04.146Z",
+      "objectType": "skillgraph",
+      "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "summary": "Approval requested for r1: Example: review the drafted skill",
+      "payload": {
+        "revision": 1,
+        "approvalId": "ap-01M1779YFHN4051QZV9VH7X0RG"
+      }
+    },
+    {
+      "id": "pe-01M1779YFKHWQ2PS0MEC9854Z4",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 15,
+      "type": "skillgraph.approved",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.147Z",
+      "objectType": "skillgraph",
+      "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "summary": "SkillGraph r1 approved by user",
+      "payload": {
+        "revision": 1,
+        "approvalId": "ap-01M1779YFHN4051QZV9VH7X0RG",
+        "decision": "approved"
+      }
+    },
+    {
+      "id": "pe-01M1779YFM9C9Y43BAVP9TS88P",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 16,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.148Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved PLANNING to AWAITING_APPROVAL",
+      "payload": {
+        "from": "PLANNING",
+        "to": "AWAITING_APPROVAL",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YFN11BCKEBF5DE9Q7EM",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 17,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.149Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved AWAITING_APPROVAL to EXECUTING",
+      "payload": {
+        "from": "AWAITING_APPROVAL",
+        "to": "EXECUTING",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YFPFB4M4ZN63SENAWME",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 18,
+      "type": "mission.updated",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.150Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+      "payload": {
+        "fields": [
+          "artifactSetId"
+        ]
+      }
+    },
+    {
+      "id": "pe-01M1779YFRMBABE2E40TCAGFHX",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 20,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.152Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved EXECUTING to VERIFYING",
+      "payload": {
+        "from": "EXECUTING",
+        "to": "VERIFYING",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YFRQ9BD61NDEA4GZ99B",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 19,
+      "type": "artifact.file_written",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.152Z",
+      "objectType": "artifact-file",
+      "objectId": "af-01M1779YFQ8SH8FTBCGNVVKCK7",
+      "summary": "Created index.html (r1, 180 bytes)",
+      "payload": {
+        "path": "index.html",
+        "revision": 1,
+        "sha256": "a708d8038db0f54982927a03d7074a885c11fb6b5b2cdfff118e85a07406133e",
+        "sizeBytes": 180
+      }
+    },
+    {
+      "id": "pe-01M1779YFS7QCDERQ2NQHFPS89",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 21,
+      "type": "verification.completed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.153Z",
+      "objectType": "verification",
+      "objectId": "vr-01M1779YFSHC0W62BGSMEPY0EV",
+      "summary": "Verification passed: 1/1 assertions ok",
+      "payload": {
+        "status": "passed",
+        "blockingFailures": 0,
+        "totalAssertions": 1
+      }
+    },
+    {
+      "id": "pe-01M1779YFTPB38QWR2GPYRGVEX",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 22,
+      "type": "mission.state_changed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.154Z",
+      "objectType": "mission",
+      "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "summary": "Mission moved VERIFYING to COMPLETE",
+      "payload": {
+        "from": "VERIFYING",
+        "to": "COMPLETE",
+        "reason": null
+      }
+    },
+    {
+      "id": "pe-01M1779YFX4FBKAMT5TBTJD023",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 23,
+      "type": "receipt.created",
+      "actorType": "system",
+      "occurredAt": "2026-08-29T16:58:04.157Z",
+      "objectType": "receipt",
+      "objectId": "rc-01M1779YFWYGBACKVW020XXT3R",
+      "summary": "Proof receipt created (verified, hash b8dd59e7e0f3…)",
+      "payload": {
+        "status": "verified",
+        "receiptHash": "b8dd59e7e0f369f1e81b43cab6327117ff524843772ce46b6e41c398d8dd638f"
+      }
+    },
+    {
+      "id": "pe-01M1779YFYFMYX241Y63XYC3Y0",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 24,
+      "type": "memory.proposed",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.158Z",
+      "objectType": "memory",
+      "objectId": "mem-01M1779YFXKW1F270Y5RHY77PK",
+      "summary": "Memory proposed (procedure/workspace): Landing snippets always get main + h1",
+      "payload": {
+        "type": "procedure",
+        "scope": "workspace",
+        "sensitivity": "private"
+      }
+    },
+    {
+      "id": "pe-01M1779YFZAQXWBFS3KR63XG47",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "sequence": 25,
+      "type": "memory.approved",
+      "actorType": "human",
+      "occurredAt": "2026-08-29T16:58:04.159Z",
+      "objectType": "memory",
+      "objectId": "mem-01M1779YFXKW1F270Y5RHY77PK",
+      "summary": "Memory \"Landing snippets always get main + h1\" approved",
+      "payload": {
+        "decision": "approved"
+      }
+    }
+  ],
+  "proofReceipts": [
+    {
+      "schemaVersion": "1.0.0",
+      "receiptId": "rc-01M1779YFWYGBACKVW020XXT3R",
+      "workspaceId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+      "missionId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+      "runId": null,
+      "skillGraphId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+      "skillGraphVersion": "0.1.0",
+      "skillGraphRevision": 1,
+      "status": "verified",
+      "canonicalization": {
+        "algorithm": "JCS-RFC8785",
+        "hashAlgorithm": "SHA-256",
+        "exclusions": [
+          "receiptHash"
+        ]
+      },
+      "events": [
+        {
+          "id": "pe-01M1779YEYGC566D5HJF0EGPJX",
+          "sequence": 1,
+          "type": "workspace.created",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.126Z",
+          "objectType": "workspace",
+          "objectId": "ws-01M1779YEMQY3RZNEAHE2H82WN",
+          "summary": "Workspace \"EXAMPLE — Learn a landing page workflow\" created",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF0GZJD94FTS0HEM7HN",
+          "sequence": 2,
+          "type": "mission.created",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.128Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission \"Build a landing snippet the lesson way\" created",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF2NWTKKBFMC18CBZW4",
+          "sequence": 3,
+          "type": "lesson.loaded",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.130Z",
+          "objectType": "lesson",
+          "objectId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+          "summary": "Lesson \"Accessible landing pages (example lesson)\" loaded (manual)",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF35HWFZ7HJTBNPETC1",
+          "sequence": 4,
+          "type": "mission.updated",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.131Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF51MS8DGDWZQFY4CAX",
+          "sequence": 5,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.133Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved DRAFT to LEARNING",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF7BBG0SYADN7YF3PFD",
+          "sequence": 6,
+          "type": "lesson.transcript_imported",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.135Z",
+          "objectType": "lesson",
+          "objectId": "ls-01M1779YF1XGVHRHJ9XQVN9Z4R",
+          "summary": "Transcript imported (4 segments, source: user_text)",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF8TWTWXBK03EFYYA1W",
+          "sequence": 7,
+          "type": "observation.recorded",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.136Z",
+          "objectType": "observation",
+          "objectId": "obs-01M1779YF8YBBDSHQQDZFTRH0V",
+          "summary": "visual observation at 40s: Presenter drags content inside a main element",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YF94N61REFGV9J8FV95",
+          "sequence": 8,
+          "type": "observation.recorded",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.137Z",
+          "objectType": "observation",
+          "objectId": "obs-01M1779YF9H08DX0SGF7ZJ4C1X",
+          "summary": "spoken observation at 80s: A real h1 matters for screen readers and SEO",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFBPTR5MNZGXPDRCGA0",
+          "sequence": 9,
+          "type": "evidence.added",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.139Z",
+          "objectType": "evidence",
+          "objectId": "ev-01M1779YFBT563SP4TC3KD26V8",
+          "summary": "Evidence added: Semantic landmarks (main, h1) are the transferable core of the lesson",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFD1F6GSYNC0YRQM4SW",
+          "sequence": 10,
+          "type": "evidence.trust_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.141Z",
+          "objectType": "evidence",
+          "objectId": "ev-01M1779YFBT563SP4TC3KD26V8",
+          "summary": "Evidence trust changed to reviewed",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFFC24GSZQ1D09RJGXF",
+          "sequence": 11,
+          "type": "skillgraph.drafted",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.143Z",
+          "objectType": "skillgraph",
+          "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+          "summary": "SkillGraph \"Accessible landing snippet\" drafted with 2 nodes",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFF5Q1ZG11NP2DVK6S7",
+          "sequence": 12,
+          "type": "mission.updated",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.143Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFGH5R512GT4M32GDPG",
+          "sequence": 13,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.144Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved LEARNING to PLANNING",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFJRQEVTR0W9CKW2MP5",
+          "sequence": 14,
+          "type": "skillgraph.approval_requested",
+          "actorType": "agent",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.146Z",
+          "objectType": "skillgraph",
+          "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+          "summary": "Approval requested for r1: Example: review the drafted skill",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFKHWQ2PS0MEC9854Z4",
+          "sequence": 15,
+          "type": "skillgraph.approved",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.147Z",
+          "objectType": "skillgraph",
+          "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+          "summary": "SkillGraph r1 approved by user",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFM9C9Y43BAVP9TS88P",
+          "sequence": 16,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.148Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved PLANNING to AWAITING_APPROVAL",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFN11BCKEBF5DE9Q7EM",
+          "sequence": 17,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.149Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved AWAITING_APPROVAL to EXECUTING",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFPFB4M4ZN63SENAWME",
+          "sequence": 18,
+          "type": "mission.updated",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.150Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission \"Build a landing snippet the lesson way\" updated",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFRQ9BD61NDEA4GZ99B",
+          "sequence": 19,
+          "type": "artifact.file_written",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.152Z",
+          "objectType": "artifact-file",
+          "objectId": "af-01M1779YFQ8SH8FTBCGNVVKCK7",
+          "summary": "Created index.html (r1, 180 bytes)",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFRMBABE2E40TCAGFHX",
+          "sequence": 20,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.152Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved EXECUTING to VERIFYING",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFS7QCDERQ2NQHFPS89",
+          "sequence": 21,
+          "type": "verification.completed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.153Z",
+          "objectType": "verification",
+          "objectId": "vr-01M1779YFSHC0W62BGSMEPY0EV",
+          "summary": "Verification passed: 1/1 assertions ok",
+          "payloadHash": null
+        },
+        {
+          "id": "pe-01M1779YFTPB38QWR2GPYRGVEX",
+          "sequence": 22,
+          "type": "mission.state_changed",
+          "actorType": "human",
+          "actorId": null,
+          "occurredAt": "2026-08-29T16:58:04.154Z",
+          "objectType": "mission",
+          "objectId": "ms-01M1779YEZGAP8MGB047ZY0A8H",
+          "summary": "Mission moved VERIFYING to COMPLETE",
+          "payloadHash": null
+        }
+      ],
+      "approvals": [
+        {
+          "id": "ap-01M1779YFHN4051QZV9VH7X0RG",
+          "objectType": "skillgraph",
+          "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
+          "objectRevision": 1,
+          "decision": "approved",
+          "decidedBy": "user",
+          "decidedAt": "2026-08-29T16:58:04.146Z",
+          "contentHash": "2241fc93fd9e2094fc8cc1f1f9f2b76699017a1208944802c116cd09800ad30b"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "index.html",
+          "mediaType": "text/html",
+          "sizeBytes": 180,
+          "sha256": "a708d8038db0f54982927a03d7074a885c11fb6b5b2cdfff118e85a07406133e",
+          "artifactRevision": 1
+        }
+      ],
+      "assertions": [
+        {
+          "id": "vr-01M1779YFS04P1HJCVR6D3QHWN",
+          "name": "Skill graph is structurally valid",
+          "type": "graph",
+          "severity": "blocking",
+          "status": "passed",
+          "startedAt": "2026-08-29T16:58:04.153Z",
+          "finishedAt": "2026-08-29T16:58:04.153Z",
+          "evidence": [
+            "Graph structurally valid: 2 nodes, 1 edges, acyclic dependencies"
+          ]
+        }
+      ],
+      "failuresAndRepairs": [],
+      "exports": [],
+      "provider": {
+        "kind": "manual",
+        "status": "not-used",
+        "verifiedSeparately": true,
+        "exitCode": null
+      },
+      "receiptHash": "b8dd59e7e0f369f1e81b43cab6327117ff524843772ce46b6e41c398d8dd638f",
+      "createdAt": "2026-08-29T16:58:04.156Z"
+    }
+  ],
+  "settings": {},
+  "integrity": {
+    "canonicalization": "JCS-RFC8785",
+    "hashAlgorithm": "SHA-256",
+    "payloadSha256": "fa13a1fc262e1d17024eb90f9f7b00d2743c4afd9eb0105345d86e0e432db35b"
+  }
+}

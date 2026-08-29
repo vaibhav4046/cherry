@@ -1,0 +1,122 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import JSZip from 'jszip';
+import { freshDb } from '../setup.ts';
+import { createMission, createWorkspace, updateMission } from '../../src/cherry/mission/mission-service.ts';
+import { draftSkillGraph, decideSkillGraphApproval, requestSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
+import { createArtifactSet, writeArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
+import { runVerification } from '../../src/cherry/verify/verification-service.ts';
+import { compileSkillBundle, validateBundleZip } from '../../src/cherry/compiler/archive-builder.ts';
+import { unwrap } from '../../src/cherry/core/result.ts';
+import { sha256Bytes } from '../../src/cherry/core/hash.ts';
+
+async function approvedSkillFixture() {
+  const workspace = unwrap(await createWorkspace({ name: 'Bundle workspace' }));
+  const mission = unwrap(
+    await createMission({
+      workspaceId: workspace.id,
+      title: 'Bundle mission',
+      objective: 'Produce a compilable skill',
+      definitionOfDone: ['Bundle compiles'],
+    }),
+  );
+  const graph = unwrap(
+    await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Landing Snippet Builder',
+      purpose: 'Builds accessible landing snippets from lesson principles',
+      nodes: [{ kind: 'build', title: 'Write the page', goal: 'Create index.html with landmarks' }],
+    }),
+  );
+  const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Bundle artifacts'));
+  unwrap(await updateMission(mission.id, { skillGraphId: graph.id, artifactSetId: artifactSet.id }));
+  unwrap(
+    await writeArtifactFile(
+      artifactSet.id,
+      'index.html',
+      '<html lang="en"><head><title>x</title></head><body><main><h1>x</h1></main></body></html>',
+      'human',
+    ),
+  );
+  unwrap(await runVerification({ missionId: mission.id }));
+  const request = unwrap(await requestSkillGraphApproval(graph.id, 'ready', 'user'));
+  const decided = unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+  return { workspace, mission, graph: decided.graph };
+}
+
+describe('skill bundle compiler', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('refuses to compile an unapproved graph', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'W' }));
+    const graph = unwrap(
+      await draftSkillGraph({
+        workspaceId: workspace.id,
+        name: 'Unapproved',
+        purpose: 'Should not compile',
+        nodes: [{ kind: 'build', title: 'X', goal: 'Y' }],
+      }),
+    );
+    const result = await compileSkillBundle(graph.id);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('approval_required');
+  });
+
+  it('compiles a valid Agent Skills bundle with matching frontmatter, manifest, and receipt', async () => {
+    const { graph } = await approvedSkillFixture();
+    const bundle = unwrap(await compileSkillBundle(graph.id));
+
+    expect(bundle.fileName).toBe('landing-snippet-builder-v0.1.0.zip');
+    expect(bundle.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(bundle.receiptId).toBeTruthy();
+
+    const validation = unwrap(await validateBundleZip(bundle.blob));
+    expect(validation.directory).toBe('landing-snippet-builder');
+    for (const required of ['SKILL.md', 'cherry.json', 'skillgraph.json', 'receipt.json', 'MANIFEST.json', 'scripts/verify.mjs', 'references/evidence.md', 'policies/safety.md', 'evals/acceptance-tests.json', 'targets/codex/AGENTS.md', 'targets/claude-code/CLAUDE.md']) {
+      expect(validation.files, required).toContain(required);
+    }
+
+    // SKILL.md frontmatter name matches the directory and stays within limits.
+    const zip = await JSZip.loadAsync(bundle.blob as never);
+    const skillMd = await zip.file('landing-snippet-builder/SKILL.md')!.async('string');
+    expect(skillMd.startsWith('---\nname: landing-snippet-builder\n')).toBe(true);
+    expect(skillMd.split('\n').length).toBeLessThan(500);
+
+    // Manifest hashes recompute for every listed file.
+    const manifest = JSON.parse(await zip.file('landing-snippet-builder/MANIFEST.json')!.async('string')) as {
+      files: Record<string, string>;
+    };
+    for (const [path, expected] of Object.entries(manifest.files)) {
+      const content = await zip.file(`landing-snippet-builder/${path}`)!.async('uint8array');
+      expect(await sha256Bytes(content), path).toBe(expected);
+    }
+
+    // Receipt inside the bundle carries a recomputable hash.
+    const receipt = JSON.parse(await zip.file('landing-snippet-builder/receipt.json')!.async('string')) as {
+      receiptHash: string;
+      status: string;
+    };
+    expect(receipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(receipt.status).toBe('verified');
+  });
+
+  it('rejects archives with traversal paths or mismatched names', async () => {
+    const evil = new JSZip();
+    evil.file('../escape/SKILL.md', 'nope');
+    const evilBlob = await evil.generateAsync({ type: 'blob' });
+    expect((await validateBundleZip(evilBlob)).ok).toBe(false);
+
+    const mismatch = new JSZip();
+    mismatch.file('dir-a/SKILL.md', '---\nname: dir-b\ndescription: x\n---\n');
+    mismatch.file('dir-a/cherry.json', '{}');
+    mismatch.file('dir-a/skillgraph.json', '{}');
+    mismatch.file('dir-a/scripts/verify.mjs', '// x');
+    mismatch.file('dir-a/MANIFEST.json', '{}');
+    const mismatchBlob = await mismatch.generateAsync({ type: 'blob' });
+    const result = await validateBundleZip(mismatchBlob);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain('does not match directory');
+  });
+});
