@@ -10,6 +10,8 @@ execute — and prove.
 
 Built for the **OpenAI WebMCP Challenge 2026**.
 
+**Live:** https://cherry-wine.vercel.app · **Source:** https://github.com/vaibhav4046/cherry
+
 ## What it does
 
 ```

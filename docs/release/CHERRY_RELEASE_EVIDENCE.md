@@ -175,14 +175,21 @@ server IS `build && preview`). **PASSED**
 
 MIT `LICENSE`, `README.md` (setup, architecture, privacy/security, compatibility, zero-dollar
 boundaries), decision log, repo map, baseline, and this evidence file are in the repository root and
-`docs/`. Publishing the repository to a public host is a user-account action — the repo is fully
-prepared for it. **PASSED (local)** — see final report for the publish step.
+`docs/`. Published publicly at **https://github.com/vaibhav4046/cherry** (MIT). **PASSED**
 
 ## deployment_smoke
 
-The build is a static `dist/` with `_headers` (CSP, Referrer-Policy, nosniff, Permissions-Policy,
-COOP) ready for Cloudflare Pages/Netlify/Vercel. Deployment to a live URL requires the user's
-hosting account; not performed autonomously. **NOT RUN** (external account action). See final report.
+Deployed to Vercel production: **https://cherry-wine.vercel.app** (project cherry, account
+vaibhav4046, static dist/ with vercel.json headers). Fresh-browser-profile smoke test executed with
+Playwright against the live URL:
+
+- CSP, X-Content-Type-Options: nosniff, Referrer-Policy present on responses;
+- landing renders with the correct title;
+- deep link /studio/settings/connections returns 200 and renders (SPA rewrite);
+- manual golden journey begins with zero developer state (workspace created on the live site);
+- /examples/example-workspace.json, /manifest.webmanifest, /sw.js all 200.
+
+**PASSED**
 
 ## local_runner (optional gate)
 
