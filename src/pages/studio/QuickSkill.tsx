@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
@@ -36,6 +36,8 @@ export default function QuickSkill() {
   const [graph, setGraph] = useState<SkillGraph | null>(null);
   const [verifyNote, setVerifyNote] = useState<string | null>(null);
   const [bundleNote, setBundleNote] = useState<string | null>(null);
+  const [sourceCount, setSourceCount] = useState(0);
+  const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -65,7 +67,7 @@ export default function QuickSkill() {
       }
       const mission = await createMission({
         workspaceId,
-        title: name || 'Quick skill',
+        title: name || 'Quick skill (auto-named on generate)',
         objective: `Turn ${url ? 'a permitted video lesson' : 'lesson material'} into an approved, portable skill.`,
         definitionOfDone: ['SkillGraph approved at its reviewed revision', 'Verification passes'],
       });
@@ -81,7 +83,7 @@ export default function QuickSkill() {
       if (!loaded.ok) throw new Error(loaded.error.message);
       await updateMission(mission.value.id, { lessonId: loaded.value.id });
       await transitionMission(mission.value.id, 'LEARNING');
-      setSkillName(name || 'Quick skill');
+      setSkillName(name);
       setLesson(loaded.value);
       setStage('transcript');
       await refresh();
@@ -90,8 +92,10 @@ export default function QuickSkill() {
 
   async function importText(text: string, source: 'user_text' | 'user_upload', fileName?: string) {
     await withBusy(async () => {
-      const imported = await importTranscript(lesson!.id, text, source, fileName);
+      const mode = sourceCount === 0 ? 'replace' : 'append';
+      const imported = await importTranscript(lesson!.id, text, source, fileName, 'human', mode);
       if (!imported.ok) throw new Error(imported.error.message);
+      setSourceCount((count) => count + 1);
       const preview = await previewQuickSkill(lesson!.id);
       if (!preview.ok) throw new Error(preview.error.message);
       setDraft(preview.value);
@@ -100,11 +104,19 @@ export default function QuickSkill() {
     });
   }
 
+  async function importFiles(files: FileList) {
+    // NotebookLM-style: drop several sources at once; each one appends.
+    for (const file of Array.from(files)) {
+      const text = await file.text();
+      await importText(text, 'user_upload', file.name);
+    }
+  }
+
   async function handleGenerate() {
     await withBusy(async () => {
       const generated = await generateSkillFromLesson({
         lessonId: lesson!.id,
-        name: skillName,
+        ...(skillName.trim() ? { name: skillName } : {}),
         keepStepIndices: [...kept],
       });
       if (!generated.ok) throw new Error(generated.error.message);
@@ -181,7 +193,7 @@ export default function QuickSkill() {
           </label>
           <label className="field">
             <span>Skill name</span>
-            <input className="input" name="name" required maxLength={120} placeholder="e.g. Hero section workflow" />
+            <input className="input" name="name" maxLength={120} placeholder="Leave blank — Cherry names it from the content" />
           </label>
           <label className="row" style={{ fontSize: 13 }}>
             <input type="checkbox" name="permission" style={{ width: 20, height: 20 }} />
@@ -201,12 +213,31 @@ export default function QuickSkill() {
           {lesson.kind === 'youtube' && lesson.videoId ? (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <iframe
+                ref={wizardPlayerRef}
                 title={`YouTube player: ${lesson.title}`}
                 src={embedUrl(lesson.videoId, window.location.origin)}
                 style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', display: 'block' }}
                 allow="accelerometer; encrypted-media; picture-in-picture"
                 allowFullScreen
               />
+              <div className="row" style={{ padding: 'var(--sp-2) var(--sp-3)' }} aria-label="Playback speed">
+                <span className="label">Watch faster</span>
+                {[1, 1.5, 2, 3].map((rate) => (
+                  <button
+                    key={rate}
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() =>
+                      wizardPlayerRef.current?.contentWindow?.postMessage(
+                        JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [rate] }),
+                        '*',
+                      )
+                    }
+                  >
+                    {rate}x
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
           <div className="card card-wash-sky stack">
@@ -230,14 +261,16 @@ export default function QuickSkill() {
                   {busy ? 'Parsing…' : 'Derive the skill'}
                 </button>
                 <label className="btn">
-                  Upload .txt / .srt / .vtt
+                  Upload sources (.txt / .srt / .vtt — pick several)
                   <input
                     type="file"
                     accept=".txt,.srt,.vtt,text/plain"
+                    multiple
                     className="sr-only"
+                    data-testid="quick-files"
                     onChange={(event) => {
-                      const file = event.currentTarget.files?.[0];
-                      if (file) void file.text().then((text) => importText(text, 'user_upload', file.name));
+                      const files = event.currentTarget.files;
+                      if (files && files.length > 0) void importFiles(files);
                     }}
                   />
                 </label>
@@ -249,7 +282,7 @@ export default function QuickSkill() {
 
       {stage === 'review' && draft ? (
         <div className="card stack" style={{ gap: 'var(--sp-4)' }}>
-          <h2 className="subhead">Review the derived workflow ({kept.size} of {draft.steps.length} steps kept)</h2>
+          <h2 className="subhead">Review the derived workflow ({kept.size} of {draft.steps.length} steps kept{sourceCount > 1 ? ` · ${sourceCount} sources` : ''})</h2>
           <p style={{ fontSize: 13, margin: 0 }}>
             Derived from your transcript by deterministic rules — not a model. Untick anything wrong;
             every kept step becomes a node with its transcript line attached as untrusted evidence.
@@ -286,6 +319,9 @@ export default function QuickSkill() {
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
               {Icons.approve(16)} {busy ? 'Generating…' : `Generate & approve ${kept.size} steps`}
+            </button>
+            <button type="button" className="btn btn-sm" onClick={() => setStage('transcript')} data-testid="quick-add-source">
+              Add another source
             </button>
             <span className="label">Approving here records a real exact-revision approval by you.</span>
           </div>

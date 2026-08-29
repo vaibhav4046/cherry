@@ -5,7 +5,7 @@ import { CherryMascot } from '../components/CherryMascot.tsx';
 import { useReveal } from '../components/useReveal.ts';
 
 const MARQUEE_TEXT =
-  'TEACH ONCE · CHERRY REMEMBERS · EVERY AGENT GETS BETTER · LOCAL-FIRST · NO API KEY REQUIRED · ';
+  'CHERRY WINE · TEACH ONCE · YOUR AGENT DOES THE REST · LOCAL-FIRST · NO API KEY REQUIRED · ';
 
 export function Landing() {
   useReveal();
@@ -34,7 +34,7 @@ export function Landing() {
           <div className="band-inner ribbon-fg" style={{ textAlign: 'center', paddingTop: 'var(--sp-15)', paddingBottom: 'var(--sp-15)' }}>
             <CherryBurst />
             <h1 id="hero-heading" className="display">Cherry</h1>
-            <p className="label" style={{ marginTop: 'var(--sp-2)' }}>CHERRY OS · THE APPRENTICESHIP LAYER FOR AI AGENTS</p>
+            <p className="label" style={{ marginTop: 'var(--sp-2)' }}>CHERRY WINE · THE APPRENTICESHIP LAYER FOR AI AGENTS</p>
             <p className="subhead" style={{ maxWidth: 680, margin: 'var(--sp-5) auto', fontWeight: 700 }}>
               Teach an AI agent a workflow once — from a video, a doc, or your own corrections — and get
               back a skill you can inspect, approve, verify, and take to any agent you use.
@@ -188,7 +188,7 @@ export function Landing() {
         </section>
 
         <section id="open" className="band band-maroon ribbon-wrap" aria-labelledby="open-heading">
-          <div className="os-watermark" aria-hidden="true">CHERRY OS</div>
+          <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
           <Ribbon color="var(--color-cherry-pop)" />
           <div className="band-inner ribbon-fg" style={{ textAlign: 'center' }}>
             <div className="reveal">

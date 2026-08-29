@@ -148,3 +148,35 @@ describe('quick skill pipeline', () => {
     expect(none.ok).toBe(false);
   });
 });
+
+describe('multi-source ingestion and auto-naming', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('append mode adds a second source after the first, shifting untimed content', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Sources workspace' }));
+    const lesson = unwrap(await loadLesson({ workspaceId: workspace.id, title: 'Multi-source', kind: 'manual' }));
+    unwrap(await importTranscript(lesson.id, '0:05 Create the frame\n0:40 Add the header', 'user_text'));
+    const appended = unwrap(
+      await importTranscript(lesson.id, 'Check contrast before shipping the page.', 'user_upload', 'notes.txt', 'human', 'append'),
+    );
+    expect(appended.totalSegments).toBe(3);
+    const { listTranscript } = await import('../../src/cherry/watch/lesson-service.ts');
+    const segments = await listTranscript(lesson.id);
+    expect(segments).toHaveLength(3);
+    // The untimed note lands after the timed content, keeping the timeline monotonic.
+    expect(segments[2]!.startSeconds).toBeGreaterThan(segments[1]!.endSeconds);
+    expect(segments[2]!.source).toBe('user_upload');
+  });
+
+  it('auto-names the skill from content when no name is given', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Autoname workspace' }));
+    const lesson = unwrap(await loadLesson({ workspaceId: workspace.id, title: 'Untitled paste', kind: 'manual' }));
+    unwrap(await importTranscript(lesson.id, '0:05 Create a responsive pricing table with three tiers\n0:40 Check alignment on mobile', 'user_text'));
+    const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id }));
+    expect(generated.graph.name.toLowerCase()).toContain('pricing table');
+    expect(generated.graph.name).toContain('workflow');
+    expect(generated.graph.name.length).toBeLessThanOrEqual(120);
+  });
+});

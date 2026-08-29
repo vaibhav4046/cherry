@@ -299,12 +299,12 @@ export default function MissionDetail() {
         </section>
 
         <section className="card card-wash-mint stack" aria-labelledby="artifact-heading">
-          <h2 id="artifact-heading" className="subhead">Artifacts</h2>
+          <h2 id="artifact-heading" className="subhead">Files & preview</h2>
           {mission.artifactSetId ? (
             <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-primary">Open artifact workspace</Link>
           ) : (
             <>
-              <p>Real files live here: HTML, CSS, JS, Markdown, JSON — versioned, previewed in isolation.</p>
+              <p>The actual output of this mission: HTML, CSS, JS, Markdown, JSON. Every save is versioned and hashed; the preview runs sealed off from your data.</p>
               <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create artifact workspace</button>
             </>
           )}

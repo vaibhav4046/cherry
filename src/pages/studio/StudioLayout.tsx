@@ -23,7 +23,7 @@ export function StudioLayout() {
         <nav className="top-nav" aria-label="Studio navigation">
           <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
           <span className="label" style={{ marginRight: 'auto' }}>
-            {activeWorkspace ? activeWorkspace.name : 'Cherry Studio'}
+            {activeWorkspace ? activeWorkspace.name : 'Cherry Wine Studio'}
             {activeMission ? ` · ${activeMission.title}` : ''}
           </span>
           <span className="sticker" data-testid="product-state">State: {productState}</span>

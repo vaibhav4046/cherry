@@ -1,0 +1,30 @@
+{
+  "fileName": "semantic-hero-section-with-a-real-h1-heading-workflow-v0.1.0.zip",
+  "sha256": "37401d8c94c7d8a365bd60ce98c8a9b16a8adb8fa35e3bf73ba4c5169ad3aacb",
+  "files": [
+    "SKILL.md",
+    "agents/openai.yaml",
+    "cherry.json",
+    "evals/acceptance-tests.json",
+    "evals/routing-cases.json",
+    "mission.json",
+    "policies/approvals.md",
+    "policies/originality.md",
+    "policies/safety.md",
+    "receipt.json",
+    "references/evidence.md",
+    "references/memory-policy.md",
+    "references/observations.json",
+    "references/principles.md",
+    "scripts/verify.mjs",
+    "skillgraph.json",
+    "targets/claude-code/CLAUDE.md",
+    "targets/claude-code/agents/cherry-skill-agent.md",
+    "targets/claude-code/hooks.example.json",
+    "targets/claude-code/install.md",
+    "targets/codex/AGENTS.md",
+    "targets/codex/install.md",
+    "MANIFEST.json"
+  ],
+  "skillName": "Semantic hero section with a real h1 heading workflow"
+}

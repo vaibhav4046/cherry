@@ -113,3 +113,28 @@ Material deviations and interpretation decisions, with reason, consequence, and 
   — and it is genuinely fast.
 - **Consequence:** The wizard labels the derivation "deterministic rules — not a model". Evidence
   provenance and trust semantics are identical to the manual flow (unit-proven).
+
+## D-012 — Live Claude Code host validation (2026-08-29)
+
+- **What actually happened:** (1) A Cherry-compiled bundle (semantic-hero-section… workflow, produced
+  by the Quick Skill pipeline from a pasted transcript) was unzipped into a real Claude Code host's
+  `~/.claude/skills/`; the host discovered it and listed it as an available skill in a live session.
+  Its standalone `scripts/verify.mjs` passed all 22 file hashes + the receipt hash beforehand.
+  (2) The native MCP bridge was registered in the same host via
+  `claude mcp add cherry-wine -- node runner/mcp/server.mjs --workspace <export>`;
+  `claude mcp list` reported **✔ Connected**.
+- **Consequence:** /compatibility upgrades "Claude Code skill install" and the bridge row to
+  Validated (live host). ChatGPT/Codex browser hosts remain honestly Experimental — no such client
+  was available on this machine.
+
+## D-013 — "AI does everything" ships as the Autopilot brief, not an API key
+
+- **Decision:** NotebookLM-style autonomy is delivered through the user's OWN ChatGPT/Claude
+  subscription attached over WebMCP: a copyable Autopilot brief on the Agent View instructs the
+  attached agent to drive the entire loop (create → load lesson → watch the embedded player with the
+  host's browser vision at 1.5–3x → record visual/spoken observations → import_transcript (append
+  for multi-source) → generate_quick_skill auto-named → request approval → stop for the human →
+  verify → receipt → bundle). New tools import_transcript and generate_quick_skill were added to the
+  learning aperture (still ≤ 5 + 2); load_lesson now advances DRAFT→LEARNING like the UI.
+- **Reason:** Zero-dollar core forbids API keys; WebMCP makes the user's existing subscription the
+  brain. Approval, trust, and memory promotion remain human-only.

@@ -9,10 +9,29 @@ import { deriveSkillFromTranscript, type DerivedSkillDraft } from './auto-draft.
 
 export interface QuickSkillInput {
   lessonId: string;
-  name: string;
+  /** Blank = Cherry derives a name from the content (NotebookLM-style). */
+  name?: string;
   purpose?: string;
   /** Indices into the derived steps the user kept (default: all). */
   keepStepIndices?: number[];
+}
+
+/** Derive a human-friendly skill name from the lesson + first concrete step. */
+export function autoNameSkill(lessonTitle: string, draft: DerivedSkillDraft): string {
+  const step = draft.steps.find((candidate) => candidate.kind === 'build') ?? draft.steps[0];
+  if (step) {
+    // "Create a new frame for the hero section." → "Frame for the hero section workflow"
+    const stripped = step.title
+      .replace(/^\W*(create|add|open|make|build|write|set|use|wrap|run|click|install|import|export|start|go|select|choose|apply|configure)\s+(a|an|the|new)?\s*/i, '')
+      .replace(/[.!?…]+$/, '')
+      .trim();
+    if (stripped.length >= 6) {
+      const base = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+      return `${base.slice(0, 90)} workflow`;
+    }
+  }
+  const title = lessonTitle.replace(/[.!?…]+$/, '').trim();
+  return `${(title || 'Learned').slice(0, 100)} skill`;
 }
 
 export interface QuickSkillResult {
@@ -41,13 +60,14 @@ export async function previewQuickSkill(lessonId: string): Promise<Result<Derive
 export async function generateSkillFromLesson(input: QuickSkillInput): Promise<Result<QuickSkillResult>> {
   const lesson = await getLesson(input.lessonId);
   if (!lesson) return fail('not_found', `Lesson ${input.lessonId} not found`);
-  const name = input.name.trim();
-  if (name.length === 0 || name.length > 120) {
-    return fail('validation', 'Skill name must be 1-120 characters');
-  }
 
   const preview = await previewQuickSkill(input.lessonId);
   if (!preview.ok) return preview;
+
+  const name = (input.name?.trim() || autoNameSkill(lesson.title, preview.value)).slice(0, 120);
+  if (name.length === 0) {
+    return fail('validation', 'Skill name must be 1-120 characters');
+  }
   const allSteps = preview.value.steps;
   const kept = input.keepStepIndices
     ? allSteps.filter((_, index) => input.keepStepIndices!.includes(index))

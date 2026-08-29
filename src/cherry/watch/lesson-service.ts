@@ -116,7 +116,8 @@ export async function importTranscript(
   source: TranscriptSource,
   fileName?: string,
   actorType: ActorType = 'human',
-): Promise<Result<{ lesson: Lesson; segmentCount: number }>> {
+  mode: 'replace' | 'append' = 'replace',
+): Promise<Result<{ lesson: Lesson; segmentCount: number; totalSegments: number }>> {
   const db = getDb();
   const lesson = await db.lessons.get(lessonId);
   if (!lesson) return notFound('Lesson', lessonId);
@@ -124,14 +125,24 @@ export async function importTranscript(
   const parsed = parseTranscript(content, fileName);
   if (!parsed.ok) return parsed;
 
+  // Append mode (multi-source drops): keep existing segments and place the new
+  // source after them. Untimed sources get shifted past the current end so the
+  // combined timeline stays monotonic; explicitly-timed sources keep their own
+  // timestamps.
+  const existing = mode === 'append' ? await db.transcriptSegments.where('lessonId').equals(lesson.id).toArray() : [];
+  const existingEnd = existing.reduce((max, segment) => Math.max(max, segment.endSeconds), 0);
+  const indexOffset = existing.length;
+  const firstStart = parsed.value.segments[0]?.startSeconds ?? 0;
+  const timeOffset = mode === 'append' && firstStart < existingEnd ? existingEnd + 2 : 0;
+
   const now = isoNow();
   const segments: TranscriptSegment[] = parsed.value.segments.map((segment) => ({
     id: newId('seg'),
     workspaceId: lesson.workspaceId,
     lessonId: lesson.id,
-    index: segment.index,
-    startSeconds: segment.startSeconds,
-    endSeconds: segment.endSeconds,
+    index: indexOffset + segment.index,
+    startSeconds: segment.startSeconds + timeOffset,
+    endSeconds: segment.endSeconds + timeOffset,
     text: segment.text,
     source,
   }));
@@ -145,7 +156,9 @@ export async function importTranscript(
   };
 
   await withWorkspaceTx(lesson.workspaceId, ['lessons', 'transcriptSegments'], async (ctx) => {
-    await ctx.db.transcriptSegments.where('lessonId').equals(lesson.id).delete();
+    if (mode === 'replace') {
+      await ctx.db.transcriptSegments.where('lessonId').equals(lesson.id).delete();
+    }
     await ctx.db.transcriptSegments.bulkAdd(segments);
     await ctx.db.lessons.put(nextLesson);
     ctx.emit({
@@ -153,11 +166,11 @@ export async function importTranscript(
       actorType,
       objectType: 'lesson',
       objectId: lesson.id,
-      summary: `Transcript imported (${segments.length} segments, source: ${source})`,
-      payload: { segmentCount: segments.length, source, format: parsed.value.format },
+      summary: `Transcript ${mode === 'append' ? 'source added' : 'imported'} (${segments.length} segments, source: ${source})`,
+      payload: { segmentCount: segments.length, source, format: parsed.value.format, mode },
     });
   });
-  return ok({ lesson: nextLesson, segmentCount: segments.length });
+  return ok({ lesson: nextLesson, segmentCount: segments.length, totalSegments: existing.length + segments.length });
 }
 
 export async function deleteTranscript(lessonId: string, actorType: ActorType = 'human'): Promise<Result<Lesson>> {

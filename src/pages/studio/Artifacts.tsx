@@ -121,7 +121,7 @@ export default function Artifacts() {
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <header className="row" style={{ justifyContent: 'space-between' }}>
-        <h1 className="display-sm">{artifactSet.name}</h1>
+        <div className="stack" style={{ gap: 4 }}><h1 className="display-sm">{artifactSet.name}</h1><p className="label" style={{ margin: 0 }}>Real files your mission produces — versioned, hashed, previewed in a sealed sandbox</p></div>
         <Link to={`/studio/missions/${artifactSet.missionId}`} className="btn">Back to mission</Link>
       </header>
       {error ? <p className="field-error" role="alert">{error}</p> : null}

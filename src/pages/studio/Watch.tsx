@@ -175,6 +175,24 @@ export default function Watch() {
                 allow="accelerometer; encrypted-media; picture-in-picture"
                 allowFullScreen
               />
+              <div className="row" style={{ padding: 'var(--sp-2) var(--sp-3)' }} aria-label="Playback speed">
+                <span className="label">Speed</span>
+                {[1, 1.5, 2, 3].map((rate) => (
+                  <button
+                    key={rate}
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() =>
+                      playerRef.current?.contentWindow?.postMessage(
+                        JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [rate] }),
+                        '*',
+                      )
+                    }
+                  >
+                    {rate}x
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="card card-wash-lavender">

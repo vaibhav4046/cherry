@@ -242,3 +242,83 @@ describe('MCP inspector data (call log + retired tools)', () => {
     expect(snapshots[snapshots.length - 1]).toBe(1);
   });
 });
+
+describe('autonomous agent drive (the Autopilot path)', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('an attached agent completes lesson→skill→approval-request purely through tools', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+
+    const workspace = parseResult(await manager.executeLocal('create_workspace', { name: 'Autopilot workspace' }));
+    context.workspaceId = workspace['workspaceId'] as string;
+    const mission = parseResult(
+      await manager.executeLocal('create_mission', {
+        title: 'Learn the hero workflow',
+        objective: 'Turn the video into a portable skill',
+        definitionOfDone: ['SkillGraph approved', 'Verification passes'],
+      }),
+    );
+    context.missionId = mission['missionId'] as string;
+
+    const lesson = parseResult(
+      await manager.executeLocal('load_lesson', {
+        title: 'Hero section lesson',
+        kind: 'youtube',
+        url: 'https://youtu.be/dQw4w9WgXcQ',
+        permissionAcknowledged: true,
+      }),
+    );
+    const lessonId = lesson['lessonId'] as string;
+
+    // Multi-source ingestion through the tool: replace, then append.
+    const first = parseResult(
+      await manager.executeLocal('import_transcript', {
+        lessonId,
+        text: '0:05 Create the hero frame\n0:40 Add the pill navigation',
+      }),
+    );
+    expect(first['addedSegments']).toBe(2);
+    const second = parseResult(
+      await manager.executeLocal('import_transcript', {
+        lessonId,
+        text: 'Check the spacing against the grid before shipping.',
+        mode: 'append',
+      }),
+    );
+    expect(second['totalSegments']).toBe(3);
+
+    // Visual observation as the agent "watches" through the host browser.
+    parseResult(
+      await manager.executeLocal('record_lesson_observation', {
+        lessonId,
+        timestampSeconds: 42,
+        kind: 'visual',
+        text: 'Presenter drags the nav into the header slot',
+      }),
+    );
+
+    // Auto-named quick skill; mission advances to PLANNING.
+    const generated = parseResult(await manager.executeLocal('generate_quick_skill', { lessonId }));
+    expect(generated['skillGraphId']).toBeTruthy();
+    expect(String(generated['name']).length).toBeGreaterThan(3);
+    expect(generated['nodeCount']).toBeGreaterThanOrEqual(2);
+    expect(String(generated['note'])).toContain('human must decide');
+
+    // Approval can be REQUESTED by the agent, never granted.
+    const approval = parseResult(
+      await manager.executeLocal('request_checkpoint_approval', {
+        skillGraphId: generated['skillGraphId'],
+        reason: 'Autopilot finished learning',
+      }),
+    );
+    expect(approval['status']).toBe('pending');
+
+    // Ledger reflects the whole run.
+    const snapshot = parseResult(await manager.executeLocal('read_cherry_context', {}));
+    expect((snapshot['pendingApprovals'] as unknown[]).length).toBe(1);
+    expect(snapshot['productState']).toBe('planning');
+  });
+});

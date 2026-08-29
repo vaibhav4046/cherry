@@ -54,14 +54,19 @@ const ROWS: Row[] = [
     evidence: 'Runner integration test executes the real script inside a real bundle: passes clean, exits non-zero after a one-byte tamper.',
   },
   {
-    surface: 'Claude Code / Codex install targets',
+    surface: 'Claude Code skill install (live host)',
+    status: 'validated',
+    evidence: "A Cherry-compiled bundle was unzipped into a real Claude Code host's ~/.claude/skills/ on 2026-08-29; the host discovered it and listed it as an available skill in a live session. The bundle's standalone verify.mjs passed all 22 file hashes first.",
+  },
+  {
+    surface: 'Codex install target',
     status: 'shipped',
-    evidence: 'Generated CLAUDE.md/AGENTS.md, install.md, hooks example, and agent file per bundle. Structure validated by tests; a live install into each host is a manual step documented in the bundle.',
+    evidence: 'Generated AGENTS.md + install.md per bundle; structure test-validated. A live Codex host was not available on this machine.',
   },
   {
     surface: 'Native MCP bridge (stdio, read/verify)',
     status: 'validated',
-    evidence: '6 integration tests over real stdio JSON-RPC: initialize, tools/list (narrow read/verify surface, no approval/write tool exists), workspace summary, integrity + receipt hash recomputation, unknown-tool refusal.',
+    evidence: '6 stdio JSON-RPC integration tests, PLUS a live registration in a real Claude Code host on 2026-08-29: claude mcp add cherry-wine … → claude mcp list reported ✔ Connected against a real workspace export.',
   },
   {
     surface: 'Local runner (pairing, allowlists, deterministic jobs)',

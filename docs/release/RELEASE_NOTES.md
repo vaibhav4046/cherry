@@ -1,5 +1,26 @@
 # Cherry release notes
 
+## v1.3.0 — Cherry Wine: Autopilot + live-host proof (2026-08-29)
+
+### Added
+- **Autopilot brief** (Agent View): copy one brief into an attached ChatGPT/Claude client and your
+  own subscription drives the whole loop through Cherry's tools — including watching the embedded
+  video with the host's browser vision. New WebMCP tools: import_transcript (append-capable) and
+  generate_quick_skill (auto-named); load_lesson now advances the mission state. Aperture still ≤5+2.
+- **Live Claude Code validation** (D-012): compiled bundle installed and discovered as a real skill
+  in a live host session; MCP bridge registered via claude mcp add → ✔ Connected.
+- **Multi-source ingestion** (NotebookLM-style): drop several .txt/.srt/.vtt files at once in the
+  wizard; each appends with a monotonic timeline. "Add another source" from the review step.
+- **Auto-naming**: leave the skill name blank — Cherry names it from the content.
+- **Playback speeds** (1x/1.5x/2x/3x) on the Watch page and wizard player via the official IFrame API.
+- **Cherry Wine identity**: product renamed across title/meta/marquee/watermark; plain-words pass on
+  the artifact screens.
+
+### Tests
+- 78 unit (+3: append shifting, auto-name, autonomous Autopilot loop through tools only) +
+  15 runner/bridge + 30 e2e — all passing. Autopilot test caught and fixed a real gap
+  (load_lesson tool didn't advance DRAFT→LEARNING).
+
 ## v1.2.0 — Quick Skill pipeline (2026-08-29)
 
 ### Added
