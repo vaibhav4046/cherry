@@ -202,3 +202,43 @@ test.describe('quick skill wizard', () => {
     await expect(page.getByRole('alert')).toBeVisible();
   });
 });
+
+test.describe('notebook (sources · overview · studio)', () => {
+  test('drop sources, get an instant overview, generate a real briefing artifact', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto('/studio/quick');
+    await page.getByTestId('quick-source-next').click();
+
+    await page.getByTestId('quick-transcript').fill(
+      [
+        '0:05 Create a hero section with a real heading for the landing page',
+        '0:40 The hero section needs a main landmark so screen readers find the landing page',
+        '1:20 Always check color contrast on the hero section before shipping',
+      ].join('\n'),
+    );
+    await page.getByTestId('quick-transcript-next').click();
+
+    // Three-pane notebook appears with an instant deterministic overview.
+    await expect(page.getByTestId('notebook')).toBeVisible();
+    await expect(page.getByTestId('notebook-overview')).toBeVisible();
+    await expect(page.getByTestId('notebook-topics').locator('.sticker').first()).toBeVisible();
+    await expect(page.getByTestId('source-card')).toHaveCount(1);
+
+    // Second source appends and shows as a second card.
+    await page.getByTestId('quick-add-source').click();
+    await page.getByTestId('quick-transcript').fill('Check the hero section spacing on mobile before release.');
+    await page.getByTestId('quick-transcript-next').click();
+    await expect(page.getByTestId('source-card')).toHaveCount(2);
+
+    // Studio output: real briefing.md — downloaded AND saved into mission files.
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('studio-briefing').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('briefing.md');
+    await expect(page.getByText(/briefing\.md saved to the mission files/)).toBeVisible();
+
+    // The briefing is a genuine artifact: generate the skill, open mission files.
+    await page.getByTestId('quick-generate').click();
+    await expect(page.getByTestId('quick-ready')).toBeVisible({ timeout: 20_000 });
+  });
+});

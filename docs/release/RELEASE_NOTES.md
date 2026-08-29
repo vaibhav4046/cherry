@@ -1,5 +1,26 @@
 # Cherry release notes
 
+## v1.4.0 — The Notebook (2026-08-29)
+
+NotebookLM-grade autonomy, zero-dollar honest. Drop sources → instant overview → one-click studio
+outputs → approved skill. No model call anywhere: the digest engine is classic extractive
+summarisation (term-frequency scoring + position boost), so every overview sentence exists verbatim
+in your sources — and the UI says so.
+
+### Added
+- **Digest engine** (src/cherry/notebook/digest.ts): deterministic extractive summary, key-topic
+  extraction (unigrams + bigrams), per-source one-line summaries, template-generated review checks.
+- **Three-pane Notebook** in the wizard: Sources (auto-titled cards with summaries and segment
+  counts) · Overview (instant summary, topic chips, things-to-check) · Studio.
+- **Studio outputs**: Briefing doc, Study guide (real checklist with rewatch timestamps), FAQ —
+  generated as genuine markdown, written into the mission's file workspace as versioned artifacts
+  AND downloaded. Fully cited with source names and timestamps.
+- 8 digest unit tests (incl. verbatim-in-source guarantee and determinism) + notebook e2e
+  (two-source ingest → overview → briefing artifact → skill generation).
+
+### Totals
+86 unit + 15 runner/bridge + 31 e2e — all passing.
+
 ## v1.3.0 — Cherry Wine: Autopilot + live-host proof (2026-08-29)
 
 ### Added

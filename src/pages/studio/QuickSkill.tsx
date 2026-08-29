@@ -2,13 +2,25 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
-import { importTranscript, loadLesson } from '../../cherry/watch/lesson-service.ts';
+import { importTranscript, listTranscript, loadLesson } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
 import { runVerification } from '../../cherry/verify/verification-service.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
+import { createArtifactSet, writeArtifactFile } from '../../cherry/artifacts/artifact-service.ts';
+import { getMission } from '../../cherry/mission/mission-service.ts';
+import {
+  buildBriefingDoc,
+  buildFaq,
+  buildStudyGuide,
+  digestSegments,
+  suggestedChecks,
+  summarizeText,
+  type SourceDigest,
+  type SourceInfo,
+} from '../../cherry/notebook/digest.ts';
 import type { Lesson } from '../../cherry/watch/watch-model.ts';
 import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { DerivedSkillDraft } from '../../cherry/skillgraph/auto-draft.ts';
@@ -37,6 +49,9 @@ export default function QuickSkill() {
   const [verifyNote, setVerifyNote] = useState<string | null>(null);
   const [bundleNote, setBundleNote] = useState<string | null>(null);
   const [sourceCount, setSourceCount] = useState(0);
+  const [sources, setSources] = useState<SourceInfo[]>([]);
+  const [digest, setDigest] = useState<SourceDigest | null>(null);
+  const [outputNote, setOutputNote] = useState<string | null>(null);
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
@@ -96,10 +111,19 @@ export default function QuickSkill() {
       const imported = await importTranscript(lesson!.id, text, source, fileName, 'human', mode);
       if (!imported.ok) throw new Error(imported.error.message);
       setSourceCount((count) => count + 1);
+      setSources((current) => [
+        ...current,
+        {
+          title: fileName ?? `Pasted text ${current.length + 1}`,
+          summary: summarizeText(text),
+          segmentCount: imported.value.segmentCount,
+        },
+      ]);
       const preview = await previewQuickSkill(lesson!.id);
       if (!preview.ok) throw new Error(preview.error.message);
       setDraft(preview.value);
       setKept(new Set(preview.value.steps.map((_, index) => index)));
+      setDigest(digestSegments(await listTranscript(lesson!.id)));
       setStage('review');
     });
   }
@@ -147,6 +171,43 @@ export default function QuickSkill() {
       }
       setStage('ready');
       await refresh();
+    });
+  }
+
+  async function handleStudioOutput(kind: 'briefing' | 'study-guide' | 'faq') {
+    await withBusy(async () => {
+      if (!draft || !digest || !lesson) throw new Error('Ingest a source first');
+      const builders = { briefing: buildBriefingDoc, 'study-guide': buildStudyGuide, faq: buildFaq } as const;
+      const markdown = builders[kind](lesson.title, sources, digest, draft);
+
+      // Real artifact: written into the mission's file workspace, then downloaded.
+      let note = 'downloaded';
+      if (lesson.missionId) {
+        const mission = await getMission(lesson.missionId);
+        if (mission) {
+          let artifactSetId = mission.artifactSetId ?? null;
+          if (!artifactSetId) {
+            const created = await createArtifactSet(mission.workspaceId, mission.id, `${mission.title} outputs`);
+            if (created.ok) {
+              artifactSetId = created.value.id;
+              const { updateMission } = await import('../../cherry/mission/mission-service.ts');
+              await updateMission(mission.id, { artifactSetId });
+            }
+          }
+          if (artifactSetId) {
+            const written = await writeArtifactFile(artifactSetId, `${kind}.md`, markdown, 'system', `Generated ${kind} from sources`);
+            if (written.ok) note = `saved to the mission files (r${written.value.revision}) and downloaded`;
+          }
+        }
+      }
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${kind}.md`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setOutputNote(`${kind}.md ${note}.`);
     });
   }
 
@@ -281,50 +342,108 @@ export default function QuickSkill() {
       ) : null}
 
       {stage === 'review' && draft ? (
-        <div className="card stack" style={{ gap: 'var(--sp-4)' }}>
-          <h2 className="subhead">Review the derived workflow ({kept.size} of {draft.steps.length} steps kept{sourceCount > 1 ? ` · ${sourceCount} sources` : ''})</h2>
-          <p style={{ fontSize: 13, margin: 0 }}>
-            Derived from your transcript by deterministic rules — not a model. Untick anything wrong;
-            every kept step becomes a node with its transcript line attached as untrusted evidence.
-          </p>
-          <ol className="stack" style={{ margin: 0, paddingLeft: 'var(--sp-5)' }} data-testid="quick-steps">
-            {draft.steps.map((step, index) => (
-              <li key={index}>
-                <label className="row" style={{ alignItems: 'flex-start' }}>
-                  <input
-                    type="checkbox"
-                    checked={kept.has(index)}
-                    onChange={(event) => {
-                      const next = new Set(kept);
-                      if (event.currentTarget.checked) next.add(index);
-                      else next.delete(index);
-                      setKept(next);
-                    }}
-                    style={{ width: 20, height: 20, marginTop: 2 }}
-                  />
-                  <span>
-                    <strong>{step.title}</strong>{' '}
-                    <span className="sticker" style={{ padding: '1px 8px' }}>{step.kind} · {Math.floor(step.timestampSeconds / 60)}:{String(Math.floor(step.timestampSeconds % 60)).padStart(2, '0')}</span>
-                  </span>
-                </label>
-              </li>
+        <div className="notebook-grid" data-testid="notebook">
+          {/* ---- Sources pane ---- */}
+          <section className="card card-wash-sky stack" aria-labelledby="sources-heading" style={{ alignSelf: 'start' }}>
+            <h2 id="sources-heading" className="subhead" style={{ fontSize: 20 }}>Sources ({sources.length})</h2>
+            {sources.map((source, index) => (
+              <div key={index} className="card stack" style={{ padding: 'var(--sp-3)', gap: 4 }} data-testid="source-card">
+                <strong style={{ fontSize: 13 }}>{source.title}</strong>
+                <span style={{ fontSize: 12, color: '#444' }}>{source.summary}</span>
+                <span className="label">{source.segmentCount} segments</span>
+              </div>
             ))}
-          </ol>
-          {draft.principles.length > 0 ? (
-            <details>
-              <summary className="label">Principles spotted ({draft.principles.length})</summary>
-              <ul>{draft.principles.map((principle, index) => <li key={index} style={{ fontSize: 13 }}>{principle}</li>)}</ul>
-            </details>
-          ) : null}
-          <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
-              {Icons.approve(16)} {busy ? 'Generating…' : `Generate & approve ${kept.size} steps`}
-            </button>
             <button type="button" className="btn btn-sm" onClick={() => setStage('transcript')} data-testid="quick-add-source">
-              Add another source
+              + Add source
             </button>
-            <span className="label">Approving here records a real exact-revision approval by you.</span>
+            <p className="label" style={{ margin: 0 }}>
+              Files, pasted text, YouTube transcripts — everything lands as untrusted, timestamped evidence.
+            </p>
+          </section>
+
+          {/* ---- Overview pane ---- */}
+          <div className="stack" style={{ gap: 'var(--sp-4)', minWidth: 0 }}>
+            {digest ? (
+              <section className="card stack" aria-labelledby="overview-heading" data-testid="notebook-overview">
+                <h2 id="overview-heading" className="subhead" style={{ fontSize: 20 }}>Overview — generated instantly, no model, no key</h2>
+                {digest.summary.map((sentence, index) => (
+                  <p key={index} style={{ margin: 0, fontSize: 14 }}>{sentence}</p>
+                ))}
+                <div className="row" data-testid="notebook-topics">
+                  {digest.topics.map((topic) => (
+                    <span key={topic} className="sticker sticker-lavender">{topic}</span>
+                  ))}
+                </div>
+                {suggestedChecks(draft, digest).length > 0 ? (
+                  <details>
+                    <summary className="label">Things to check ({suggestedChecks(draft, digest).length})</summary>
+                    <ul style={{ marginTop: 8 }}>
+                      {suggestedChecks(draft, digest).map((check, index) => (
+                        <li key={index} style={{ fontSize: 13 }}>{check}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+                <p className="label" style={{ margin: 0 }}>
+                  Every sentence above exists verbatim in your sources — extractive, deterministic, cited.
+                </p>
+              </section>
+            ) : null}
+
+            <section className="card stack" aria-labelledby="steps-heading">
+              <h2 id="steps-heading" className="subhead" style={{ fontSize: 20 }}>
+                Derived workflow ({kept.size} of {draft.steps.length} steps kept{sourceCount > 1 ? ` · ${sourceCount} sources` : ''})
+              </h2>
+              <ol className="stack" style={{ margin: 0, paddingLeft: 'var(--sp-5)' }} data-testid="quick-steps">
+                {draft.steps.map((step, index) => (
+                  <li key={index}>
+                    <label className="row" style={{ alignItems: 'flex-start' }}>
+                      <input
+                        type="checkbox"
+                        checked={kept.has(index)}
+                        onChange={(event) => {
+                          const next = new Set(kept);
+                          if (event.currentTarget.checked) next.add(index);
+                          else next.delete(index);
+                          setKept(next);
+                        }}
+                        style={{ width: 20, height: 20, marginTop: 2 }}
+                      />
+                      <span>
+                        <strong>{step.title}</strong>{' '}
+                        <span className="sticker" style={{ padding: '1px 8px' }}>{step.kind} · {Math.floor(step.timestampSeconds / 60)}:{String(Math.floor(step.timestampSeconds % 60)).padStart(2, '0')}</span>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ol>
+              <div className="row">
+                <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
+                  {Icons.approve(16)} {busy ? 'Generating…' : `Generate & approve ${kept.size} steps`}
+                </button>
+                <span className="label">Approving records a real exact-revision approval by you.</span>
+              </div>
+            </section>
           </div>
+
+          {/* ---- Studio pane ---- */}
+          <section className="card card-wash-lavender stack" aria-labelledby="studio-heading" style={{ alignSelf: 'start' }}>
+            <h2 id="studio-heading" className="subhead" style={{ fontSize: 20 }}>Studio</h2>
+            <p style={{ fontSize: 12, margin: 0 }}>
+              One-click documents built from your sources. Saved as real files in the mission workspace
+              and downloaded.
+            </p>
+            <button type="button" className="btn" onClick={() => void handleStudioOutput('briefing')} disabled={busy} data-testid="studio-briefing">
+              {Icons.proof(15)} Briefing doc
+            </button>
+            <button type="button" className="btn" onClick={() => void handleStudioOutput('study-guide')} disabled={busy} data-testid="studio-guide">
+              {Icons.memory(15)} Study guide
+            </button>
+            <button type="button" className="btn" onClick={() => void handleStudioOutput('faq')} disabled={busy} data-testid="studio-faq">
+              {Icons.skills(15)} FAQ
+            </button>
+            {outputNote ? <p className="sticker sticker-pass" role="status" style={{ whiteSpace: 'normal' }}>{outputNote}</p> : null}
+          </section>
         </div>
       ) : null}
 
