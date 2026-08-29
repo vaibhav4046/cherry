@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { clearPairToken, getStoredPairToken, pairRunner, runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 import { deleteWorkspace } from '../../cherry/mission/mission-service.ts';
+import { CopyButton } from '../../components/Icons.tsx';
 
 export default function Connections() {
   const { activeWorkspace, webmcp, refresh } = useAppState();
@@ -90,7 +91,7 @@ export default function Connections() {
             <div className="stack">
               <p className="sticker sticker-wait">Not running</p>
               <p style={{ fontSize: 13 }}>
-                Optional. From the repository: <code className="mono">node runner/dist/server.js</code> — it
+                Optional. From the repository: <code className="mono">node runner/server.mjs</code> — it
                 binds to 127.0.0.1 only and prints a one-time pairing token.
               </p>
             </div>
@@ -115,6 +116,30 @@ export default function Connections() {
             <li>Never paste passwords, API keys, or tokens into chat with any agent.</li>
           </ul>
           <Link to="/studio/onboarding" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>Run capability check</Link>
+        </section>
+
+        <section className="card card-wash-lavender stack" aria-labelledby="cli-heading">
+          <h2 id="cli-heading" className="subhead">Connect Claude Code / Codex CLI</h2>
+          <p style={{ fontSize: 13, margin: 0 }}>
+            Export your workspace (Command Center → Export), then give any MCP-capable CLI read/verify
+            access to it through the bundled stdio bridge:
+          </p>
+          <div className="row">
+            <code className="mono" style={{ background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: '6px 10px', overflowX: 'auto', flex: 1, minWidth: 200 }}>
+              claude mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json
+            </code>
+            <CopyButton text="claude mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json" />
+          </div>
+          <p style={{ fontSize: 13, margin: 0 }}>
+            Compiled skill bundles install into Claude Code by unzipping into <code className="mono">~/.claude/skills/</code>.
+            Start the optional local runner with:
+          </p>
+          <div className="row">
+            <code className="mono" style={{ background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: '6px 10px', overflowX: 'auto', flex: 1, minWidth: 200 }}>
+              node runner/server.mjs --root .
+            </code>
+            <CopyButton text="node runner/server.mjs --root ." />
+          </div>
         </section>
 
         <section className="card stack" aria-labelledby="danger-heading">

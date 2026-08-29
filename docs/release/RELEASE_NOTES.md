@@ -1,5 +1,28 @@
 # Cherry release notes
 
+## v1.2.0 — Quick Skill pipeline (2026-08-29)
+
+### Added
+- **Quick Skill wizard** (/studio/quick): YouTube link (official player) or manual → paste the
+  transcript (YouTube's Show-transcript copy formats now parse natively: bare 0:05 lines,
+  alternating timestamp/text rows) → Cherry deterministically derives steps and principles →
+  per-step review with keep/drop → real exact-revision approval → verification + receipt →
+  downloadable Agent Skills bundle with install guidance. ~4 clicks, no API key. (Decision D-011)
+- Deterministic auto-draft engine (auto-draft.ts) + pipeline service (quick-skill.ts): every kept
+  step becomes a node with its transcript line attached as untrusted, timestamped evidence.
+- Sticker-weight SVG icon set across the Studio nav; copy-to-clipboard buttons.
+- Mission phase stepper on the mission page (live state machine visual).
+- Connect page: copyable Claude Code MCP-bridge and runner commands.
+- Landing/Command Center CTAs route straight into the wizard.
+
+### Fixed
+- Stale runner path in three screens (runner/dist/server.js → runner/server.mjs).
+
+### Tests
+- 75 unit (+10: derivation heuristics, spread cap, determinism, pipeline E2E through compile,
+  YouTube copy-format parsing) + 15 runner/bridge + 30 e2e (+2: full wizard journey incl. download
+  and Skills hand-off; honest empty-transcript refusal).
+
 ## v1.1.0 — "Winner perception" upgrade (2026-08-29)
 
 Engine untouched; perception, guidance, and WebMCP visibility upgraded. All prior guarantees hold.

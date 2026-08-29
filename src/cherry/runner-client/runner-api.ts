@@ -74,7 +74,7 @@ export async function pairRunner(token: string): Promise<Result<{ paired: true }
   const status = await runnerStatus();
   if (!status.reachable) {
     clearPairToken();
-    return fail('temporary', 'No runner is listening on 127.0.0.1:47821. Start it with: node runner/dist/server.js');
+    return fail('temporary', 'No runner is listening on 127.0.0.1:47821. Start it with: node runner/server.mjs');
   }
   if (!status.paired) {
     clearPairToken();

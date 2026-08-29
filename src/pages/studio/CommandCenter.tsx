@@ -60,7 +60,7 @@ export default function CommandCenter() {
     if (wantsTeach && activeWorkspace) {
       entryHandledRef.current = true;
       setSearchParams({}, { replace: true });
-      navigate('/studio/missions/new');
+      navigate('/studio/quick');
       return;
     }
     if (wantsDemo) {
@@ -90,7 +90,7 @@ export default function CommandCenter() {
     await refresh();
     if (searchParams.get('teach') === '1') {
       setSearchParams({}, { replace: true });
-      navigate('/studio/missions/new');
+      navigate('/studio/quick');
     }
   }
 
@@ -204,7 +204,8 @@ export default function CommandCenter() {
       <header className="row" style={{ justifyContent: 'space-between' }}>
         <h1 className="display-sm">Command Center</h1>
         <div className="row">
-          <Link to="/studio/missions/new" className="btn btn-primary">Create mission</Link>
+          <Link to="/studio/quick" className="btn btn-primary">Quick skill from a video</Link>
+          <Link to="/studio/missions/new" className="btn">Create mission</Link>
           <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
             Replay walkthrough
           </button>

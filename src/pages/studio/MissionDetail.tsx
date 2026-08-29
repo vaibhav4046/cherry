@@ -201,6 +201,21 @@ export default function MissionDetail() {
           <span className="sticker sticker-cherry" data-testid="mission-state">{mission.state}</span>
         </div>
         <p className="subhead">{mission.objective}</p>
+        <div className="row" aria-label="Mission phases" data-testid="mission-stepper" style={{ gap: 'var(--sp-1)' }}>
+          {(['DRAFT', 'LEARNING', 'PLANNING', 'AWAITING_APPROVAL', 'EXECUTING', 'VERIFYING', 'COMPLETE'] as const).map((phase, index, phases) => {
+            const currentIndex = phases.indexOf(mission.state as (typeof phases)[number]);
+            const status = mission.state === phase ? 'current' : currentIndex > index ? 'done' : 'ahead';
+            return (
+              <span
+                key={phase}
+                className={status === 'current' ? 'sticker sticker-cherry' : status === 'done' ? 'sticker sticker-pass' : 'sticker'}
+                style={{ padding: '2px 10px', fontSize: 11, opacity: status === 'ahead' ? 0.55 : 1 }}
+              >
+                {status === 'done' ? '✓ ' : ''}{phase.replace('_', ' ')}
+              </span>
+            );
+          })}
+        </div>
         <div className="row">
           {mission.definitionOfDone.map((item, index) => (
             <span key={index} className="sticker">{item}</span>

@@ -108,13 +108,13 @@ test.describe('agent view (MCP inspector)', () => {
     await expect(page.getByTestId('calls-empty')).toBeVisible();
   });
 
-  test('teach CTA routes into the first-mission form once a workspace exists', async ({ page }) => {
+  test('teach CTA routes into the Quick Skill wizard once a workspace exists', async ({ page }) => {
     await page.goto('/studio?demo=1');
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible({ timeout: 20_000 });
     await page.getByRole('button', { name: 'Exit walkthrough' }).click();
     await page.goto('/studio?teach=1');
-    await expect(page).toHaveURL(/\/studio\/missions\/new$/);
-    await expect(page.getByRole('heading', { name: 'New mission' })).toBeVisible();
+    await expect(page).toHaveURL(/\/studio\/quick$/);
+    await expect(page.getByRole('heading', { name: 'Quick Skill' })).toBeVisible();
   });
 });
 
@@ -139,5 +139,66 @@ test.describe('upgrade accessibility', () => {
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
     expect(serious.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([]);
+  });
+});
+
+test.describe('quick skill wizard', () => {
+  test('URL to installable skill: transcript in, approved bundle out', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto('/studio/quick');
+    await expect(page.getByRole('heading', { name: 'Quick Skill' })).toBeVisible();
+
+    // Stage 1: manual lesson (no video needed in CI), name, permission.
+    await page.getByLabel('Skill name').fill('Wizard hero workflow');
+    await page.locator('input[name="permission"]').check();
+    await page.getByTestId('quick-source-next').click();
+
+    // Stage 2: paste a transcript.
+    await expect(page.getByTestId('quick-transcript')).toBeVisible();
+    await page.getByTestId('quick-transcript').fill(
+      [
+        '0:05 Create a new frame for the hero section',
+        '0:40 Always keep the heading a real h1 for accessibility',
+        '1:10 Add the navigation bar with pill buttons',
+        '1:50 Check the spacing against the grid',
+      ].join('\n'),
+    );
+    await page.getByTestId('quick-transcript-next').click();
+
+    // Stage 3: review derived steps — real checkboxes over real derivations.
+    await expect(page.getByTestId('quick-steps')).toBeVisible();
+    const checkboxes = page.getByTestId('quick-steps').locator('input[type="checkbox"]');
+    await expect(checkboxes.first()).toBeChecked();
+    const stepCount = await checkboxes.count();
+    expect(stepCount).toBeGreaterThanOrEqual(3);
+
+    await page.getByTestId('quick-generate').click();
+
+    // Stage 4: approved, verified, downloadable.
+    await expect(page.getByTestId('quick-ready')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/approved r\d+ by user/)).toBeVisible();
+    await expect(page.getByText(/verify: passed/)).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('quick-download').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('wizard-hero-workflow-v0.1.0.zip');
+
+    // The skill is a real record: open it in the Skills library.
+    await page.getByRole('link', { name: 'Open in Skills' }).click();
+    await expect(page.getByTestId('skill-status')).toContainText('approved');
+    // Nodes carry transcript evidence.
+    await expect(page.getByText(/Evidence in scope \([1-9]/)).toBeVisible();
+  });
+
+  test('wizard refuses an empty transcript path honestly', async ({ page }) => {
+    await page.goto('/studio/quick');
+    await page.getByLabel('Skill name').fill('No transcript');
+    await page.getByTestId('quick-source-next').click();
+    await expect(page.getByTestId('quick-transcript')).toBeVisible();
+    // HTML required attribute blocks empty submit; type whitespace to reach the service validation.
+    await page.getByTestId('quick-transcript').fill('   ');
+    await page.getByTestId('quick-transcript-next').click();
+    await expect(page.getByRole('alert')).toBeVisible();
   });
 });

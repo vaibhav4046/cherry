@@ -1,15 +1,17 @@
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { GuidedTour } from '../../components/GuidedTour.tsx';
+import { Icons } from '../../components/Icons.tsx';
 
 const NAV = [
-  { to: '/studio', label: 'Command', end: true },
-  { to: '/studio/agent', label: 'Agent', end: false },
-  { to: '/studio/skills', label: 'Skills', end: false },
-  { to: '/studio/memory', label: 'Memory', end: false },
-  { to: '/studio/runs', label: 'Runs', end: false },
-  { to: '/studio/proof', label: 'Proof', end: false },
-  { to: '/studio/settings/connections', label: 'Connect', end: false },
+  { to: '/studio', label: 'Command', end: true, icon: Icons.command },
+  { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick },
+  { to: '/studio/agent', label: 'Agent', end: false, icon: Icons.agent },
+  { to: '/studio/skills', label: 'Skills', end: false, icon: Icons.skills },
+  { to: '/studio/memory', label: 'Memory', end: false, icon: Icons.memory },
+  { to: '/studio/runs', label: 'Runs', end: false, icon: Icons.runs },
+  { to: '/studio/proof', label: 'Proof', end: false, icon: Icons.proof },
+  { to: '/studio/settings/connections', label: 'Connect', end: false, icon: Icons.connect },
 ];
 
 export function StudioLayout() {
@@ -43,7 +45,7 @@ export function StudioLayout() {
         <nav className="studio-rail" aria-label="Studio sections">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className="rail-link">
-              {item.label}
+              {item.icon(18)} {item.label}
             </NavLink>
           ))}
         </nav>

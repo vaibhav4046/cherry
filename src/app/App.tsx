@@ -17,6 +17,7 @@ const Runs = lazy(() => import('../pages/studio/Runs.tsx'));
 const Proof = lazy(() => import('../pages/studio/Proof.tsx'));
 const Connections = lazy(() => import('../pages/studio/Connections.tsx'));
 const AgentView = lazy(() => import('../pages/studio/AgentView.tsx'));
+const QuickSkill = lazy(() => import('../pages/studio/QuickSkill.tsx'));
 
 function Loading() {
   return (
@@ -35,6 +36,7 @@ export function App() {
         <Route path="/studio" element={<StudioLayout />}>
           <Route index element={<CommandCenter />} />
           <Route path="onboarding" element={<Onboarding />} />
+          <Route path="quick" element={<QuickSkill />} />
           <Route path="missions/new" element={<MissionNew />} />
           <Route path="missions/:missionId" element={<MissionDetail />} />
           <Route path="watch/:lessonId" element={<Watch />} />

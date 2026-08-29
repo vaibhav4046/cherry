@@ -1,0 +1,116 @@
+import { fail, ok, type Result } from '../core/result.ts';
+import { getLesson, listTranscript } from '../watch/lesson-service.ts';
+import { addEvidence } from '../evidence/evidence-service.ts';
+import { draftSkillGraph, reviseSkillGraph } from './skillgraph-service.ts';
+import { updateMission } from '../mission/mission-service.ts';
+import type { Evaluation } from './skillgraph-model.ts';
+import type { SkillGraph } from './skillgraph-model.ts';
+import { deriveSkillFromTranscript, type DerivedSkillDraft } from './auto-draft.ts';
+
+export interface QuickSkillInput {
+  lessonId: string;
+  name: string;
+  purpose?: string;
+  /** Indices into the derived steps the user kept (default: all). */
+  keepStepIndices?: number[];
+}
+
+export interface QuickSkillResult {
+  graph: SkillGraph;
+  draft: DerivedSkillDraft;
+  evidenceCount: number;
+}
+
+/** Preview what would be generated, without writing anything. */
+export async function previewQuickSkill(lessonId: string): Promise<Result<DerivedSkillDraft>> {
+  const lesson = await getLesson(lessonId);
+  if (!lesson) return fail('not_found', `Lesson ${lessonId} not found`);
+  const segments = await listTranscript(lessonId);
+  if (segments.length === 0) {
+    return fail('validation', 'Import a transcript first — Cherry derives the skill from it, deterministically.');
+  }
+  return ok(deriveSkillFromTranscript(segments));
+}
+
+/**
+ * The Quick Skill pipeline: transcript → evidence records (untrusted, with
+ * timestamps) → drafted SkillGraph with standing evaluations. Everything is
+ * persisted through the same domain services the manual flow uses; the human
+ * still reviews, approves, verifies, and compiles.
+ */
+export async function generateSkillFromLesson(input: QuickSkillInput): Promise<Result<QuickSkillResult>> {
+  const lesson = await getLesson(input.lessonId);
+  if (!lesson) return fail('not_found', `Lesson ${input.lessonId} not found`);
+  const name = input.name.trim();
+  if (name.length === 0 || name.length > 120) {
+    return fail('validation', 'Skill name must be 1-120 characters');
+  }
+
+  const preview = await previewQuickSkill(input.lessonId);
+  if (!preview.ok) return preview;
+  const allSteps = preview.value.steps;
+  const kept = input.keepStepIndices
+    ? allSteps.filter((_, index) => input.keepStepIndices!.includes(index))
+    : allSteps;
+  if (kept.length === 0) {
+    return fail('validation', 'Keep at least one step — a skill needs a workflow.');
+  }
+
+  // One evidence record per kept step, honestly labelled: transcript-derived,
+  // untrusted until a human raises it.
+  const nodes: Array<{ kind: (typeof kept)[number]['kind']; title: string; goal: string; evidenceIds: string[] }> = [];
+  let evidenceCount = 0;
+  for (const step of kept) {
+    const evidence = await addEvidence(
+      {
+        workspaceId: lesson.workspaceId,
+        missionId: lesson.missionId ?? null,
+        lessonId: lesson.id,
+        sourceType: 'transcript',
+        claim: step.sourceText.slice(0, 2000),
+        provenanceMethod: lesson.transcriptSource === 'user_upload' ? 'user_upload' : 'user_typed',
+        timestampSeconds: step.timestampSeconds,
+        transferability: 'unknown',
+        ...(lesson.canonicalUrl ? { sourceUri: lesson.canonicalUrl } : {}),
+      },
+      'system',
+    );
+    if (!evidence.ok) return evidence;
+    evidenceCount += 1;
+    nodes.push({ kind: step.kind, title: step.title, goal: step.goal, evidenceIds: [evidence.value.id] });
+  }
+
+  const purpose =
+    input.purpose?.trim() ||
+    `Workflow learned from "${lesson.title}"${preview.value.principles.length > 0 ? `. Key principles: ${preview.value.principles.slice(0, 3).join(' ')}` : ''}`;
+
+  const drafted = await draftSkillGraph(
+    {
+      workspaceId: lesson.workspaceId,
+      missionId: lesson.missionId ?? null,
+      name,
+      purpose: purpose.slice(0, 2000),
+      nodes,
+    },
+    'system',
+  );
+  if (!drafted.ok) return drafted;
+
+  const standing: Evaluation[] = [
+    { id: 'std-hash', name: 'Artifact hashes recompute', type: 'hash', severity: 'blocking', config: {} },
+    { id: 'std-policy', name: 'No unresolved placeholder markers', type: 'policy', severity: 'blocking', config: {} },
+  ];
+  const withChecks = await reviseSkillGraph(
+    drafted.value.id,
+    { evaluations: [...drafted.value.evaluations, ...standing] },
+    'Standing checks added by Quick Skill',
+    'system',
+  );
+  if (!withChecks.ok) return withChecks;
+
+  if (lesson.missionId) {
+    await updateMission(lesson.missionId, { skillGraphId: drafted.value.id }, 'system');
+  }
+
+  return ok({ graph: withChecks.value, draft: { steps: kept, principles: preview.value.principles }, evidenceCount });
+}

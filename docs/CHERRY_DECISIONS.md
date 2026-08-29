@@ -100,3 +100,16 @@ Material deviations and interpretation decisions, with reason, consequence, and 
   real records. Steps that need records the workspace lacks are skipped, not faked.
 - **Consequence:** A judge reaches the fail→repair→pass receipt story in under a minute without
   reading docs. The walkthrough is re-launchable from the Command Center.
+
+## D-011 — Quick Skill pipeline is deterministic derivation, not AI
+
+- **Decision:** "Paste a YouTube link → get a skill" ships as: official player + user-pasted
+  transcript (YouTube's own Show-transcript copy formats are parsed natively) → deterministic
+  imperative-sentence derivation into steps/principles → per-step transcript evidence (untrusted,
+  timestamped) → drafted graph → human review with per-step keep/drop → exact-revision approval →
+  verification → receipt → downloadable bundle. One screen, ~4 clicks, zero credentials.
+- **Reason:** Caption scraping violates YouTube ToS and the product contract; a model call violates
+  the zero-dollar core. Deterministic structure extraction that the human owns is the honest maximum
+  — and it is genuinely fast.
+- **Consequence:** The wizard labels the derivation "deterministic rules — not a model". Evidence
+  provenance and trust semantics are identical to the manual flow (unit-proven).

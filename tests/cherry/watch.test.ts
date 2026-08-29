@@ -159,3 +159,34 @@ describe('artifact path validation', () => {
     }
   });
 });
+
+describe('YouTube copied-transcript format', () => {
+  it('parses alternating timestamp/text lines as segments', () => {
+    const copied = ['0:05', 'Create a new frame for the hero section', '0:40', 'Always keep the heading a real h1', '1:10', 'Add the navigation bar'].join('\n');
+    const result = parseTranscript(copied);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.segments).toHaveLength(3);
+      expect(result.value.segments[0]!.startSeconds).toBe(5);
+      expect(result.value.segments[0]!.text).toBe('Create a new frame for the hero section');
+      expect(result.value.segments[2]!.startSeconds).toBe(70);
+    }
+  });
+
+  it('parses single-line "0:05 text" rows without blank separators', () => {
+    const rows = ['0:05 Create the frame', '0:40 Add the header', '1:50 Check the spacing'].join('\n');
+    const result = parseTranscript(rows);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.segments).toHaveLength(3);
+      expect(result.value.segments[1]!.text).toBe('Add the header');
+    }
+  });
+
+  it('leaves prose without timestamps on the paragraph path', () => {
+    const prose = 'First paragraph of notes here.\n\nSecond paragraph of notes.';
+    const result = parseTranscript(prose);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.segments).toHaveLength(2);
+  });
+});

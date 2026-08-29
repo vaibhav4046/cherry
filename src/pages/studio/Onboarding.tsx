@@ -71,7 +71,7 @@ export default function Onboarding() {
             ? 'Runner reachable and paired.'
             : 'Runner reachable on 127.0.0.1:47821 but not paired.'
           : 'No runner detected (optional).',
-        fallback: 'The runner is optional. Start it with `node runner/dist/server.js` and pair from Connections.',
+        fallback: 'The runner is optional. Start it with `node runner/server.mjs` and pair from Connections.',
       });
 
       results.push({

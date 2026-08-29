@@ -46,7 +46,7 @@ export function Landing() {
             </p>
             <div className="row" style={{ justifyContent: 'center' }} data-testid="hero-ctas">
               <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
-              <Link to="/studio?teach=1" className="btn">Teach Cherry from a video</Link>
+              <Link to="/studio/quick" className="btn">Teach Cherry from a video</Link>
               <Link to="/studio" className="btn">Open MCP Studio</Link>
             </div>
           </div>

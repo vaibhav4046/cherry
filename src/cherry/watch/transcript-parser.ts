@@ -66,12 +66,49 @@ function parseCueBlocks(lines: string[], allowVttArrow: boolean): ParsedTranscri
   return segments;
 }
 
+const LINE_TIMESTAMP = /^\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*(.*)$/;
+
+/**
+ * YouTube's own "Show transcript" panel copies as alternating lines —
+ * `0:05` then the caption text (or `0:05 text` on one line). When a majority
+ * of non-empty lines start with a timestamp, treat each timestamped line as a
+ * segment boundary instead of requiring blank-line paragraphs.
+ */
+function splitYouTubeCopyFormat(content: string): string[] | null {
+  // Blank-line-separated content is authored paragraphs; leave it to the
+  // paragraph path so timestamped and plain paragraphs can mix freely.
+  if (/\n\s*\n/.test(content.trim())) return null;
+  const lines = content.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (lines.length < 2) return null;
+  const timestampStarts = lines.filter((line) => LINE_TIMESTAMP.test(line) && /^\[?\d/.test(line)).length;
+  if (timestampStarts / lines.length < 0.4) return null;
+
+  const paragraphs: string[] = [];
+  let current: string[] = [];
+  for (const line of lines) {
+    const isBoundary = /^\[?\d{1,2}:\d{2}(?::\d{2})?\]?(\s|$)/.test(line);
+    if (isBoundary && current.length > 0) {
+      paragraphs.push(current.join(' '));
+      current = [line];
+    } else if (isBoundary) {
+      current = [line];
+    } else {
+      current.push(line);
+    }
+  }
+  if (current.length > 0) paragraphs.push(current.join(' '));
+  return paragraphs;
+}
+
 function parsePlainText(content: string): ParsedTranscriptSegment[] {
-  // Plain text: split into paragraphs; support optional leading [mm:ss] markers.
-  const paragraphs = content
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
+  // Plain text: paragraph blocks with optional [mm:ss] markers, or YouTube's
+  // copied-transcript line format (timestamp line + caption line).
+  const paragraphs =
+    splitYouTubeCopyFormat(content) ??
+    content
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
   const segments: ParsedTranscriptSegment[] = [];
   let cursor = 0;
   paragraphs.forEach((paragraph, index) => {
