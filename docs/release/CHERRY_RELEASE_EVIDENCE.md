@@ -1,5 +1,14 @@
 # Cherry release evidence
 
+> **v1.1.0 addendum (2026-08-29):** the winner-perception upgrade re-ran every gate on the new
+> tree. Current totals: **65 unit/integration (vitest, +4 for the MCP inspector call log and
+> retired-tools diff) + 15 runner/bridge (node:test) + 28 e2e (Playwright, +9: landing CTAs, cherry
+> burst incl. reduced-motion, guided walkthrough end-to-end, replay, Agent View honesty, teach
+> routing, axe on /compatibility and Agent View)**. All passing. New surfaces (Agent View, guided
+> tour, compatibility page, mascot/brand layer) are additive; the golden journey spec is unchanged
+> except one selector disambiguation. Deployment re-smoked live after v1.1 (tour, example import,
+> Agent View, /compatibility all verified on https://cherry-wine.vercel.app). See RELEASE_NOTES.md.
+
 **Date:** 2026-08-29 · **Tested tree:** initial release commit (see git log)
 
 Every command below was executed on this tree with the pasted result.
