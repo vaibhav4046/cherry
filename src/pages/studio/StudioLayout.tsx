@@ -1,8 +1,10 @@
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
+import { GuidedTour } from '../../components/GuidedTour.tsx';
 
 const NAV = [
   { to: '/studio', label: 'Command', end: true },
+  { to: '/studio/agent', label: 'Agent', end: false },
   { to: '/studio/skills', label: 'Skills', end: false },
   { to: '/studio/memory', label: 'Memory', end: false },
   { to: '/studio/runs', label: 'Runs', end: false },
@@ -53,6 +55,8 @@ export function StudioLayout() {
           )}
         </main>
       </div>
+
+      <GuidedTour />
 
       <nav className="bottom-nav" aria-label="Studio sections (mobile)">
         {NAV.map((item) => (

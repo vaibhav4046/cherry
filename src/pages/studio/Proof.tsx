@@ -94,7 +94,7 @@ export default function Proof() {
 
       {selected ? (
         <div className="stack" style={{ gap: 'var(--sp-4)' }}>
-          <div className="card card-wash-cherry stack">
+          <div key={selected.receiptId} className="card card-wash-cherry stack receipt-in">
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <h2 className="subhead">{selected.receiptId}</h2>
               <span className={selected.status === 'verified' ? 'sticker sticker-pass' : 'sticker sticker-fail'} data-testid="receipt-status">

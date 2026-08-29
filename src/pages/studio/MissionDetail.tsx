@@ -300,7 +300,7 @@ export default function MissionDetail() {
           {latestVerification ? (
             <p>
               Latest:{' '}
-              <span className={latestVerification.status === 'passed' ? 'sticker sticker-pass' : 'sticker sticker-fail'} data-testid="verification-status">
+              <span key={latestVerification.id} className={latestVerification.status === 'passed' ? 'sticker sticker-pass verify-pop' : 'sticker sticker-fail verify-pop'} data-testid="verification-status">
                 {latestVerification.status} · {latestVerification.totalAssertions - latestVerification.blockingFailures}/{latestVerification.totalAssertions}
               </span>
             </p>

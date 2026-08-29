@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
-import { Ribbon, StickerCluster } from '../components/Ribbon.tsx';
+import { Ribbon } from '../components/Ribbon.tsx';
+import { CherryBurst } from '../components/CherryBurst.tsx';
+import { CherryMascot } from '../components/CherryMascot.tsx';
+import { useReveal } from '../components/useReveal.ts';
 
 const MARQUEE_TEXT =
   'TEACH ONCE · CHERRY REMEMBERS · EVERY AGENT GETS BETTER · LOCAL-FIRST · NO API KEY REQUIRED · ';
 
 export function Landing() {
+  useReveal();
   return (
     <div>
       <div className="marquee" aria-hidden="true">
@@ -16,43 +20,52 @@ export function Landing() {
           <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
           <div className="row nav-links" style={{ flex: 1, justifyContent: 'center' }}>
             <a href="#how" className="nav-pill">How it works</a>
-            <a href="#architecture" className="nav-pill">Architecture</a>
+            <a href="#agents" className="nav-pill">For agents</a>
             <a href="#security" className="nav-pill">Security</a>
-            <a href="#open" className="nav-pill">Open source</a>
+            <Link to="/compatibility" className="nav-pill">What's proven</Link>
           </div>
           <Link to="/studio" className="btn btn-primary">Open Studio</Link>
         </nav>
       </header>
 
       <main>
-        <section className="band band-cherry ribbon-wrap" aria-labelledby="hero-heading">
+        <section className="band band-blush ribbon-wrap" aria-labelledby="hero-heading">
           <Ribbon />
-          <div className="band-inner ribbon-fg" style={{ textAlign: 'center', paddingTop: 'var(--sp-20)', paddingBottom: 'var(--sp-20)' }}>
-            <div className="row" style={{ justifyContent: 'center', marginBottom: 'var(--sp-4)' }}>
-              <span className="sticker sticker-sunburst">WebMCP native</span>
-              <span className="sticker sticker-mint">Local-first</span>
-              <span className="sticker sticker-violet">Zero API keys</span>
-            </div>
+          <div className="band-inner ribbon-fg" style={{ textAlign: 'center', paddingTop: 'var(--sp-15)', paddingBottom: 'var(--sp-15)' }}>
+            <CherryBurst />
             <h1 id="hero-heading" className="display">Cherry</h1>
-            <p className="subhead" style={{ maxWidth: 720, margin: 'var(--sp-6) auto' }}>
-              Your agents should not start from zero. Cherry watches how useful work gets done, turns the
-              process into trusted memory and portable skills, then gives the agents you already use a
-              mission they can execute and prove.
+            <p className="label" style={{ marginTop: 'var(--sp-2)' }}>CHERRY OS · THE APPRENTICESHIP LAYER FOR AI AGENTS</p>
+            <p className="subhead" style={{ maxWidth: 680, margin: 'var(--sp-5) auto', fontWeight: 700 }}>
+              Teach an AI agent a workflow once — from a video, a doc, or your own corrections — and get
+              back a skill you can inspect, approve, verify, and take to any agent you use.
             </p>
-            <div className="row" style={{ justifyContent: 'center' }}>
-              <Link to="/studio" className="btn btn-primary">Teach Cherry something</Link>
-              <a href="#how" className="btn">See the loop</a>
+            <p style={{ maxWidth: 560, margin: '0 auto var(--sp-6)' }}>
+              Cherry is the workbench where you and your agent do it together: it learns in front of you,
+              stops for your approval, proves its work with recomputable receipts — and it runs entirely in
+              your browser. No API key. No account. No cloud.
+            </p>
+            <div className="row" style={{ justifyContent: 'center' }} data-testid="hero-ctas">
+              <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
+              <Link to="/studio?teach=1" className="btn">Teach Cherry from a video</Link>
+              <Link to="/studio" className="btn">Open MCP Studio</Link>
             </div>
           </div>
         </section>
 
-        <section id="how" className="band" aria-labelledby="how-heading">
+        <section id="how" className="band band-cream" aria-labelledby="how-heading">
           <div className="band-inner">
-            <h2 id="how-heading" className="display-sm">Watch → SkillGraph → Run → Proof</h2>
-            <p className="subhead" style={{ maxWidth: 700, marginTop: 'var(--sp-4)' }}>
-              One persistent journey, real state at every step. No staged demos, no fake activity.
-            </p>
-            <div className="grid-cards" style={{ marginTop: 'var(--sp-8)' }}>
+            <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 280 }}>
+                <h2 id="how-heading" className="display-sm">Watch → SkillGraph → Run → Proof</h2>
+                <p className="subhead" style={{ maxWidth: 700, marginTop: 'var(--sp-4)' }}>
+                  One persistent journey, real state at every step. No staged demos, no fake activity.
+                </p>
+              </div>
+              <div className="reveal">
+                <CherryMascot pose="point" size={150} line="Four beats. One loop. I keep the receipts." />
+              </div>
+            </div>
+            <div className="grid-cards reveal reveal-stagger" style={{ marginTop: 'var(--sp-8)' }}>
               <div className="card card-wash-sky stack">
                 <span className="sticker sticker-blue">1 · Watch</span>
                 <h3>Learn from permitted sources</h3>
@@ -90,47 +103,58 @@ export function Landing() {
           </div>
         </section>
 
-        <section id="architecture" className="band band-gray" aria-labelledby="arch-heading">
+        <section id="agents" className="band" aria-labelledby="agents-heading">
           <div className="band-inner">
-            <h2 id="arch-heading" className="display-sm">Built like a product, priced like a protocol</h2>
-            <div className="grid-cards" style={{ marginTop: 'var(--sp-8)' }}>
+            <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 280 }}>
+                <h2 id="agents-heading" className="display-sm">Humans and agents, same workbench</h2>
+                <p className="subhead" style={{ maxWidth: 720, marginTop: 'var(--sp-4)' }}>
+                  In a WebMCP-compatible client, your agent operates this exact page through state-aware site
+                  tools. You watch every move in the Agent View — and everything it can do, you can do by hand.
+                </p>
+              </div>
+              <div className="reveal">
+                <CherryMascot pose="wave" size={150} flip line="Attach your agent over WebMCP — I hand it five tools at a time." />
+              </div>
+            </div>
+            <div className="grid-cards reveal reveal-stagger" style={{ marginTop: 'var(--sp-8)' }}>
               <div className="card stack">
-                <span className="sticker">Attached WebMCP</span>
+                <span className="sticker">State-aware tool aperture</span>
                 <p>
-                  A compatible ChatGPT/Codex client works with Cherry's live page through dynamically
-                  registered site tools. Works only while the page is open in a compatible client — Cherry
-                  says so instead of pretending otherwise.
+                  At most five tools are exposed at a time, chosen by what the mission actually permits
+                  right now. Tools appear when a phase begins and disappear when it ends — no tool soup,
+                  no stale capabilities.
+                </p>
+              </div>
+              <div className="card stack">
+                <span className="sticker">Approval boundaries</span>
+                <p>
+                  The agent can request a checkpoint; only you can approve it, and only at the exact
+                  revision you reviewed. There is no tool that approves, raises trust, or activates memory.
+                </p>
+              </div>
+              <div className="card stack">
+                <span className="sticker">Live Agent View</span>
+                <p>
+                  An inspector shows the current phase, exposed tools, recently retired tools, and every
+                  recent tool call — the same truth in front of you and the agent.
                 </p>
               </div>
               <div className="card stack">
                 <span className="sticker">Portable skills</span>
                 <p>
-                  Export standards-aligned Agent Skills with Codex and Claude Code install targets, evidence
-                  references, policies, evals, and a verification script.
-                </p>
-              </div>
-              <div className="card stack">
-                <span className="sticker">Local runner</span>
-                <p>
-                  An optional localhost Node runner queues deterministic jobs with pairing, allowlists, and
-                  timeouts. Runs only while your machine is on — it is not a cloud.
-                </p>
-              </div>
-              <div className="card stack">
-                <span className="sticker">Your data, your browser</span>
-                <p>
-                  Everything persists in IndexedDB in your browser. Export and import complete workspaces as
-                  hash-verified JSON. No hosted database, no account, no tracking.
+                  Export standards-aligned Agent Skills bundles with Codex and Claude Code install targets,
+                  evidence references, policies, evals, and a standalone verification script.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="security" className="band" aria-labelledby="security-heading">
+        <section id="security" className="band band-gray" aria-labelledby="security-heading">
           <div className="band-inner">
             <h2 id="security-heading" className="display-sm">Trust is a feature</h2>
-            <div className="grid-cards" style={{ marginTop: 'var(--sp-8)' }}>
+            <div className="grid-cards reveal reveal-stagger" style={{ marginTop: 'var(--sp-8)' }}>
               <div className="card stack">
                 <span className="sticker sticker-fail">Untrusted by default</span>
                 <p>
@@ -163,23 +187,27 @@ export function Landing() {
           </div>
         </section>
 
-        <section id="open" className="band band-sky ribbon-wrap" aria-labelledby="open-heading">
-          <Ribbon color="var(--color-electric-blue)" />
+        <section id="open" className="band band-maroon ribbon-wrap" aria-labelledby="open-heading">
+          <div className="os-watermark" aria-hidden="true">CHERRY OS</div>
+          <Ribbon color="var(--color-cherry-pop)" />
           <div className="band-inner ribbon-fg" style={{ textAlign: 'center' }}>
-            <StickerCluster />
+            <div className="reveal">
+              <CherryMascot pose="stamp" size={170} line="Approved by you. Verified by checks. Sealed by hashes." />
+            </div>
             <h2 id="open-heading" className="display-sm">Open source, no meter running</h2>
             <p className="subhead" style={{ maxWidth: 640, margin: 'var(--sp-4) auto' }}>
               Cherry's core needs no AI API key, no cloud database, and no paid backend. Connecting an agent
               accelerates the same product — it never unlocks a different one.
             </p>
             <div className="row" style={{ justifyContent: 'center', marginTop: 'var(--sp-6)' }}>
-              <Link to="/studio" className="btn btn-primary">Open Cherry Studio</Link>
+              <Link to="/studio?demo=1" className="btn" style={{ background: 'var(--color-cream)' }}>Try the guided example</Link>
+              <Link to="/compatibility" className="btn" style={{ background: 'var(--color-cream)' }}>See what's proven</Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="band">
+      <footer className="band band-cream">
         <div className="band-inner row" style={{ justifyContent: 'space-between' }}>
           <span className="label">Cherry · the apprenticeship layer for AI agents</span>
           <span className="label">MIT licensed · local-first · WebMCP Challenge 2026</span>

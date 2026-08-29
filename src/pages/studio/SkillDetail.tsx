@@ -101,7 +101,7 @@ export default function SkillDetail() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <h1 className="display-sm">{graph.name}</h1>
-          <span className={graph.status === 'approved' ? 'sticker sticker-pass' : 'sticker sticker-wait'} data-testid="skill-status">
+          <span key={`${graph.status}-${graph.revision}`} className={graph.status === 'approved' ? 'sticker sticker-pass stamp-in' : 'sticker sticker-wait'} data-testid="skill-status">
             {graph.status} · r{graph.revision}
           </span>
         </div>

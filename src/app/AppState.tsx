@@ -47,7 +47,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(() => readStored(ACTIVE_WORKSPACE_KEY));
   const [activeMissionId, setActiveMissionId] = useState<string | null>(() => readStored(ACTIVE_MISSION_KEY));
-  const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty' });
+  const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty', recentlyRemoved: [], recentCalls: [] });
 
   const workspaceRef = useRef<string | null>(activeWorkspaceId);
   const missionRef = useRef<string | null>(activeMissionId);

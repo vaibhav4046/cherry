@@ -28,10 +28,24 @@ export interface RegisteredToolInfo {
   untrustedContent: boolean;
 }
 
+/** One real tool invocation, recorded at execution time. Session-local. */
+export interface ToolCallLogEntry {
+  name: string;
+  at: string;
+  ok: boolean;
+  /** First characters of the (already size-capped) result text. */
+  resultPreview: string;
+  source: 'host' | 'local';
+}
+
 export interface WebMcpStatus {
   supported: boolean;
   registered: RegisteredToolInfo[];
   productState: ProductState;
+  /** Tools retired by the most recent state change. */
+  recentlyRemoved: string[];
+  /** Most recent real tool calls, newest last (max 50). */
+  recentCalls: ToolCallLogEntry[];
 }
 
 type StatusListener = (status: WebMcpStatus) => void;
@@ -48,6 +62,8 @@ export class WebMcpRegistrationManager {
   private currentState: ProductState | null = null;
   private listeners = new Set<StatusListener>();
   private registered: RegisteredToolInfo[] = [];
+  private recentlyRemoved: string[] = [];
+  private callLog: ToolCallLogEntry[] = [];
 
   constructor(context: ToolContext) {
     this.definitions = buildToolDefinitions(context);
@@ -62,7 +78,23 @@ export class WebMcpRegistrationManager {
       supported: this.supported,
       registered: [...this.registered],
       productState: this.currentState ?? 'empty',
+      recentlyRemoved: [...this.recentlyRemoved],
+      recentCalls: [...this.callLog],
     };
+  }
+
+  /** Records a real invocation and derives ok from the tool result shape. */
+  private logCall(name: string, result: unknown, source: ToolCallLogEntry['source']): void {
+    const shaped = result as { isError?: boolean; content?: Array<{ text?: string }> } | undefined;
+    this.callLog.push({
+      name,
+      at: new Date().toISOString(),
+      ok: shaped?.isError !== true,
+      resultPreview: (shaped?.content?.[0]?.text ?? '').slice(0, 160),
+      source,
+    });
+    if (this.callLog.length > 50) this.callLog = this.callLog.slice(-50);
+    this.notify();
   }
 
   subscribe(listener: StatusListener): () => void {
@@ -85,7 +117,10 @@ export class WebMcpRegistrationManager {
   /** Re-register tools for the given product state. Old registrations abort. */
   syncState(state: ProductState): void {
     if (state === this.currentState) return;
+    const previousActive = this.currentState ? this.activeNamesFor(this.currentState) : [];
     this.currentState = state;
+    const nextActive = new Set(this.activeNamesFor(state));
+    this.recentlyRemoved = previousActive.filter((name) => !nextActive.has(name));
     this.registered = [];
 
     if (!this.supported) {
@@ -109,7 +144,11 @@ export class WebMcpRegistrationManager {
             description: definition.description,
             inputSchema: definition.inputSchema,
             annotations: definition.annotations,
-            execute: async (input: unknown) => definition.execute(input, signal),
+            execute: async (input: unknown) => {
+              const result = await definition.execute(input, signal);
+              this.logCall(definition.name, result, 'host');
+              return result;
+            },
           },
           { signal },
         );
@@ -131,7 +170,9 @@ export class WebMcpRegistrationManager {
     const definition = this.definitions.find((candidate) => candidate.name === name);
     if (!definition) throw new Error(`Unknown tool ${name}`);
     const controller = new AbortController();
-    return definition.execute(input, controller.signal);
+    const result = await definition.execute(input, controller.signal);
+    this.logCall(name, result, 'local');
+    return result;
   }
 
   listDefinitions(): CherryToolDefinition[] {
@@ -142,6 +183,8 @@ export class WebMcpRegistrationManager {
     this.controller?.abort();
     this.controller = null;
     this.registered = [];
+    this.recentlyRemoved = [];
+    this.callLog = [];
     this.listeners.clear();
   }
 }

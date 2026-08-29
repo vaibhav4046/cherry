@@ -85,8 +85,9 @@ test.describe('artifact preview isolation', () => {
     await page.getByTestId('save-artifact').click();
 
     // The preview reports its own console errors through the bridge.
-    await expect(page.getByText(/SANDBOX_REPORT/)).toBeVisible({ timeout: 10_000 });
-    const reportText = await page.getByText(/SANDBOX_REPORT/).textContent();
+    const consoleRow = page.locator('.event-row', { hasText: 'SANDBOX_REPORT' });
+    await expect(consoleRow).toBeVisible({ timeout: 10_000 });
+    const reportText = await consoleRow.textContent();
     // Opaque origin: storage access must throw SecurityError.
     expect(reportText).toContain('blocked');
     // Cherry itself is untouched: still on our origin, workspace intact.

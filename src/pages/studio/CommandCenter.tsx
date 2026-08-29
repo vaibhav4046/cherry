@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
+import { startTour } from '../../components/GuidedTour.tsx';
 import { createWorkspace } from '../../cherry/mission/mission-service.ts';
 import { listProofEvents } from '../../cherry/persistence/transactions.ts';
 import { listApprovals, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
@@ -10,10 +11,13 @@ import { runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runn
 import { exportWorkspace, importWorkspace } from '../../cherry/persistence/workspace-archive.ts';
 import type { ProofEvent } from '../../cherry/core/domain-event.ts';
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
-import { StickerCluster } from '../../components/Ribbon.tsx';
+import { CherryMascot } from '../../components/CherryMascot.tsx';
 
 export default function CommandCenter() {
-  const { activeWorkspace, activeMission, missions, refresh, setActiveMission } = useAppState();
+  const { activeWorkspace, activeMission, missions, refresh, setActiveMission, setActiveWorkspace } = useAppState();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const entryHandledRef = useRef(false);
   const [events, setEvents] = useState<ProofEvent[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [memoryInboxCount, setMemoryInboxCount] = useState(0);
@@ -45,6 +49,34 @@ export default function CommandCenter() {
     };
   }, [activeWorkspace, activeMission]);
 
+  // Landing CTA entries. demo=1: load the guided example and start the tour.
+  // teach=1: go straight to the first-mission form once a workspace exists.
+  useEffect(() => {
+    if (entryHandledRef.current) return;
+    const wantsDemo = searchParams.get('demo') === '1';
+    const wantsTeach = searchParams.get('teach') === '1';
+    if (!wantsDemo && !wantsTeach) return;
+
+    if (wantsTeach && activeWorkspace) {
+      entryHandledRef.current = true;
+      setSearchParams({}, { replace: true });
+      navigate('/studio/missions/new');
+      return;
+    }
+    if (wantsDemo) {
+      entryHandledRef.current = true;
+      setSearchParams({}, { replace: true });
+      void (async () => {
+        // Reuse an already-imported example instead of importing twice.
+        const alreadyExample = activeWorkspace?.isExample === true;
+        if (!alreadyExample) {
+          await handleImportExample();
+        }
+        startTour();
+      })();
+    }
+  }, [searchParams, activeWorkspace, setSearchParams, navigate]);
+
   async function handleCreateWorkspace(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -56,6 +88,10 @@ export default function CommandCenter() {
       return;
     }
     await refresh();
+    if (searchParams.get('teach') === '1') {
+      setSearchParams({}, { replace: true });
+      navigate('/studio/missions/new');
+    }
   }
 
   async function handleDecision(approval: ApprovalRecord, decision: 'approved' | 'rejected') {
@@ -109,6 +145,7 @@ export default function CommandCenter() {
         return;
       }
       setNotice(`Example workspace loaded (hash ${result.value.hashVerified ? 'verified' : 'absent'}). Delete it anytime from Connections.`);
+      setActiveWorkspace(result.value.workspaceId);
       await refresh();
     } catch (fetchError) {
       setError(`Could not load the example workspace: ${(fetchError as Error).message}`);
@@ -118,7 +155,7 @@ export default function CommandCenter() {
   if (!activeWorkspace) {
     return (
       <div className="empty-state">
-        <StickerCluster />
+        <CherryMascot pose="present" size={150} line="Hi! Give me a workspace and teach me a workflow — I will keep the receipts." />
         <h1 className="display-sm">Teach Cherry something</h1>
         <p className="subhead" style={{ maxWidth: 520 }}>
           Create a local workspace. Everything stays in this browser until you export it.
@@ -168,6 +205,9 @@ export default function CommandCenter() {
         <h1 className="display-sm">Command Center</h1>
         <div className="row">
           <Link to="/studio/missions/new" className="btn btn-primary">Create mission</Link>
+          <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
+            Replay walkthrough
+          </button>
           <button type="button" className="btn" onClick={() => void handleExport()}>Export workspace</button>
           <label className="btn">
             Import

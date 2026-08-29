@@ -13,7 +13,7 @@ test.describe('golden manual journey', () => {
 
     // Landing → Studio
     await expect(page.getByRole('heading', { name: 'Cherry', exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Open Studio' }).click();
+    await page.getByRole('link', { name: 'Open Studio', exact: true }).click();
 
     // Empty state: create workspace
     await expect(page.getByRole('heading', { name: 'Teach Cherry something' })).toBeVisible();

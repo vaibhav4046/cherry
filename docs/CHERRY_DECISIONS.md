@@ -72,3 +72,31 @@ Material deviations and interpretation decisions, with reason, consequence, and 
 - **Decision:** Route set implemented exactly as spec §6 with `settings/connections` combining
   connections + privacy and workspace deletion.
 - **Reason:** Keeps every route real and populated; avoids dead navigation.
+
+## D-008 — Auth (incl. Privy) declined for v1; guest-first stays
+
+- **Decision:** No auth layer. Cherry remains guest-first: open the page, own your data.
+- **Reason:** Cherry has no server and no per-user cloud state — there is nothing an account would
+  unlock. Privy (or any auth SDK) adds an external service dependency, API keys, bundle weight, and a
+  login wall in front of the 3-minute demo, all against the zero-dollar core and the golden path.
+- **Consequence:** The compatibility page lists "Accounts / auth" as Roadmap with this rationale.
+- **Rollback:** If encrypted sync ships later, auth rides in with it behind the same guest-first default.
+
+## D-009 — Cherry-native identity evolution (v2 brand layer)
+
+- **Decision:** Evolve the Slush sticker-book base into a Cherry-native system: dark-cherry/maroon +
+  cream + blush palette anchors, cherry-burst hero interaction, a recurring SVG mascot that explains
+  each section, scroll-depth reveals (IntersectionObserver, no scroll handlers), a CHERRY OS
+  watermark band, and earned motion on the three emotional beats (approval stamp, verification pop,
+  receipt print). All zero-dependency SVG/CSS; every animation is neutralised under
+  prefers-reduced-motion and the burst never gates navigation.
+- **Consequence:** Landing sections re-composed; axe and overflow tests still pass; Studio screens
+  stay operationally calm (motion only on state-change beats).
+
+## D-010 — Guided example + replayable walkthrough
+
+- **Decision:** "Try the guided example" imports the real exported example workspace (produced by
+  actual domain operations) and starts a replayable walkthrough whose steps navigate real routes with
+  real records. Steps that need records the workspace lacks are skipped, not faked.
+- **Consequence:** A judge reaches the fail→repair→pass receipt story in under a minute without
+  reading docs. The walkthrough is re-launchable from the Command Center.

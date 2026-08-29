@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
+import { Compatibility } from '../pages/Compatibility.tsx';
 
 const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
 const Onboarding = lazy(() => import('../pages/studio/Onboarding.tsx'));
@@ -15,6 +16,7 @@ const Artifacts = lazy(() => import('../pages/studio/Artifacts.tsx'));
 const Runs = lazy(() => import('../pages/studio/Runs.tsx'));
 const Proof = lazy(() => import('../pages/studio/Proof.tsx'));
 const Connections = lazy(() => import('../pages/studio/Connections.tsx'));
+const AgentView = lazy(() => import('../pages/studio/AgentView.tsx'));
 
 function Loading() {
   return (
@@ -29,6 +31,7 @@ export function App() {
     <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/compatibility" element={<Compatibility />} />
         <Route path="/studio" element={<StudioLayout />}>
           <Route index element={<CommandCenter />} />
           <Route path="onboarding" element={<Onboarding />} />
@@ -42,6 +45,7 @@ export function App() {
           <Route path="runs" element={<Runs />} />
           <Route path="proof/:receiptId" element={<Proof />} />
           <Route path="proof" element={<Proof />} />
+          <Route path="agent" element={<AgentView />} />
           <Route path="settings/connections" element={<Connections />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

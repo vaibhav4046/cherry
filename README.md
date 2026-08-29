@@ -36,6 +36,11 @@ WATCH / READ / OBSERVE  →  UNDERSTAND AND STRUCTURE  →  APPROVE THE SKILLGRA
   canonical JSON. Tamper-evident and independently recomputable (not a signature, and never called one).
 - **Cherry Compiler** — export approved skills as Agent Skills bundles with Codex and Claude Code
   install targets, evidence references, policies, evals, and a standalone `verify.mjs`.
+- **Agent View (MCP Inspector)** — a live inspector at /studio/agent: current phase, the exact
+  tool aperture per phase, live registrations, retired tools, and a real tool-call log. In manual
+  mode it shows the honest truth: nothing registered, nothing called.
+- **Guided example + walkthrough** — one click imports a real exported example workspace and walks
+  you through the whole loop, ending at the recomputable receipt. Replayable anytime.
 - **WebMCP native** — in a compatible ChatGPT/Codex client, Cherry registers **state-aware site
   tools** (max 5 per state + 2 global reads) that mutate the same visible workspace. Tools appear and
   disappear as the product state changes. No WebMCP? The complete product works manually.
@@ -102,6 +107,12 @@ every domain mutation emits a ProofEvent in the same transaction. See `docs/CHER
   was semantically understood.
 - The native MCP bridge is read/verify over exports (browser IndexedDB is unreachable from Node).
 - Optional encrypted sync is not in golden v1.
+
+## What is proven vs. roadmap
+
+See the in-app page at /compatibility (or the live site) — every surface is labelled Validated /
+Shipped / Experimental / Roadmap with the actual test behind the label. Auth is deliberately
+absent (guest-first, decision D-008 in docs/CHERRY_DECISIONS.md).
 
 ## License
 

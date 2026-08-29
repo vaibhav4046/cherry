@@ -194,3 +194,51 @@ describe('WebMCP graceful degradation', () => {
     }
   });
 });
+
+describe('MCP inspector data (call log + retired tools)', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('records real tool calls with honest ok/error flags', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+
+    await manager.executeLocal('create_workspace', { name: 'Log workspace' });
+    // Invalid arguments produce a logged error entry, not silence.
+    await manager.executeLocal('create_workspace', { name: 42 });
+
+    const status = manager.status();
+    expect(status.recentCalls).toHaveLength(2);
+    expect(status.recentCalls[0]).toMatchObject({ name: 'create_workspace', ok: true, source: 'local' });
+    expect(status.recentCalls[1]).toMatchObject({ name: 'create_workspace', ok: false });
+    expect(status.recentCalls[0]!.resultPreview).toContain('workspaceId');
+  });
+
+  it('caps the call log at 50 entries', async () => {
+    const manager = new WebMcpRegistrationManager(makeContext());
+    for (let index = 0; index < 55; index += 1) {
+      await manager.executeLocal('read_cherry_context', {});
+    }
+    expect(manager.status().recentCalls).toHaveLength(50);
+  });
+
+  it('reports tools retired by a state change', () => {
+    const manager = new WebMcpRegistrationManager(makeContext());
+    manager.syncState('learning');
+    manager.syncState('passed');
+    const status = manager.status();
+    expect(status.recentlyRemoved).toContain('load_lesson');
+    expect(status.recentlyRemoved).toContain('record_lesson_observation');
+    expect(status.recentlyRemoved).not.toContain('read_cherry_context'); // global stays
+    expect(status.recentlyRemoved).not.toContain('compile_skill_bundle'); // newly active
+  });
+
+  it('notifies subscribers when a call lands', async () => {
+    const manager = new WebMcpRegistrationManager(makeContext());
+    const snapshots: number[] = [];
+    manager.subscribe((status) => snapshots.push(status.recentCalls.length));
+    await manager.executeLocal('read_cherry_context', {});
+    expect(snapshots[snapshots.length - 1]).toBe(1);
+  });
+});
