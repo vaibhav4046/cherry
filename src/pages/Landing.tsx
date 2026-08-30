@@ -24,6 +24,7 @@ export function Landing() {
             <a href="#how" className="nav-pill">How it works</a>
             <a href="#agents" className="nav-pill">For agents</a>
             <a href="#security" className="nav-pill">Security</a>
+            <Link to="/showcase" className="nav-pill">Showcase</Link>
             <Link to="/compatibility" className="nav-pill">What's proven</Link>
           </div>
           <Link to="/studio" className="btn btn-primary">Open Studio</Link>
