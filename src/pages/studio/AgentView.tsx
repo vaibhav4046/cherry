@@ -7,6 +7,7 @@ import { listApprovals } from '../../cherry/skillgraph/skillgraph-service.ts';
 import type { ProductState } from '../../cherry/mission/mission-state.ts';
 
 const AUTOPILOT_BRIEF = [
+  'First, call introduce_agent with the name I should see — you are already auto-assigned to this workspace; there is nothing to create.',
   'You are attached to Cherry Wine through WebMCP site tools. Drive the full apprenticeship loop:',
   '1. read_cherry_context. If there is no workspace or mission, create them (create_workspace, create_mission with a testable definition of done).',
   '2. load_lesson with the YouTube URL I give you. Set permissionAcknowledged true only after I confirm I may learn from it.',
@@ -57,11 +58,15 @@ export default function AgentView() {
           What a connected agent can see and do, right now. This inspector reads the same state that
           drives the real WebMCP registrations — nothing here is illustrative.
         </p>
+        <p className="label" style={{ margin: 0 }}>
+          No agent setup exists: whoever attaches over WebMCP is auto-assigned to this workspace.
+          The agent can name itself from the chat with introduce_agent.
+        </p>
       </header>
 
       <div className="row">
         <span className={webmcp.supported ? 'sticker sticker-pass' : 'sticker sticker-wait'} data-testid="agent-mode">
-          {webmcp.supported ? 'Attached — WebMCP host detected' : 'Manual mode — no WebMCP host'}
+          {webmcp.supported ? `Attached — ${webmcp.agent?.name ?? 'agent auto-assigned'}` : 'Manual mode — no WebMCP host'}
         </span>
         <span className="sticker sticker-cherry" data-testid="agent-phase">Phase: {PHASE_LABEL[productState]}</span>
         {activeMission ? <span className="sticker">Mission: {activeMission.state}</span> : null}

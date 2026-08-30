@@ -46,6 +46,8 @@ import { exportWorkspace } from '../persistence/workspace-archive.ts';
 export interface ToolContext {
   getActiveWorkspaceId(): string | null;
   getActiveMissionId(): string | null;
+  /** Wired by the registration manager: records the attached agent's chosen name. */
+  setAgentName?(name: string): void;
 }
 
 function fromResult<T>(result: Result<T>, map: (value: T) => unknown): CherryToolResult {
@@ -124,6 +126,26 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   });
 
   // ---------- Empty / onboarding ----------
+  define({
+    name: 'introduce_agent',
+    description:
+      'Introduce yourself by name. The attached agent is auto-assigned to the active workspace and mission — there is nothing to create or configure. The name only labels the session for the human; it grants no authority: approvals, trust, and memory stay human-only.',
+    inputSchema: objectSchema({ name: { type: 'string', description: 'How the human should see you, e.g. "ChatGPT" or "Claude — research".' } }, ['name']),
+    annotations: { readOnlyHint: false },
+    states: [],
+    zodSchema: z.object({ name: z.string().min(1).max(40) }),
+    execute: guarded(z.object({ name: z.string().min(1).max(40) }), async (input) => {
+      const name = input.name.trim();
+      if (name.length === 0) return toolError('validation', 'Name cannot be blank.');
+      context.setAgentName?.(name);
+      return toolText({
+        agent: name,
+        assignment: 'auto — the active workspace and mission are already yours to operate',
+        boundaries: 'Approvals, trust promotion, and memory activation remain human-only.',
+      });
+    }),
+  });
+
   define({
     name: 'create_workspace',
     description: 'Create a new local Cherry workspace. All data stays in this browser unless the user exports it.',
@@ -851,7 +873,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   return definitions;
 }
 
-export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities'] as const;
+export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities', 'introduce_agent'] as const;
 
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
   empty: ['create_workspace', 'create_mission'],

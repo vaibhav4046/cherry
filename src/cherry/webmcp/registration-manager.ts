@@ -46,6 +46,8 @@ export interface WebMcpStatus {
   recentlyRemoved: string[];
   /** Most recent real tool calls, newest last (max 50). */
   recentCalls: ToolCallLogEntry[];
+  /** The attached agent: auto-assigned whenever a WebMCP host is present. */
+  agent: { attached: boolean; name: string | null };
 }
 
 type StatusListener = (status: WebMcpStatus) => void;
@@ -64,8 +66,13 @@ export class WebMcpRegistrationManager {
   private registered: RegisteredToolInfo[] = [];
   private recentlyRemoved: string[] = [];
   private callLog: ToolCallLogEntry[] = [];
+  private agentName: string | null = null;
 
   constructor(context: ToolContext) {
+    context.setAgentName = (name: string) => {
+      this.agentName = name;
+      this.notify();
+    };
     this.definitions = buildToolDefinitions(context);
   }
 
@@ -80,6 +87,7 @@ export class WebMcpRegistrationManager {
       productState: this.currentState ?? 'empty',
       recentlyRemoved: [...this.recentlyRemoved],
       recentCalls: [...this.callLog],
+      agent: { attached: this.supported, name: this.agentName },
     };
   }
 

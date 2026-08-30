@@ -33,16 +33,34 @@ describe('WebMCP tool aperture', () => {
     freshDb();
   });
 
-  it('never exceeds five state tools plus two global reads', () => {
+  it('never exceeds five state tools plus three globals', () => {
     const context = makeContext();
     const manager = new WebMcpRegistrationManager(context);
     const states: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
     for (const state of states) {
       const names = manager.activeNamesFor(state);
-      expect(names.length, state).toBeLessThanOrEqual(7);
+      expect(names.length, state).toBeLessThanOrEqual(8);
       expect(names).toContain('read_cherry_context');
       expect(names).toContain('list_cherry_capabilities');
+      expect(names).toContain('introduce_agent');
     }
+  });
+
+  it('the attached agent is auto-assigned and can introduce itself by name', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    // jsdom has no WebMCP host, so nothing is attached — and no name is set.
+    expect(manager.status().agent).toEqual({ attached: false, name: null });
+    const result = parseResult(await manager.executeLocal('introduce_agent', { name: 'Codex helper' }));
+    expect(result.agent).toBe('Codex helper');
+    expect(String(result.boundaries)).toMatch(/human-only/);
+    expect(manager.status().agent.name).toBe('Codex helper');
+  });
+
+  it('introduce_agent rejects a blank name', async () => {
+    const manager = new WebMcpRegistrationManager(makeContext());
+    const shaped = (await manager.executeLocal('introduce_agent', { name: '   ' })) as { isError?: boolean };
+    expect(shaped.isError).toBe(true);
   });
 
   it('tool names are snake_case and within limits; descriptions within 500 chars', () => {
