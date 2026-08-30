@@ -15,6 +15,10 @@ import {
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import type { CoverageReport, Lesson, Observation, TranscriptSegment } from '../../cherry/watch/watch-model.ts';
 
+// The embed always loads from the privacy-enhanced host (youtube-url.ts), so
+// outbound player commands target that exact origin — never a wildcard.
+const PLAYER_ORIGIN = 'https://www.youtube-nocookie.com';
+
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const rest = Math.floor(seconds % 60);
@@ -52,6 +56,7 @@ export default function Watch() {
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.origin !== 'https://www.youtube-nocookie.com' && event.origin !== 'https://www.youtube.com') return;
+      if (event.source !== playerRef.current?.contentWindow) return;
       if (typeof event.data !== 'string') return;
       try {
         const data = JSON.parse(event.data) as { event?: string; info?: { currentTime?: number; duration?: number } };
@@ -67,7 +72,7 @@ export default function Watch() {
     }
     window.addEventListener('message', onMessage);
     const interval = window.setInterval(() => {
-      playerRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 'cherry' }), '*');
+      playerRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 'cherry' }), PLAYER_ORIGIN);
     }, 2000);
     return () => {
       window.removeEventListener('message', onMessage);
@@ -185,7 +190,7 @@ export default function Watch() {
                     onClick={() =>
                       playerRef.current?.contentWindow?.postMessage(
                         JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [rate] }),
-                        '*',
+                        PLAYER_ORIGIN,
                       )
                     }
                   >

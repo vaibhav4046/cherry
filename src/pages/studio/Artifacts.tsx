@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   deleteArtifactFile,
@@ -19,6 +19,7 @@ export default function Artifacts() {
   const [error, setError] = useState<string | null>(null);
   const [previewMessages, setPreviewMessages] = useState<PreviewMessage[]>([]);
   const [previewNonce, setPreviewNonce] = useState(0);
+  const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const load = useCallback(async () => {
     if (!artifactSetId) return;
@@ -40,6 +41,10 @@ export default function Artifacts() {
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
+      // Only the sandboxed srcdoc preview may report here: opaque origin ('null')
+      // and a source that is the preview iframe's own contentWindow.
+      if (event.origin !== 'null') return;
+      if (event.source !== previewFrameRef.current?.contentWindow) return;
       const message = parsePreviewMessage(event.data);
       if (!message) return;
       setPreviewMessages((current) => [...current.slice(-19), message]);
@@ -188,6 +193,7 @@ export default function Artifacts() {
             <>
               <iframe
                 key={previewNonce}
+                ref={previewFrameRef}
                 title="Sandboxed artifact preview (network blocked)"
                 sandbox={PREVIEW_SANDBOX}
                 srcDoc={previewDoc}
