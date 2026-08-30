@@ -184,3 +184,38 @@ in any commit. It now exists: it hash-checks `docs/release/sample-bundle.zip` ag
 extracts with a path-traversal guard, runs the bundle's embedded standalone verifier, and proves
 tamper-evidence (one-byte mutation must fail; deleted evidence file must fail). The gate passes
 6/6; a release claim about bundle verification is now backed by a runnable command.
+
+## D-019 — Optional Privy auth behind a provider-neutral boundary (supersedes D-008)
+
+- **Decision:** Cherry supports Privy email-OTP sign-in via a provider-neutral `AuthBoundary`.
+  Guest mode stays the default and fully functional; auth activates only when
+  `VITE_PRIVY_APP_ID` is set at build time.
+- **Reason:** The product owner now requires account support, and D-008's objections are
+  neutralised: the SDK ships in a lazy chunk never requested in guest mode (entry grew ~1.7 kB
+  gzip), there is no login wall (sign-in is one optional card on Connections), and zero-config
+  deploys behave exactly as before. Privy failing to load degrades to a "setup required" notice,
+  never a broken app.
+- **Consequence:** New workspaces can key off `authScopeKey()` ('guest' or 'privy:<userId>');
+  existing guest data stays local until exported/imported — no silent migration, no fake sync.
+  Setup lives in docs/PRIVY_SETUP.md; `PRIVY_APP_SECRET` remains server-only and unused by the
+  client.
+
+## D-020 — Canonical origin (2026-08-31)
+
+`https://cherry-wine.vercel.app` is the canonical production origin: it is what the README,
+Devpost draft, OG tags, PRIVY_SETUP origins, and receipts documentation use. The Vercel project
+also answers on `getcherry.vercel.app`; that alias should be removed or redirected in the Vercel
+dashboard (owner action — dashboard/DNS changes are outside this environment's autonomy contract).
+No document may introduce the duplicate origin.
+
+## D-021 — Fresh-journey WebMCP repair (2026-08-31)
+
+Three real gaps in the agent-driven fresh journey were found and fixed: (1) tool mutations never
+resynchronised the app shell, so an agent-created workspace/mission did not advance the aperture
+until a human clicked — every successful mutating tool now triggers a shared refresh, and
+create/start tools atomically switch the active selection; (2) `load_lesson` was unreachable in
+the onboarding aperture, deadlocking the journey after `create_mission`; (3) `generate_quick_skill`
+did not link the drafted graph to the mission on the agent path. Two tools were added —
+`get_cherry_status` (4th global read) and `start_apprenticeship` (empty/onboarding) — and the
+whole path is pinned by a registered-closure Playwright journey (`e2e/cherry/showcase-host.spec.ts`)
+that never touches `executeLocal`.

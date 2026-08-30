@@ -13,6 +13,7 @@ Teach once. Cherry remembers. Every agent gets better.
 ## Links
 
 - Live app: https://cherry-wine.vercel.app
+- Judge route (fresh linear story): https://cherry-wine.vercel.app/showcase
 - Repository (MIT): https://github.com/vaibhav4046/cherry
 - Video: (add after recording — script in docs/release/DEMO_SCRIPT.md)
 

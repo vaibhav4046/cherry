@@ -1,5 +1,22 @@
 # Cherry release evidence
 
+> **v1.3 addendum (2026-08-31, god-mode master execution):** full gate suite re-run after the
+> /showcase + fresh-journey + Privy work: **135 unit passed + 2 skipped (15 files) + 42
+> runner/bridge (node:test) + 36 e2e (Playwright)**, typecheck/lint clean, production build clean,
+> verify:pack 6/6, audit:submission 13 checks 0 FAIL. New evidence class: a **registered-closure
+> host-path e2e** (`e2e/cherry/showcase-host.spec.ts`) installs a mock `document.modelContext`
+> BEFORE app load and drives the entire fresh journey through the closures the app actually
+> registered — discovery, introduce_agent, start_apprenticeship, aperture advancing with no human
+> click, load_lesson, import_transcript, add_source_evidence, generate_quick_skill,
+> request_checkpoint_approval — then the human approves in the /showcase UI and the agent
+> continues. It also asserts no registered tool name can approve/decide. Fresh-journey defects
+> fixed same day (D-021): mutation→shell sync, onboarding-aperture lesson deadlock, quick-skill
+> mission linking. Privy auth boundary landed per D-019 (guest-first, setup_required without
+> credentials, SDK lazy-chunked and pinned). **Host validation attempt (2026-08-31):** owner's
+> Chrome 151 probed via its own console — `document.modelContext` undefined (WebMCP testing flag
+> not enabled); result recorded as unavailable-in-current-host, no live browser-host claim is
+> made. Live-host validation remains a queued owner action in docs/BUILD_STATUS.md.
+
 > **v1.2 addendum (2026-08-30, editorial-pack integration):** every gate re-ran fresh on the tree
 > after the god-mode pack landed. Current totals: **119 unit/integration passed + 2 skipped
 > (vitest, 13 files) + 42 runner/bridge/v2 (node:test) + 33 e2e (Playwright)**, typecheck and
