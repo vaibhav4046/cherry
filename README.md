@@ -12,6 +12,8 @@ Built for the **OpenAI WebMCP Challenge 2026**.
 
 **Live:** https://cherry-wine.vercel.app · **Source:** https://github.com/vaibhav4046/cherry
 
+![Cherry landing — Teach once. Prove it. Keep it.](docs/release/screenshots/landing-v4-desktop.png)
+
 ## What it does
 
 ```
