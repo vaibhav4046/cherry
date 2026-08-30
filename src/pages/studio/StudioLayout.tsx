@@ -1,4 +1,5 @@
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { NavLink, Outlet, Link , useLocation } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { GuidedTour } from '../../components/GuidedTour.tsx';
 import { Icons } from '../../components/Icons.tsx';
@@ -7,6 +8,7 @@ const NAV = [
   { to: '/studio', label: 'Command', end: true, icon: Icons.command },
   { to: '/studio/inbox', label: 'Inbox', end: false, icon: Icons.runs },
   { to: '/studio/crew', label: 'Crew', end: false, icon: Icons.agent },
+  { to: '/studio/routines', label: 'Routines', end: false, icon: Icons.memory },
   { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick },
   { to: '/studio/agent', label: 'Agent', end: false, icon: Icons.agent },
   { to: '/studio/skills', label: 'Skills', end: false, icon: Icons.skills },
@@ -17,7 +19,24 @@ const NAV = [
 ];
 
 export function StudioLayout() {
-  const { ready, activeWorkspace, activeMission, productState, webmcp } = useAppState();
+  const { ready, activeWorkspace, activeMission, productState, webmcp, setToolSurface } = useAppState();
+  const location = useLocation();
+
+  // Route-driven tool surface: the WebMCP aperture follows where the human is.
+  useEffect(() => {
+    const path = location.pathname;
+    const surface =
+      path.startsWith('/studio/inbox') || path.startsWith('/studio/work')
+        ? ('inbox' as const)
+        : path.startsWith('/studio/crew')
+          ? ('crew' as const)
+          : path.startsWith('/studio/routines')
+          ? ('routines' as const)
+        : path.startsWith('/studio/runs')
+            ? ('run' as const)
+            : ('default' as const);
+    setToolSurface(surface);
+  }, [location.pathname, setToolSurface]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

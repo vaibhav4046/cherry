@@ -4,6 +4,7 @@ import { listMissions } from '../cherry/mission/mission-service.ts';
 import type { Mission, WorkspaceRecord } from '../cherry/mission/mission-model.ts';
 import { productStateForMission, type ProductState } from '../cherry/mission/mission-state.ts';
 import { WebMcpRegistrationManager, type WebMcpStatus } from '../cherry/webmcp/registration-manager.ts';
+import type { ToolSurface } from '../cherry/webmcp/workforce-tools.ts';
 
 const ACTIVE_WORKSPACE_KEY = 'cherry.activeWorkspaceId';
 const ACTIVE_MISSION_KEY = 'cherry.activeMissionId';
@@ -15,6 +16,7 @@ interface AppState {
   missions: Mission[];
   activeMission: Mission | null;
   productState: ProductState;
+  setToolSurface: (surface: ToolSurface) => void;
   webmcp: WebMcpStatus;
   setActiveWorkspace(id: string | null): void;
   setActiveMission(id: string | null): void;
@@ -47,7 +49,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(() => readStored(ACTIVE_WORKSPACE_KEY));
   const [activeMissionId, setActiveMissionId] = useState<string | null>(() => readStored(ACTIVE_MISSION_KEY));
-  const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty', recentlyRemoved: [], recentCalls: [], agent: { attached: false, name: null } });
+  const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty', recentlyRemoved: [], recentCalls: [], agent: { attached: false, name: null }, surface: 'default' });
 
   const workspaceRef = useRef<string | null>(activeWorkspaceId);
   const missionRef = useRef<string | null>(activeMissionId);
@@ -114,6 +116,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     missions,
     activeMission,
     productState,
+    setToolSurface: (surface) => manager.setSurface(surface),
     webmcp: webmcpStatus,
     setActiveWorkspace(id) {
       workspaceRef.current = id;

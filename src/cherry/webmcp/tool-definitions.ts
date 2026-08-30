@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { guarded, objectSchema, toolError, toolText, type CherryToolDefinition, type CherryToolResult } from './tool-contract.ts';
+import { buildWorkforceToolDefinitions } from './workforce-tools.ts';
 import type { Result } from '../core/result.ts';
 import {
   createMission,
@@ -62,7 +63,7 @@ function requireWorkspace(context: ToolContext): string | CherryToolResult {
 }
 
 export function buildToolDefinitions(context: ToolContext): CherryToolDefinition[] {
-  const definitions: CherryToolDefinition[] = [];
+  const definitions: CherryToolDefinition[] = [...buildWorkforceToolDefinitions(context)];
 
   const define = <I>(definition: CherryToolDefinition<I>): void => {
     definitions.push(definition as CherryToolDefinition);

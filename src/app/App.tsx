@@ -21,6 +21,8 @@ const QuickSkill = lazy(() => import('../pages/studio/QuickSkill.tsx'));
 const WorkInbox = lazy(() => import('../pages/studio/WorkInbox.tsx'));
 const WorkThread = lazy(() => import('../pages/studio/WorkThread.tsx'));
 const CrewPage = lazy(() => import('../pages/studio/CrewPage.tsx'));
+const RoutinesPage = lazy(() => import('../pages/studio/RoutinesPage.tsx'));
+const RoutineDetail = lazy(() => import('../pages/studio/RoutineDetail.tsx'));
 
 function Loading() {
   return (
@@ -43,6 +45,8 @@ export function App() {
           <Route path="inbox" element={<WorkInbox />} />
           <Route path="work/:workItemId" element={<WorkThread />} />
           <Route path="crew" element={<CrewPage />} />
+          <Route path="routines" element={<RoutinesPage />} />
+          <Route path="routines/:routineId" element={<RoutineDetail />} />
           <Route path="missions/new" element={<MissionNew />} />
           <Route path="missions/:missionId" element={<MissionDetail />} />
           <Route path="watch/:lessonId" element={<Watch />} />

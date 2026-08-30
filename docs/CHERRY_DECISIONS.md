@@ -138,3 +138,20 @@ Material deviations and interpretation decisions, with reason, consequence, and 
   learning aperture (still ≤ 5 + 2); load_lesson now advances DRAFT→LEARNING like the UI.
 - **Reason:** Zero-dollar core forbids API keys; WebMCP makes the user's existing subscription the
   brain. Approval, trust, and memory promotion remain human-only.
+
+## D-014 — Third global tool: introduce_agent
+The Workforce spec keeps exactly two global reads. Cherry ships a third global, `introduce_agent`
+(write: names the attached session). Rationale: the owner explicitly requested auto-assigned,
+chat-nameable agents; the tool grants no authority and the aperture tests cap globals at 3.
+Deviation recorded per autonomy policy.
+
+## D-015 — Surface-selected apertures
+WebMCP tools are selected by (route surface, product state): /studio/inbox|/studio/work → inbox set,
+/studio/crew → crew set, /studio/runs → run set, otherwise the mission-state table. Each surface set
+is capped at five tools; the registration manager re-registers (and reports retired tools) on both
+surface and state changes.
+
+## D-016 — Success is earned
+`transitionWorkItem` refuses SUCCEEDED for actorType 'agent' (approval_required). Verification-linked
+success enforcement for runner-backed runs lands with Runner v2 integration; until then the human or
+system verifier records the outcome, matching manual-mode parity.

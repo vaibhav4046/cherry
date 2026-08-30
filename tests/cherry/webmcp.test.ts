@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { freshDb } from '../setup.ts';
 import { WebMcpRegistrationManager } from '../../src/cherry/webmcp/registration-manager.ts';
 import { GLOBAL_TOOLS, TOOL_STATE_TABLE, buildToolDefinitions, type ToolContext } from '../../src/cherry/webmcp/tool-definitions.ts';
+import { TOOL_SURFACE_TABLE } from '../../src/cherry/webmcp/workforce-tools.ts';
 import type { ProductState } from '../../src/cherry/mission/mission-state.ts';
 
 function makeContext(): ToolContext & { workspaceId: string | null; missionId: string | null } {
@@ -61,6 +62,41 @@ describe('WebMCP tool aperture', () => {
     const manager = new WebMcpRegistrationManager(makeContext());
     const shaped = (await manager.executeLocal('introduce_agent', { name: '   ' })) as { isError?: boolean };
     expect(shaped.isError).toBe(true);
+  });
+
+  it('surface apertures stay within five tools plus globals and select by route surface', () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    for (const surface of ['inbox', 'crew', 'run'] as const) {
+      expect(TOOL_SURFACE_TABLE[surface].length).toBeLessThanOrEqual(5);
+      const names = manager.activeNamesFor('learning', surface);
+      expect(names.length).toBeLessThanOrEqual(8);
+      for (const name of TOOL_SURFACE_TABLE[surface]) expect(names).toContain(name);
+    }
+    // default surface falls back to the state table.
+    expect(manager.activeNamesFor('learning', 'default')).toEqual(manager.activeNamesFor('learning'));
+    // every surface tool has exactly one definition.
+    const defined = new Set(buildToolDefinitions(makeContext()).map((definition) => definition.name));
+    for (const names of Object.values(TOOL_SURFACE_TABLE)) {
+      for (const name of names) expect(defined.has(name), name).toBe(true);
+    }
+  });
+
+  it('inbox tools create and advance a work item honestly, never past QUEUED', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const workspace = parseResult(await manager.executeLocal('create_workspace', { name: 'Tool workforce' }));
+    context.workspaceId = workspace.workspaceId as string;
+    const created = parseResult(await manager.executeLocal('create_work_item', { title: 'Tool-made item', objective: 'x', definitionOfDone: ['done'] }));
+    expect(created.status).toBe('DRAFT');
+    const readied = parseResult(await manager.executeLocal('request_work_run', { workItemId: created.workItemId }));
+    expect(readied.status).toBe('READY');
+    const queued = parseResult(await manager.executeLocal('request_work_run', { workItemId: created.workItemId }));
+    expect(queued.status).toBe('QUEUED');
+    const stuck = (await manager.executeLocal('request_work_run', { workItemId: created.workItemId })) as { isError?: boolean };
+    expect(stuck.isError).toBe(true);
+    const thread = parseResult(await manager.executeLocal('read_work_thread', { workItemId: created.workItemId }));
+    expect((thread.item as { status: string }).status).toBe('QUEUED');
   });
 
   it('tool names are snake_case and within limits; descriptions within 500 chars', () => {

@@ -69,6 +69,7 @@ export default function AgentView() {
           {webmcp.supported ? `Attached — ${webmcp.agent?.name ?? 'agent auto-assigned'}` : 'Manual mode — no WebMCP host'}
         </span>
         <span className="sticker sticker-cherry" data-testid="agent-phase">Phase: {PHASE_LABEL[productState]}</span>
+        <span className="sticker sticker-lavender" data-testid="agent-surface">Surface: {webmcp.surface}</span>
         {activeMission ? <span className="sticker">Mission: {activeMission.state}</span> : null}
         <span className={pendingApprovals > 0 ? 'sticker sticker-wait' : 'sticker'}>
           {pendingApprovals > 0 ? `${pendingApprovals} approval${pendingApprovals === 1 ? '' : 's'} waiting on you` : 'No approvals pending'}

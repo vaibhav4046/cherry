@@ -1,6 +1,7 @@
 import type { CherryToolDefinition } from './tool-contract.ts';
 import { buildToolDefinitions, GLOBAL_TOOLS, TOOL_STATE_TABLE, type ToolContext } from './tool-definitions.ts';
 import type { ProductState } from '../mission/mission-state.ts';
+import { TOOL_SURFACE_TABLE, type ToolSurface } from './workforce-tools.ts';
 
 /** Minimal typing of the experimental WebMCP browser API. */
 interface ModelContextToolRegistration {
@@ -48,6 +49,8 @@ export interface WebMcpStatus {
   recentCalls: ToolCallLogEntry[];
   /** The attached agent: auto-assigned whenever a WebMCP host is present. */
   agent: { attached: boolean; name: string | null };
+  /** Route-driven tool surface currently selected. */
+  surface: ToolSurface;
 }
 
 type StatusListener = (status: WebMcpStatus) => void;
@@ -67,6 +70,7 @@ export class WebMcpRegistrationManager {
   private recentlyRemoved: string[] = [];
   private callLog: ToolCallLogEntry[] = [];
   private agentName: string | null = null;
+  private currentSurface: ToolSurface = 'default';
 
   constructor(context: ToolContext) {
     context.setAgentName = (name: string) => {
@@ -88,6 +92,7 @@ export class WebMcpRegistrationManager {
       recentlyRemoved: [...this.recentlyRemoved],
       recentCalls: [...this.callLog],
       agent: { attached: this.supported, name: this.agentName },
+      surface: this.currentSurface,
     };
   }
 
@@ -117,17 +122,33 @@ export class WebMcpRegistrationManager {
   }
 
   /** Returns the names that should be active for a state (aperture ≤ 5 + 2 global). */
-  activeNamesFor(state: ProductState): string[] {
+  activeNamesFor(state: ProductState, surface: ToolSurface = 'default'): string[] {
+    if (surface !== 'default') {
+      return [...GLOBAL_TOOLS, ...(TOOL_SURFACE_TABLE[surface] ?? []).slice(0, 5)];
+    }
     const stateTools = TOOL_STATE_TABLE[state] ?? [];
     return [...GLOBAL_TOOLS, ...stateTools.slice(0, 5)];
+  }
+
+  /** Route-driven surface selection; re-registers when it changes. */
+  setSurface(surface: ToolSurface): void {
+    if (surface === this.currentSurface) return;
+    const previous = this.activeNamesFor(this.currentState ?? 'empty', this.currentSurface);
+    this.currentSurface = surface;
+    this.applySelection(previous);
   }
 
   /** Re-register tools for the given product state. Old registrations abort. */
   syncState(state: ProductState): void {
     if (state === this.currentState) return;
-    const previousActive = this.currentState ? this.activeNamesFor(this.currentState) : [];
+    const previousActive = this.currentState ? this.activeNamesFor(this.currentState, this.currentSurface) : [];
     this.currentState = state;
-    const nextActive = new Set(this.activeNamesFor(state));
+    this.applySelection(previousActive);
+  }
+
+  private applySelection(previousActive: string[]): void {
+    const state = this.currentState ?? 'empty';
+    const nextActive = new Set(this.activeNamesFor(state, this.currentSurface));
     this.recentlyRemoved = previousActive.filter((name) => !nextActive.has(name));
     this.registered = [];
 
@@ -142,7 +163,7 @@ export class WebMcpRegistrationManager {
     this.controller = new AbortController();
     const { signal } = this.controller;
 
-    const active = new Set(this.activeNamesFor(state));
+    const active = new Set(this.activeNamesFor(state, this.currentSurface));
     for (const definition of this.definitions) {
       if (!active.has(definition.name)) continue;
       try {

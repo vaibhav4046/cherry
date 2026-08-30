@@ -169,6 +169,20 @@ describe('workforce service', () => {
     expect((await transitionWorkItem(workspaceId, item.value.id, 'QUEUED')).ok).toBe(false);
   });
 
+  it('an agent can never mark work succeeded', async () => {
+    const workspaceId = await workspace();
+    const item = await createWorkItem({ workspaceId, title: 'No shortcut', objective: 'x', definitionOfDone: ['y'] });
+    if (!item.ok) throw new Error('setup');
+    for (const to of ['READY', 'QUEUED', 'LEASED', 'RUNNING', 'VERIFYING'] as const) {
+      await transitionWorkItem(workspaceId, item.value.id, to);
+    }
+    const denied = await transitionWorkItem(workspaceId, item.value.id, 'SUCCEEDED', { actorType: 'agent' });
+    expect(denied.ok).toBe(false);
+    if (!denied.ok) expect(denied.error.code).toBe('approval_required');
+    const allowed = await transitionWorkItem(workspaceId, item.value.id, 'SUCCEEDED', { actorType: 'system' });
+    expect(allowed.ok).toBe(true);
+  });
+
   it('rejects a stale revision instead of silently overwriting', async () => {
     const workspaceId = await workspace();
     const item = await createWorkItem({ workspaceId, title: 'Stale test', objective: 'x', definitionOfDone: ['y'] });

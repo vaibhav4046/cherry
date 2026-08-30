@@ -49,6 +49,12 @@ export const PROOF_EVENT_TYPES = [
   'work.item_transitioned',
   'work.item_assigned',
   'work.message_added',
+  'routine.drafted',
+  'routine.schedule_set',
+  'routine.approved',
+  'routine.enabled',
+  'routine.paused',
+  'routine.run_requested',
 ] as const;
 
 export type ProofEventType = (typeof PROOF_EVENT_TYPES)[number];

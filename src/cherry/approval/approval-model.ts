@@ -1,4 +1,4 @@
-export type ApprovalObjectType = 'skillgraph' | 'memory' | 'consequential_action' | 'runner_job';
+export type ApprovalObjectType = 'skillgraph' | 'memory' | 'consequential_action' | 'runner_job' | 'routine';
 
 export interface ApprovalRecord {
   id: string;

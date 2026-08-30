@@ -22,6 +22,7 @@ import {
   type WorkItem,
   type WorkItemStatus,
   type WorkMessage,
+  type HandoffRecord,
 } from './workforce-model.ts';
 
 function slugify(name: string): string {
@@ -207,6 +208,9 @@ export async function transitionWorkItem(
     if (options.expectedRevision !== undefined && options.expectedRevision !== item.revision) {
       return err('conflict', `Work item is at revision ${item.revision}, not ${options.expectedRevision}. Re-read before acting.`);
     }
+    if (to === 'SUCCEEDED' && options.actorType === 'agent') {
+      return err('approval_required', 'Agents cannot mark work as succeeded. Success is reached through verification recorded by the system or the human.');
+    }
     if (!canTransition(item.status, to)) {
       return err('conflict', `${item.status} → ${to} is not a legal work-item transition.`);
     }
@@ -279,6 +283,62 @@ export async function addWorkMessage(
 export async function listWorkMessages(workspaceId: string, workItemId: string): Promise<WorkMessage[]> {
   const messages = await getDb().workMessages.where('workItemId').equals(workItemId).toArray();
   return messages.filter((message) => message.workspaceId === workspaceId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function updateAgentProfileRole(
+  workspaceId: string,
+  agentId: string,
+  updates: { role?: string; objective?: string; instructions?: string },
+): Promise<Result<AgentProfile>> {
+  return withWorkspaceTx(workspaceId, ['agentProfiles'], async (ctx) => {
+    const profile = await ctx.db.agentProfiles.get(agentId);
+    if (!profile || profile.workspaceId !== workspaceId || profile.status === 'archived') {
+      return err('not_found', 'Agent profile not found.');
+    }
+    const updated: AgentProfile = {
+      ...profile,
+      ...(updates.role !== undefined ? { role: updates.role.trim() || profile.role } : {}),
+      ...(updates.objective !== undefined ? { objective: updates.objective.trim() } : {}),
+      ...(updates.instructions !== undefined ? { instructions: updates.instructions.trim() } : {}),
+      revision: profile.revision + 1,
+      updatedAt: isoNow(),
+    };
+    await ctx.db.agentProfiles.put(updated);
+    ctx.emit({ type: 'agent.profile_created', actorType: 'agent', objectType: 'agentProfile', objectId: agentId, summary: `Agent profile "${profile.name}" updated (r${updated.revision})` });
+    return ok(updated);
+  });
+}
+
+export async function proposeHandoff(
+  workspaceId: string,
+  input: { workItemId: string; fromAgentId?: string | null; toAgentId: string; reason: string; contextRefs?: string[] },
+): Promise<Result<HandoffRecord>> {
+  const reason = input.reason.trim();
+  if (reason.length === 0) return err('validation', 'A handoff needs a reason.');
+  return withWorkspaceTx(workspaceId, ['handoffs', 'workItems', 'agentProfiles'], async (ctx) => {
+    const item = await ctx.db.workItems.get(input.workItemId);
+    if (!item || item.workspaceId !== workspaceId) return err('not_found', 'Work item not found.');
+    const target = await ctx.db.agentProfiles.get(input.toAgentId);
+    if (!target || target.workspaceId !== workspaceId || target.status === 'archived') {
+      return err('validation', 'Target agent does not exist in this workspace.');
+    }
+    const now = isoNow();
+    const record: HandoffRecord = {
+      id: newId('hf'),
+      workspaceId,
+      workItemId: input.workItemId,
+      fromAgentId: input.fromAgentId ?? null,
+      toAgentId: input.toAgentId,
+      reason,
+      contextRefs: input.contextRefs ?? [],
+      status: 'proposed',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await ctx.db.handoffs.add(record);
+    ctx.emit({ type: 'work.item_assigned', actorType: 'agent', objectType: 'workItem', objectId: input.workItemId, summary: `Handoff proposed to "${target.name}": ${reason.slice(0, 80)}` });
+    return ok(record);
+  });
 }
 
 // ---------------- Attention queue ----------------
