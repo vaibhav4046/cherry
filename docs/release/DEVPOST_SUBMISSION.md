@@ -33,11 +33,16 @@ sandboxed workspace → deterministic verification with honest fail/repair/pass 
 proof receipt (SHA-256 over RFC 8785 canonical JSON, recomputable by anyone) → a portable Agent
 Skills bundle with Codex and Claude Code install targets.
 
-The WebMCP part: Cherry registers state-aware site tools — at most 5 per mission phase plus 2 global
-reads. Learning tools exist only while learning; export tools only after verification passes. Tools
+The WebMCP part: Cherry registers state-aware site tools — at most 5 per surface plus global reads.
+Learning tools exist only while learning; export tools only after verification passes. Tools
 register and unregister live as the mission's state machine advances, agents can request but never
 grant approvals, and every tool call lands in a visible inspector (Agent View). In a browser without
 WebMCP, the complete product works manually — the agent path and the human path are the same product.
+
+On top sits a workforce layer: a crew of named agent seats, a work inbox with legal state
+transitions (an agent can never mark its own work SUCCEEDED), routines with action-hash approvals,
+and an optional durable runner (leased job queue, worker pool, exactly-once scheduler, hash-chained
+events). Lessons transcribe on-device with Whisper (WebGPU, WASM fallback) — still no API key.
 
 ## How we built it
 
@@ -58,11 +63,16 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
 
 ## Accomplishments
 
-- 65 unit + 15 runner/bridge + 28 e2e tests, including a hostile-artifact sandbox probe, axe audits,
-  and an end-to-end guided-walkthrough test.
+- 119 unit + 42 runner/bridge + 33 e2e tests, including a hostile-artifact sandbox probe, axe
+  audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
 - A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
   the actual test behind the label — including what we did NOT test.
-- Proof receipts a stranger can recompute; a bundle verify script that fails on a one-byte tamper.
+- Proof receipts a stranger can recompute; `npm run verify:pack` proves it — a one-byte tamper or a
+  deleted evidence file fails verification.
+- The native MCP bridge live-validated from a real host session: workspace integrity and receipt
+  hashes recomputed over the bridge and matched byte-for-byte.
+- An adversarial security pass that tried to refute our own claims — and the one it broke
+  (postMessage origin wording) was fixed the same day and documented.
 
 ## What's next
 
