@@ -4,6 +4,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { clearPairToken, getStoredPairToken, pairRunner, runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 import { deleteWorkspace } from '../../cherry/mission/mission-service.ts';
 import { CopyButton } from '../../components/Icons.tsx';
+import { AccountPanel } from '../../components/AccountPanel.tsx';
 
 export default function Connections() {
   const { activeWorkspace, webmcp, refresh } = useAppState();
@@ -106,6 +107,8 @@ export default function Connections() {
             ) : null}
           </form>
         </section>
+
+        <AccountPanel />
 
         <section className="card card-wash-sky stack" aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="subhead">Privacy</h2>
