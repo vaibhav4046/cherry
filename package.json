@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:runner": "node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs",
-    "verify:pack": "node scripts/verify-release.mjs"
+    "verify:pack": "node scripts/verify-release.mjs",
+    "audit:submission": "node scripts/audit-submission.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
