@@ -34,13 +34,13 @@ describe('WebMCP tool aperture', () => {
     freshDb();
   });
 
-  it('never exceeds five state tools plus three globals', () => {
+  it('never exceeds five state tools plus four globals', () => {
     const context = makeContext();
     const manager = new WebMcpRegistrationManager(context);
     const states: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
     for (const state of states) {
       const names = manager.activeNamesFor(state);
-      expect(names.length, state).toBeLessThanOrEqual(8);
+      expect(names.length, state).toBeLessThanOrEqual(9);
       expect(names).toContain('read_cherry_context');
       expect(names).toContain('list_cherry_capabilities');
       expect(names).toContain('introduce_agent');
@@ -70,7 +70,7 @@ describe('WebMCP tool aperture', () => {
     for (const surface of ['inbox', 'crew', 'run'] as const) {
       expect(TOOL_SURFACE_TABLE[surface].length).toBeLessThanOrEqual(5);
       const names = manager.activeNamesFor('learning', surface);
-      expect(names.length).toBeLessThanOrEqual(8);
+      expect(names.length).toBeLessThanOrEqual(9);
       for (const name of TOOL_SURFACE_TABLE[surface]) expect(names).toContain(name);
     }
     // default surface falls back to the state table.
@@ -374,5 +374,98 @@ describe('autonomous agent drive (the Autopilot path)', () => {
     const snapshot = parseResult(await manager.executeLocal('read_cherry_context', {}));
     expect((snapshot['pendingApprovals'] as unknown[]).length).toBe(1);
     expect(snapshot['productState']).toBe('planning');
+  });
+});
+
+describe('fresh-journey tools and mutation sync', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  function makeSyncedContext() {
+    const calls: string[] = [];
+    const context = makeContext() as ReturnType<typeof makeContext> & {
+      mutations: number;
+      synced: string[];
+    };
+    context.mutations = 0;
+    context.synced = calls;
+    context.setActiveIds = (ids) => {
+      if (ids.workspaceId !== undefined) context.workspaceId = ids.workspaceId;
+      if (ids.missionId !== undefined) context.missionId = ids.missionId;
+      calls.push(JSON.stringify(ids));
+    };
+    context.onMutation = () => {
+      context.mutations += 1;
+    };
+    return context;
+  }
+
+  it('start_apprenticeship creates workspace + mission and makes them active', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const result = parseResult(await manager.executeLocal('start_apprenticeship', {}));
+    expect(result.workspaceId).toBeTruthy();
+    expect(result.missionId).toBeTruthy();
+    expect(result.state).toBe('DRAFT');
+    expect(String(result.nextAction)).toMatch(/load_lesson/);
+    // The shell was told to switch selection — the aperture can advance without a click.
+    expect(context.workspaceId).toBe(result.workspaceId);
+    expect(context.missionId).toBe(result.missionId);
+    expect(context.mutations).toBeGreaterThanOrEqual(1);
+  });
+
+  it('start_apprenticeship reuses the active workspace and never loads a source', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const first = parseResult(await manager.executeLocal('start_apprenticeship', { workspaceName: 'Mine' }));
+    const second = parseResult(
+      await manager.executeLocal('start_apprenticeship', { title: 'Second draft' }),
+    );
+    expect(second.workspaceId).toBe(first.workspaceId);
+    expect(second.missionId).not.toBe(first.missionId);
+    expect(JSON.stringify(second)).not.toMatch(/lessonId/);
+  });
+
+  it('create_workspace and create_mission update the active selection', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const workspace = parseResult(await manager.executeLocal('create_workspace', { name: 'Synced' }));
+    expect(context.workspaceId).toBe(workspace.workspaceId);
+    const mission = parseResult(
+      await manager.executeLocal('create_mission', { title: 'M', objective: 'o', definitionOfDone: ['d'] }),
+    );
+    expect(context.missionId).toBe(mission.missionId);
+  });
+
+  it('read-only tools never trigger the mutation callback', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    await manager.executeLocal('get_cherry_status', {});
+    await manager.executeLocal('read_cherry_context', {});
+    await manager.executeLocal('list_cherry_capabilities', {});
+    expect(context.mutations).toBe(0);
+  });
+
+  it('failed mutations do not trigger the mutation callback', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const shaped = (await manager.executeLocal('create_workspace', { name: '' })) as { isError?: boolean };
+    expect(shaped.isError).toBe(true);
+    expect(context.mutations).toBe(0);
+  });
+
+  it('get_cherry_status reports state, ids, and the active tool set honestly', async () => {
+    const context = makeSyncedContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const before = parseResult(await manager.executeLocal('get_cherry_status', {}));
+    expect(before.productState).toBe('empty');
+    expect(before.activeWorkspaceId).toBeNull();
+    expect(before.activeTools).toContain('start_apprenticeship');
+    await manager.executeLocal('start_apprenticeship', {});
+    const after = parseResult(await manager.executeLocal('get_cherry_status', {}));
+    expect(after.productState).toBe('onboarding');
+    expect(after.activeWorkspaceId).toBe(context.workspaceId);
+    expect(after.missionState).toBe('DRAFT');
   });
 });

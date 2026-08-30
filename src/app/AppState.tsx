@@ -55,12 +55,28 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const missionRef = useRef<string | null>(activeMissionId);
   workspaceRef.current = activeWorkspaceId;
   missionRef.current = activeMissionId;
+  const refreshRef = useRef<() => Promise<void>>(async () => {});
 
   const manager = useMemo(
     () =>
       new WebMcpRegistrationManager({
         getActiveWorkspaceId: () => workspaceRef.current,
         getActiveMissionId: () => missionRef.current,
+        // Agent-driven mutations switch selection and re-sync the aperture the
+        // same way a human click would — no manual UI action required.
+        setActiveIds: (ids) => {
+          if (ids.workspaceId !== undefined) {
+            workspaceRef.current = ids.workspaceId;
+            setActiveWorkspaceId(ids.workspaceId);
+            writeStored(ACTIVE_WORKSPACE_KEY, ids.workspaceId);
+          }
+          if (ids.missionId !== undefined) {
+            missionRef.current = ids.missionId;
+            setActiveMissionId(ids.missionId);
+            writeStored(ACTIVE_MISSION_KEY, ids.missionId);
+          }
+        },
+        onMutation: () => refreshRef.current(),
       }),
     [],
   );
@@ -95,6 +111,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
     setReady(true);
   }, [manager]);
+  refreshRef.current = refresh;
 
   useEffect(() => {
     void refresh();

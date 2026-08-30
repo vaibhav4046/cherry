@@ -121,7 +121,7 @@ export class WebMcpRegistrationManager {
     for (const listener of this.listeners) listener(snapshot);
   }
 
-  /** Returns the names that should be active for a state (aperture ≤ 5 + 2 global). */
+  /** Returns the names that should be active for a state (aperture ≤ 5 phase tools + the global set). */
   activeNamesFor(state: ProductState, surface: ToolSurface = 'default'): string[] {
     if (surface !== 'default') {
       return [...GLOBAL_TOOLS, ...(TOOL_SURFACE_TABLE[surface] ?? []).slice(0, 5)];

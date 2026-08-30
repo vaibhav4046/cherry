@@ -49,6 +49,10 @@ export interface ToolContext {
   getActiveMissionId(): string | null;
   /** Wired by the registration manager: records the attached agent's chosen name. */
   setAgentName?(name: string): void;
+  /** Wired by the app shell: atomically switch the active workspace/mission selection. */
+  setActiveIds?(ids: { workspaceId?: string; missionId?: string }): void;
+  /** Wired by the app shell: re-read persisted state (UI + aperture) after any tool mutation. */
+  onMutation?(): void | Promise<void>;
 }
 
 function fromResult<T>(result: Result<T>, map: (value: T) => unknown): CherryToolResult {
@@ -148,6 +152,85 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   });
 
   define({
+    name: 'get_cherry_status',
+    description:
+      'Lightweight status probe: current product state, active workspace/mission ids, counts, and which tools are callable right now. Read-only and always available.',
+    inputSchema: objectSchema({}, []),
+    annotations: { readOnlyHint: true },
+    states: [],
+    zodSchema: z.object({}),
+    execute: guarded(z.object({}), async () => {
+      const workspaces = await listWorkspaces();
+      const workspaceId = context.getActiveWorkspaceId();
+      const missionId = context.getActiveMissionId();
+      const mission = missionId ? await getMission(missionId) : null;
+      const state = productStateForMission(mission?.state ?? null, workspaceId !== null);
+      return toolText({
+        productState: state,
+        activeWorkspaceId: workspaceId,
+        activeMissionId: missionId,
+        missionState: mission?.state ?? null,
+        workspaceCount: workspaces.length,
+        activeTools: [...GLOBAL_TOOLS, ...(TOOL_STATE_TABLE[state] ?? [])],
+        storage: 'local IndexedDB — nothing leaves this browser without an explicit export',
+      });
+    }),
+  });
+
+  const startApprenticeshipSchema = z.object({
+    workspaceName: z.string().min(1).max(120).optional(),
+    title: z.string().min(1).max(160).optional(),
+    objective: z.string().min(1).max(4000).optional(),
+    definitionOfDone: z.array(z.string().min(1).max(500)).min(1).max(20).optional(),
+  });
+  define({
+    name: 'start_apprenticeship',
+    description:
+      'Start a fresh apprenticeship in one call: creates a local workspace if none is active and a DRAFT mission, then makes them active. Never loads a source — lesson loading stays behind the explicit rights check in load_lesson.',
+    inputSchema: objectSchema(
+      {
+        workspaceName: { type: 'string', description: 'Workspace name when a new one is created (default "My apprenticeship")' },
+        title: { type: 'string', description: 'Mission title (default "Learn a lesson and prove it")' },
+        objective: { type: 'string', description: 'What the finished skill should achieve' },
+        definitionOfDone: { type: 'array', items: { type: 'string' }, description: 'Acceptance checklist' },
+      },
+      [],
+    ),
+    annotations: { readOnlyHint: false },
+    states: ['empty', 'onboarding'],
+    zodSchema: startApprenticeshipSchema,
+    execute: guarded(startApprenticeshipSchema, async (input) => {
+      let workspaceId = context.getActiveWorkspaceId();
+      if (!workspaceId) {
+        const created = await createWorkspace({ name: input.workspaceName ?? 'My apprenticeship' }, 'agent');
+        if (!created.ok) return toolError(created.error.code, created.error.message);
+        workspaceId = created.value.id;
+      }
+      const mission = await createMission(
+        {
+          workspaceId,
+          title: input.title ?? 'Learn a lesson and prove it',
+          objective: input.objective ?? 'Turn a permitted lesson into an approved, verified, portable skill.',
+          definitionOfDone: input.definitionOfDone ?? [
+            'Evidence is timestamped and linked to the source',
+            'The human approved the exact skill revision',
+            'Verification passed on a real artifact',
+          ],
+        },
+        'agent',
+      );
+      if (!mission.ok) return toolError(mission.error.code, mission.error.message);
+      context.setActiveIds?.({ workspaceId, missionId: mission.value.id });
+      return toolText({
+        workspaceId,
+        missionId: mission.value.id,
+        state: mission.value.state,
+        nextAction: 'load_lesson — a permitted YouTube URL (permissionAcknowledged=true) or a manual lesson',
+      });
+    }),
+  });
+
+  define({
     name: 'create_workspace',
     description: 'Create a new local Cherry workspace. All data stays in this browser unless the user exports it.',
     inputSchema: objectSchema(
@@ -159,6 +242,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     zodSchema: z.object({ name: z.string().min(1).max(120), description: z.string().max(2000).optional() }),
     execute: guarded(z.object({ name: z.string().min(1).max(120), description: z.string().max(2000).optional() }), async (input) => {
       const result = await createWorkspace(input, 'agent');
+      if (result.ok) context.setActiveIds?.({ workspaceId: result.value.id });
       return fromResult(result, (workspace) => ({ workspaceId: workspace.id, name: workspace.name }));
     }),
   });
@@ -188,6 +272,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const workspaceId = requireWorkspace(context);
       if (typeof workspaceId !== 'string') return workspaceId;
       const result = await createMission({ workspaceId, ...input }, 'agent');
+      if (result.ok) context.setActiveIds?.({ missionId: result.value.id });
       return fromResult(result, (mission) => ({ missionId: mission.id, state: mission.state }));
     }),
   });
@@ -213,7 +298,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       ['title', 'kind'],
     ),
     annotations: { readOnlyHint: false },
-    states: ['learning'],
+    states: ['onboarding', 'learning'],
     zodSchema: loadLessonSchema,
     execute: guarded(loadLessonSchema, async (input) => {
       const workspaceId = requireWorkspace(context);
@@ -452,6 +537,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       if (!result.ok) return toolError(result.error.code, result.error.message);
       const missionId = context.getActiveMissionId();
       if (missionId) {
+        await updateMission(missionId, { skillGraphId: result.value.graph.id }, 'agent');
         const mission = await getMission(missionId);
         if (mission && mission.state === 'LEARNING') {
           await transitionMission(missionId, 'PLANNING', 'agent', 'Quick skill generated from lesson');
@@ -871,14 +957,28 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
-  return definitions;
+  // After any successful mutating call, re-sync the app shell (UI selection and
+  // tool aperture) so an agent-driven journey advances without a human click.
+  // Read-only tools skip it; contexts without onMutation (bridge, tests) no-op.
+  return definitions.map((definition) => {
+    if (definition.annotations.readOnlyHint) return definition;
+    const inner = definition.execute;
+    return {
+      ...definition,
+      execute: async (input: unknown, signal: AbortSignal) => {
+        const result = await inner(input, signal);
+        if (result.isError !== true) await context.onMutation?.();
+        return result;
+      },
+    };
+  });
 }
 
-export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities', 'introduce_agent'] as const;
+export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent'] as const;
 
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
-  empty: ['create_workspace', 'create_mission'],
-  onboarding: ['create_workspace', 'create_mission'],
+  empty: ['start_apprenticeship', 'create_workspace', 'create_mission'],
+  onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson'],
   learning: ['load_lesson', 'import_transcript', 'record_lesson_observation', 'add_source_evidence', 'generate_quick_skill'],
   planning: ['define_skillgraph', 'propose_memory_rule', 'request_checkpoint_approval', 'revise_checkpoint'],
   execution: ['write_artifact_file', 'record_task_result', 'request_consequential_action', 'run_cherry_verification'],
