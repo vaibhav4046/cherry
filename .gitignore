@@ -20,3 +20,4 @@ docs/spec-pack/harness/CLAUDE.md
 docs/release/e2e-results.json
 
 .vercel
+.claude/

@@ -156,7 +156,7 @@ export default function CommandCenter() {
     return (
       <div className="empty-state">
         <CherryMascot pose="present" size={150} line="Hi! Give me a workspace and teach me a workflow — I will keep the receipts." />
-        <h1 className="display-sm">Teach Cherry something</h1>
+        <h1 className="display-sm title-3d">Teach Cherry something</h1>
         <p className="subhead" style={{ maxWidth: 520 }}>
           Create a local workspace. Everything stays in this browser until you export it.
         </p>
@@ -202,7 +202,7 @@ export default function CommandCenter() {
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <header className="row" style={{ justifyContent: 'space-between' }}>
-        <h1 className="display-sm">Command Center</h1>
+        <h1 className="display-sm title-3d">Command Center</h1>
         <div className="row">
           <Link to="/studio/quick" className="btn btn-primary">Quick skill from a video</Link>
           <Link to="/studio/missions/new" className="btn">Create mission</Link>

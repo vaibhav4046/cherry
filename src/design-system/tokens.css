@@ -484,6 +484,108 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.45); }
   user-select: none;
 }
 
+/* ---------- Cinema hero + 3D display type (v1.5) ---------- */
+.hero-cinema { min-height: 84vh; display: grid; align-items: center; }
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: var(--sp-10);
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+}
+
+.type-3d {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  font-size: clamp(42px, 7vw, 104px);
+  color: var(--color-cream);
+  text-shadow:
+    1px 1px 0 var(--color-carbon), 2px 2px 0 var(--color-carbon), 3px 3px 0 var(--color-carbon),
+    4px 4px 0 var(--color-cherry-pop), 5px 5px 0 var(--color-cherry-pop), 6px 6px 0 var(--color-cherry-pop),
+    7px 7px 0 var(--color-cherry-pop), 8px 8px 0 var(--color-cherry-pop), 9px 9px 0 var(--color-carbon);
+  margin: 0;
+}
+.title-3d { text-shadow: 2px 2px 0 var(--color-blush), 3px 3px 0 var(--color-carbon); }
+
+.rise-line { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .rise-line {
+    opacity: 0;
+    transform: translateY(0.55em) rotate(1.2deg);
+    animation: line-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .rise-line:nth-child(2) { animation-delay: 130ms; }
+  .rise-line:nth-child(3) { animation-delay: 260ms; }
+}
+@keyframes line-rise { to { opacity: 1; transform: none; } }
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.band-maroon .kicker { color: var(--color-blush); }
+
+.link-quiet {
+  color: var(--color-cream);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  padding: 10px 6px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Engraved ray burst behind the hero cherry */
+.rays-wrap { position: relative; display: inline-grid; place-items: center; padding: var(--sp-10); }
+.rays-wrap > * { grid-area: 1 / 1; }
+.rays { width: 220%; max-width: none; height: auto; color: var(--color-cream); pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .rays { animation: rays-spin 120s linear infinite; }
+}
+@keyframes rays-spin { to { rotate: 360deg; } }
+
+/* ---------- Numbered chapters + drawn diagrams (v1.5) ---------- */
+.chapter-head { display: flex; gap: var(--sp-6); align-items: flex-start; flex-wrap: wrap; }
+.chapter-num {
+  font-family: var(--font-display);
+  font-size: clamp(64px, 9vw, 140px);
+  line-height: 0.85;
+  color: var(--color-blush);
+  user-select: none;
+  flex-shrink: 0;
+}
+@supports (-webkit-text-stroke: 2px black) {
+  .chapter-num { color: transparent; -webkit-text-stroke: 2.5px var(--color-carbon); }
+}
+
+.diagram-scroll {
+  overflow-x: auto;
+  border: var(--border);
+  border-radius: var(--radius-card);
+  background: var(--color-paper-white);
+  padding: var(--sp-4);
+}
+.diagram-scroll svg { display: block; min-width: 780px; width: 100%; height: auto; }
+.diagram .draw { stroke-dasharray: 900; stroke-dashoffset: 900; }
+.diagram.reveal-in .draw { animation: draw-in 1100ms cubic-bezier(0.4, 0, 0.2, 1) 180ms forwards; }
+@keyframes draw-in { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .diagram .draw { stroke-dasharray: none; stroke-dashoffset: 0; }
+}
+
+.guarantee-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-5); }
+
 /* ---------- Notebook (sources · overview · studio) ---------- */
 .notebook-grid {
   display: grid;
