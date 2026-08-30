@@ -178,3 +178,8 @@ test('output redaction removes secret-shaped strings', async () => {
   assert.equal(job.status, 'failed');
   assert.ok(!job.result.stderr.includes('sk-abcdefghijklmnop1234'));
 });
+
+// Runner v2 suites (durable queue, scheduler, events, adapters, HTTP wiring).
+// Dynamic import AFTER the hooks above are registered, because the
+// test:runner script lists explicit files and cannot be changed here.
+await import('./v2.test.mjs');

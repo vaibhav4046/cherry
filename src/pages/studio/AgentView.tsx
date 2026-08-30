@@ -7,6 +7,7 @@ import { listApprovals } from '../../cherry/skillgraph/skillgraph-service.ts';
 import type { ProductState } from '../../cherry/mission/mission-state.ts';
 
 const AUTOPILOT_BRIEF = [
+  'Tool sets follow the open page: Inbox pages expose work-item tools, Crew pages expose profile tools, Routines pages expose scheduling tools. Navigate me (or ask the human to) and read list_cherry_capabilities to see the active set.',
   'First, call introduce_agent with the name I should see — you are already auto-assigned to this workspace; there is nothing to create.',
   'You are attached to Cherry Wine through WebMCP site tools. Drive the full apprenticeship loop:',
   '1. read_cherry_context. If there is no workspace or mission, create them (create_workspace, create_mission with a testable definition of done).',

@@ -24,6 +24,11 @@ interface Row {
  */
 const ROWS: Row[] = [
   {
+    surface: 'Workforce: inbox, crew, routines (local)',
+    status: 'validated',
+    evidence: 'Work items run a strict state machine (no shortcut to success), the five-agent starter crew is editable, and routine schedules are DST-aware with exact-revision approval. Covered by 30 workforce unit tests and a Playwright journey.',
+  },
+  {
     surface: 'Manual golden journey (no AI provider)',
     status: 'validated',
     evidence: 'Playwright e2e walks workspace → lesson → transcript → evidence → SkillGraph → exact-revision approval → artifact → honest fail → repair → pass → receipt → hash recompute → export → import → reload. 19 e2e tests total.',

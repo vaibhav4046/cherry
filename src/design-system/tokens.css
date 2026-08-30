@@ -615,6 +615,12 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.45); }
 
 .guarantee-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-5); }
 
+/* ---------- Workforce motion: honest status pulse ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .sticker-blue { animation: status-pulse 2.2s ease-in-out infinite; }
+}
+@keyframes status-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.72; } }
+
 /* ---------- Notebook (sources · overview · studio) ---------- */
 .notebook-grid {
   display: grid;

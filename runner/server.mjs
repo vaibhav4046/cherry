@@ -19,9 +19,14 @@ import { randomBytes, createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join, sep, isAbsolute } from 'node:path';
+import { redact } from './lib/redact.mjs';
+import { computeActionHash } from './lib/canonical.mjs';
+import { EventsLog } from './lib/events.mjs';
+import { DurableQueue, validateEnvelope } from './lib/queue.mjs';
+import { Scheduler, validateRoutine } from './lib/scheduler.mjs';
+import { createAdapters } from './lib/adapters.mjs';
 
 const VERSION = '1.0.0';
-const PORT = 47821;
 const MAX_OUTPUT_BYTES = 256 * 1024;
 const DEFAULT_TIMEOUT_MS = 120_000;
 const MAX_TIMEOUT_MS = 600_000;
@@ -45,16 +50,11 @@ const allowedExecutables = new Set(argValues('--allow-exec'));
 const stateDir = resolve(argValues('--state')[0] ?? join(process.cwd(), '.cherry-runner'));
 mkdirSync(stateDir, { recursive: true });
 const jobsFile = join(stateDir, 'runner-jobs.json');
+const PORT = Number(argValues('--port')[0] ?? 47821);
+/** Runner v2 durable data lives next to the existing state by default. */
+const dataDir = resolve(argValues('--data-dir')[0] ?? join(stateDir, 'v2'));
 
 const pairToken = process.env.CHERRY_RUNNER_TOKEN ?? randomBytes(24).toString('base64url');
-
-/** Secret-shaped strings are redacted from any captured output. */
-function redact(text) {
-  return String(text)
-    .replace(/(sk|pk|rk|ghp|gho|xoxb|xoxp)-[A-Za-z0-9_-]{10,}/g, '[redacted]')
-    .replace(/(bearer\s+)[A-Za-z0-9._~+/=-]{16,}/gi, '$1[redacted]')
-    .replace(/(api[_-]?key["'\s:=]+)[A-Za-z0-9_-]{12,}/gi, '$1[redacted]');
-}
 
 function loadJobs() {
   try {
@@ -231,7 +231,51 @@ async function pump() {
   setImmediate(pump);
 }
 
+// ---------------- Runner v2: durable queue, events, scheduler ----------------
+const v2Events = new EventsLog(join(dataDir, 'events.log'));
+const v2Adapters = createAdapters({ allowedRoots, allowedExecutables });
+const v2Concurrency = Math.min(3, Math.max(1, Number(argValues('--concurrency')[0]) || 1));
+const v2Queue = new DurableQueue({ dataDir, events: v2Events, concurrency: v2Concurrency });
+const v2Executor = (envelope, context) => v2Adapters.run(envelope, context);
+
+/** Routines materialise into envelope jobs; idempotencyKey makes each due time exactly-once. */
+function materialiseRoutine(routine, dueIso) {
+  const envelope = {
+    ...routine.envelope,
+    schemaVersion: 1,
+    idempotencyKey: `${routine.id}@${dueIso}`,
+    createdAt: new Date().toISOString(),
+  };
+  envelope.actionHash = computeActionHash(envelope);
+  v2Queue.enqueue(envelope);
+  v2Queue.runPending(v2Executor);
+}
+
+const v2Scheduler = new Scheduler({ dataDir, materialise: materialiseRoutine });
+const v2Timer = setInterval(() => {
+  v2Queue.expireLeases();
+  v2Queue.runPending(v2Executor);
+  v2Scheduler.tick();
+}, 1000);
+v2Timer.unref();
+
 // ---------------- HTTP API ----------------
+function readJsonBody(request, response, origin, onBody) {
+  let raw = '';
+  request.on('data', (chunk) => {
+    raw += chunk;
+    if (raw.length > 64 * 1024) request.destroy();
+  });
+  request.on('end', () => {
+    let body;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return send(response, 400, { error: 'invalid JSON' }, origin);
+    }
+    onBody(body);
+  });
+}
 function send(response, status, body, origin) {
   const headers = {
     'content-type': 'application/json',
@@ -267,6 +311,12 @@ const server = createServer((request, response) => {
         paired: authorized,
         queueDepth: jobs.filter((job) => job.status === 'queued' || job.status === 'running').length,
         adapters: Object.keys(ADAPTERS),
+        v2: {
+          adapters: v2Adapters.names,
+          concurrency: v2Concurrency,
+          queueDepth: v2Queue.list().filter((job) => ['queued', 'leased', 'running'].includes(job.status)).length,
+          eventsHead: { seq: v2Events.seq, chain: v2Events.chain },
+        },
       },
       origin,
     );
@@ -316,6 +366,73 @@ const server = createServer((request, response) => {
       saveJobs(jobs);
       setImmediate(pump);
       return send(response, 201, { jobId: job.id }, origin);
+    });
+    return;
+  }
+
+  // ---------------- v2 routes ----------------
+  if (request.method === 'GET' && url.pathname === '/events') {
+    const sinceRaw = Number(url.searchParams.get('since') ?? 0);
+    const since = Number.isFinite(sinceRaw) ? sinceRaw : 0;
+    return send(
+      response,
+      200,
+      { events: v2Events.readSince(since), head: { seq: v2Events.seq, chain: v2Events.chain } },
+      origin,
+    );
+  }
+
+  if (request.method === 'GET' && url.pathname === '/v2/jobs') {
+    return send(response, 200, { jobs: v2Queue.list().slice(-100) }, origin);
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v2/jobs') {
+    readJsonBody(request, response, origin, (body) => {
+      const envelope = body?.envelope;
+      const problems = validateEnvelope(envelope);
+      if (problems.length > 0) return send(response, 400, { error: problems.join('; ') }, origin);
+      if (!v2Adapters.has(envelope.adapter)) return send(response, 400, { error: `unknown adapter ${envelope.adapter}` }, origin);
+      const timeoutMs = Number(body.timeoutMs) > 0 ? Math.min(Number(body.timeoutMs), MAX_TIMEOUT_MS) : undefined;
+      const outcome = v2Queue.enqueue(envelope, { timeoutMs });
+      if (!outcome.ok) {
+        return send(response, outcome.code === 'duplicate' ? 409 : 400, { error: outcome.reason }, origin);
+      }
+      v2Queue.runPending(v2Executor);
+      return send(response, 201, { jobId: outcome.jobId }, origin);
+    });
+    return;
+  }
+
+  const v2JobMatch = /^\/v2\/jobs\/([A-Za-z0-9-]+)(\/cancel)?$/.exec(url.pathname);
+  if (v2JobMatch) {
+    const job = v2Queue.getJob(v2JobMatch[1]);
+    if (!job) return send(response, 404, { error: 'job not found' }, origin);
+    if (request.method === 'POST' && v2JobMatch[2] === '/cancel') {
+      return send(response, 200, { job: v2Queue.cancel(job.id) }, origin);
+    }
+    if (request.method === 'GET') {
+      return send(response, 200, { job }, origin);
+    }
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v2/routines') {
+    readJsonBody(request, response, origin, (body) => {
+      const routines = Array.isArray(body?.routines) ? body.routines : null;
+      if (!routines) return send(response, 400, { error: 'routines must be an array' }, origin);
+      for (const routine of routines) {
+        const problems = validateRoutine(routine);
+        if (routine?.envelope === undefined || typeof routine.envelope !== 'object') {
+          problems.push('envelope template is required');
+        } else if (!v2Adapters.has(routine.envelope.adapter)) {
+          problems.push(`unknown adapter ${routine.envelope?.adapter}`);
+        }
+        if (problems.length > 0) {
+          return send(response, 400, { error: `routine ${routine?.id ?? '?'}: ${problems.join('; ')}` }, origin);
+        }
+      }
+      v2Scheduler.setRoutines(routines);
+      const materialised = v2Scheduler.tick();
+      return send(response, 200, { routines: routines.length, materialised }, origin);
     });
     return;
   }

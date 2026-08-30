@@ -48,4 +48,13 @@ test.describe('workforce: crew, inbox, work thread', () => {
     // Terminal: no further human moves.
     await expect(page.getByTestId('work-actions')).toHaveCount(0);
   });
+
+  test('routines page renders honestly with no routines yet', async ({ page }) => {
+    await page.goto('/studio');
+    await page.getByLabel('Workspace name').fill('Routine smoke');
+    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await page.getByRole('link', { name: 'Routines', exact: true }).first().click();
+    await expect(page.getByRole('heading', { name: /Routines/i }).first()).toBeVisible();
+    await expect(page.getByText(/approved local or cloud execution host|approved skill/i).first()).toBeVisible();
+  });
 });
