@@ -82,7 +82,7 @@ export default function Artifacts() {
   async function handleSave() {
     if (!selectedPath) return;
     setError(null);
-    const result = await writeArtifactFile(artifactSet!.id, selectedPath, draft, 'human', 'Edited in the artifact workspace');
+    const result = await writeArtifactFile(artifactSet!.id, selectedPath, draft, 'human', 'Edited in the file workspace');
     if (!result.ok) setError(result.error.message);
     setPreviewNonce((nonce) => nonce + 1);
     setPreviewMessages([]);

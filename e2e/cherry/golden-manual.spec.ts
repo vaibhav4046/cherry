@@ -102,8 +102,8 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Move to EXECUTING' }).click();
     await expect(stateChip).toHaveText('EXECUTING');
 
-    await page.getByRole('button', { name: 'Create artifact workspace' }).click();
-    await page.getByRole('link', { name: 'Open artifact workspace' }).click();
+    await page.getByRole('button', { name: 'Create file workspace' }).click();
+    await page.getByRole('link', { name: 'Open file workspace' }).click();
 
     // Create a deliberately failing artifact (no h1)
     await page.locator('input[name="path"]').fill('index.html');
@@ -119,7 +119,7 @@ test.describe('golden manual journey', () => {
     await expect(page.getByText('Failed assertions')).toBeVisible();
 
     // Repair: fix the artifact, re-run, pass
-    await page.getByRole('link', { name: 'Open artifact workspace' }).click();
+    await page.getByRole('link', { name: 'Open file workspace' }).click();
     await page.getByRole('button', { name: 'index.html', exact: true }).click();
     await page
       .getByTestId('artifact-editor')

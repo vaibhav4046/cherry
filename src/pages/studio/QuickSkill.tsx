@@ -9,6 +9,7 @@ import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherr
 import { runVerification } from '../../cherry/verify/verification-service.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
+import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
 import { createArtifactSet, writeArtifactFile } from '../../cherry/artifacts/artifact-service.ts';
 import { getMission } from '../../cherry/mission/mission-service.ts';
 import {
@@ -31,7 +32,7 @@ type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
 /**
  * Quick Skill: paste a YouTube link (or skip the video), paste the transcript,
- * and Cherry deterministically drafts the SkillGraph. You review the steps,
+ * and Cherry deterministically drafts the skill. You review the steps,
  * approve, and download an installable bundle — one screen, real records at
  * every stage, same domain services as the manual flow.
  */
@@ -54,6 +55,10 @@ export default function QuickSkill() {
   const [outputNote, setOutputNote] = useState<string | null>(null);
   const [addingSource, setAddingSource] = useState(false);
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
+  const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
+  const captureRef = useRef<TabCapture | null>(null);
+  const [autoProgress, setAutoProgress] = useState<TranscribeProgress | null>(null);
+  const [capturing, setCapturing] = useState(false);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -86,7 +91,7 @@ export default function QuickSkill() {
         workspaceId,
         title: name || 'Quick skill (auto-named on generate)',
         objective: `Turn ${url ? 'a permitted video lesson' : 'lesson material'} into an approved, portable skill.`,
-        definitionOfDone: ['SkillGraph approved at its reviewed revision', 'Verification passes'],
+        definitionOfDone: ['Skill approved at the exact version you reviewed', 'Verification passes'],
       });
       if (!mission.ok) throw new Error(mission.error.message);
       const loaded = await loadLesson({
@@ -137,6 +142,49 @@ export default function QuickSkill() {
     for (const file of Array.from(files)) {
       const text = await file.text();
       await importText(text, 'user_upload', file.name);
+    }
+  }
+
+  function fillTranscript(text: string) {
+    if (transcriptRef.current) {
+      transcriptRef.current.value = text;
+      transcriptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  async function handleAutoFile(file: File) {
+    setError(null);
+    try {
+      const text = await transcribeMediaFile(file, setAutoProgress);
+      fillTranscript(text);
+    } catch (thrown) {
+      setAutoProgress(null);
+      setError(`On-device transcription failed: ${(thrown as Error).message}`);
+    }
+  }
+
+  async function handleCaptureToggle() {
+    setError(null);
+    if (capturing && captureRef.current) {
+      captureRef.current.stop();
+      return;
+    }
+    try {
+      const capture = await startTabAudioCapture();
+      captureRef.current = capture;
+      setCapturing(true);
+      setAutoProgress({ phase: 'transcribing', fraction: null, detail: 'Recording this tab. Play the video (1x keeps timestamps aligned), then press Stop.' });
+      const blob = await capture.result;
+      setCapturing(false);
+      captureRef.current = null;
+      const pcm = await decodeToMono16k(await blob.arrayBuffer());
+      const text = await transcribePcm(pcm, setAutoProgress);
+      fillTranscript(text);
+    } catch (thrown) {
+      setCapturing(false);
+      captureRef.current = null;
+      setAutoProgress(null);
+      setError(`Tab capture failed: ${(thrown as Error).message}`);
     }
   }
 
@@ -308,6 +356,44 @@ export default function QuickSkill() {
               </div>
             </div>
           ) : null}
+          <div className="card card-wash-lavender stack" data-testid="auto-transcribe">
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <h2 className="subhead">Auto-transcribe on this device</h2>
+              <span className="sticker">no key · audio never leaves this machine</span>
+            </div>
+            <p style={{ fontSize: 13, margin: 0 }}>
+              Whisper (tiny) runs in your browser — WebGPU when available. It downloads once (~40 MB),
+              then works offline. The result is a <strong>draft</strong>: small models mishear, so review
+              the text below before deriving. Pasting the official transcript stays the exact path.
+            </p>
+            <div className="row">
+              <button type="button" className={capturing ? 'btn btn-danger' : 'btn btn-primary'} onClick={() => void handleCaptureToggle()} data-testid="capture-tab-audio">
+                {capturing ? 'Stop capture & transcribe' : 'Capture this tab\u2019s audio'}
+              </button>
+              <label className="btn">
+                Transcribe a media file
+                <input
+                  type="file"
+                  accept="audio/*,video/*"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) void handleAutoFile(file);
+                  }}
+                />
+              </label>
+            </div>
+            {autoProgress ? (
+              <p className="sticker sticker-wait" role="status" style={{ whiteSpace: 'normal' }}>
+                {autoProgress.detail}
+              </p>
+            ) : null}
+            <p className="label" style={{ margin: 0 }}>
+              Capture flow: press capture, choose this tab and tick "share tab audio", play the video, stop.
+              Cherry never touches YouTube data — it transcribes your own playback, locally.
+            </p>
+          </div>
+
           <div className="card card-wash-sky stack">
             <h2 className="subhead">Paste the transcript</h2>
             <p style={{ fontSize: 13, margin: 0 }}>
@@ -323,7 +409,7 @@ export default function QuickSkill() {
               }}
               className="stack"
             >
-              <textarea className="textarea" name="transcript" required style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" />
+              <textarea ref={transcriptRef} className="textarea" name="transcript" required style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" />
               <div className="row">
                 <button type="submit" className="btn btn-primary" disabled={busy} data-testid="quick-transcript-next">
                   {busy ? 'Parsing…' : 'Derive the skill'}
@@ -489,7 +575,7 @@ export default function QuickSkill() {
                 <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
                   {Icons.approve(16)} {busy ? 'Generating…' : `Generate & approve ${kept.size} steps`}
                 </button>
-                <span className="label">Approving records a real exact-revision approval by you.</span>
+                <span className="label">Approving records a real approval at the exact version you reviewed by you.</span>
               </div>
             </section>
           </div>

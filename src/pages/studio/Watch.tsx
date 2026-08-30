@@ -347,7 +347,7 @@ export default function Watch() {
                   </button>
                 </div>
               ))}
-              {observations.length === 0 ? <p>None yet. Observations become the evidence behind the SkillGraph.</p> : null}
+              {observations.length === 0 ? <p>None yet. Observations become the evidence behind the skill.</p> : null}
             </div>
           </section>
         </div>

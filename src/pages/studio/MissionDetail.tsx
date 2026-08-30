@@ -163,7 +163,7 @@ export default function MissionDetail() {
 
   async function handleRequestApproval() {
     await act(async () => {
-      const request = await requestSkillGraphApproval(graph!.id, 'Please review this skill graph revision', 'user');
+      const request = await requestSkillGraphApproval(graph!.id, 'Please review this skill revision', 'user');
       if (request.ok && mission!.state === 'PLANNING') {
         await transitionMission(mission!.id, 'AWAITING_APPROVAL');
       }
@@ -177,7 +177,7 @@ export default function MissionDetail() {
       if (!set.ok) return set;
       await updateMission(mission!.id, { artifactSetId: set.value.id });
       return set;
-    }, 'Artifact workspace created');
+    }, 'File workspace created');
   }
 
   async function handleVerify() {
@@ -292,7 +292,7 @@ export default function MissionDetail() {
             </>
           ) : (
             <>
-              <p>No skill graph yet. Compile the lesson from Cherry Watch, or draft one from the mission.</p>
+              <p>No skill yet. Compile the lesson from Cherry Watch, or draft one from the mission.</p>
               <button type="button" className="btn" onClick={() => void handleDraftGraph()}>Draft SkillGraph</button>
             </>
           )}
@@ -301,11 +301,11 @@ export default function MissionDetail() {
         <section className="card card-wash-mint stack" aria-labelledby="artifact-heading">
           <h2 id="artifact-heading" className="subhead">Files & preview</h2>
           {mission.artifactSetId ? (
-            <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-primary">Open artifact workspace</Link>
+            <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-primary">Open file workspace</Link>
           ) : (
             <>
               <p>The actual output of this mission: HTML, CSS, JS, Markdown, JSON. Every save is versioned and hashed; the preview runs sealed off from your data.</p>
-              <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create artifact workspace</button>
+              <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create file workspace</button>
             </>
           )}
         </section>

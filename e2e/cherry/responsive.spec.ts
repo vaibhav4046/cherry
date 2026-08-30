@@ -65,8 +65,8 @@ test.describe('artifact preview isolation', () => {
     await page.getByLabel('Objective').fill('Prove the preview sandbox holds');
     await page.getByLabel('Definition of done (one item per line)').fill('sandbox holds');
     await page.getByRole('button', { name: 'Create mission' }).click();
-    await page.getByRole('button', { name: 'Create artifact workspace' }).click();
-    await page.getByRole('link', { name: 'Open artifact workspace' }).click();
+    await page.getByRole('button', { name: 'Create file workspace' }).click();
+    await page.getByRole('link', { name: 'Open file workspace' }).click();
 
     await page.locator('input[name="path"]').fill('index.html');
     await page.getByRole('button', { name: 'Create file' }).click();

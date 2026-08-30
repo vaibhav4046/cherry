@@ -73,7 +73,7 @@ export default function RoutinesPage() {
       {graphs.length === 0 ? (
         <section className="card card-wash-lavender stack">
           <h2 className="subhead" style={{ fontSize: 20 }}>No approved skills yet</h2>
-          <p style={{ margin: 0 }}>A routine runs an approved skill graph. Approve one in Skills first.</p>
+          <p style={{ margin: 0 }}>A routine runs an approved skill. Approve one in Skills first.</p>
           <Link to="/studio/skills" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Go to Skills</Link>
         </section>
       ) : (
