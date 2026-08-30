@@ -48,6 +48,7 @@ export function ClipVideo({ src, variant = 'card', className }: ClipVideoProps) 
       className={`${variant === 'bg' ? 'clip-bg' : 'clip-card'}${className ? ` ${className}` : ''}`}
       src={src}
       muted
+      autoPlay
       loop
       playsInline
       preload="metadata"
