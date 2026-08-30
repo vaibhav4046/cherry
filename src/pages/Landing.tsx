@@ -4,6 +4,7 @@ import { CherryBurst } from '../components/CherryBurst.tsx';
 import { CherryMascot } from '../components/CherryMascot.tsx';
 import { useReveal } from '../components/useReveal.ts';
 import { CarryFlow, ConnectArch, ProofFlow, RaysBurst, TeachFlow } from '../components/Diagrams.tsx';
+import { ClipVideo } from '../components/ClipVideo.tsx';
 
 const MARQUEE_TEXT =
   'CHERRY WINE · TEACH ONCE · PROVE IT · KEEP IT · LOCAL-FIRST · NO API KEY REQUIRED · ';
@@ -32,6 +33,7 @@ export function Landing() {
       <main>
         {/* ---- Hero: the tagline, the cherry, nothing else ---- */}
         <section className="band band-maroon ribbon-wrap hero-cinema" aria-labelledby="hero-heading">
+          <ClipVideo src="/clips/hero-loop.mp4" variant="bg" />
           <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
           <div className="band-inner ribbon-fg hero-grid">
             <div className="stack" style={{ gap: 'var(--sp-5)' }}>
@@ -72,8 +74,9 @@ export function Landing() {
                   becomes a skill until you approve the exact revision you read.
                 </p>
               </div>
-              <div className="reveal">
-                <CherryMascot pose="point" size={120} line="Every step keeps its receipt." />
+              <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
+                <ClipVideo src="/clips/split-reveal.mp4" />
+                <CherryMascot pose="point" size={100} line="Every step keeps its receipt." />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
@@ -86,7 +89,7 @@ export function Landing() {
         <section className="band band-blush" aria-labelledby="prove-heading">
           <div className="band-inner">
             <div className="chapter-head">
-              <span className="chapter-num" aria-hidden="true">02</span>
+<span className="chapter-num" aria-hidden="true">02</span>
               <div className="stack" style={{ gap: 'var(--sp-3)', flex: 1, minWidth: 260 }}>
                 <p className="kicker">Prove</p>
                 <h2 id="prove-heading" className="display-sm">Receipts, not promises</h2>
@@ -94,6 +97,9 @@ export function Landing() {
                   Every action is hashed into a receipt anyone can recompute. Tamper-evident by
                   construction — and honestly labelled: it's a hash chain, not a signature.
                 </p>
+              </div>
+              <div className="reveal">
+                <ClipVideo src="/clips/proof-seal.mp4" />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
@@ -116,8 +122,9 @@ export function Landing() {
                   reasons under its own plan — and no tool can approve, trust, or remember for you.
                 </p>
               </div>
-              <div className="reveal">
-                <CherryMascot pose="wave" size={120} flip line="I hand your agent five tools at a time." />
+              <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
+                <ClipVideo src="/clips/crew-constellation.mp4" />
+                <CherryMascot pose="wave" size={100} flip line="I hand your agent five tools at a time." />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
@@ -138,6 +145,9 @@ export function Landing() {
                   One bundle installs into Claude Code and Codex, with a standalone verifier anyone can
                   run — no Cherry required.
                 </p>
+              </div>
+              <div className="reveal">
+                <ClipVideo src="/clips/carry-case.mp4" />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>

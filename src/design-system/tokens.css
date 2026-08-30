@@ -615,6 +615,26 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.45); }
 
 .guarantee-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-5); }
 
+/* ---------- Brand clips (generated illustration, never proof) ---------- */
+.clip-card {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 143, 171, 0.45);
+}
+.clip-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* ---------- Workforce motion: honest status pulse ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .sticker-blue { animation: status-pulse 2.2s ease-in-out infinite; }
