@@ -1,0 +1,105 @@
+{
+  "version": "1.0.0",
+  "brand": "Cherry Wine",
+  "palette": {
+    "ink": "#16080D",
+    "wine": "#3B0D1C",
+    "plum": "#52152A",
+    "pink": "#F23873",
+    "blush": "#FF9DBA",
+    "cream": "#FFF1E8",
+    "leaf": "#8FD34F",
+    "proofBlue": "#474DFF"
+  },
+  "assets": [
+    {
+      "id": "hero",
+      "file": "cherry-hero-engraving.png",
+      "webp": "cherry-hero-engraving.webp",
+      "avif": "cherry-hero-engraving.avif",
+      "width": 1536,
+      "height": 1024,
+      "role": "hero editorial plate",
+      "decorative": true
+    },
+    {
+      "id": "teach",
+      "file": "cherry-teach-plate.png",
+      "webp": "cherry-teach-plate.webp",
+      "avif": "cherry-teach-plate.avif",
+      "width": 1619,
+      "height": 971,
+      "role": "teach section plate",
+      "decorative": true
+    },
+    {
+      "id": "proof",
+      "file": "cherry-proof-receipt.png",
+      "webp": "cherry-proof-receipt.webp",
+      "avif": "cherry-proof-receipt.avif",
+      "width": 1619,
+      "height": 971,
+      "role": "proof section plate",
+      "decorative": true
+    },
+    {
+      "id": "connect",
+      "file": "cherry-connect-bridge.png",
+      "webp": "cherry-connect-bridge.webp",
+      "avif": "cherry-connect-bridge.avif",
+      "width": 1619,
+      "height": 971,
+      "role": "connect section plate",
+      "decorative": true
+    },
+    {
+      "id": "carry",
+      "file": "cherry-carry-bundle.png",
+      "webp": "cherry-carry-bundle.webp",
+      "avif": "cherry-carry-bundle.avif",
+      "width": 1619,
+      "height": 971,
+      "role": "carry section plate",
+      "decorative": true
+    },
+    {
+      "id": "seal",
+      "file": "cherry-seal-mark.png",
+      "webp": "cherry-seal-mark.webp",
+      "width": 1254,
+      "height": 1254,
+      "role": "transparent trust/receipt ornament",
+      "decorative": true,
+      "alpha": true
+    },
+    {
+      "id": "poster",
+      "file": "cherry-film-poster.png",
+      "webp": "cherry-film-poster.webp",
+      "avif": "cherry-film-poster.avif",
+      "width": 1672,
+      "height": 941,
+      "role": "hero film poster",
+      "decorative": true
+    },
+    {
+      "id": "og",
+      "file": "cherry-og-social.png",
+      "webp": "cherry-og-social.webp",
+      "avif": "cherry-og-social.avif",
+      "width": 1200,
+      "height": 630,
+      "role": "Open Graph share-card background",
+      "decorative": true
+    }
+  ],
+  "video": {
+    "master16x9": "cherry-hero-film-16x9.mp4",
+    "webm16x9": "cherry-hero-film-16x9.webm",
+    "mobile9x16": "cherry-hero-film-9x16.mp4",
+    "loop8s": "cherry-hero-loop-8s.webm",
+    "poster": "cherry-film-poster.webp",
+    "silent": true,
+    "loop": true
+  }
+}

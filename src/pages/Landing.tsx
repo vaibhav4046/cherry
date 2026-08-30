@@ -33,7 +33,7 @@ export function Landing() {
       <main>
         {/* ---- Hero: the tagline, the cherry, nothing else ---- */}
         <section className="band band-maroon ribbon-wrap hero-cinema" aria-labelledby="hero-heading">
-          <ClipVideo src="/clips/hero-loop.mp4" variant="bg" />
+          <ClipVideo src="/clips/hero-loop.mp4" poster="/clips/hero-loop-poster.webp" variant="bg" />
           <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
           <div className="band-inner ribbon-fg hero-grid">
             <div className="stack" style={{ gap: 'var(--sp-5)' }}>
@@ -75,7 +75,10 @@ export function Landing() {
                 </p>
               </div>
               <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
-                <ClipVideo src="/clips/split-reveal.mp4" />
+                <ClipVideo
+                  src="/media/cherry-editorial/video/cherry-lesson-seed-16x9.mp4"
+                  poster="/media/cherry-editorial/video/cherry-lesson-seed-poster.webp"
+                />
                 <CherryMascot pose="point" size={100} line="Every step keeps its receipt." />
               </div>
             </div>
@@ -99,7 +102,10 @@ export function Landing() {
                 </p>
               </div>
               <div className="reveal">
-                <ClipVideo src="/clips/proof-seal.mp4" />
+                <ClipVideo
+                  src="/media/cherry-editorial/video/cherry-proof-approval-16x9.mp4"
+                  poster="/media/cherry-editorial/video/cherry-proof-approval-poster.webp"
+                />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
@@ -123,7 +129,7 @@ export function Landing() {
                 </p>
               </div>
               <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
-                <ClipVideo src="/clips/crew-constellation.mp4" />
+                <ClipVideo src="/clips/crew-constellation.mp4" poster="/clips/crew-constellation-poster.webp" />
                 <CherryMascot pose="wave" size={100} flip line="I hand your agent five tools at a time." />
               </div>
             </div>
@@ -147,7 +153,10 @@ export function Landing() {
                 </p>
               </div>
               <div className="reveal">
-                <ClipVideo src="/clips/carry-case.mp4" />
+                <ClipVideo
+                  src="/media/cherry-editorial/video/cherry-carry-forward-16x9.mp4"
+                  poster="/media/cherry-editorial/video/cherry-carry-forward-poster.webp"
+                />
               </div>
             </div>
             <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
@@ -159,7 +168,21 @@ export function Landing() {
         {/* ---- Guarantees ---- */}
         <section id="security" className="band band-gray" aria-labelledby="security-heading">
           <div className="band-inner">
-            <h2 id="security-heading" className="display-sm">Trust is a feature</h2>
+            <div className="row" style={{ alignItems: 'center', gap: 'var(--sp-5)' }}>
+              <h2 id="security-heading" className="display-sm" style={{ margin: 0 }}>Trust is a feature</h2>
+              <picture>
+                <source srcSet="/media/cherry-editorial/cherry-seal-mark.webp" type="image/webp" />
+                <img
+                  src="/media/cherry-editorial/cherry-seal-mark.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={88}
+                  height={88}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
+            </div>
             <div className="guarantee-row reveal reveal-stagger" style={{ marginTop: 'var(--sp-8)' }}>
               <div className="stack" style={{ gap: 'var(--sp-2)' }}>
                 <span className="sticker sticker-fail">Untrusted by default</span>
