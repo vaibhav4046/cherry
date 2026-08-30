@@ -73,7 +73,8 @@ export default function QuickSkill() {
     const data = new FormData(event.currentTarget);
     const url = String(data.get('url') ?? '').trim();
     const name = String(data.get('name') ?? '').trim();
-    const permission = data.get('permission') === 'on';
+    // Consent line sits beside the submit; submitting is the acknowledgment gesture.
+    const permission = true;
     await withBusy(async () => {
       let workspaceId = activeWorkspace?.id;
       if (!workspaceId) {
@@ -252,23 +253,26 @@ export default function QuickSkill() {
       {stage === 'source' ? (
         <form onSubmit={handleSource} className="card stack" style={{ gap: 'var(--sp-4)' }}>
           <label className="field">
-            <span>YouTube link (leave blank for a manual lesson)</span>
-            <input className="input" name="url" placeholder="https://youtu.be/…" inputMode="url" />
+            <span>Paste a YouTube link — that is all Cherry needs</span>
+            <input className="input" name="url" placeholder="https://youtu.be/…" inputMode="url" autoFocus style={{ fontSize: 17, padding: '16px 20px' }} />
           </label>
-          <label className="field">
-            <span>Skill name</span>
-            <input className="input" name="name" maxLength={120} placeholder="Leave blank — Cherry names it from the content" />
-          </label>
-          <label className="row" style={{ fontSize: 13 }}>
-            <input type="checkbox" name="permission" style={{ width: 20, height: 20 }} />
-            I am permitted to learn from this source, and I will not copy its branding or assets.
-          </label>
-          <p className="label">
-            The video plays in the official YouTube player. Cherry never scrapes captions or media.
-          </p>
+          <details>
+            <summary className="label" style={{ cursor: 'pointer' }}>More options</summary>
+            <div className="stack" style={{ gap: 'var(--sp-3)', marginTop: 'var(--sp-3)' }}>
+              <label className="field">
+                <span>Skill name</span>
+                <input className="input" name="name" maxLength={120} placeholder="Leave blank — Cherry names it from the content" />
+              </label>
+              <p className="label" style={{ margin: 0 }}>No video? Leave the link blank and paste notes on the next step instead.</p>
+            </div>
+          </details>
           <button type="submit" className="btn btn-primary" disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="quick-source-next">
             {Icons.quick(16)} {busy ? 'Setting up…' : 'Continue'}
           </button>
+          <p className="label" style={{ margin: 0 }}>
+            Continuing confirms you may learn from this source and will not copy its branding or assets.
+            The video plays in the official YouTube player — Cherry never scrapes captions or media.
+          </p>
         </form>
       ) : null}
 

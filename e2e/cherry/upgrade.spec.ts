@@ -149,8 +149,8 @@ test.describe('quick skill wizard', () => {
     await expect(page.getByRole('heading', { name: 'Quick Skill' })).toBeVisible();
 
     // Stage 1: manual lesson (no video needed in CI), name, permission.
+    await page.getByText('More options').click();
     await page.getByLabel('Skill name').fill('Wizard hero workflow');
-    await page.locator('input[name="permission"]').check();
     await page.getByTestId('quick-source-next').click();
 
     // Stage 2: paste a transcript.
@@ -193,6 +193,7 @@ test.describe('quick skill wizard', () => {
 
   test('wizard refuses an empty transcript path honestly', async ({ page }) => {
     await page.goto('/studio/quick');
+    await page.getByText('More options').click();
     await page.getByLabel('Skill name').fill('No transcript');
     await page.getByTestId('quick-source-next').click();
     await expect(page.getByTestId('quick-transcript')).toBeVisible();
