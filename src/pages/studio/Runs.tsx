@@ -87,7 +87,7 @@ export default function Runs() {
                 <tr key={run.id}>
                   <td>
                     <strong>{run.summary}</strong>
-                    {run.detail ? <div style={{ fontSize: 12, color: '#555' }}>{run.detail}</div> : null}
+                    {run.detail ? <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>{run.detail}</div> : null}
                     {run.provider ? (
                       <div className="label">provider: {run.provider.kind} ({run.provider.status}) — verified separately</div>
                     ) : null}

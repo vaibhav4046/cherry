@@ -33,10 +33,10 @@ export function Landing() {
         {/* ---- Hero: the tagline, the cherry, nothing else ---- */}
         <section className="band band-maroon ribbon-wrap hero-cinema" aria-labelledby="hero-heading">
           <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
-          <Ribbon color="var(--color-cherry-pop)" />
           <div className="band-inner ribbon-fg hero-grid">
             <div className="stack" style={{ gap: 'var(--sp-5)' }}>
-              <p className="kicker">Cherry Wine · open source · local-first · no API key</p>
+              <p className="script-mark">Cherry</p>
+              <p className="kicker">open source · local-first · no API key</p>
               <h1 id="hero-heading" className="type-3d">
                 <span className="rise-line">Teach once.</span>{' '}
                 <span className="rise-line">Prove it.</span>{' '}
@@ -185,8 +185,8 @@ export function Landing() {
               same product — it never unlocks a different one.
             </p>
             <div className="row" style={{ justifyContent: 'center', marginTop: 'var(--sp-6)' }}>
-              <Link to="/studio?demo=1" className="btn" style={{ background: 'var(--color-cream)' }}>Try the guided example</Link>
-              <Link to="/compatibility" className="btn" style={{ background: 'var(--color-cream)' }}>See what's proven</Link>
+              <Link to="/studio?demo=1" className="btn">Try the guided example</Link>
+              <Link to="/compatibility" className="btn">See what's proven</Link>
             </div>
           </div>
         </section>

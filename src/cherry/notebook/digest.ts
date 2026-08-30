@@ -118,6 +118,7 @@ export interface SourceInfo {
   title: string;
   summary: string;
   segmentCount: number;
+  kind?: 'paste' | 'file';
 }
 
 function stamp(seconds: number): string {

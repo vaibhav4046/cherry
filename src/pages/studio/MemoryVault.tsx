@@ -203,7 +203,7 @@ export default function MemoryVault() {
                   <tr key={memory.id}>
                     <td>
                       <strong>{memory.pinned ? '📌 ' : ''}{memory.title}</strong>
-                      <div style={{ fontSize: 12, color: '#555' }}>{memory.content.slice(0, 160)}</div>
+                      <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>{memory.content.slice(0, 160)}</div>
                     </td>
                     <td>{memory.type} / {memory.scope}</td>
                     <td>

@@ -52,6 +52,7 @@ export default function QuickSkill() {
   const [sources, setSources] = useState<SourceInfo[]>([]);
   const [digest, setDigest] = useState<SourceDigest | null>(null);
   const [outputNote, setOutputNote] = useState<string | null>(null);
+  const [addingSource, setAddingSource] = useState(false);
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
@@ -117,6 +118,7 @@ export default function QuickSkill() {
           title: fileName ?? `Pasted text ${current.length + 1}`,
           summary: summarizeText(text),
           segmentCount: imported.value.segmentCount,
+          kind: fileName ? 'file' : 'paste',
         },
       ]);
       const preview = await previewQuickSkill(lesson!.id);
@@ -124,6 +126,7 @@ export default function QuickSkill() {
       setDraft(preview.value);
       setKept(new Set(preview.value.steps.map((_, index) => index)));
       setDigest(digestSegments(await listTranscript(lesson!.id)));
+      setAddingSource(false);
       setStage('review');
     });
   }
@@ -344,28 +347,89 @@ export default function QuickSkill() {
       {stage === 'review' && draft ? (
         <div className="notebook-grid" data-testid="notebook">
           {/* ---- Sources pane ---- */}
-          <section className="card card-wash-sky stack" aria-labelledby="sources-heading" style={{ alignSelf: 'start' }}>
-            <h2 id="sources-heading" className="subhead" style={{ fontSize: 20 }}>Sources ({sources.length})</h2>
+          <section className="card card-wash-sky stack" aria-labelledby="sources-heading" style={{ alignSelf: 'start', gap: 'var(--sp-3)' }}>
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <h2 id="sources-heading" className="kicker" style={{ fontSize: 13 }}>Sources</h2>
+              <span className="sticker">{sources.length}</span>
+            </div>
+            {addingSource ? (
+              <form
+                className="stack"
+                style={{ gap: 'var(--sp-2)' }}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const text = String(new FormData(event.currentTarget).get('transcript') ?? '');
+                  void importText(text, 'user_text');
+                }}
+              >
+                <textarea
+                  className="textarea"
+                  name="transcript"
+                  required
+                  style={{ minHeight: 120 }}
+                  placeholder="Paste another transcript, notes, or a doc…"
+                  data-testid="quick-transcript"
+                />
+                <div className="row">
+                  <button type="submit" className="btn btn-sm btn-primary" disabled={busy} data-testid="quick-transcript-next">
+                    {busy ? 'Adding…' : 'Add to notebook'}
+                  </button>
+                  <label className="btn btn-sm">
+                    Upload files
+                    <input
+                      type="file"
+                      accept=".txt,.srt,.vtt,text/plain"
+                      multiple
+                      className="sr-only"
+                      onChange={(event) => {
+                        const files = event.currentTarget.files;
+                        if (files && files.length > 0) void importFiles(files);
+                      }}
+                    />
+                  </label>
+                  <button type="button" className="btn btn-sm" onClick={() => setAddingSource(false)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => setAddingSource(true)}
+                data-testid="quick-add-source"
+                style={{ justifyContent: 'center' }}
+              >
+                + Add source
+              </button>
+            )}
             {sources.map((source, index) => (
               <div key={index} className="card stack" style={{ padding: 'var(--sp-3)', gap: 4 }} data-testid="source-card">
-                <strong style={{ fontSize: 13 }}>{source.title}</strong>
-                <span style={{ fontSize: 12, color: '#444' }}>{source.summary}</span>
+                <strong style={{ fontSize: 13, display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                  {source.kind === 'file' ? Icons.download(14) : Icons.copy(14)} {source.title}
+                </strong>
+                <span style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>{source.summary}</span>
                 <span className="label">{source.segmentCount} segments</span>
               </div>
             ))}
-            <button type="button" className="btn btn-sm" onClick={() => setStage('transcript')} data-testid="quick-add-source">
-              + Add source
-            </button>
             <p className="label" style={{ margin: 0 }}>
-              Files, pasted text, YouTube transcripts — everything lands as untrusted, timestamped evidence.
+              Everything lands as untrusted, timestamped evidence.
             </p>
           </section>
 
           {/* ---- Overview pane ---- */}
           <div className="stack" style={{ gap: 'var(--sp-4)', minWidth: 0 }}>
+            <section className="card stack" style={{ gap: 4, padding: 'var(--sp-4)' }}>
+              <p className="kicker" style={{ fontSize: 11 }}>Notebook</p>
+              <h2 className="subhead" style={{ fontSize: 22, margin: 0 }}>{skillName.trim() || lesson?.title || 'Untitled notebook'}</h2>
+              <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>
+                {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {digest?.wordCount ?? 0} words ingested · named for you
+              </span>
+            </section>
             {digest ? (
               <section className="card stack" aria-labelledby="overview-heading" data-testid="notebook-overview">
-                <h2 id="overview-heading" className="subhead" style={{ fontSize: 20 }}>Overview — generated instantly, no model, no key</h2>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <h2 id="overview-heading" className="subhead" style={{ fontSize: 20 }}>Overview</h2>
+                  <span className="sticker sticker-pass">instant · no model · no key</span>
+                </div>
                 {digest.summary.map((sentence, index) => (
                   <p key={index} style={{ margin: 0, fontSize: 14 }}>{sentence}</p>
                 ))}
@@ -433,14 +497,17 @@ export default function QuickSkill() {
               One-click documents built from your sources. Saved as real files in the mission workspace
               and downloaded.
             </p>
-            <button type="button" className="btn" onClick={() => void handleStudioOutput('briefing')} disabled={busy} data-testid="studio-briefing">
-              {Icons.proof(15)} Briefing doc
+            <button type="button" className="studio-card" onClick={() => void handleStudioOutput('briefing')} disabled={busy} data-testid="studio-briefing">
+              <span className="studio-card-title">{Icons.proof(15)} Briefing doc</span>
+              <span className="studio-card-sub">The lesson as a story — cited, timestamped</span>
             </button>
-            <button type="button" className="btn" onClick={() => void handleStudioOutput('study-guide')} disabled={busy} data-testid="studio-guide">
-              {Icons.memory(15)} Study guide
+            <button type="button" className="studio-card" onClick={() => void handleStudioOutput('study-guide')} disabled={busy} data-testid="studio-guide">
+              <span className="studio-card-title">{Icons.memory(15)} Study guide</span>
+              <span className="studio-card-sub">Practice checklist + review questions</span>
             </button>
-            <button type="button" className="btn" onClick={() => void handleStudioOutput('faq')} disabled={busy} data-testid="studio-faq">
-              {Icons.skills(15)} FAQ
+            <button type="button" className="studio-card" onClick={() => void handleStudioOutput('faq')} disabled={busy} data-testid="studio-faq">
+              <span className="studio-card-title">{Icons.skills(15)} FAQ</span>
+              <span className="studio-card-sub">Answers pulled straight from your sources</span>
             </button>
             {outputNote ? <p className="sticker sticker-pass" role="status" style={{ whiteSpace: 'normal' }}>{outputNote}</p> : null}
           </section>

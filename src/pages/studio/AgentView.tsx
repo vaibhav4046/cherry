@@ -175,7 +175,7 @@ export default function AgentView() {
                     {call.ok ? 'ok' : 'error'}
                   </span>
                   <span className="mono">{call.name}</span>
-                  <span style={{ fontSize: 12, color: '#555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, color: 'var(--color-ink-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {call.resultPreview}
                   </span>
                 </div>
