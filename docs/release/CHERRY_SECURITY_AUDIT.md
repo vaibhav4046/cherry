@@ -89,3 +89,28 @@ Runner integration tests (9, all passing) demonstrate:
   captions or media, no undocumented endpoints, no login automation of any provider site.
 
 **Result: PASS**
+
+## Adversarial re-review — 2026-08-30 (independent refutation pass)
+
+A second, independent pass whose explicit job was to REFUTE the five highest-risk claims.
+
+| Claim | Verdict | Notes |
+|---|---|---|
+| Artifact preview sandbox network-blocked + isolated | CONFIRMED | `allow-scripts` only, CSP `default-src 'none'`; pinned by `e2e/cherry/responsive.spec.ts` malicious-artifact test |
+| Exact-revision approval binding; no tool can approve | CONFIRMED | `decideSkillGraphApproval` rejects replay + stale revision; approval function never registered as a WebMCP tool |
+| Transcript/article text cannot become tool policy | CONFIRMED | no eval/innerHTML in `src/`; `untrustedContentHint` on ingest tools; trust raised only by the user |
+| Bundle/receipt tamper detection, hash not signature | CONFIRMED | RFC 8785-style canonical JSON + SHA-256; one-byte tamper pinned by unit test and `scripts/verify-release.mjs` |
+| YouTube bridge origin/source validation | REFUTED as previously worded — FIXED same day | Outbound player commands used wildcard `'*'` targetOrigin and inbound messages did not check `event.source`. Practical severity was low (`event.origin` allowlist and JSON-parse guard were already in place; messages carry playback commands only, no secrets). |
+
+Fixes landed 2026-08-30:
+
+- `src/pages/studio/Watch.tsx`: outbound `postMessage` now targets the exact embed origin
+  `https://www.youtube-nocookie.com` (never `'*'`), and the inbound handler rejects any message
+  whose `event.source` is not the player iframe's `contentWindow`.
+- `src/pages/studio/Artifacts.tsx`: the preview-message listener now accepts only messages with
+  the sandboxed frame's opaque origin (`'null'`) AND `event.source === previewFrameRef.contentWindow`,
+  closing a low-value proof-event forgery path.
+
+Sweep results: no credential-shaped strings outside deliberate redaction-test fixtures; no
+`eval` / `new Function` / `dangerouslySetInnerHTML` / `innerHTML` in `src/`; no sensitive
+`console.log` in production paths.

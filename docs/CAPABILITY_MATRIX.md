@@ -1,0 +1,41 @@
+# Cherry capability matrix
+
+**Date:** 2026-08-30 · **Commit:** 5297dad
+
+States used: `live_local` (works now, in-browser, no setup), `live_with_user_consent`
+(works now but requires an explicit user permission/gesture), `setup_required` (works after
+the user runs/installs something), `experimental` (implemented, not validated in a live
+target environment), `unavailable_in_current_host` (depends on a host capability this
+environment cannot provide), `disabled_for_safety` (deliberately not built/blocked).
+
+Rows marked "not implemented" have no code behind them; nothing in the UI pretends otherwise.
+
+| Capability | State | Notes | Evidence / where in code |
+|---|---|---|---|
+| Local workspace + missions (guest-first, IndexedDB) | live_local | No account, no server; refresh-safe; every mutation emits a ProofEvent | `src/cherry/persistence/cherry-db.ts`, `src/cherry/mission/mission-service.ts`, e2e `e2e/cherry/golden-manual.spec.ts` |
+| YouTube lesson via official embed | live_with_user_consent | Official `youtube-nocookie.com/embed` player only; loading refuses without permission acknowledgement; no caption/media scraping | `src/cherry/watch/youtube-url.ts`, `src/cherry/watch/lesson-service.ts`, tests `tests/cherry/watch.test.ts` |
+| Tab-audio capture | live_with_user_consent | `getDisplayMedia({ audio: true })` — user must pick the tab and tick "share tab audio"; recording stays local | `src/cherry/transcribe/local-whisper.ts` (`startTabAudioCapture`), UI `src/pages/studio/QuickSkill.tsx` |
+| On-device Whisper transcription (file + tab audio) | live_local | Whisper tiny.en via transformers.js, WebGPU → WASM fallback; model weights download once from the Hugging Face CDN then cache (first use needs network); output labelled a draft | `src/cherry/transcribe/local-whisper.ts`, `src/cherry/transcribe/whisper-format.ts`, tests `tests/cherry/whisper-format.test.ts` |
+| Transcript paste/upload (.txt/.srt/.vtt) | live_local | YouTube "Show transcript" copy formats parsed natively; content enters the ledger untrusted | `src/cherry/watch/transcript-parser.ts`, tests `tests/cherry/watch.test.ts` |
+| Timestamped observations + computed coverage | live_local | Coverage computed against declared segments/criteria, never invented; gaps shown honestly | `src/cherry/watch/coverage.ts`, golden journey e2e |
+| Evidence ledger / trust promotion | live_local | Everything external starts `untrusted`; `setEvidenceTrust` rejects non-human actors | `src/cherry/evidence/evidence-service.ts`, test "evidence trust boundary" in `tests/cherry/domain-flow.test.ts` |
+| SkillGraph editing + versioning | live_local | Editable, versioned, vendor-neutral; validator + rollback | `src/cherry/skillgraph/skillgraph-service.ts`, `skillgraph-validator.ts` |
+| Quick Skill deterministic derivation | live_local | Rules-based imperative-sentence derivation, labelled "not a model" (decision D-011) | `src/cherry/skillgraph/quick-skill.ts`, `auto-draft.ts`, tests `tests/cherry/quick-skill.test.ts` |
+| Exact-revision approval | live_local | Approval binds to the reviewed revision; any edit invalidates; agents can request, never grant | `src/cherry/approval/`, enforcement in `skillgraph-service.ts`, stale-approval tests in `tests/cherry/domain-flow.test.ts` |
+| Artifact workspace + sandboxed preview | live_local | Real versioned files; preview iframe `sandbox="allow-scripts"` + `default-src 'none'` CSP; hostile-artifact e2e probe | `src/cherry/artifacts/`, probe in `e2e/cherry/responsive.spec.ts` |
+| Deterministic verify (fail → repair → pass) | live_local | File/DOM/hash/placeholder/a11y/graph assertions against actual files; failures link evidence | `src/cherry/verify/verification-service.ts` |
+| Memory proposals + human promotion | live_local | Agents propose; activation requires a human decision; correction compiler turns failures into scoped rules | `src/cherry/memory/memory-service.ts` |
+| Skill bundle export (Codex / Claude Code / standalone verifier) | live_local | ZIP with MANIFEST hashes, receipt, `scripts/verify.mjs` that fails on one-byte tamper | `src/cherry/compiler/`, tests `tests/cherry/compiler.test.ts`, runner tamper test |
+| Workspace export/import | live_local | Id-remapped, RFC 8785/SHA-256 hash-verified JSON; corrupted files rejected with nothing written | `src/cherry/persistence/workspace-archive.ts` |
+| Proof receipts (hash-chain, recomputable) | live_local | SHA-256 over RFC 8785 canonical JSON; tamper-evident, explicitly NOT a signature and never called one | `src/cherry/proof/proof-service.ts`, `proof-verifier.ts`, `src/cherry/core/canonical-json.ts` |
+| WebMCP site tools in a compatible host | experimental / unavailable_in_current_host | Implemented against `document.modelContext.registerTool`, feature-detected, aperture-capped (≤5 + 3 globals); verified with a mock host in unit tests, not yet exercised in a live ChatGPT/Codex browser client (compatibility matrix). Without a host: honest manual mode, zero tools registered | `src/cherry/webmcp/registration-manager.ts`, `tool-definitions.ts`, `workforce-tools.ts`, `tests/cherry/webmcp.test.ts`, `docs/release/CHERRY_COMPATIBILITY_MATRIX.md` |
+| Native MCP bridge (Claude Code / Codex CLI) | setup_required | `node runner/mcp/server.mjs --workspace export.json`; read/verify scope only (D-005); validated in a live Claude Code host (D-012) | `runner/mcp/server.mjs`, `runner/mcp/bridge.test.mjs`, `docs/CHERRY_DECISIONS.md` D-012 |
+| Local runner (deterministic jobs) | setup_required | `node runner/server.mjs --root <path>`; loopback-only, pairing token, allowlists, no shell strings; runs while the machine is on — not a cloud | `runner/server.mjs`, `runner/runner.test.mjs` |
+| Runner v2 durable queue + routines | setup_required | Durable queue (leases, idempotency, retry, crash recovery), scheduler/routines, hash-chained events log | `runner/lib/{queue,scheduler,schedule,events}.mjs`, `runner/v2.test.mjs` (imported by `runner.test.mjs`) |
+| Routines / workforce surfaces in Studio | live_local | Inbox, crew, routines, runs pages with surface-selected tool apertures (D-015) | `src/cherry/workforce/`, `src/pages/studio/{WorkInbox,CrewPage,RoutinesPage,Runs}.tsx`, `tests/cherry/{workforce,routines}.test.ts` |
+| Guided example + replayable walkthrough | live_local | Imports a real exported example workspace on explicit click; steps navigate real records (D-010) | `src/components/GuidedTour.tsx`, `public/examples/example-workspace.json`, `/studio?demo=1` link in `src/pages/Landing.tsx` |
+| PWA install / offline shell | setup_required | Manifest + service worker cache the static shell only; install prompt needs the HTTPS deployment | `docs/release/CHERRY_RELEASE_EVIDENCE.md` (pwa_offline), `public/` |
+| PDF / DOCX / EPUB / web-article import | not implemented | No parser or importer for these formats exists in `src/` (grep for pdf/docx/epub: zero hits). Lesson sources are YouTube embed, pasted/uploaded transcripts, local audio/video files, and manual material | absence verified by grep over `src/` 2026-08-30 |
+| Accounts / auth / cloud sync / billing | not implemented (deliberate) | Guest-first, zero-dollar core; no server, no per-user cloud state; decision D-008. Encrypted sync explicitly out of golden v1 | `docs/CHERRY_DECISIONS.md` D-008, README "Zero-dollar core" |
+| Cloud computer control / consumer-site automation | disabled_for_safety | Not built. No login automation, no scraping, no remote control of third-party sites; the security audit's consumer-site-automation section records "None" | `docs/release/CHERRY_SECURITY_AUDIT.md` ("Consumer-site automation"), CSP in `public/_headers` |
+| AI model calls from the core product | disabled_for_safety | Zero-dollar core: no AI API key anywhere; autonomy is delivered via the user's own agent over WebMCP (D-013). On-device Whisper is the only model, and it runs locally | `docs/CHERRY_DECISIONS.md` D-011/D-013, `package.json` (no provider SDKs) |

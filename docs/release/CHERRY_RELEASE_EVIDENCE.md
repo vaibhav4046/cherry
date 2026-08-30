@@ -1,5 +1,26 @@
 # Cherry release evidence
 
+> **v1.2 addendum (2026-08-30, editorial-pack integration):** every gate re-ran fresh on the tree
+> after the god-mode pack landed. Current totals: **119 unit/integration passed + 2 skipped
+> (vitest, 13 files) + 42 runner/bridge/v2 (node:test) + 33 e2e (Playwright)**, typecheck and
+> eslint clean, production build clean. Two gates that previously lacked a runnable command now
+> pass for real: `npm run verify:pack` (6/6 — sample-bundle hash matches meta, standalone verifier
+> passes, **one-byte mutation fails**, **deleted evidence fails**) and `npm run audit:submission`
+> (13 checks, 0 FAIL, 0 WARN). Security re-review REFUTED the YouTube-bridge wording (wildcard
+> `'*'` targetOrigin + missing `event.source` check, low practical severity) — fixed same day, see
+> CHERRY_SECURITY_AUDIT.md §Adversarial re-review. Landing now uses the three linked brand clips
+> (lesson-seed / proof-approval / carry-forward) with first-frame posters (reduced motion shows the
+> static poster, never a blank slot); OG card upgraded to the editorial plate (`/og.jpg`).
+>
+> **Native MCP live-host validation (2026-08-30):** from a real MCP host (Claude Code session) over
+> the runner bridge: `read_workspace_summary` returned the example workspace (1 mission COMPLETE,
+> 1 skill, 1 approved memory, 1 receipt); `list_skills` returned the approved skill at
+> revision = approvedRevision; `verify_workspace_integrity` recomputed `fa13a1fc…432db35b` matching
+> stored; `verify_receipt rc-01M1779YFWYGBACKVW020XXT3R` recomputed `b8dd59e7…8dd638f` matching
+> stored; an unknown receipt id returned an honest error; `list_skill_bundles` honestly reported no
+> bundles directory configured. Browser-host WebMCP status is unchanged from the compatibility
+> matrix (mock-host tested, labelled as such — no live ChatGPT/Codex host claim is made).
+
 > **v1.1.0 addendum (2026-08-29):** the winner-perception upgrade re-ran every gate on the new
 > tree. Current totals: **65 unit/integration (vitest, +4 for the MCP inspector call log and
 > retired-tools diff) + 15 runner/bridge (node:test) + 28 e2e (Playwright, +9: landing CTAs, cherry

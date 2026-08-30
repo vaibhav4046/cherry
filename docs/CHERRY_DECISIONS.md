@@ -155,3 +155,32 @@ surface and state changes.
 `transitionWorkItem` refuses SUCCEEDED for actorType 'agent' (approval_required). Verification-linked
 success enforcement for runner-backed runs lands with Runner v2 integration; until then the human or
 system verifier records the outcome, matching manual-mode parity.
+
+## D-017 — Editorial asset pack integration (2026-08-30)
+
+The Cherry Claude god-mode pack shipped editorial plates, a transparent seal mark, an OG plate,
+and three linked 8-second 16:9 brand clips (lesson-seed → proof-approval → carry-forward).
+Integration decisions:
+
+- The three linked clips replace the previous Teach/Prove/Carry chapter clips on the landing page
+  (thematically exact match; 1280×720, same `clip-card` 16:9 frame). The replaced files
+  (`split-reveal.mp4`, `proof-seal.mp4`, `carry-case.mp4`) were grep-proven unused and removed.
+- Every landing clip now has a first-frame poster (extracted with ffmpeg, WebP 15–67 KB):
+  instant paint before video load, and `ClipVideo` now renders the static poster under
+  `prefers-reduced-motion` instead of nothing (no blank narrative slots with motion disabled).
+- Opaque editorial plates ship as AVIF + WebP only (no 2.5 MB PNG masters in the deploy);
+  WebP support is universal in the supported-browser set. The transparent
+  `cherry-seal-mark` keeps WebP + PNG (alpha preserved, per pack instruction) and appears as a
+  small decorative ornament (alt="") in the Trust section.
+- `public/og.jpg` (1200×630, 88 KB) generated from the pack's `cherry-og-social` master replaces
+  `og.png` in the OG/Twitter meta; `og.png` stays on disk so previously scraped links keep working.
+- Assets live under `public/media/cherry-editorial/` with the pack's manifest JSON copied verbatim.
+  Copy, claims, and labels remain live DOM — nothing was baked into media.
+
+## D-018 — verify:pack made real (2026-08-30)
+
+`package.json` wired `verify:pack` to `scripts/verify-release.mjs`, but the script never existed
+in any commit. It now exists: it hash-checks `docs/release/sample-bundle.zip` against its meta,
+extracts with a path-traversal guard, runs the bundle's embedded standalone verifier, and proves
+tamper-evidence (one-byte mutation must fail; deleted evidence file must fail). The gate passes
+6/6; a release claim about bundle verification is now backed by a runnable command.
