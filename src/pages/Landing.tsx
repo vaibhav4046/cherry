@@ -111,9 +111,9 @@ export function Landing() {
                 <p className="kicker">Connect</p>
                 <h2 id="connect-heading" className="display-sm">Your agent drives. You hold the keys.</h2>
                 <p className="subhead" style={{ maxWidth: 640 }}>
-                  Attach the Claude or ChatGPT you already pay for over WebMCP. It sees five tools at a
-                  time, watches the lesson with you — and no tool can approve, trust, or remember on
-                  your behalf.
+                  Open Cherry in a supported ChatGPT/Codex browser to collaborate through WebMCP, or
+                  carry a verified Cherry skill into Claude Code through Agent Skills and MCP. The host
+                  reasons under its own plan — and no tool can approve, trust, or remember for you.
                 </p>
               </div>
               <div className="reveal">

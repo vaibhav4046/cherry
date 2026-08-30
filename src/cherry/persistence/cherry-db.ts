@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { AgentProfile, Crew, ExecutionHost, HandoffRecord, Routine, WorkItem, WorkMessage } from '../workforce/workforce-model.ts';
 import type { ProofEvent } from '../core/domain-event.ts';
 import type { WorkspaceRecord, SettingRecord } from '../mission/mission-model.ts';
 import type { Mission, MissionTask } from '../mission/mission-model.ts';
@@ -34,6 +35,13 @@ export class CherryDatabase extends Dexie {
   proofEvents!: Table<ProofEvent, string>;
   receipts!: Table<ProofReceipt, string>;
   settings!: Table<SettingRecord, string>;
+  agentProfiles!: Table<AgentProfile, string>;
+  crews!: Table<Crew, string>;
+  workItems!: Table<WorkItem, string>;
+  workMessages!: Table<WorkMessage, string>;
+  handoffs!: Table<HandoffRecord, string>;
+  executionHosts!: Table<ExecutionHost, string>;
+  routines!: Table<Routine, string>;
 
   constructor(name = 'cherry') {
     super(name);

@@ -36,6 +36,18 @@ export const CHERRY_DB_MIGRATIONS: CherryMigration[] = [
       settings: 'key',
     },
   },
+  {
+    version: 2,
+    stores: {
+      agentProfiles: 'id, workspaceId, slug, status, updatedAt',
+      crews: 'id, workspaceId, updatedAt',
+      workItems: 'id, workspaceId, status, priority, updatedAt',
+      workMessages: 'id, workspaceId, workItemId, createdAt',
+      handoffs: 'id, workspaceId, workItemId, status, createdAt',
+      executionHosts: 'id, workspaceId, kind, status',
+      routines: 'id, workspaceId, skillGraphId, enabled, nextRunAt',
+    },
+  },
 ];
 
 export const CHERRY_DB_VERSION = CHERRY_DB_MIGRATIONS[CHERRY_DB_MIGRATIONS.length - 1]!.version;

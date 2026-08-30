@@ -5,6 +5,8 @@ import { Icons } from '../../components/Icons.tsx';
 
 const NAV = [
   { to: '/studio', label: 'Command', end: true, icon: Icons.command },
+  { to: '/studio/inbox', label: 'Inbox', end: false, icon: Icons.runs },
+  { to: '/studio/crew', label: 'Crew', end: false, icon: Icons.agent },
   { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick },
   { to: '/studio/agent', label: 'Agent', end: false, icon: Icons.agent },
   { to: '/studio/skills', label: 'Skills', end: false, icon: Icons.skills },

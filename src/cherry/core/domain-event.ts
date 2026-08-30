@@ -42,6 +42,13 @@ export const PROOF_EVENT_TYPES = [
   'export.created',
   'tool.invoked',
   'tool.rejected',
+  'agent.profile_created',
+  'agent.profile_archived',
+  'crew.created',
+  'work.item_created',
+  'work.item_transitioned',
+  'work.item_assigned',
+  'work.message_added',
 ] as const;
 
 export type ProofEventType = (typeof PROOF_EVENT_TYPES)[number];
