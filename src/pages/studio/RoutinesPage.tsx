@@ -111,10 +111,10 @@ export default function RoutinesPage() {
                   {routine.enabled ? 'enabled' : 'disabled'}
                 </span>
                 <span style={{ fontWeight: 700 }}>{routine.name}</span>
-                <span style={{ fontSize: 13 }}>{describeSchedule(routine.schedule)}</span>
-                <span className="mono" style={{ fontSize: 12 }}>next {fmt(routine.nextRunAt)}</span>
-                <span className="mono" style={{ fontSize: 12 }}>last {fmt(routine.lastRunAt)}</span>
-                <span className="sticker" style={{ padding: '1px 8px', fontSize: 10 }}>{routine.executionHostId}</span>
+                <span style={{ fontSize: 14 }}>{describeSchedule(routine.schedule)}</span>
+                <span className="mono" style={{ fontSize: 13 }}>next {fmt(routine.nextRunAt)}</span>
+                <span className="mono" style={{ fontSize: 13 }}>last {fmt(routine.lastRunAt)}</span>
+                <span className="sticker" style={{ padding: '1px 8px', fontSize: 11 }}>{routine.executionHostId}</span>
               </Link>
             ))}
           </div>

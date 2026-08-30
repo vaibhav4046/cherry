@@ -62,7 +62,7 @@ export default function Connections() {
                   ))}
                 </ul>
               </details>
-              <p style={{ fontSize: 13 }}>
+              <p style={{ fontSize: 14 }}>
                 Tools exist only while this page is open in a compatible client. They mutate the same state
                 you see here — there is no separate agent world.
               </p>
@@ -70,7 +70,7 @@ export default function Connections() {
           ) : (
             <>
               <p className="sticker sticker-wait">Not available in this browser</p>
-              <p style={{ fontSize: 13 }}>
+              <p style={{ fontSize: 14 }}>
                 Open Cherry inside a WebMCP-compatible ChatGPT/Codex client and its agent can operate this
                 page through state-aware tools. Until then, every feature works manually — same product, no
                 hidden extras.
@@ -90,7 +90,7 @@ export default function Connections() {
           ) : (
             <div className="stack">
               <p className="sticker sticker-wait">Not running</p>
-              <p style={{ fontSize: 13 }}>
+              <p style={{ fontSize: 14 }}>
                 Optional. From the repository: <code className="mono">node runner/server.mjs</code> — it
                 binds to 127.0.0.1 only and prints a one-time pairing token.
               </p>
@@ -120,7 +120,7 @@ export default function Connections() {
 
         <section className="card card-wash-lavender stack" aria-labelledby="cli-heading">
           <h2 id="cli-heading" className="subhead">Connect Claude Code / Codex CLI</h2>
-          <p style={{ fontSize: 13, margin: 0 }}>
+          <p style={{ fontSize: 14, margin: 0 }}>
             Export your workspace (Command Center → Export), then give any MCP-capable CLI read/verify
             access to it through the bundled stdio bridge:
           </p>
@@ -130,7 +130,7 @@ export default function Connections() {
             </code>
             <CopyButton text="claude mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json" />
           </div>
-          <p style={{ fontSize: 13, margin: 0 }}>
+          <p style={{ fontSize: 14, margin: 0 }}>
             Compiled skill bundles install into Claude Code by unzipping into <code className="mono">~/.claude/skills/</code>.
             Start the optional local runner with:
           </p>
@@ -146,7 +146,7 @@ export default function Connections() {
           <h2 id="danger-heading" className="subhead">Danger zone</h2>
           {activeWorkspace ? (
             <>
-              <p style={{ fontSize: 13 }}>
+              <p style={{ fontSize: 14 }}>
                 Deleting a workspace removes every record it owns from this browser. Export first if in doubt.
               </p>
               <button type="button" className="btn btn-danger" onClick={() => void handleDeleteWorkspace()}>

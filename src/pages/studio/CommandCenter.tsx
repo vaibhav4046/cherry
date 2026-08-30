@@ -262,7 +262,7 @@ export default function CommandCenter() {
             approvals.map((approval) => (
               <div key={approval.id} className="stack" style={{ border: 'var(--border)', borderRadius: 'var(--radius-sticker)', padding: 'var(--sp-3)' }}>
                 <span className="label">
-                  {approval.objectType} · revision {approval.objectRevision}
+                  {approval.objectType} · version {approval.objectRevision}
                 </span>
                 <p style={{ margin: 0 }}>{approval.requestReason}</p>
                 <div className="row">

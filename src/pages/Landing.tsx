@@ -70,8 +70,8 @@ export function Landing() {
                 <p className="kicker">Teach</p>
                 <h2 id="teach-heading" className="display-sm">From video to skill, in front of you</h2>
                 <p className="subhead" style={{ maxWidth: 620 }}>
-                  Point Cherry at a lesson. It drafts the steps with timestamped evidence — and nothing
-                  becomes a skill until you approve the exact revision you read.
+                  Point Cherry at a lesson. It drafts the steps with time-stamped proof of where each step came from — and nothing
+                  becomes a skill until you approve the exact version you read.
                 </p>
               </div>
               <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>

@@ -298,7 +298,7 @@ export default function Watch() {
                   <span className="sticker sticker-blue">{formatTime(coverage.transcriptCoveredSeconds)} transcript</span>
                   <span className="sticker sticker-lavender">{coverage.observationCount} observations</span>
                 </div>
-                <p style={{ fontSize: 13 }}>{coverage.completenessNote}</p>
+                <p style={{ fontSize: 14 }}>{coverage.completenessNote}</p>
                 {coverage.gaps.length > 0 ? (
                   <details>
                     <summary className="label">Evidence gaps ({coverage.gaps.length})</summary>

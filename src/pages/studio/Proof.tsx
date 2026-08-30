@@ -149,7 +149,7 @@ export default function Proof() {
                       <td>{assertion.name}</td>
                       <td>{assertion.type} · {assertion.severity}</td>
                       <td><span className={assertion.status === 'passed' ? 'sticker sticker-pass' : assertion.status === 'failed' ? 'sticker sticker-fail' : 'sticker sticker-wait'}>{assertion.status}</span></td>
-                      <td style={{ fontSize: 12 }}>{assertion.evidence.slice(0, 2).join(' · ')}</td>
+                      <td style={{ fontSize: 13 }}>{assertion.evidence.slice(0, 2).join(' · ')}</td>
                     </tr>
                   ))}
                 </tbody>

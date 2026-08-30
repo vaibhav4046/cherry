@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { addWorkMessage, getWorkItem, listWorkMessages, transitionWorkItem } from '../../cherry/workforce/workforce-service.ts';
-import { WORK_ITEM_TRANSITIONS, type WorkItem, type WorkItemStatus, type WorkMessage } from '../../cherry/workforce/workforce-model.ts';
+import { WORK_ITEM_STATUS_LABEL, WORK_ITEM_TRANSITIONS, type WorkItem, type WorkItemStatus, type WorkMessage } from '../../cherry/workforce/workforce-model.ts';
 
 /** Human-facing controls: label per target state, offered only when legal. */
 const HUMAN_ACTIONS: Array<{ to: WorkItemStatus; label: string; danger?: boolean }> = [
@@ -70,7 +70,7 @@ export default function WorkThread() {
         <Link to="/studio/inbox" className="label" style={{ textDecoration: 'none' }}>← Work Inbox</Link>
         <h1 className="display-sm title-3d">{item.title}</h1>
         <div className="row">
-          <span className="sticker sticker-cherry" data-testid="work-status">{item.status.replace(/_/g, ' ')}</span>
+          <span className="sticker sticker-cherry" data-testid="work-status">{WORK_ITEM_STATUS_LABEL[item.status]}</span>
           <span className="sticker">{item.priority}</span>
           <span className="sticker">risk {item.riskLevel}</span>
           <span className="sticker">r{item.revision}</span>
@@ -84,7 +84,7 @@ export default function WorkThread() {
         <h2 id="dod-heading" className="subhead" style={{ fontSize: 18 }}>Definition of done</h2>
         <ul style={{ margin: 0, paddingLeft: 'var(--sp-5)' }}>
           {item.definitionOfDone.map((line, index) => (
-            <li key={index} style={{ fontSize: 13 }}>{line}</li>
+            <li key={index} style={{ fontSize: 14 }}>{line}</li>
           ))}
         </ul>
       </section>

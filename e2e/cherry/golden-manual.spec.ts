@@ -72,7 +72,7 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Raise trust' }).first().click();
     await expect(page.locator('.data-table').getByText('reviewed').first()).toBeVisible();
 
-    await page.getByRole('button', { name: 'Draft SkillGraph' }).click();
+    await page.getByRole('button', { name: 'Draft the skill' }).click();
     await expect(page.getByTestId('mission-state')).toHaveText('PLANNING');
 
     // Open the skill and edit one node (creates a new revision)

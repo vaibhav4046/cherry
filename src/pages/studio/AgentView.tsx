@@ -92,7 +92,7 @@ export default function AgentView() {
 
       <section className="card stack" aria-labelledby="aperture-heading">
         <h2 id="aperture-heading" className="subhead">Tool aperture by phase</h2>
-        <p style={{ fontSize: 13, margin: 0 }}>
+        <p style={{ fontSize: 14, margin: 0 }}>
           At most <strong>5 phase tools + 2 global reads</strong> exist at any moment. The current phase
           is highlighted; every other phase's tools are unregistered until their phase begins.
         </p>
@@ -182,7 +182,7 @@ export default function AgentView() {
                     {call.ok ? 'ok' : 'error'}
                   </span>
                   <span className="mono">{call.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--color-ink-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 13, color: 'var(--color-ink-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {call.resultPreview}
                   </span>
                 </div>
@@ -194,7 +194,7 @@ export default function AgentView() {
 
       <section className="card card-wash-cherry stack" aria-labelledby="autopilot-heading" data-testid="autopilot-card">
         <h2 id="autopilot-heading" className="subhead">Autopilot brief — let your agent do everything</h2>
-        <p style={{ fontSize: 13, margin: 0 }}>
+        <p style={{ fontSize: 14, margin: 0 }}>
           Open this page inside ChatGPT or another WebMCP client, paste this brief, and your own
           subscription's model drives the whole loop through Cherry's tools — it can even <strong>watch
           the embedded video with its own browser vision</strong> while you speed it up. No API key;
@@ -205,14 +205,14 @@ export default function AgentView() {
         </div>
         <details>
           <summary className="label">Read the brief</summary>
-          <pre className="mono" style={{ whiteSpace: 'pre-wrap', fontSize: 12, background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: 12 }}>{AUTOPILOT_BRIEF}</pre>
+          <pre className="mono" style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: 12 }}>{AUTOPILOT_BRIEF}</pre>
         </details>
       </section>
 
       <section className="card card-wash-lavender stack" aria-labelledby="guarantees-heading">
         <h2 id="guarantees-heading" className="subhead">What no tool can ever do</h2>
         <ul style={{ margin: 0, paddingLeft: 'var(--sp-5)' }}>
-          <li>Approve a SkillGraph, activate a memory, or raise evidence trust — those are human-only code paths.</li>
+          <li>Approve a skill, activate a memory, or raise evidence trust — those are human-only code paths.</li>
           <li>Mark verification passed — badges derive only from stored deterministic results.</li>
           <li>Skip a mission state — tools route through the same state machine the UI enforces.</li>
           <li>Read or write outside the active workspace, or touch credentials (Cherry holds none).</li>

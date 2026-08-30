@@ -101,10 +101,10 @@ export default function CrewPage() {
                   <span className={STATUS_STICKER[profile.status]}>{profile.status}</span>
                 </div>
                 <span className="label">{profile.role}</span>
-                <p style={{ margin: 0, fontSize: 13 }}>{profile.objective}</p>
+                <p style={{ margin: 0, fontSize: 14 }}>{profile.objective}</p>
                 <div className="row" style={{ gap: 6 }}>
                   {profile.allowedCapabilities.map((capability) => (
-                    <span key={capability} className="sticker" style={{ padding: '1px 8px', fontSize: 10 }}>{capability.replace(/_/g, ' ')}</span>
+                    <span key={capability} className="sticker" style={{ padding: '1px 8px', fontSize: 11 }}>{capability.replace(/_/g, ' ')}</span>
                   ))}
                 </div>
                 <p className="label" style={{ margin: 0 }}>

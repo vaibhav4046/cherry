@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { attentionQueue, createWorkItem, listCrews, listWorkItems } from '../../cherry/workforce/workforce-service.ts';
+import { WORK_ITEM_STATUS_LABEL } from '../../cherry/workforce/workforce-model.ts';
 import type { AttentionItem, Crew, WorkItem } from '../../cherry/workforce/workforce-model.ts';
 
 const STATUS_STICKER: Record<string, string> = {
@@ -82,7 +83,7 @@ export default function WorkInbox() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm title-3d">Work Inbox</h1>
         <p className="subhead" style={{ maxWidth: 680 }}>
-          Hand work to your crew. Every item is tracked through a real state machine — nothing shows as
+          Hand work to your crew. Every item is tracked through a strict, honest workflow — nothing shows as
           running unless a host actually leased it.
         </p>
       </header>
@@ -94,7 +95,7 @@ export default function WorkInbox() {
           <h2 id="attention-heading" className="subhead" style={{ fontSize: 20 }}>Needs you ({attention.length})</h2>
           {attention.slice(0, 6).map((entry) => (
             <div key={entry.id} className="row" style={{ justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{entry.title}</span>
+              <span style={{ fontSize: 14, fontWeight: 700 }}>{entry.title}</span>
               <span className="sticker" style={{ padding: '2px 8px' }}>{entry.kind.replace(/_/g, ' ')}</span>
             </div>
           ))}
@@ -156,7 +157,7 @@ export default function WorkInbox() {
           <div className="event-strip">
             {items.map((item) => (
               <Link key={item.id} to={`/studio/work/${item.id}`} className="event-row" style={{ textDecoration: 'none' }} data-testid="work-item-row">
-                <span className={STATUS_STICKER[item.status] ?? 'sticker'} style={{ padding: '2px 10px' }}>{item.status.replace(/_/g, ' ')}</span>
+                <span className={STATUS_STICKER[item.status] ?? 'sticker'} style={{ padding: '2px 10px' }}>{WORK_ITEM_STATUS_LABEL[item.status]}</span>
                 <span style={{ fontWeight: 700 }}>{item.title}</span>
                 <span className="mono">{item.priority}</span>
               </Link>

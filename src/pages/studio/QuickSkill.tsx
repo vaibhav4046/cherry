@@ -361,7 +361,7 @@ export default function QuickSkill() {
               <h2 className="subhead">Auto-transcribe on this device</h2>
               <span className="sticker">no key · audio never leaves this machine</span>
             </div>
-            <p style={{ fontSize: 13, margin: 0 }}>
+            <p style={{ fontSize: 14, margin: 0 }}>
               Whisper (tiny) runs in your browser — WebGPU when available. It downloads once (~40 MB),
               then works offline. The result is a <strong>draft</strong>: small models mishear, so review
               the text below before deriving. Pasting the official transcript stays the exact path.
@@ -396,7 +396,7 @@ export default function QuickSkill() {
 
           <div className="card card-wash-sky stack">
             <h2 className="subhead">Paste the transcript</h2>
-            <p style={{ fontSize: 13, margin: 0 }}>
+            <p style={{ fontSize: 14, margin: 0 }}>
               On YouTube: open the video → description → <strong>Show transcript</strong> → click the
               ⋮ menu → toggle timestamps if you like → select all → copy. Paste it here. Plain notes
               work too — Cherry parses .txt/.srt/.vtt and timestamped lines.
@@ -439,7 +439,7 @@ export default function QuickSkill() {
           {/* ---- Sources pane ---- */}
           <section className="card card-wash-sky stack" aria-labelledby="sources-heading" style={{ alignSelf: 'start', gap: 'var(--sp-3)' }}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h2 id="sources-heading" className="kicker" style={{ fontSize: 13 }}>Sources</h2>
+              <h2 id="sources-heading" className="kicker" style={{ fontSize: 14 }}>Sources</h2>
               <span className="sticker">{sources.length}</span>
             </div>
             {addingSource ? (
@@ -493,22 +493,22 @@ export default function QuickSkill() {
             )}
             {sources.map((source, index) => (
               <div key={index} className="card stack" style={{ padding: 'var(--sp-3)', gap: 4 }} data-testid="source-card">
-                <strong style={{ fontSize: 13, display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                <strong style={{ fontSize: 14, display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                   {source.kind === 'file' ? Icons.download(14) : Icons.copy(14)} {source.title}
                 </strong>
-                <span style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>{source.summary}</span>
+                <span style={{ fontSize: 13, color: 'var(--color-ink-soft)' }}>{source.summary}</span>
                 <span className="label">{source.segmentCount} segments</span>
               </div>
             ))}
             <p className="label" style={{ margin: 0 }}>
-              Everything lands as untrusted, timestamped evidence.
+              Everything lands as untrusted, time-stamped proof of where each step came from.
             </p>
           </section>
 
           {/* ---- Overview pane ---- */}
           <div className="stack" style={{ gap: 'var(--sp-4)', minWidth: 0 }}>
             <section className="card stack" style={{ gap: 4, padding: 'var(--sp-4)' }}>
-              <p className="kicker" style={{ fontSize: 11 }}>Notebook</p>
+              <p className="kicker" style={{ fontSize: 12 }}>Notebook</p>
               <h2 className="subhead" style={{ fontSize: 22, margin: 0 }}>{skillName.trim() || lesson?.title || 'Untitled notebook'}</h2>
               <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>
                 {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {digest?.wordCount ?? 0} words ingested · named for you
@@ -521,7 +521,7 @@ export default function QuickSkill() {
                   <span className="sticker sticker-pass">instant · no model · no key</span>
                 </div>
                 {digest.summary.map((sentence, index) => (
-                  <p key={index} style={{ margin: 0, fontSize: 14 }}>{sentence}</p>
+                  <p key={index} style={{ margin: 0, fontSize: 15 }}>{sentence}</p>
                 ))}
                 <div className="row" data-testid="notebook-topics">
                   {digest.topics.map((topic) => (
@@ -533,7 +533,7 @@ export default function QuickSkill() {
                     <summary className="label">Things to check ({suggestedChecks(draft, digest).length})</summary>
                     <ul style={{ marginTop: 8 }}>
                       {suggestedChecks(draft, digest).map((check, index) => (
-                        <li key={index} style={{ fontSize: 13 }}>{check}</li>
+                        <li key={index} style={{ fontSize: 14 }}>{check}</li>
                       ))}
                     </ul>
                   </details>
@@ -583,7 +583,7 @@ export default function QuickSkill() {
           {/* ---- Studio pane ---- */}
           <section className="card card-wash-lavender stack" aria-labelledby="studio-heading" style={{ alignSelf: 'start' }}>
             <h2 id="studio-heading" className="subhead" style={{ fontSize: 20 }}>Studio</h2>
-            <p style={{ fontSize: 12, margin: 0 }}>
+            <p style={{ fontSize: 13, margin: 0 }}>
               One-click documents built from your sources. Saved as real files in the mission workspace
               and downloaded.
             </p>
@@ -627,7 +627,7 @@ export default function QuickSkill() {
           {bundleNote ? <p className="sticker sticker-pass" role="status">{bundleNote}</p> : null}
           <div className="stack" style={{ gap: 'var(--sp-2)' }}>
             <h3 className="label">Install it</h3>
-            <p style={{ fontSize: 13, margin: 0 }}>
+            <p style={{ fontSize: 14, margin: 0 }}>
               <strong>Claude Code:</strong> unzip into <code className="mono">~/.claude/skills/</code> — the folder name
               is the skill name; Claude discovers SKILL.md automatically.{' '}
               <strong>Codex:</strong> follow <code className="mono">targets/codex/install.md</code> inside the bundle.{' '}

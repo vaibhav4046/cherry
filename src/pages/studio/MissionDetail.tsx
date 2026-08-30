@@ -158,7 +158,7 @@ export default function MissionDetail() {
       await updateMission(mission!.id, { skillGraphId: drafted.value.id });
       if (mission!.state === 'LEARNING') await transitionMission(mission!.id, 'PLANNING');
       return withChecks;
-    }, 'Draft SkillGraph created with acceptance checks from the definition of done');
+    }, 'Skill draft created with acceptance checks from the definition of done');
   }
 
   async function handleRequestApproval() {
@@ -209,7 +209,7 @@ export default function MissionDetail() {
               <span
                 key={phase}
                 className={status === 'current' ? 'sticker sticker-cherry' : status === 'done' ? 'sticker sticker-pass' : 'sticker'}
-                style={{ padding: '2px 10px', fontSize: 11, opacity: status === 'ahead' ? 0.55 : 1 }}
+                style={{ padding: '2px 10px', fontSize: 12, opacity: status === 'ahead' ? 0.55 : 1 }}
               >
                 {status === 'done' ? '✓ ' : ''}{phase.replace('_', ' ')}
               </span>
@@ -264,7 +264,7 @@ export default function MissionDetail() {
                 <span>YouTube URL or video id (blank = manual lesson)</span>
                 <input className="input" name="url" placeholder="https://youtu.be/…" />
               </label>
-              <label className="row" style={{ fontSize: 13 }}>
+              <label className="row" style={{ fontSize: 14 }}>
                 <input type="checkbox" name="permission" style={{ width: 20, height: 20 }} />
                 I am permitted to learn from this source, and I will not copy its branding or assets.
               </label>
@@ -274,7 +274,7 @@ export default function MissionDetail() {
         </section>
 
         <section className="card stack" aria-labelledby="graph-heading">
-          <h2 id="graph-heading" className="subhead">SkillGraph</h2>
+          <h2 id="graph-heading" className="subhead">Skill steps</h2>
           {graph ? (
             <>
               <p>
@@ -293,7 +293,7 @@ export default function MissionDetail() {
           ) : (
             <>
               <p>No skill yet. Compile the lesson from Cherry Watch, or draft one from the mission.</p>
-              <button type="button" className="btn" onClick={() => void handleDraftGraph()}>Draft SkillGraph</button>
+              <button type="button" className="btn" onClick={() => void handleDraftGraph()}>Draft the skill</button>
             </>
           )}
         </section>

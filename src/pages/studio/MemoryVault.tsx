@@ -152,7 +152,7 @@ export default function MemoryVault() {
 
         <section className="card card-wash-cherry stack" aria-labelledby="correction-heading">
           <h2 id="correction-heading" className="subhead">Correction compiler</h2>
-          <p style={{ fontSize: 13 }}>
+          <p style={{ fontSize: 14 }}>
             Turn a correction into scoped memory. Classify it; Cherry proposes the right record and it still
             needs your approval.
           </p>
@@ -203,7 +203,7 @@ export default function MemoryVault() {
                   <tr key={memory.id}>
                     <td>
                       <strong>{memory.pinned ? '📌 ' : ''}{memory.title}</strong>
-                      <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>{memory.content.slice(0, 160)}</div>
+                      <div style={{ fontSize: 13, color: 'var(--color-ink-soft)' }}>{memory.content.slice(0, 160)}</div>
                     </td>
                     <td>{memory.type} / {memory.scope}</td>
                     <td>

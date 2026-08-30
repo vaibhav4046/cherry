@@ -26,7 +26,7 @@ export default function Skills() {
         <div className="empty-state">
           <StickerCluster />
           <p className="subhead" style={{ maxWidth: 520 }}>
-            No skills yet. Learn from a lesson in a mission, compile the draft, and your first SkillGraph
+            No skills yet. Learn from a lesson in a mission, compile the draft, and your first skill
             lands here with its evidence attached.
           </p>
           <Link to="/studio/missions/new" className="btn btn-primary">Start a mission</Link>

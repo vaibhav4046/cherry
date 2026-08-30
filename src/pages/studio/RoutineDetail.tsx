@@ -269,7 +269,7 @@ export default function RoutineDetail() {
         {editor.kind === 'weekly' ? (
           <div className="row" role="group" aria-label="Weekdays">
             {WEEKDAYS.map((name, day) => (
-              <label key={name} className="row" style={{ gap: 4, fontSize: 13 }}>
+              <label key={name} className="row" style={{ gap: 4, fontSize: 14 }}>
                 <input type="checkbox" checked={editor.weekdays.includes(day)} onChange={() => toggleWeekday(day)} />
                 {name}
               </label>

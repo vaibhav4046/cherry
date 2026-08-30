@@ -171,6 +171,22 @@ export const WORK_ITEM_TRANSITIONS: Readonly<Record<WorkItemStatus, readonly Wor
   CANCELLED: [],
 };
 
+/** Human-facing status wording — plain words, no scheduler jargon. */
+export const WORK_ITEM_STATUS_LABEL: Readonly<Record<WorkItemStatus, string>> = {
+  DRAFT: 'DRAFT',
+  READY: 'READY',
+  QUEUED: 'QUEUED',
+  LEASED: 'CLAIMED BY A HOST',
+  RUNNING: 'RUNNING',
+  WAITING_FOR_HUMAN: 'NEEDS YOU',
+  WAITING_FOR_DEPENDENCY: 'WAITING ON ANOTHER TASK',
+  RETRYING: 'RETRYING',
+  VERIFYING: 'CHECKING THE WORK',
+  SUCCEEDED: 'DONE',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+};
+
 export function canTransition(from: WorkItemStatus, to: WorkItemStatus): boolean {
   return WORK_ITEM_TRANSITIONS[from].includes(to);
 }

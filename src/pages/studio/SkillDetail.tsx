@@ -131,7 +131,7 @@ export default function SkillDetail() {
         ) : null}
         {pendingApproval ? (
           <>
-            <button type="button" className="btn btn-primary" data-testid="approve-skill" onClick={() => void run(() => decideSkillGraphApproval(pendingApproval.id, 'approved', 'user'), 'Approved at this exact revision')}>
+            <button type="button" className="btn btn-primary" data-testid="approve-skill" onClick={() => void run(() => decideSkillGraphApproval(pendingApproval.id, 'approved', 'user'), 'Approved at this exact version')}>
               Approve r{pendingApproval.objectRevision}
             </button>
             <button type="button" className="btn btn-danger" onClick={() => void run(() => decideSkillGraphApproval(pendingApproval.id, 'rejected', 'user'))}>
