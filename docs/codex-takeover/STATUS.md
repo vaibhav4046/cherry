@@ -1,47 +1,37 @@
-# Status — codex/cherry-workforce-v2
+# Status — Cherry Workforce v2
 
-Updated: 2026-08-30
+Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.vercel.app = cherry-wine.vercel.app
 
 ## Completed
-- Baseline preserved and recorded (BASELINE.md); all prior gates green before feature work.
-- Workforce domain core (`src/cherry/workforce/workforce-model.ts`): AgentProfile, Crew, WorkItem,
-  WorkMessage, HandoffRecord, ExecutionHost + capability routing, Routine + ExecutionEnvelope types,
-  the locked work-item state machine, ScheduleSpec validation (5min–30d bounds, IANA tz required),
-  DST-aware nextRunAt (Europe/London spring-forward covered by test), attention sorting.
-- Persistence v2 (Dexie migration 2: agentProfiles, crews, workItems, workMessages, handoffs,
-  executionHosts, routines) — additive, no data loss.
-- Workforce service: proof-evented mutations (same-transaction), starter five-agent crew (editable,
-  deletable, honest idle status), work-item transitions with stale-revision refusal, assignment
-  validation, thread messages, attention queue (approvals, waiting, failed, memory proposals).
-- Product surfaces: /studio/inbox (composer "What should your crew get done?", attention queue,
-  item list), /studio/crew (starter crew, profile cards, archive, add), /studio/work/:id (thread,
-  DoD, legal-moves-only controls). Rail + routes wired; every existing route preserved.
-- Copy corrections: landing chapter 03 now states the supported-host truth (ChatGPT/Codex browser
-  over WebMCP; Claude Code via Agent Skills + MCP; host reasons under its own plan).
-- Tests: +16 unit (state machine, schedules incl. DST, capability routing, service incl. proof
-  events and stale revisions) and +1 e2e journey (crew → handoff → thread → transitions). Full run:
-  104 unit passed + 2 skipped, 32 e2e passed.
-- Production content proof (pre-branch): Karpathy "Let's build GPT" full transcript (233,217 chars,
-  byte-verified) → 10-node skill, approved r2, verification passed 3/3, on the live site.
+- Phase 1 (see git history): domain core, state machine, DST schedules, Dexie v2, crew/inbox/thread
+  surfaces, attention queue, copy truths.
+- Surface-selected WebMCP apertures: inbox / crew / routines / run tool sets, selected by route +
+  mission state, each ≤5 tools + 3 globals, retired-tools diff on every switch. 14 new workforce
+  tools; agents can draft/schedule/queue but can never approve, enable, or mark success.
+- Routines end-to-end: draft from approved SkillGraph → schedule (validated, DST-aware) → exact-
+  revision human approval binding an action hash → pause/resume; every schedule edit invalidates
+  approval. Full UI at /studio/routines(+detail). ApprovalObjectType widened with 'routine'.
+- Runner v2 (dependency-free Node, evolves the secure v1): durable queue with immutable hashed
+  envelopes, leases+heartbeats+expiry recovery, worker pool 1–3, idempotency refusal, bounded retry,
+  cancellation/timeout, crash recovery, exactly-once schedule materialisation with missed-run
+  policies, hash-chained events log + /events?since sync, adapters: cherry-verify, cherry-export,
+  codex-cli, claude-cli (dual-allowlist, never 'verified'), safe-command. v1 endpoints untouched.
+- Motion: honest status pulse on running stickers (reduced-motion safe).
+- Evidence, all run fresh by the lead after integration:
+  typecheck ✓ · lint ✓ · unit 116 passed + 2 skipped · runner 42/42 · build ✓ · e2e 33/33 ·
+  production routes /studio/inbox|crew|routines live (HTTP 200 smoke).
 
-## Active
-- None (end of this working session).
+## Honest limitations (unchanged claims never shipped)
+- Provider-CLI success path (spawning a real codex/claude binary) has no automated test on Windows
+  (.cmd shim limitation under shell:false); gating/refusal/never-verified contracts ARE tested.
+- Work items reach RUNNING only via the service/runner path; the browser UI offers legal human moves
+  only. Studio↔runner event import UI is wired at the protocol level (/events + chain verify) but
+  the Studio-side import screen is not built yet.
+- The 25-step full workforce journey e2e is partial (crew→handoff→assign→queue→cancel + routine
+  smoke covered; runner-backed live-run steps need the import screen).
+- Live ChatGPT/Codex WebMCP host validation requires the owner present in a supported client.
 
-## Blocked
-- Real ChatGPT/Codex WebMCP host validation: requires a live supported client session (owner-present).
-
-## Next Merge
-1. WebMCP workforce apertures (inbox/crew/routines/run tool sets, surface+state selection).
-2. Runner v2: durable queue, leases/heartbeats, worker pool, scheduler, event sync protocol.
-3. Routines UI + approval-bound schedules (model + math already landed and tested).
-4. Host adapters (cherry-verify, cherry-export, codex-cli, claude-cli, allowlisted safe commands).
-5. Full 25-step workforce journey e2e; live host validation; motion pass.
-
-## Evidence
-- BASELINE.md; vitest/playwright outputs in terminal log; e2e/cherry/workforce.spec.ts.
-
-## Honest limitations
-- Work items can reach RUNNING/VERIFYING/SUCCEEDED only through the service API today; no execution
-  host leases them yet — the UI says exactly that and offers only legal human moves.
-- Attention queue covers approvals, waiting-for-human, failures, memory proposals; host/routine
-  kinds land with Runner v2.
+## Owner-only actions remaining
+1. Live host validation session (open getcherry.vercel.app in a WebMCP-capable ChatGPT/Codex
+   browser; the Agent page brief drives it).
+2. Record the <3-minute video; submit on Devpost before Sep 3, 1 PM PT.
