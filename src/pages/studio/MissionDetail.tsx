@@ -14,6 +14,43 @@ import { runVerification, listVerifications } from '../../cherry/verify/verifica
 import type { VerificationReport } from '../../cherry/verify/assertion-model.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
 
+/** Plain-word status labels; the raw state stays available as a quiet label / title. */
+const STATE_LABELS: Record<MissionState, string> = {
+  DRAFT: 'Draft',
+  LEARNING: 'Learning',
+  PLANNING: 'Planning',
+  AWAITING_APPROVAL: 'Waiting for your approval',
+  EXECUTING: 'Running',
+  VERIFYING: 'Verifying',
+  COMPLETE: 'Complete',
+  BLOCKED: 'Blocked',
+  CANCELLED: 'Cancelled',
+};
+
+/** Shorter forms for buttons and the phase stepper. */
+const MOVE_LABELS: Record<MissionState, string> = {
+  ...STATE_LABELS,
+  AWAITING_APPROVAL: 'Awaiting approval',
+};
+
+const MISSION_PHASES = ['DRAFT', 'LEARNING', 'PLANNING', 'AWAITING_APPROVAL', 'EXECUTING', 'VERIFYING', 'COMPLETE'] as const;
+
+function timeOf(iso: string): string {
+  return iso.slice(11, 19);
+}
+
+function since(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return '';
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
 export default function MissionDetail() {
   const { missionId } = useParams<{ missionId: string }>();
   const { refresh, setActiveMission } = useAppState();
@@ -64,7 +101,7 @@ export default function MissionDetail() {
   }
 
   async function handleTransition(to: MissionState) {
-    await act(() => transitionMission(mission!.id, to, 'human'), `Mission moved to ${to}`);
+    await act(() => transitionMission(mission!.id, to, 'human'), `Mission moved to ${MOVE_LABELS[to]}`);
   }
 
   async function handleStartLearning(event: FormEvent<HTMLFormElement>) {
@@ -192,61 +229,156 @@ export default function MissionDetail() {
   }
 
   const latestVerification = verifications[0] ?? null;
+  const failedAssertions = latestVerification ? latestVerification.results.filter((assertion) => assertion.status === 'failed') : [];
+  const lastChange = mission.stateHistory[mission.stateHistory.length - 1] ?? null;
+  const availableStates = nextStates(mission.state);
 
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <h1 className="display-sm">{mission.title}</h1>
-          <span className="sticker sticker-cherry" data-testid="mission-state">{mission.state}</span>
+          <div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}>
+            <span className="sticker sticker-cherry">{STATE_LABELS[mission.state]}</span>
+            <span className="label mission-raw-state" data-testid="mission-state">{mission.state}</span>
+          </div>
         </div>
         <p className="subhead">{mission.objective}</p>
         <div className="row" aria-label="Mission phases" data-testid="mission-stepper" style={{ gap: 'var(--sp-1)' }}>
-          {(['DRAFT', 'LEARNING', 'PLANNING', 'AWAITING_APPROVAL', 'EXECUTING', 'VERIFYING', 'COMPLETE'] as const).map((phase, index, phases) => {
+          {MISSION_PHASES.map((phase, index, phases) => {
             const currentIndex = phases.indexOf(mission.state as (typeof phases)[number]);
             const status = mission.state === phase ? 'current' : currentIndex > index ? 'done' : 'ahead';
             return (
               <span
                 key={phase}
+                title={phase}
                 className={status === 'current' ? 'sticker sticker-cherry' : status === 'done' ? 'sticker sticker-pass' : 'sticker'}
                 style={{ padding: '2px 10px', fontSize: 12, opacity: status === 'ahead' ? 0.55 : 1 }}
               >
-                {status === 'done' ? '✓ ' : ''}{phase.replace('_', ' ')}
+                {status === 'done' ? '✓ ' : ''}{MOVE_LABELS[phase]}
               </span>
             );
           })}
         </div>
-        <div className="row">
-          {mission.definitionOfDone.map((item, index) => (
-            <span key={index} className="sticker">{item}</span>
-          ))}
+        <div className="stack" style={{ gap: 'var(--sp-1)' }}>
+          <h2 className="contract-h" style={{ margin: 0 }}>Definition of done</h2>
+          <ul className="dod-list">
+            {mission.definitionOfDone.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
         </div>
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
 
-      <section className="card stack" aria-labelledby="state-heading">
-        <h2 id="state-heading" className="subhead">Mission state</h2>
+      <section className="card stack" aria-labelledby="run-heading">
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <h2 id="run-heading" className="subhead">Run</h2>
+          <p className="run-meta tnum" title={`Raw state: ${mission.state}`}>
+            {STATE_LABELS[mission.state]}
+            {lastChange ? ` for ${since(lastChange.at)}` : ''} · updated {timeOf(mission.updatedAt)}
+          </p>
+        </div>
+
         <div className="row">
-          {nextStates(mission.state).map((state) => (
-            <button key={state} type="button" className="btn btn-sm" onClick={() => void handleTransition(state)}>
-              Move to {state}
+          {availableStates.map((state) => (
+            <button key={state} type="button" className="btn btn-sm" title={`Raw state: ${state}`} onClick={() => void handleTransition(state)}>
+              Move to {MOVE_LABELS[state]}
             </button>
           ))}
-          {nextStates(mission.state).length === 0 ? <span>This mission is terminal.</span> : null}
+          {availableStates.length === 0 ? <span>This mission has reached its final state.</span> : null}
         </div>
-        <details>
-          <summary className="label">State history ({mission.stateHistory.length})</summary>
-          <ul className="stack" style={{ marginTop: 'var(--sp-2)' }}>
+
+        <div className="row">
+          <button type="button" className="btn btn-primary" onClick={() => void handleVerify()} data-testid="run-verification">
+            Run verification
+          </button>
+          <button type="button" className="btn" onClick={() => void handleReceipt()} disabled={!graph}>
+            Generate proof receipt
+          </button>
+          {latestVerification ? (
+            <span
+              key={latestVerification.id}
+              className={latestVerification.status === 'passed' ? 'sticker sticker-pass' : 'sticker sticker-fail'}
+              data-testid="verification-status"
+            >
+              {latestVerification.status} · {latestVerification.totalAssertions - latestVerification.blockingFailures}/{latestVerification.totalAssertions}
+            </span>
+          ) : (
+            <span className="contract-empty">Not verified yet — verification tests the real files and cannot be toggled by hand.</span>
+          )}
+        </div>
+
+        {latestVerification && latestVerification.status === 'passed' ? (
+          <div className="pass-calm">
+            <span className="run-ico run-ico-pass" aria-hidden="true">✓</span>
+            <p style={{ margin: 0 }}>
+              <strong>Verified.</strong>{' '}
+              <span className="contract-empty">All {latestVerification.totalAssertions} checks passed against the real files at {timeOf(latestVerification.finishedAt)}.</span>
+            </p>
+          </div>
+        ) : null}
+
+        {latestVerification && latestVerification.status === 'failed' ? (
+          <div className="fail-panel">
+            <strong>Failed assertions</strong>
+            <ul className="assert-list">
+              {failedAssertions.map((assertion) => (
+                <li key={assertion.id} className="assert-row">
+                  <span className="run-ico run-ico-fail" aria-hidden="true">✕</span>
+                  <div style={{ minWidth: 0 }}>
+                    <span>{assertion.name}</span>
+                    {assertion.evidence.slice(0, 3).map((line, index) => (
+                      <p key={index} className="assert-quote">“{line}”</p>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p style={{ margin: 0 }}>
+              Cause: the produced files do not yet meet the definition of done. Next action: fix the files, then run verification again.
+            </p>
+            {mission.artifactSetId ? (
+              <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-sm btn-primary" style={{ alignSelf: 'flex-start' }}>
+                Apply repair and rerun
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+
+        {latestVerification ? (
+          <div className="stack" style={{ gap: 'var(--sp-1)' }}>
+            <h3 className="contract-h" style={{ margin: 0 }}>Checks</h3>
+            <div className="run-rows">
+              {latestVerification.results.map((assertion) => (
+                <div key={assertion.id} className="run-row">
+                  <span className={assertion.status === 'passed' ? 'run-ico run-ico-pass' : 'run-ico run-ico-fail'} aria-hidden="true">
+                    {assertion.status === 'passed' ? '✓' : '✕'}
+                  </span>
+                  <span className="run-time">{timeOf(assertion.finishedAt)}</span>
+                  <span>{assertion.name}</span>
+                  <span className="run-result">{assertion.status}{assertion.status !== 'passed' && assertion.evidence[0] ? ` — ${assertion.evidence[0]}` : ''}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="stack" style={{ gap: 'var(--sp-1)' }}>
+          <h3 className="contract-h" style={{ margin: 0 }}>Events ({mission.stateHistory.length})</h3>
+          <div className="run-rows">
             {mission.stateHistory.map((change, index) => (
-              <li key={index} className="mono">
-                {change.at.slice(0, 19)} · {change.from ?? '∅'} → {change.to} ({change.actorType})
-                {change.reason ? ` — ${change.reason}` : ''}
-              </li>
+              <div key={index} className="run-row" title={`${change.from ?? '∅'} → ${change.to}`}>
+                <span className="run-ico run-ico-step" aria-hidden="true">→</span>
+                <span className="run-time">{timeOf(change.at)}</span>
+                <span>{change.from === null ? 'Mission created' : `Moved to ${MOVE_LABELS[change.to]}`}{change.reason ? ` — ${change.reason}` : ''}</span>
+                <span className="run-result">{change.actorType}</span>
+              </div>
             ))}
-          </ul>
-        </details>
+          </div>
+        </div>
       </section>
 
       <div className="grid-cards">
@@ -308,47 +440,6 @@ export default function MissionDetail() {
               <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create file workspace</button>
             </>
           )}
-        </section>
-
-        <section className="card stack" aria-labelledby="verify-heading">
-          <h2 id="verify-heading" className="subhead">Verification</h2>
-          {latestVerification ? (
-            <p>
-              Latest:{' '}
-              <span key={latestVerification.id} className={latestVerification.status === 'passed' ? 'sticker sticker-pass verify-pop' : 'sticker sticker-fail verify-pop'} data-testid="verification-status">
-                {latestVerification.status} · {latestVerification.totalAssertions - latestVerification.blockingFailures}/{latestVerification.totalAssertions}
-              </span>
-            </p>
-          ) : (
-            <p>Not verified yet. Verification tests real files and state — it cannot be toggled by hand.</p>
-          )}
-          <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => void handleVerify()} data-testid="run-verification">
-              Run verification
-            </button>
-            <button type="button" className="btn" onClick={() => void handleReceipt()} disabled={!graph}>
-              Generate proof receipt
-            </button>
-          </div>
-          {latestVerification && latestVerification.status === 'failed' ? (
-            <details open>
-              <summary className="label">Failed assertions</summary>
-              <ul className="stack" style={{ marginTop: 'var(--sp-2)' }}>
-                {latestVerification.results
-                  .filter((assertion) => assertion.status === 'failed')
-                  .map((assertion) => (
-                    <li key={assertion.id} className="field-error">
-                      <strong>{assertion.name}</strong>
-                      <ul>
-                        {assertion.evidence.slice(0, 3).map((line, index) => (
-                          <li key={index} className="mono">{line}</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          ) : null}
         </section>
       </div>
 

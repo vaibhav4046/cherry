@@ -1,0 +1,101 @@
+/* Premium-restraint foundation (2026-08-31 UI sprint). Shared utilities only —
+   page-scoped styles live in shell.css / showcase.css / contract.css. */
+
+:root {
+  --dur-fast: 180ms;
+  --dur-page: 500ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Quiet-instrument pass: inside the Studio shell, page titles inform rather
+   than shout — no 3D glow, working-tool scale. */
+.studio-main .display-sm {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.1rem);
+  text-shadow: none;
+  -webkit-text-stroke: 0;
+}
+
+/* One calm page entrance; individual elements animate only on state change. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter { animation: page-enter var(--dur-page) var(--ease-standard) both; }
+  @keyframes page-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .state-swap { transition: opacity var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard); }
+}
+
+/* ---------- Landing (home) ---------- */
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--sp-8);
+  align-items: center;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--sp-9) var(--sp-6);
+}
+@media (max-width: 860px) {
+  .home-hero { grid-template-columns: 1fr; padding: var(--sp-7) var(--sp-5); }
+}
+
+.home-eyebrow {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+.home-headline {
+  font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.4rem);
+  line-height: 1.06;
+  margin: 0;
+}
+
+.trust-line { opacity: 0.75; font-size: 0.85rem; }
+
+/* The live lesson card — the product in miniature. */
+.lesson-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 157, 186, 0.35);
+  border-radius: var(--radius-card);
+  background: rgba(255, 241, 232, 0.045);
+  padding: var(--sp-5);
+  color: inherit;
+  cursor: pointer;
+}
+.lesson-card, .lesson-card * { text-decoration: none; }
+.lesson-card:hover, .lesson-card:focus-visible {
+  border-color: rgba(255, 157, 186, 0.7);
+  background: rgba(255, 241, 232, 0.075);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lesson-card { transition: border-color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard); }
+  .lesson-card:hover { transform: translateY(-2px); }
+}
+.lesson-card .obs-row {
+  display: grid;
+  grid-template-columns: 3.6em 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid rgba(255, 157, 186, 0.18);
+  font-size: 0.9rem;
+}
+.lesson-card .obs-time { font-variant-numeric: tabular-nums; opacity: 0.7; }
+
+.home-three {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-6);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-6);
+}
+@media (max-width: 860px) { .home-three { grid-template-columns: 1fr; } }
+.home-three h2 { font-size: 1.15rem; margin: 0 0 var(--sp-2); }
+.home-three p { margin: 0; opacity: 0.9; }
+.home-three .num { opacity: 0.5; font-variant-numeric: tabular-nums; }

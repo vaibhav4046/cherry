@@ -27,6 +27,20 @@ interface StoryStep {
   href?: string;
 }
 
+interface Chapter {
+  name: string;
+  from: number;
+  to: number;
+}
+
+/** Four quiet chapters over the twelve steps: Source, Shape, Prove, Carry. */
+const CHAPTERS: Chapter[] = [
+  { name: 'Source', from: 0, to: 2 },
+  { name: 'Shape', from: 3, to: 4 },
+  { name: 'Prove', from: 5, to: 9 },
+  { name: 'Carry', from: 10, to: 11 },
+];
+
 interface ShowcaseData {
   lesson: Lesson | null;
   transcriptCount: number;
@@ -117,7 +131,7 @@ export function Showcase() {
       return;
     }
     setActiveWorkspace(workspace.value.id);
-    setNotice('Fresh workspace created. An attached agent can now call start_apprenticeship — or use the buttons below.');
+    setNotice('Fresh workspace created. An attached agent can now call start_apprenticeship — or use the buttons above.');
     setBusy(false);
   }
 
@@ -243,7 +257,7 @@ export function Showcase() {
       detail: approvedExact
         ? `Approved at exactly r${data.skillGraph!.approvedRevision}`
         : data.pendingApproval
-          ? `PENDING for r${data.pendingApproval.objectRevision} — only you can decide, below`
+          ? `PENDING for r${data.pendingApproval.objectRevision} — only you can decide, in the inspector`
           : `${data.decidedApprovals} decided · no pending request`,
       status: approvedExact ? 'done' : data.pendingApproval ? 'now' : 'todo',
     },
@@ -300,6 +314,39 @@ export function Showcase() {
   const firstTodo = steps.find((step) => step.status === 'todo');
   if (firstTodo && !steps.some((step) => step.status === 'now')) firstTodo.status = 'now';
 
+  // Current chapter = first chapter containing a non-done step; all done → last.
+  const firstUnfinishedChapter = CHAPTERS.findIndex((chapter) =>
+    steps.slice(chapter.from, chapter.to + 1).some((step) => step.status !== 'done'),
+  );
+  const currentChapter = firstUnfinishedChapter === -1 ? CHAPTERS.length - 1 : firstUnfinishedChapter;
+
+  const milestones = [
+    { label: 'empty', reached: true },
+    { label: 'learning', reached: activeMission !== null },
+    { label: 'approval needed', reached: data.pendingApproval !== null || data.decidedApprovals > 0 },
+    { label: 'approved', reached: approvedExact },
+    { label: 'failed', reached: failedVerifications.length > 0 },
+    { label: 'repaired', reached: failedVerifications.length > 0 && passedVerification !== null },
+    { label: 'verified', reached: passedVerification !== null },
+    { label: 'exported', reached: latestReceipt !== null },
+  ];
+
+  const sourceStatus = data.lesson
+    ? `${data.lesson.kind === 'youtube' ? 'Official player + your transcript' : 'Manual material'} · "${data.lesson.title}"`
+    : 'No source yet · add a lesson to begin';
+  const approvalStatus = data.pendingApproval
+    ? 'Waiting for your approval'
+    : approvedExact
+      ? `Approved · revision ${data.skillGraph!.approvedRevision}`
+      : 'Not requested yet';
+  const verificationStatus = passedVerification
+    ? 'Verified'
+    : failedVerifications.length > 0
+      ? 'This run failed one check · repair is ready'
+      : 'Not run yet';
+  const exportStatus = latestReceipt ? 'Bundle verified' : 'Not exported yet';
+  const lastCall = webmcp.recentCalls.length > 0 ? webmcp.recentCalls[webmcp.recentCalls.length - 1]! : null;
+
   if (!ready) {
     return (
       <div className="empty-state" role="status" aria-live="polite">
@@ -321,65 +368,9 @@ export function Showcase() {
         </nav>
 
         <header className="stack" style={{ gap: 'var(--sp-3)' }}>
-          <p className="kicker">Showcase — the whole apprenticeship, live</p>
-          <h1 className="display-sm">Watch a lesson become a proven skill</h1>
-          <p className="subhead" style={{ maxWidth: 640 }}>
-            Every card below reads real persisted state. Nothing is scripted, nothing is pre-completed,
-            and the approval in the middle can only be clicked by you.
-          </p>
-          <details className="card" data-testid="showcase-judge-script">
-            <summary className="subhead" style={{ cursor: 'pointer' }}>Judge script — the whole path in two minutes</summary>
-            <ol className="stack" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', paddingLeft: '1.2em' }}>
-              <li><strong>Start fresh</strong> — a blank workspace; the story rail below is all “to do”.</li>
-              <li><strong>Load labelled sample</strong> — imports the hash-verified example (clearly badged as such) if you want the finished journey instead of driving it yourself.</li>
-              <li>Driving it yourself: create the mission, open the lesson, paste a transcript, and watch <strong>timestamped evidence</strong> land — everything external starts untrusted.</li>
-              <li>Generate the skill draft, then <strong>approve the exact revision</strong> — the one button no agent can press.</li>
-              <li>Run verification: the demo artifact <strong>fails honestly</strong> (heading hierarchy), gets repaired, and passes.</li>
-              <li><strong>Export</strong> the bundle + receipt — recompute the hash yourself; a one-byte edit breaks it.</li>
-              <li>The host panel above shows live WebMCP registrations when a compatible host is attached — and says so honestly when one is not.</li>
-            </ol>
-          </details>
-        </header>
-
-        <section className="card stack" aria-labelledby="host-heading" data-testid="showcase-host">
-          <h2 id="host-heading" className="subhead">WebMCP host</h2>
-          {webmcp.supported ? (
-            <p style={{ margin: 0 }}>
-              <span className="sticker sticker-pass">Host attached</span>{' '}
-              {webmcp.registered.length} tools live ({webmcp.productState} aperture)
-              {webmcp.agent.name ? ` · agent "${webmcp.agent.name}"` : ' · agent has not introduced itself yet'}
-            </p>
-          ) : (
-            <p style={{ margin: 0 }}>
-              <span className="sticker sticker-wait">No WebMCP host</span> This browser exposes no{' '}
-              <span className="mono">modelContext</span>. Every step below still works manually — the agent
-              path and the human path are the same product.
-            </p>
-          )}
-          {webmcp.recentCalls.length > 0 ? (
-            <p className="label" style={{ margin: 0 }} data-testid="showcase-last-call">
-              Last call: <span className="mono">{webmcp.recentCalls[webmcp.recentCalls.length - 1]!.name}</span>{' '}
-              ({webmcp.recentCalls[webmcp.recentCalls.length - 1]!.ok ? 'tool ok' : 'tool returned an error'}) ·{' '}
-              {new Date(webmcp.recentCalls[webmcp.recentCalls.length - 1]!.at).toLocaleTimeString()} ·{' '}
-              {webmcp.recentCalls[webmcp.recentCalls.length - 1]!.resultPreview.slice(0, 80)}
-            </p>
-          ) : (
-            <p className="label" style={{ margin: 0 }}>No tool calls yet this session.</p>
-          )}
-        </section>
-
-        <section className="card stack" aria-labelledby="session-heading">
-          <h2 id="session-heading" className="subhead">Session</h2>
-          {activeWorkspace ? (
-            <p style={{ margin: 0 }}>
-              Workspace <strong>{activeWorkspace.name}</strong>
-              {activeWorkspace.name.startsWith('EXAMPLE') ? <span className="sticker sticker-wait"> SAMPLE DATA</span> : null}
-              {' · '}
-              {missions.length} mission(s)
-            </p>
-          ) : (
-            <p style={{ margin: 0 }}>Fresh session — no workspace exists in this browser yet.</p>
-          )}
+          <p className="kicker">Showcase / Guided example</p>
+          <h1 className="home-headline" style={{ maxWidth: 720 }}>Watch a lesson become a proven skill</h1>
+          <p className="subhead" style={{ maxWidth: 560 }}>A complete run using a labelled offline lesson.</p>
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={() => void startFresh()} disabled={busy} data-testid="showcase-start-fresh">
               Start fresh
@@ -392,11 +383,11 @@ export function Showcase() {
             <button type="button" className="btn" onClick={() => void loadSample()} disabled={busy} data-testid="showcase-load-sample">
               Load labelled sample
             </button>
-            <button type="button" className="btn" onClick={() => void loadAll()} disabled={busy}>
-              Refresh
-            </button>
-            <button type="button" className="btn" onClick={() => void resetDemo()} disabled={busy} data-testid="showcase-reset-demo">
+            <button type="button" className="btn btn-sm showcase-btn-quiet" onClick={() => void resetDemo()} disabled={busy} data-testid="showcase-reset-demo">
               Reset demo
+            </button>
+            <button type="button" className="btn btn-sm showcase-btn-quiet" onClick={() => void loadAll()} disabled={busy}>
+              Refresh
             </button>
           </div>
           <p className="label" style={{ margin: 0 }}>
@@ -404,62 +395,175 @@ export function Showcase() {
           </p>
           {notice ? <p className="label" role="status">{notice}</p> : null}
           {error ? <p className="field-error" role="alert">{error}</p> : null}
-        </section>
+        </header>
 
-        <section aria-labelledby="story-heading" className="stack" style={{ gap: 'var(--sp-4)' }}>
-          <h2 id="story-heading" className="subhead">The story, from real state</h2>
-          <ol className="stack" style={{ gap: 'var(--sp-3)', listStyle: 'none', padding: 0, margin: 0 }} data-testid="showcase-steps">
-            {steps.map((step) => (
-              <li key={step.title} className="card row" style={{ alignItems: 'baseline', gap: 'var(--sp-4)' }}>
-                <span
-                  className={`sticker ${step.status === 'done' ? 'sticker-pass' : step.status === 'now' ? 'sticker-wait' : ''}`}
-                  aria-label={step.status === 'done' ? 'complete' : step.status === 'now' ? 'current step' : 'not started'}
+        <div className="showcase-grid">
+          <aside className="stack showcase-inspector" style={{ gap: 'var(--sp-4)' }} aria-label="Run inspector">
+            <section className="card stack" aria-labelledby="inspector-heading">
+              <h2 id="inspector-heading" className="subhead">This run</h2>
+              {activeWorkspace ? (
+                <p style={{ margin: 0 }}>
+                  Workspace <strong>{activeWorkspace.name}</strong>{' '}
+                  {activeWorkspace.name.startsWith('EXAMPLE') ? <span className="sticker sticker-wait">SAMPLE DATA</span> : null}
+                  {' · '}
+                  {missions.length} mission(s)
+                </p>
+              ) : (
+                <p style={{ margin: 0 }}>Fresh session — no workspace exists in this browser yet.</p>
+              )}
+              <dl className="showcase-facts">
+                <div>
+                  <dt>Mission</dt>
+                  <dd>{activeMission ? activeMission.title : 'No mission yet'}</dd>
+                </div>
+                <div>
+                  <dt>Source</dt>
+                  <dd>{sourceStatus}</dd>
+                </div>
+                <div>
+                  <dt>Approval</dt>
+                  <dd>{approvalStatus}</dd>
+                </div>
+                <div>
+                  <dt>Verification</dt>
+                  <dd>{verificationStatus}</dd>
+                </div>
+                <div>
+                  <dt>Export</dt>
+                  <dd>{exportStatus}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="card stack" aria-labelledby="host-heading" data-testid="showcase-host">
+              <h2 id="host-heading" className="subhead">WebMCP host</h2>
+              {webmcp.supported ? (
+                <p style={{ margin: 0 }}>
+                  <span className="sticker sticker-pass">Host attached</span>{' '}
+                  {webmcp.registered.length} tools live · stage: {webmcp.productState}
+                  {webmcp.agent.name ? ` · agent "${webmcp.agent.name}"` : ' · agent has not introduced itself yet'}
+                </p>
+              ) : (
+                <p style={{ margin: 0 }}>
+                  <span className="sticker sticker-wait">No WebMCP host</span> This browser exposes no{' '}
+                  <span className="mono">modelContext</span>. Every step still works manually — the agent
+                  path and the human path are the same product.
+                </p>
+              )}
+              {lastCall ? (
+                <p className="label showcase-last-call" style={{ margin: 0 }} data-testid="showcase-last-call">
+                  Last call: <span className="mono">{lastCall.name}</span>{' '}
+                  ({lastCall.ok ? 'tool ok' : 'tool returned an error'}) ·{' '}
+                  <span className="tnum">{new Date(lastCall.at).toLocaleTimeString()}</span> ·{' '}
+                  {lastCall.resultPreview.slice(0, 80)}
+                </p>
+              ) : (
+                <p className="label" style={{ margin: 0 }}>No tool calls yet this session.</p>
+              )}
+            </section>
+
+            {data.pendingApproval ? (
+              <section className="card stack showcase-approval" aria-labelledby="approval-heading" data-testid="showcase-approval">
+                <h2 id="approval-heading" className="subhead">Approval checkpoint — human only</h2>
+                <p style={{ margin: 0 }}>
+                  The agent requested approval for revision r{data.pendingApproval.objectRevision}. No tool can
+                  decide this; the buttons below are the only path.
+                </p>
+                <div className="row">
+                  <button type="button" className="btn btn-primary" onClick={() => void decideApproval('approved')} disabled={busy}>
+                    Approve this exact revision
+                  </button>
+                  <button type="button" className="btn" onClick={() => void decideApproval('rejected')} disabled={busy}>
+                    Reject
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
+            <details className="card" data-testid="showcase-judge-script">
+              <summary className="subhead" style={{ cursor: 'pointer' }}>Judge script — the whole path in two minutes</summary>
+              <ol className="stack" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', paddingLeft: '1.2em' }}>
+                <li><strong>Start fresh</strong> — a blank workspace; every chapter starts as to-do.</li>
+                <li><strong>Load labelled sample</strong> — imports the hash-verified example (clearly badged as such) if you want the finished journey instead of driving it yourself.</li>
+                <li>Driving it yourself: create the mission, open the lesson, paste a transcript, and watch <strong>timestamped evidence</strong> land — everything external starts untrusted.</li>
+                <li>Generate the skill draft, then <strong>approve the exact revision</strong> — the one button no agent can press.</li>
+                <li>Run verification: the demo artifact <strong>fails honestly</strong> (heading hierarchy), gets repaired, and passes.</li>
+                <li><strong>Export</strong> the bundle + receipt — recompute the hash yourself; a one-byte edit breaks it.</li>
+                <li>The host panel shows live tools when a compatible host is attached — and says so honestly when one is not.</li>
+              </ol>
+            </details>
+          </aside>
+
+          <div className="stack showcase-canvas" style={{ gap: 'var(--sp-5)' }}>
+            <ol className="showcase-rail" aria-label="Run progress">
+              {milestones.map((milestone) => (
+                <li
+                  key={milestone.label}
+                  className={`showcase-rail-item${milestone.reached ? ' is-on' : ''}`}
+                  aria-label={`${milestone.label} — ${milestone.reached ? 'reached' : 'not yet'}`}
                 >
-                  {step.status === 'done' ? 'DONE' : step.status === 'now' ? 'NOW' : 'TODO'}
-                </span>
-                <div className="stack" style={{ gap: 'var(--sp-1)', flex: 1 }}>
-                  <strong>{step.title}</strong>
-                  <span>{step.detail}</span>
-                </div>
-                {step.href ? <Link to={step.href} className="link-quiet">Open</Link> : null}
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {data.pendingApproval ? (
-          <section className="card stack" aria-labelledby="approval-heading" data-testid="showcase-approval">
-            <h2 id="approval-heading" className="subhead">Approval checkpoint — human only</h2>
-            <p style={{ margin: 0 }}>
-              The agent requested approval for revision r{data.pendingApproval.objectRevision}. No tool can
-              decide this; the buttons below are the only path.
-            </p>
-            <div className="row">
-              <button type="button" className="btn btn-primary" onClick={() => void decideApproval('approved')} disabled={busy}>
-                Approve this exact revision
-              </button>
-              <button type="button" className="btn" onClick={() => void decideApproval('rejected')} disabled={busy}>
-                Reject
-              </button>
-            </div>
-          </section>
-        ) : null}
-
-        <section className="card stack" aria-labelledby="timeline-heading">
-          <h2 id="timeline-heading" className="subhead">Event timeline (append-only)</h2>
-          {data.events.length === 0 ? (
-            <p className="label" style={{ margin: 0 }}>No events yet — every mutation will land here with its actor.</p>
-          ) : (
-            <div className="stack" style={{ gap: 'var(--sp-1)', maxHeight: 280, overflowY: 'auto' }}>
-              {data.events.map((event) => (
-                <div key={event.id} className="event-row">
-                  <span className="mono">#{event.sequence}</span>{' '}
-                  <span className="sticker">{event.actorType.toUpperCase()}</span> {event.summary}
-                </div>
+                  <span className="showcase-rail-dot" aria-hidden="true" />
+                  <span className="showcase-rail-label">{milestone.label}</span>
+                </li>
               ))}
+            </ol>
+
+            <div className="stack" style={{ gap: 'var(--sp-3)' }} data-testid="showcase-steps">
+              {CHAPTERS.map((chapter, chapterIndex) => {
+                const chapterSteps = steps.slice(chapter.from, chapter.to + 1);
+                const doneCount = chapterSteps.filter((step) => step.status === 'done').length;
+                const isCurrent = chapterIndex === currentChapter;
+                return (
+                  <details
+                    key={chapter.name}
+                    className={`showcase-chapter${isCurrent ? ' is-current' : ''}`}
+                    open={isCurrent}
+                  >
+                    <summary>
+                      <span className="showcase-chapter-name">{chapter.name}</span>
+                      <span className="showcase-chapter-count">
+                        {doneCount} of {chapterSteps.length} done
+                      </span>
+                    </summary>
+                    <ol className="showcase-chapter-steps">
+                      {chapterSteps.map((step) => (
+                        <li key={step.title} className="showcase-step">
+                          <span
+                            className={`sticker ${step.status === 'done' ? 'sticker-pass' : step.status === 'now' ? 'sticker-wait' : ''}`}
+                            aria-label={step.status === 'done' ? 'complete' : step.status === 'now' ? 'current step' : 'not started'}
+                          >
+                            {step.status === 'done' ? 'DONE' : step.status === 'now' ? 'NOW' : 'TODO'}
+                          </span>
+                          <div className="stack showcase-step-body" style={{ gap: 'var(--sp-1)' }}>
+                            <strong>{step.title}</strong>
+                            <span>{step.detail}</span>
+                          </div>
+                          {step.href ? <Link to={step.href} className="link-quiet">Open</Link> : null}
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                );
+              })}
             </div>
-          )}
-        </section>
+
+            <section className="card stack" aria-labelledby="timeline-heading">
+              <h2 id="timeline-heading" className="subhead">Event timeline (append-only)</h2>
+              {data.events.length === 0 ? (
+                <p className="label" style={{ margin: 0 }}>No events yet — every mutation will land here with its actor.</p>
+              ) : (
+                <div className="stack" style={{ gap: 'var(--sp-1)', maxHeight: 280, overflowY: 'auto' }}>
+                  {data.events.map((event) => (
+                    <div key={event.id} className="event-row">
+                      <span className="mono">#{event.sequence}</span>{' '}
+                      <span className="sticker">{event.actorType.toUpperCase()}</span> {event.summary}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
 
         <footer className="row" style={{ justifyContent: 'space-between' }}>
           <span className="label">Local-first · everything above lives in this browser's IndexedDB</span>

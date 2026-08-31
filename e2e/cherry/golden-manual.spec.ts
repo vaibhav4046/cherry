@@ -12,8 +12,8 @@ test.describe('golden manual journey', () => {
     await page.goto('/');
 
     // Landing → Studio
-    await expect(page.getByRole('heading', { name: /Teach once/i })).toBeVisible();
-    await page.getByRole('link', { name: 'Open Studio', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /Turn a lesson into a skill/i })).toBeVisible();
+    await page.getByRole('link', { name: 'Open Studio', exact: true }).first().click();
 
     // Empty state: create workspace
     await expect(page.getByRole('heading', { name: 'Teach Cherry something' })).toBeVisible();
@@ -97,9 +97,9 @@ test.describe('golden manual journey', () => {
     // Walk the state machine: AWAITING_APPROVAL -> EXECUTING
     const stateChip = page.getByTestId('mission-state');
     if ((await stateChip.textContent()) === 'PLANNING') {
-      await page.getByRole('button', { name: 'Move to AWAITING_APPROVAL' }).click();
+      await page.getByRole('button', { name: 'Move to Awaiting approval' }).click();
     }
-    await page.getByRole('button', { name: 'Move to EXECUTING' }).click();
+    await page.getByRole('button', { name: 'Move to Running' }).click();
     await expect(stateChip).toHaveText('EXECUTING');
 
     await page.getByRole('button', { name: 'Create file workspace' }).click();

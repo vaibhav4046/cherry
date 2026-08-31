@@ -1,0 +1,215 @@
+/* Skill-contract + run-screen styles — owned by the editor track of the 2026-08-31 UI sprint. */
+
+/* ---------- Contract layout: document + version rail ---------- */
+.contract-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--sp-4);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .contract-grid { grid-template-columns: 1fr; }
+  .contract-rail { order: -1; }
+}
+
+.contract-doc { display: flex; flex-direction: column; gap: 0; }
+
+.contract-section {
+  padding: var(--sp-5) 0;
+  border-top: 1px solid rgba(255, 185, 205, 0.16);
+}
+.contract-section:first-child { border-top: none; padding-top: 0; }
+.contract-section:last-child { padding-bottom: 0; }
+
+.contract-h {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--sp-3);
+}
+
+.contract-empty {
+  color: var(--color-ink-soft);
+  opacity: 0.75;
+  font-size: 14px;
+  margin: 0;
+}
+
+.contract-list { margin: 0; padding: 0 0 0 var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-2); font-size: 15px; }
+.contract-list .quiet { color: var(--color-ink-soft); font-size: 13px; }
+
+/* ---------- Method: ordered, readable steps ---------- */
+.method-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  counter-reset: method;
+}
+.method-step { counter-increment: method; }
+.method-btn {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sticker);
+  padding: var(--sp-2) var(--sp-3);
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+}
+.method-btn::before {
+  content: counter(method, decimal-leading-zero);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+.method-btn:hover { border-color: rgba(255, 185, 205, 0.4); background: rgba(255, 233, 240, 0.04); }
+.method-btn[aria-expanded='true'] { border-color: rgba(255, 185, 205, 0.5); background: var(--color-cherry-wash); }
+.method-btn:focus-visible { border-color: transparent; }
+.method-goal { display: block; color: var(--color-ink-soft); font-size: 14px; }
+.method-kind {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  opacity: 0.8;
+}
+.method-refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.evidence-chip {
+  display: inline-block;
+  border: 1px solid rgba(255, 185, 205, 0.28);
+  border-radius: var(--radius-pill);
+  padding: 1px 10px;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+  background: transparent;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Version rail ---------- */
+.rail-kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px var(--sp-3);
+  margin: 0;
+  font-size: 14px;
+}
+.rail-kv dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-ink-soft);
+  align-self: baseline;
+}
+.rail-kv dd { margin: 0; justify-self: end; text-align: right; overflow-wrap: anywhere; }
+
+.checkpoint-panel {
+  border: 1px dashed rgba(85, 219, 156, 0.55);
+  background: rgba(85, 219, 156, 0.07);
+}
+.checkpoint-hash {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+/* ---------- Run screen (test-runner treatment) ---------- */
+.mission-raw-state { opacity: 0.55; font-size: 11px; }
+
+.run-meta {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.dod-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dod-list li { display: flex; gap: var(--sp-2); align-items: baseline; font-size: 15px; }
+.dod-list li::before { content: '◆'; font-size: 9px; color: var(--color-cherry-pop); flex-shrink: 0; }
+
+.run-rows {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  overflow-y: auto;
+  border: var(--border);
+  border-radius: var(--radius-sticker);
+  background: var(--color-paper-white);
+}
+.run-row {
+  display: grid;
+  grid-template-columns: 1.6em 5.4em minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: baseline;
+  padding: 8px var(--sp-3);
+  border-top: 1px solid rgba(255, 185, 205, 0.12);
+  font-size: 14px;
+}
+.run-row:first-child { border-top: none; }
+.run-ico { font-family: var(--font-mono); text-align: center; }
+.run-ico-pass { color: var(--color-mint-pop); }
+.run-ico-fail { color: var(--color-cherry-pop); }
+.run-ico-step { color: var(--color-ink-soft); }
+.run-time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+.run-result { font-size: 12px; color: var(--color-ink-soft); text-align: right; overflow-wrap: anywhere; }
+
+.assert-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.assert-row { display: flex; gap: var(--sp-3); align-items: baseline; font-size: 15px; }
+.assert-quote {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--color-ink-soft);
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.fail-panel {
+  border: 1px solid rgba(255, 79, 120, 0.5);
+  background: rgba(255, 79, 120, 0.08);
+  border-radius: var(--radius-sticker);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.pass-calm {
+  border: 1px solid rgba(85, 219, 156, 0.45);
+  background: rgba(85, 219, 156, 0.06);
+  border-radius: var(--radius-sticker);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+}
+
+/* Motion: 150–240ms, always behind the reduced-motion gate. */
+@media (prefers-reduced-motion: no-preference) {
+  .method-btn { transition: background 180ms var(--ease-standard, ease), border-color 180ms var(--ease-standard, ease); }
+  .run-row, .assert-row { transition: background 150ms var(--ease-standard, ease); }
+  .fail-panel, .pass-calm { transition: border-color 240ms var(--ease-standard, ease); }
+}

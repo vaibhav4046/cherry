@@ -1,28 +1,75 @@
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { NavLink, Outlet, Link , useLocation } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { GuidedTour } from '../../components/GuidedTour.tsx';
 import { Icons } from '../../components/Icons.tsx';
+import type { ProductState } from '../../cherry/mission/mission-state.ts';
 
-const NAV = [
-  { to: '/studio', label: 'Command', end: true, icon: Icons.command },
-  { to: '/studio/inbox', label: 'Inbox', end: false, icon: Icons.runs },
-  { to: '/studio/crew', label: 'Crew', end: false, icon: Icons.agent },
-  { to: '/studio/routines', label: 'Routines', end: false, icon: Icons.memory },
-  { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick },
-  { to: '/studio/agent', label: 'Agent', end: false, icon: Icons.agent },
+interface NavItem {
+  to: string;
+  label: string;
+  end: boolean;
+  icon: (size: number) => ReactNode;
+  title?: string;
+  hint?: string;
+}
+
+const NAV_PRIMARY: NavItem[] = [
+  { to: '/studio', label: 'Command', end: true, icon: Icons.command, title: 'Overview' },
+  { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick, hint: 'add a source' },
   { to: '/studio/skills', label: 'Skills', end: false, icon: Icons.skills },
-  { to: '/studio/memory', label: 'Memory', end: false, icon: Icons.memory },
   { to: '/studio/runs', label: 'Runs', end: false, icon: Icons.runs },
   { to: '/studio/proof', label: 'Proof', end: false, icon: Icons.proof },
   { to: '/studio/settings/connections', label: 'Connect', end: false, icon: Icons.connect },
 ];
 
-export function StudioLayout() {
-  const { ready, activeWorkspace, activeMission, productState, webmcp, setToolSurface } = useAppState();
-  const location = useLocation();
+const NAV_WORKFORCE: NavItem[] = [
+  { to: '/studio/inbox', label: 'Inbox', end: false, icon: Icons.runs },
+  { to: '/studio/crew', label: 'Crew', end: false, icon: Icons.agent },
+  { to: '/studio/routines', label: 'Routines', end: false, icon: Icons.memory },
+  { to: '/studio/agent', label: 'Agent', end: false, icon: Icons.agent },
+  { to: '/studio/memory', label: 'Memory', end: false, icon: Icons.memory },
+];
 
-  // Route-driven tool surface: the WebMCP aperture follows where the human is.
+const NAV_ALL: NavItem[] = [...NAV_PRIMARY, ...NAV_WORKFORCE];
+
+const PRODUCT_STATE_LABEL: Record<ProductState, string> = {
+  empty: 'No mission yet',
+  onboarding: 'Getting started',
+  learning: 'Learning',
+  planning: 'Shaping the skill',
+  execution: 'Running',
+  verification: 'Verifying',
+  passed: 'Verified',
+};
+
+function subscribeOnline(callback: () => void) {
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+}
+
+function RailLink({ item }: { item: NavItem }) {
+  return (
+    <NavLink to={item.to} end={item.end} className="rail-link" title={item.title}>
+      {item.icon(18)}
+      <span className="rail-link-text">
+        {item.label}
+        {item.hint ? <span className="rail-hint" aria-hidden="true">{item.hint}</span> : null}
+      </span>
+    </NavLink>
+  );
+}
+
+export function StudioLayout() {
+  const { ready, workspaces, activeWorkspace, activeMission, productState, webmcp, setActiveWorkspace, setToolSurface } = useAppState();
+  const location = useLocation();
+  const isOnline = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
+
+  // Route-driven tool surface: registered tools follow where the human is.
   useEffect(() => {
     const path = location.pathname;
     const surface =
@@ -38,37 +85,76 @@ export function StudioLayout() {
     setToolSurface(surface);
   }, [location.pathname, setToolSurface]);
 
+  const stateLabel =
+    productState === 'planning' && activeMission?.state === 'AWAITING_APPROVAL'
+      ? 'Awaiting your approval'
+      : PRODUCT_STATE_LABEL[productState];
+
+  const hostPill = webmcp.supported
+    ? {
+        text: `Host connected · ${webmcp.registered.length} tools`,
+        className: 'sticker sticker-pass tnum',
+        title: `WebMCP active: ${webmcp.registered.length} tools registered`,
+      }
+    : !isOnline
+      ? {
+          text: 'Offline',
+          className: 'sticker sticker-wait',
+          title: 'This device is offline. Cherry keeps working — everything lives in this browser.',
+        }
+      : {
+          text: 'Local',
+          className: 'sticker',
+          title:
+            'WebMCP is not available in this browser. Everything works manually; open Cherry in a compatible ChatGPT/Codex client to attach an agent.',
+        };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <header style={{ borderBottom: 'var(--border)' }}>
         <nav className="top-nav" aria-label="Studio navigation">
           <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
-          <span className="label" style={{ marginRight: 'auto' }}>
-            {activeWorkspace ? activeWorkspace.name : 'Cherry Wine Studio'}
+          <span className="label top-nav-context" style={{ marginRight: 'auto' }}>
+            {workspaces.length > 1 ? (
+              <select
+                className="select workspace-select"
+                aria-label="Workspace"
+                value={activeWorkspace?.id ?? ''}
+                onChange={(event) => setActiveWorkspace(event.target.value)}
+              >
+                {workspaces.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              activeWorkspace ? activeWorkspace.name : 'Cherry Wine Studio'
+            )}
             {activeMission ? ` · ${activeMission.title}` : ''}
           </span>
-          <span className="sticker" data-testid="product-state">State: {productState}</span>
-          <span
-            className={webmcp.supported ? 'sticker sticker-pass' : 'sticker sticker-wait'}
-            data-testid="webmcp-status"
-            title={
-              webmcp.supported
-                ? `WebMCP active: ${webmcp.registered.length} tools registered`
-                : 'WebMCP is not available in this browser. Everything works manually; open Cherry in a compatible ChatGPT/Codex client to attach an agent.'
-            }
-          >
-            {webmcp.supported ? `WebMCP · ${webmcp.registered.length} tools` : 'WebMCP off · manual mode'}
+          <span className="sticker" data-testid="product-state" title={`Product state: ${productState}`}>
+            {stateLabel}
+          </span>
+          <span className={hostPill.className} data-testid="webmcp-status" title={hostPill.title}>
+            {hostPill.text}
           </span>
         </nav>
       </header>
 
       <div className="studio-shell">
         <nav className="studio-rail" aria-label="Studio sections">
-          {NAV.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className="rail-link">
-              {item.icon(18)} {item.label}
-            </NavLink>
-          ))}
+          <div className="rail-group">
+            {NAV_PRIMARY.map((item) => (
+              <RailLink key={item.to} item={item} />
+            ))}
+          </div>
+          <div className="rail-divider">Workforce</div>
+          <div className="rail-group">
+            {NAV_WORKFORCE.map((item) => (
+              <RailLink key={item.to} item={item} />
+            ))}
+          </div>
         </nav>
         <main className="studio-main" id="studio-main">
           {ready ? <Outlet /> : (
@@ -82,7 +168,7 @@ export function StudioLayout() {
       <GuidedTour />
 
       <nav className="bottom-nav" aria-label="Studio sections (mobile)">
-        {NAV.map((item) => (
+        {NAV_ALL.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end}>
             {item.label}
           </NavLink>

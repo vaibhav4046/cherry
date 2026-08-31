@@ -25,6 +25,15 @@ export default function CommandCenter() {
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const sourceDialogRef = useRef<HTMLDialogElement>(null);
+
+  function openSourceDialog() {
+    sourceDialogRef.current?.showModal();
+  }
+
+  function closeSourceDialog() {
+    sourceDialogRef.current?.close();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -204,7 +213,9 @@ export default function CommandCenter() {
       <header className="row" style={{ justifyContent: 'space-between' }}>
         <h1 className="display-sm title-3d">Command Center</h1>
         <div className="row">
-          <Link to="/studio/quick" className="btn btn-primary">Quick skill from a video</Link>
+          <button type="button" className="btn btn-primary" onClick={openSourceDialog}>
+            Add a source
+          </button>
           <Link to="/studio/missions/new" className="btn">Create mission</Link>
           <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
             Replay walkthrough
@@ -313,7 +324,7 @@ export default function CommandCenter() {
       <section aria-labelledby="events-heading" className="stack">
         <h2 id="events-heading" className="subhead">Proof event strip</h2>
         {events.length === 0 ? (
-          <p className="card">No events yet. Every important action lands here as an append-only record.</p>
+          <p className="card">No events yet. Every important action lands here as a permanent record.</p>
         ) : (
           <div className="event-strip" aria-live="polite">
             {events.map((event) => (
@@ -327,6 +338,39 @@ export default function CommandCenter() {
           </div>
         )}
       </section>
+
+      <dialog
+        ref={sourceDialogRef}
+        className="sheet source-dialog"
+        aria-labelledby="add-source-title"
+        onClick={(event) => {
+          if (event.target === sourceDialogRef.current) closeSourceDialog();
+        }}
+      >
+        <div className="stack" style={{ gap: 'var(--sp-4)' }}>
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <h2 id="add-source-title" className="subhead" style={{ margin: 0 }}>Add a source</h2>
+            <button type="button" className="btn btn-sm" onClick={closeSourceDialog}>Close</button>
+          </div>
+          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
+            <span className="source-option-title">YouTube link</span>
+            <span className="source-option-copy">
+              Plays in the official player. Cherry reads the transcript you paste or upload — it does not scrape captions.
+            </span>
+          </Link>
+          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
+            <span className="source-option-title">Paste a transcript</span>
+            <span className="source-option-copy">Text, .srt or .vtt becomes timestamped evidence.</span>
+          </Link>
+          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
+            <span className="source-option-title">Upload text / Markdown / JSON</span>
+            <span className="source-option-copy">Imported locally and hashed. Nothing leaves this browser.</span>
+          </Link>
+          <Link to="/showcase" className="link-quiet" onClick={closeSourceDialog}>
+            No source handy? Load the labelled sample
+          </Link>
+        </div>
+      </dialog>
     </div>
   );
 }

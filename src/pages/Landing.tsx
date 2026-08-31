@@ -1,29 +1,127 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ribbon } from '../components/Ribbon.tsx';
-import { CherryBurst } from '../components/CherryBurst.tsx';
-import { CherryMascot } from '../components/CherryMascot.tsx';
-import { useReveal } from '../components/useReveal.ts';
-import { CarryFlow, ConnectArch, ProofFlow, RaysBurst, TeachFlow } from '../components/Diagrams.tsx';
-import { ClipVideo } from '../components/ClipVideo.tsx';
 
-const MARQUEE_TEXT =
-  'CHERRY WINE · TEACH ONCE · PROVE IT · KEEP IT · LOCAL-FIRST · NO API KEY REQUIRED · ';
+interface CardRow {
+  seconds: number;
+  text: string;
+}
+
+interface CardData {
+  lessonTitle: string;
+  rows: CardRow[];
+  skillName: string;
+  revision: number;
+  approved: boolean;
+  verified: boolean;
+  receiptHash: string | null;
+}
+
+function formatTimestamp(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+/**
+ * The product in miniature: real data from the labelled example export —
+ * a source, timestamped evidence, a skill, a human approval, a verified run.
+ */
+function LessonCard() {
+  const [card, setCard] = useState<CardData | null | 'unavailable'>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch('/examples/example-workspace.json');
+        if (!response.ok) throw new Error('example unavailable');
+        const data = (await response.json()) as {
+          lessons: Array<{ id: string; title: string }>;
+          observations: Array<{ timestampSeconds: number; text: string }>;
+          transcriptSegments: Array<{ startSeconds?: number; timestampSeconds?: number; text: string }>;
+          skillGraphs: Array<{ name: string; revision: number; status: string; approvedRevision: number | null }>;
+          verifications: Array<{ status: string }>;
+          proofReceipts: Array<{ receiptHash: string }>;
+        };
+        const rows: CardRow[] = data.observations
+          .slice(0, 3)
+          .map((observation) => ({ seconds: observation.timestampSeconds, text: observation.text }));
+        for (const segment of data.transcriptSegments) {
+          if (rows.length >= 3) break;
+          rows.push({ seconds: segment.startSeconds ?? segment.timestampSeconds ?? 0, text: segment.text });
+        }
+        const skill = data.skillGraphs[0];
+        if (!cancelled && skill) {
+          setCard({
+            lessonTitle: data.lessons[0]?.title ?? 'Lesson',
+            rows,
+            skillName: skill.name,
+            revision: skill.revision,
+            approved: skill.status === 'approved' && skill.approvedRevision === skill.revision,
+            verified: data.verifications.some((report) => report.status === 'passed'),
+            receiptHash: data.proofReceipts[0]?.receiptHash?.slice(0, 12) ?? null,
+          });
+        }
+      } catch {
+        if (!cancelled) setCard('unavailable');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (card === 'unavailable') {
+    return (
+      <div className="lesson-card" aria-hidden="true">
+        <p className="label" style={{ margin: 0 }}>The example lesson could not load. The Studio still works — everything is local.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Link to="/studio?demo=1" className="lesson-card" data-testid="lesson-card" aria-label="Open the guided example in the Studio">
+      <p className="label" style={{ margin: 0 }}>Lesson</p>
+      <p style={{ margin: '2px 0 var(--sp-3)', fontWeight: 600 }}>{card ? card.lessonTitle : 'Loading the example…'}</p>
+      {card
+        ? card.rows.map((row) => (
+            <span className="obs-row" key={`${row.seconds}-${row.text.slice(0, 12)}`}>
+              <span className="obs-time tnum">{formatTimestamp(row.seconds)}</span>
+              <span>{row.text}</span>
+            </span>
+          ))
+        : null}
+      {card ? (
+        <div className="stack" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
+          <p style={{ margin: 0 }}>
+            <span className="label">Skill draft · </span>
+            {card.skillName} <span className="label tnum">revision {card.revision}</span>
+          </p>
+          <p style={{ margin: 0 }}>
+            <span className={card.approved ? 'sticker sticker-pass' : 'sticker sticker-wait'}>
+              {card.approved ? `Approved · revision ${card.revision}` : 'Waiting for your approval'}
+            </span>{' '}
+            <span className={card.verified ? 'sticker sticker-pass' : 'sticker'}>
+              {card.verified ? 'Verified' : 'Not verified yet'}
+            </span>
+          </p>
+          {card.receiptHash ? (
+            <p className="label tnum" style={{ margin: 0 }}>Receipt {card.receiptHash}… — recompute it yourself</p>
+          ) : null}
+        </div>
+      ) : null}
+    </Link>
+  );
+}
 
 export function Landing() {
-  useReveal();
   return (
     <div>
-      <div className="marquee" aria-hidden="true">
-        <div className="marquee-track">{MARQUEE_TEXT.repeat(4)}</div>
-      </div>
-
       <header>
         <nav className="top-nav" aria-label="Main navigation">
           <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
           <div className="row nav-links" style={{ flex: 1, justifyContent: 'center' }}>
             <a href="#how" className="nav-pill">How it works</a>
-            <a href="#agents" className="nav-pill">For agents</a>
-            <a href="#security" className="nav-pill">Security</a>
             <Link to="/showcase" className="nav-pill">Showcase</Link>
             <Link to="/compatibility" className="nav-pill">What's proven</Link>
           </div>
@@ -32,203 +130,68 @@ export function Landing() {
       </header>
 
       <main>
-        {/* ---- Hero: the tagline, the cherry, nothing else ---- */}
-        <section className="band band-maroon ribbon-wrap hero-cinema" aria-labelledby="hero-heading">
-          <ClipVideo src="/clips/hero-loop.mp4" poster="/clips/hero-loop-poster.webp" variant="bg" />
-          <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
-          <div className="band-inner ribbon-fg hero-grid">
-            <div className="stack" style={{ gap: 'var(--sp-5)' }}>
-              <p className="script-mark">Cherry</p>
-              <p className="kicker">open source · local-first · no API key</p>
-              <h1 id="hero-heading" className="type-3d">
-                <span className="rise-line">Teach once.</span>{' '}
-                <span className="rise-line">Prove it.</span>{' '}
-                <span className="rise-line">Keep it.</span>
-              </h1>
-              <p className="subhead" style={{ maxWidth: 520, margin: 0, color: 'var(--color-cream)' }}>
-                Turn any video into a skill your agent can run — inspected, approved by you, sealed
-                with recomputable proof.
-              </p>
-              <div className="row" data-testid="hero-ctas" style={{ marginTop: 'var(--sp-2)' }}>
-                <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
-                <Link to="/studio/quick" className="btn">Teach Cherry from a video</Link>
-                <Link to="/studio" className="link-quiet">Open MCP Studio</Link>
-              </div>
-            </div>
-            <div className="rays-wrap reveal">
-              <RaysBurst />
-              <CherryBurst />
-            </div>
-          </div>
-        </section>
-
-        {/* ---- 01 · TEACH ---- */}
-        <section id="how" className="band band-cream" aria-labelledby="teach-heading">
-          <div className="band-inner">
-            <div className="chapter-head">
-              <span className="chapter-num" aria-hidden="true">01</span>
-              <div className="stack" style={{ gap: 'var(--sp-3)', flex: 1, minWidth: 260 }}>
-                <p className="kicker">Teach</p>
-                <h2 id="teach-heading" className="display-sm">From video to skill, in front of you</h2>
-                <p className="subhead" style={{ maxWidth: 620 }}>
-                  Point Cherry at a lesson. It drafts the steps with time-stamped proof of where each step came from — and nothing
-                  becomes a skill until you approve the exact version you read.
-                </p>
-              </div>
-              <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
-                <ClipVideo
-                  src="/media/cherry-editorial/video/cherry-lesson-seed-16x9.mp4"
-                  poster="/media/cherry-editorial/video/cherry-lesson-seed-poster.webp"
-                />
-                <CherryMascot pose="point" size={100} line="Every step keeps its receipt." />
-              </div>
-            </div>
-            <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
-              <div className="diagram-scroll" tabIndex={0} role="region" aria-label="Teach flow diagram (scrollable)"><TeachFlow /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- 02 · PROVE ---- */}
-        <section className="band band-blush" aria-labelledby="prove-heading">
-          <div className="band-inner">
-            <div className="chapter-head">
-<span className="chapter-num" aria-hidden="true">02</span>
-              <div className="stack" style={{ gap: 'var(--sp-3)', flex: 1, minWidth: 260 }}>
-                <p className="kicker">Prove</p>
-                <h2 id="prove-heading" className="display-sm">Receipts, not promises</h2>
-                <p className="subhead" style={{ maxWidth: 620 }}>
-                  Every action is hashed into a receipt anyone can recompute. Tamper-evident by
-                  construction — and honestly labelled: it's a hash chain, not a signature.
-                </p>
-              </div>
-              <div className="reveal">
-                <ClipVideo
-                  src="/media/cherry-editorial/video/cherry-proof-approval-16x9.mp4"
-                  poster="/media/cherry-editorial/video/cherry-proof-approval-poster.webp"
-                />
-              </div>
-            </div>
-            <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
-              <div className="diagram-scroll" tabIndex={0} role="region" aria-label="Proof pipeline diagram (scrollable)"><ProofFlow /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- 03 · CONNECT ---- */}
-        <section id="agents" className="band band-cream" aria-labelledby="connect-heading">
-          <div className="band-inner">
-            <div className="chapter-head">
-              <span className="chapter-num" aria-hidden="true">03</span>
-              <div className="stack" style={{ gap: 'var(--sp-3)', flex: 1, minWidth: 260 }}>
-                <p className="kicker">Connect</p>
-                <h2 id="connect-heading" className="display-sm">Your agent drives. You hold the keys.</h2>
-                <p className="subhead" style={{ maxWidth: 640 }}>
-                  Open Cherry in a supported ChatGPT/Codex browser to collaborate through WebMCP, or
-                  carry a verified Cherry skill into Claude Code through Agent Skills and MCP. The host
-                  reasons under its own plan — and no tool can approve, trust, or remember for you.
-                </p>
-              </div>
-              <div className="reveal stack" style={{ alignItems: 'center', gap: 'var(--sp-3)' }}>
-                <ClipVideo src="/clips/crew-constellation.mp4" poster="/clips/crew-constellation-poster.webp" />
-                <CherryMascot pose="wave" size={100} flip line="I hand your agent five tools at a time." />
-              </div>
-            </div>
-            <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
-              <div className="diagram-scroll" tabIndex={0} role="region" aria-label="WebMCP architecture diagram (scrollable)"><ConnectArch /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- 04 · CARRY ---- */}
-        <section className="band band-lavender" aria-labelledby="carry-heading">
-          <div className="band-inner">
-            <div className="chapter-head">
-              <span className="chapter-num" aria-hidden="true">04</span>
-              <div className="stack" style={{ gap: 'var(--sp-3)', flex: 1, minWidth: 260 }}>
-                <p className="kicker">Carry</p>
-                <h2 id="carry-heading" className="display-sm">Skills that travel</h2>
-                <p className="subhead" style={{ maxWidth: 620 }}>
-                  One bundle installs into Claude Code and Codex, with a standalone verifier anyone can
-                  run — no Cherry required.
-                </p>
-              </div>
-              <div className="reveal">
-                <ClipVideo
-                  src="/media/cherry-editorial/video/cherry-carry-forward-16x9.mp4"
-                  poster="/media/cherry-editorial/video/cherry-carry-forward-poster.webp"
-                />
-              </div>
-            </div>
-            <div className="reveal diagram" style={{ marginTop: 'var(--sp-8)' }}>
-              <div className="diagram-scroll" tabIndex={0} role="region" aria-label="Skill portability diagram (scrollable)"><CarryFlow /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- Guarantees ---- */}
-        <section id="security" className="band band-gray" aria-labelledby="security-heading">
-          <div className="band-inner">
-            <div className="row" style={{ alignItems: 'center', gap: 'var(--sp-5)' }}>
-              <h2 id="security-heading" className="display-sm" style={{ margin: 0 }}>Trust is a feature</h2>
-              <picture>
-                <source srcSet="/media/cherry-editorial/cherry-seal-mark.webp" type="image/webp" />
-                <img
-                  src="/media/cherry-editorial/cherry-seal-mark.png"
-                  alt=""
-                  aria-hidden="true"
-                  width={88}
-                  height={88}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </picture>
-            </div>
-            <div className="guarantee-row reveal reveal-stagger" style={{ marginTop: 'var(--sp-8)' }}>
-              <div className="stack" style={{ gap: 'var(--sp-2)' }}>
-                <span className="sticker sticker-fail">Untrusted by default</span>
-                <p style={{ margin: 0 }}>Everything a source says stays data until you promote it.</p>
-              </div>
-              <div className="stack" style={{ gap: 'var(--sp-2)' }}>
-                <span className="sticker sticker-wait">Exact-revision approvals</span>
-                <p style={{ margin: 0 }}>Edit anything after approving and the approval goes stale.</p>
-              </div>
-              <div className="stack" style={{ gap: 'var(--sp-2)' }}>
-                <span className="sticker sticker-pass">Recomputable proof</span>
-                <p style={{ margin: 0 }}>SHA-256 over canonical JSON — check it without trusting us.</p>
-              </div>
-              <div className="stack" style={{ gap: 'var(--sp-2)' }}>
-                <span className="sticker">Sandboxed previews</span>
-                <p style={{ margin: 0 }}>Artifacts render network-blocked, storage-blocked, isolated.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- Closing ---- */}
-        <section id="open" className="band band-maroon ribbon-wrap" aria-labelledby="open-heading">
-          <div className="os-watermark" aria-hidden="true">CHERRY WINE</div>
-          <Ribbon color="var(--color-cherry-pop)" />
-          <div className="band-inner ribbon-fg" style={{ textAlign: 'center' }}>
-            <div className="reveal">
-              <CherryMascot pose="stamp" size={160} line="Approved by you. Verified by checks. Sealed by hashes." />
-            </div>
-            <h2 id="open-heading" className="display-sm" style={{ marginTop: 'var(--sp-4)' }}>Open source, no meter running</h2>
-            <p className="subhead" style={{ maxWidth: 620, margin: 'var(--sp-4) auto' }}>
-              No AI API key, no cloud database, no paid backend. Connecting an agent accelerates the
-              same product — it never unlocks a different one.
+        <section className="home-hero page-enter" aria-labelledby="hero-heading">
+          <div className="stack" style={{ gap: 'var(--sp-4)' }}>
+            <p className="home-eyebrow" style={{ margin: 0 }}>Cherry / Skill studio</p>
+            <h1 id="hero-heading" className="home-headline">Turn a lesson into a skill you can run.</h1>
+            <p className="subhead" style={{ margin: 0, maxWidth: 480 }}>
+              Give Cherry a lesson you're allowed to learn from. It drafts the method with timestamped
+              evidence, waits for your approval, then verifies the result — and seals it with a receipt
+              anyone can recompute.
             </p>
-            <div className="row" style={{ justifyContent: 'center', marginTop: 'var(--sp-6)' }}>
-              <Link to="/studio?demo=1" className="btn">Try the guided example</Link>
-              <Link to="/compatibility" className="btn">See what's proven</Link>
+            <div className="row" data-testid="hero-ctas" style={{ marginTop: 'var(--sp-2)' }}>
+              <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
+              <Link to="/studio" className="link-quiet">Open Studio</Link>
             </div>
+            <p className="trust-line" style={{ margin: 0 }}>Local-first · Human-approved · Proof-backed</p>
+          </div>
+          <LessonCard />
+        </section>
+
+        <section id="how" className="home-three" aria-label="How Cherry works">
+          <div>
+            <p className="num label">01</p>
+            <h2>Learn from the source</h2>
+            <p>
+              Every step is drawn from timestamped evidence — what was said, what was shown, and when.
+              Anything from outside starts untrusted until you promote it.
+            </p>
+          </div>
+          <div>
+            <p className="num label">02</p>
+            <h2>Approve the method</h2>
+            <p>
+              The skill is a readable contract, not a black box. You approve the exact revision you
+              read — edit anything afterwards and the approval goes stale.
+            </p>
+          </div>
+          <div>
+            <p className="num label">03</p>
+            <h2>Run it with proof</h2>
+            <p>
+              Verification runs real checks that can genuinely fail. The pass, the failures, and the
+              repairs are sealed into an exportable receipt.
+            </p>
+            <picture>
+              <source srcSet="/media/cherry-editorial/cherry-seal-mark.webp" type="image/webp" />
+              <img
+                src="/media/cherry-editorial/cherry-seal-mark.png"
+                alt=""
+                aria-hidden="true"
+                width={56}
+                height={56}
+                loading="lazy"
+                decoding="async"
+                style={{ marginTop: 'var(--sp-3)' }}
+              />
+            </picture>
           </div>
         </section>
       </main>
 
       <footer className="band band-cream">
         <div className="band-inner row" style={{ justifyContent: 'space-between' }}>
-          <span className="label">Cherry Wine · the apprenticeship layer for AI agents</span>
+          <span className="label">Cherry — the apprenticeship layer for AI agents</span>
           <span className="label">MIT licensed · local-first · WebMCP Challenge 2026</span>
         </div>
       </footer>

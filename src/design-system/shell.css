@@ -1,0 +1,142 @@
+/* Studio shell styles — owned by the shell track of the 2026-08-31 UI sprint.
+   Quiet instrument: warm paper, dark wine, one copper accent, precise motion. */
+
+.studio-rail {
+  --shell-accent: #d99a72; /* copper */
+  width: 240px;
+  padding: var(--sp-4) var(--sp-3);
+  gap: 0;
+}
+
+.rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rail-divider {
+  margin: var(--sp-4) var(--sp-2) var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid rgba(255, 185, 205, 0.16);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(236, 203, 215, 0.78);
+}
+
+/* Quiet rail links: no gradient, hairline states, one accent. */
+.studio-rail .rail-link {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--color-ink-soft);
+  min-height: 40px;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.studio-rail .rail-link:hover {
+  background: rgba(255, 185, 205, 0.07);
+  color: var(--color-carbon);
+}
+
+.studio-rail .rail-link:focus-visible {
+  outline: 2px solid var(--shell-accent);
+  outline-offset: 2px;
+}
+
+.studio-rail .rail-link[aria-current='page'] {
+  background: rgba(217, 154, 114, 0.13);
+  color: #f4d8c4;
+  box-shadow: inset 2px 0 0 var(--shell-accent);
+}
+
+.rail-link-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.rail-hint {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(236, 203, 215, 0.78);
+}
+
+/* ---------- Top bar ---------- */
+.workspace-select {
+  width: auto;
+  max-width: 260px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  padding: 8px 14px;
+}
+
+.top-nav-context {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* ---------- Add a source dialog ---------- */
+dialog.source-dialog {
+  max-width: 520px;
+  padding: var(--sp-6);
+}
+
+dialog.source-dialog::backdrop {
+  background: rgba(21, 6, 9, 0.62);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.source-dialog[open] {
+    animation: source-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+@keyframes source-dialog-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.source-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--sp-4);
+  background: var(--color-paper-white);
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.source-option:hover {
+  background: var(--color-cherry-wash);
+  border-color: rgba(217, 154, 114, 0.55);
+}
+
+.source-option:focus-visible {
+  outline: 2px solid #d99a72;
+  outline-offset: 2px;
+}
+
+.source-option-title {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--color-carbon);
+}
+
+.source-option-copy {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}

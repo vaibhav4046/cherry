@@ -13,7 +13,7 @@ test.describe('responsive and accessible shell', () => {
     test(`landing and studio render without horizontal overflow at ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /Teach once/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Turn a lesson into a skill/i })).toBeVisible();
       const landingOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(landingOverflow, 'landing horizontal overflow').toBeLessThanOrEqual(1);
 
@@ -23,6 +23,14 @@ test.describe('responsive and accessible shell', () => {
       expect(studioOverflow, 'studio horizontal overflow').toBeLessThanOrEqual(1);
     });
   }
+
+  test('showcase renders without horizontal overflow at mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/showcase');
+    await expect(page.getByRole('heading', { name: 'Watch a lesson become a proven skill' })).toBeVisible();
+    const showcaseOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(showcaseOverflow, 'showcase horizontal overflow').toBeLessThanOrEqual(1);
+  });
 
   test('mobile shows bottom navigation instead of the rail', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });

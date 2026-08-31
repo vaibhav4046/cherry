@@ -1,23 +1,27 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('landing upgrade', () => {
-  test('three CTAs are present and the cherry burst opens the Studio', async ({ page }) => {
+  test('hero has one primary CTA, a quiet Studio link, and the live lesson card opens the example', async ({ page }) => {
     await page.goto('/');
     const ctas = page.getByTestId('hero-ctas');
     await expect(ctas.getByRole('link', { name: 'Try the guided example' })).toBeVisible();
-    await expect(ctas.getByRole('link', { name: 'Teach Cherry from a video' })).toBeVisible();
-    await expect(ctas.getByRole('link', { name: 'Open MCP Studio' })).toBeVisible();
+    await expect(ctas.getByRole('link', { name: 'Open Studio' })).toBeVisible();
 
-    await page.getByTestId('cherry-burst').click();
-    await expect(page).toHaveURL(/\/studio$/, { timeout: 10_000 });
+    // The lesson card renders REAL example data (source title + timestamped evidence).
+    const card = page.getByTestId('lesson-card');
+    await expect(card).toContainText('Accessible landing pages (example lesson)');
+    await expect(card).toContainText('0:40');
+    await expect(card).toContainText('Approved · revision 1');
+    await card.click();
+    await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
   });
 
-  test('cherry burst respects reduced motion (navigates immediately)', async ({ browser }) => {
+  test('landing respects reduced motion (lesson card still navigates immediately)', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     await page.goto('/');
-    await page.getByTestId('cherry-burst').click();
-    await expect(page).toHaveURL(/\/studio$/, { timeout: 5_000 });
+    await page.getByTestId('lesson-card').click();
+    await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
     await context.close();
   });
 

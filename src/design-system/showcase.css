@@ -1,0 +1,166 @@
+/* Showcase styles — owned by the showcase track of the 2026-08-31 UI sprint.
+   Calm two-column demo: chapters + progress rail on the left, sticky inspector
+   on the right. Hairline borders, one accent, 150-240ms state transitions. */
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- Two-column grid ---------- */
+/* DOM order is inspector-first (status reads first on mobile and for screen
+   readers); explicit grid placement puts the canvas on the left at desktop. */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+@media (min-width: 980px) {
+  .showcase-grid { grid-template-columns: minmax(0, 1fr) 380px; }
+  .showcase-canvas { grid-column: 1; grid-row: 1; }
+  .showcase-inspector {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: var(--sp-6);
+  }
+}
+
+/* ---------- Quiet control variants ---------- */
+.showcase-btn-quiet {
+  background: transparent;
+  border-color: transparent;
+}
+.showcase-btn-quiet:hover {
+  box-shadow: none;
+  border-color: rgba(255, 185, 205, 0.32);
+}
+
+/* ---------- Progress rail ---------- */
+.showcase-rail {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  border: var(--border);
+  border-radius: var(--radius-card);
+  background: var(--color-paper-white);
+}
+.showcase-rail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  opacity: 0.45;
+  transform: translateY(1px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.showcase-rail-item.is-on { opacity: 1; transform: none; }
+.showcase-rail-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 185, 205, 0.6);
+  background: transparent;
+  flex-shrink: 0;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+.showcase-rail-item.is-on .showcase-rail-dot {
+  background: var(--color-cherry-pop);
+  border-color: var(--color-cherry-pop);
+}
+.showcase-rail-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- Chapters ---------- */
+.showcase-chapter {
+  border: var(--border);
+  border-radius: var(--radius-card);
+  background: var(--color-paper-white);
+  transition: border-color 180ms ease;
+}
+.showcase-chapter.is-current { border-color: var(--color-cherry-pop); }
+.showcase-chapter > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  cursor: pointer;
+  list-style: none;
+}
+.showcase-chapter > summary::-webkit-details-marker { display: none; }
+.showcase-chapter-name {
+  font-weight: 800;
+  font-size: var(--text-body-lg);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.showcase-chapter-count {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+.showcase-chapter-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sp-5) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .showcase-chapter[open] .showcase-chapter-steps { animation: showcase-steps-in 180ms ease both; }
+}
+@keyframes showcase-steps-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.showcase-step {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  border-top: 1px solid rgba(255, 185, 205, 0.16);
+  padding-top: var(--sp-3);
+}
+.showcase-step-body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+/* ---------- Inspector ---------- */
+.showcase-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.showcase-facts > div {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  border-top: 1px solid rgba(255, 185, 205, 0.14);
+  padding-top: var(--sp-2);
+}
+.showcase-facts dt {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  min-width: 96px;
+  flex-shrink: 0;
+}
+.showcase-facts dd {
+  margin: 0;
+  font-size: 15px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.showcase-last-call { overflow-wrap: anywhere; }
+.showcase-approval { border-color: var(--color-cherry-pop); }
