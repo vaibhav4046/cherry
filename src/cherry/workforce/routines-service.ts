@@ -282,6 +282,9 @@ export async function resumeRoutine(workspaceId: string, routineId: string): Pro
       return err('approval_required', 'Routine approval hash no longer matches its current action envelope. Re-approve it.');
     }
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
+    if (!graph?.missionId) return err('validation', 'Routine must be bound to a mission before it can run.');
+    const mission = await ctx.db.missions.get(graph.missionId);
+    if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== currentGraphHash) {
       return err('approval_required', 'The skill graph approval is stale. Approve the current skill revision before resuming.');
     }
@@ -317,7 +320,7 @@ export async function requestRunNow(
   const preflightHash = preflight ? await computeRoutineActionHash(preflight) : null;
   const preflightGraph = preflight ? await getDb().skillGraphs.get(preflight.skillGraphId) : null;
   const preflightGraphHash = preflightGraph ? await sha256Canonical({ ...preflightGraph, versionHash: undefined }) : null;
-  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'runs'], async (ctx) => {
+  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'missions', 'runs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
 
@@ -329,13 +332,16 @@ export async function requestRunNow(
     if (actionHash !== routine.approvedActionHash || approval.contentHash !== actionHash) return err('approval_required', 'Routine action hash is stale; re-approve before running.');
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== preflightGraphHash) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
+    if (!graph.missionId) return err('validation', 'Routine must be bound to a mission before it can run.');
+    const mission = await ctx.db.missions.get(graph.missionId);
+    if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
     if (routine.executionHostId !== DEFAULT_EXECUTION_HOST_ID) return err('unsupported', 'Routine execution host is not available.');
     const key = idempotencyKey ?? newId('run');
     const existing = (await ctx.db.runs.toArray()).find((candidate) => candidate.idempotencyKey === key);
     if (existing) return err('conflict', 'A run with this idempotency key already exists.');
     const now = isoNow();
     const run: RunRecord & { note: string } = {
-      id: newId('run'), workspaceId, missionId: graph.missionId ?? routine.id, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
+      id: newId('run'), workspaceId, missionId: graph.missionId, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
       summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner. Start it with: node runner/server.mjs', requestedAt: now,
       command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key,
       provider: { kind: 'runner', status: 'blocked', verifiedSeparately: true }, revision: 1, createdAt: now, updatedAt: now,
@@ -371,10 +377,10 @@ function redactOutput(value: string | undefined): string | undefined {
 export async function settleRun(
   runId: string,
   status: Exclude<RunStatus, 'queued' | 'waiting_for_runner'>,
-  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider'] } = {},
+  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapability?: boolean } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
-  if (actorType !== 'runner') return err('approval_required', 'Only the paired runner may settle a run.');
+  if (actorType !== 'runner' || details.runnerCapability !== true) return err('approval_required', 'Only a paired runner may settle a run.');
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
