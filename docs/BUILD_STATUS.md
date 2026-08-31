@@ -1,6 +1,6 @@
 # Cherry build status
 
-**Date:** 2026-08-31 · **Evidence snapshot:** `98d7fff` · **Branch/tree:** main at `D:\project\cherry`
+**Date:** 2026-08-31 · **Evidence snapshot:** `5b7d731` · **Branch/tree:** main at `D:\project\cherry`
 
 ## Gates (full suite re-run 2026-08-31 on the current tree)
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Typecheck | `npm run typecheck` | PASS (tsc --noEmit, strict) |
 | Lint | `npm run lint` | PASS (eslint 9 flat config) |
-| Unit/integration | `npm run test` | PASS — 152 passed, 2 skipped (18 files passed, 2 skipped; vitest) — 2026-08-31 |
+| Unit/integration | `npm run test` | PASS — 154 passed, 2 skipped (19 files passed, 2 skipped; vitest) — 2026-08-31 |
 | Runner + bridge + v2 | `npm run test:runner` | PASS — 42 passed (node:test) |
 | Production build | `npm run build` | PASS (vite; largest chunk `transformers.web` ~549 KB) |
 | E2E | `npm run test:e2e` | PASS — 41 passed, 0 unexpected/flaky/skipped (desktop + mobile; registered-closure host path included); see docs/release/e2e-results.json |
@@ -17,6 +17,16 @@
 
 Skipped unit tests are the opt-in fixture generators (`GENERATE_EXAMPLE=1`), not
 release-critical.
+
+## Production deployment (2026-08-31)
+
+- **Status:** READY
+- **Commit:** `5b7d731`
+- **Deployment:** `dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC`
+- **Public alias:** [https://getcherry.vercel.app](https://getcherry.vercel.app) (resolves to the public Cherry domain)
+- **Post-deploy smoke:** HTTP 200; browser render on the public alias showed the landing content,
+  no Vercel/Vite error overlay, and no captured console errors.
+- **Preview note:** the preview URL is Vercel-auth protected; production is the public inspection link.
 
 **Note on verify:pack:** the wired script was missing from the tree when this snapshot was first
 taken; `scripts/verify-release.mjs` now exists (added 2026-08-30). It checks the shipped
@@ -38,8 +48,8 @@ flipping one byte of `SKILL.md` (must FAIL) and deleting `references/evidence.md
 
 ## Owner-action status (2026-08-31, after "complete all")
 
-1. **Push + deploy:** NOT PERFORMED by this task. No credentials or deployment linkage were
-   provided; a public URL/HTTP response is not treated as deployment or client-rendering proof.
+1. **Push + deploy:** deploy completed through the linked Vercel project via CLI; no git push was
+   performed. The production alias above is the public inspection link.
 2. **Duplicate origin (D-020):** redirect rule is present in `vercel.json`; live redirect behavior
    remains an owner check until a linked deployment is explicitly authorized.
 3. **Live WebMCP browser-host validation:** still open — no `modelContext`-enabled host exists on

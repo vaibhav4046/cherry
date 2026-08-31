@@ -1,5 +1,9 @@
 # Premium UI review — 2026-08-31 overhaul sprint
 
+**Apple-inspired restyle addendum:** commit `5b7d731` applies the provided Apple/Refero palette,
+SF Pro fallback stack, 8px surfaces, 980px controls, and light glass treatment across the shared
+shell, landing, Studio, and Showcase. The 41-test browser suite remains green after contrast fixes.
+
 Three parallel tracks (shell, showcase, editor/run) plus a landing rebuild, integrated and
 gate-verified serially. Product sentence everywhere: *Cherry turns one lesson into a skill that an
 agent can safely run.*
@@ -47,7 +51,7 @@ zero page errors on every capture).
 
 ## Interaction tests (commands + results, 2026-08-31)
 
-Serial integrated run: typecheck ✅ · lint ✅ · unit **152 passed + 2 skipped** · runner **42
+Serial integrated run: typecheck ✅ · lint ✅ · unit **154 passed + 2 skipped** · runner **42
 passed** · build ✅ · **e2e 41 passed** (golden manual
 journey, registered-closure WebMCP host path, workforce, responsive incl. new /showcase mobile
 no-overflow, landing lesson-card navigation incl. reduced-motion) · verify:pack **6/6** ·

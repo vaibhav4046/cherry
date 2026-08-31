@@ -1,7 +1,14 @@
 # Cherry release evidence
 
+> **Production deployment addendum (2026-08-31):** commit `5b7d731` deployed successfully to the
+> linked Vercel project as `dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC` with a READY production target. The
+> public alias is [https://getcherry.vercel.app](https://getcherry.vercel.app); HTTP returned 200 and
+> a browser smoke check rendered the Cherry landing page with no Vercel/Vite overlay or captured
+> console errors. The preview deployment remains Vercel-auth protected, so the production alias is
+> the inspection URL. The live WebMCP host boundary is unchanged and remains experimental.
+
 > **Finalist hardening addendum (2026-08-31):** full gate suite re-run after the
-> Memory Vault, routines, WebMCP, and glass UI work: **152 unit passed + 2 skipped + 42
+> Memory Vault, routines, WebMCP, and glass UI work: **154 unit passed + 2 skipped + 42
 > runner/bridge (node:test) + 41 e2e (Playwright)**, typecheck/lint clean, production build clean,
 > verify:pack 6/6, audit:submission 13 checks 0 FAIL. New evidence class: a **registered-closure
 > host-path e2e** (`e2e/cherry/showcase-host.spec.ts`) installs a mock `document.modelContext`
@@ -17,10 +24,10 @@
 > not enabled); result recorded as unavailable-in-current-host, no live browser-host claim is
 > made. Live-host validation remains a queued owner action in docs/BUILD_STATUS.md.
 >
-> **Deployment/host boundary:** no deployment or push was performed by this release pass because
-> no credentials or project linkage were provided. An HTTP response from a public URL is not
-> treated as client-rendering or deployment proof. A compatible live WebMCP browser host remains
-> unverified; the registered-closure Playwright journey uses a mock `document.modelContext` host.
+> **Deployment/host boundary at the original snapshot:** no deployment or push had been performed
+> when that evidence block was written. A subsequent linked Vercel production deployment is recorded
+> above. A compatible live WebMCP browser host remains unverified; the registered-closure Playwright
+> journey uses a mock `document.modelContext` host.
 
 > **v1.2 addendum (2026-08-30, editorial-pack integration):** every gate re-ran fresh on the tree
 > after the god-mode pack landed. Current totals: **119 unit/integration passed + 2 skipped
@@ -231,10 +238,11 @@ boundaries), decision log, repo map, baseline, and this evidence file are in the
 
 ## deployment_smoke
 
-**NOT RUN / NOT CLAIMED.** No deployment or push was authorized or performed in this release pass.
-The listed public URL is retained as submission metadata only; an HTTP 200/static SPA fallback does
-not prove that this tree is deployed or that the client rendered successfully. Run this smoke gate
-only after linking the intended deployment project and explicitly authorizing the action.
+**PASSED (2026-08-31).** `npx vercel deploy --prod --yes` deployed commit `5b7d731` to
+`dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC` with READY status. `https://getcherry.vercel.app/` returned HTTP
+200 and a browser smoke check confirmed meaningful Cherry content, no Vercel/Vite error overlay, and
+no captured console errors. The production alias is public; the separate preview deployment is
+Vercel-auth protected.
 
 ## local_runner (optional gate)
 

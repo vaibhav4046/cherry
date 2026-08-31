@@ -12,8 +12,9 @@ Teach once. Cherry remembers. Every agent gets better.
 
 ## Links
 
-- Live app: https://cherry-wine.vercel.app
-- Judge route (fresh linear story): https://cherry-wine.vercel.app/showcase
+- Live app: https://getcherry.vercel.app (public production alias; canonical domain:
+  https://cherry-wine.vercel.app)
+- Judge route (fresh linear story): https://getcherry.vercel.app/showcase
 - Repository (MIT): https://github.com/vaibhav4046/cherry
 - Video: (add after recording — script in docs/release/DEMO_SCRIPT.md)
 
@@ -64,7 +65,7 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
 
 ## Accomplishments
 
-- 152 unit (+2 opt-in skips) + 42 runner/bridge + 41 e2e tests, including a hostile-artifact sandbox probe, axe
+- 154 unit (+2 opt-in skips) + 42 runner/bridge + 41 e2e tests, including a hostile-artifact sandbox probe, axe
   audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
 - A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
   the actual test behind the label — including what we did NOT test.
