@@ -268,7 +268,7 @@ export async function resumeRoutine(workspaceId: string, routineId: string): Pro
   const currentHash = current ? await computeRoutineActionHash(current) : null;
   const currentGraph = current ? await getDb().skillGraphs.get(current.skillGraphId) : null;
   const currentGraphHash = currentGraph ? await sha256Canonical({ ...currentGraph, versionHash: undefined }) : null;
-  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs'], async (ctx) => {
+  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'missions'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
     if (!routine.approvalId) {
