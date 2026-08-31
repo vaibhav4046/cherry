@@ -25,10 +25,11 @@ Tests run/results:
 - npm run typecheck — PASS
 - npm test -- --run tests/cherry/memory.test.ts tests/cherry/memory-graph.test.ts — PASS (3 tests)
 - npm test -- --run tests/cherry/schemas.test.ts — PASS (5 tests)
-- npm test -- --run — PASS (141 tests, 2 skipped).
+- npm test -- --run — PASS (142 tests, 2 skipped).
 - npm run lint — repository currently reports existing vendored public/lab/three-d errors; no errors from changed TypeScript files.
 
 Risks/unresolved limitations:
 - Graph relationship edges are emitted only where persisted IDs expose a direct relationship; observations do not store transcript-segment IDs, so no guessed transcript→observation edge is created.
 - Proof provider kind is mapped from RunRecord provider data and receipt event selection is causal-ID based; receipts remain schema-compatible with optional truncation metadata.
 - Agent decision refusal uses the optional actorType argument (`decideMemory(..., 'agent')`); legacy three-argument human calls remain compatible.
+- d1fea01 — approved revision metadata and regression coverage
