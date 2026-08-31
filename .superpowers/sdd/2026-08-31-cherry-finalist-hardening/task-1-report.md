@@ -3,7 +3,7 @@
 Status: COMPLETE (focused implementation and tests pass)
 
 Commit hashes:
-- 15cfbd1 — fix persisted graph relations and memory decision actors
+- 82395f6 — initial memory graph/policy/receipt hardening`n- 15cfbd1 — persisted graph relations and actor enforcement`n- 6f13100 — causal receipt expansion and deleted-memory redaction
 
 Files changed:
 - src/cherry/memory/memory-graph-model.ts
