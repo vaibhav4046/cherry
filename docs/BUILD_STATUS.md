@@ -1,6 +1,6 @@
 # Cherry build status
 
-**Date:** 2026-08-31 · **Evidence snapshot:** `c2ad305` · **Branch/tree:** main at `D:\project\cherry`
+**Date:** 2026-08-31 · **Evidence snapshot:** `dd0677d` · **Branch/tree:** main at `D:\project\cherry`
 
 ## Gates (full suite re-run 2026-08-31 on the current tree)
 
@@ -21,8 +21,8 @@ release-critical.
 ## Production deployment (2026-08-31)
 
 - **Status:** READY
-- **Commit:** `c2ad305`
-- **Deployment:** `dpl_Ho1QmXCkpGw1D1qdtwKLHy4BAoLV`
+- **Commit:** `dd0677d`
+- **Deployment:** `dpl_EhP7qaomLMuiLxGPfN7Kqdy6ahsp`
 - **Production URL:** [https://cherry-wine.vercel.app](https://cherry-wine.vercel.app)
 - **Public alias:** [https://getcherry.vercel.app](https://getcherry.vercel.app) (resolves to the public Cherry domain)
 - **Post-deploy smoke:** HTTP 200 for `/` and `/studio/sources` on both public domains.
