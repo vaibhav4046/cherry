@@ -7,6 +7,7 @@ import { ok, type Result } from '../core/result.ts';
 import { conflict, invalid, notFound } from '../core/errors.ts';
 import type { ActorType } from '../core/domain-event.ts';
 import { canTransition } from './mission-state.ts';
+import { sha256Canonical } from '../core/hash.ts';
 import type { Mission, MissionState, RunRecord, WorkspaceRecord } from './mission-model.ts';
 
 const SAFE_TEXT = z.string().trim().min(1).max(4000);
@@ -174,7 +175,7 @@ export async function transitionMission(
   if (to === 'EXECUTING') {
     if (!mission.skillGraphId) return invalid('Mission must reference an approved skill graph before execution');
     const graph = await db.skillGraphs.get(mission.skillGraphId);
-    if (!graph || graph.status !== 'approved' || graph.approvedRevision !== graph.revision) {
+    if (!graph || graph.workspaceId !== mission.workspaceId || graph.missionId && graph.missionId !== mission.id || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.versionHash !== await sha256Canonical({ ...graph, versionHash: undefined })) {
       return invalid('Mission execution requires approval of the current skill graph revision');
     }
   }
@@ -274,6 +275,7 @@ export async function updateRun(
   patch: Partial<RunRecord>,
   actorType: ActorType = 'system',
 ): Promise<Result<RunRecord>> {
+  if (patch.status === 'succeeded') return { ok: false, error: { code: 'approval_required', message: 'Use settleRun with a verified receipt to mark success.' } };
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return notFound('Run', runId);

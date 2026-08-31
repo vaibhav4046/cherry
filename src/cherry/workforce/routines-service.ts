@@ -265,6 +265,8 @@ export async function pauseRoutine(workspaceId: string, routineId: string): Prom
 export async function resumeRoutine(workspaceId: string, routineId: string): Promise<Result<Routine>> {
   const current = await getRoutine(workspaceId, routineId);
   const currentHash = current ? await computeRoutineActionHash(current) : null;
+  const currentGraph = current ? await getDb().skillGraphs.get(current.skillGraphId) : null;
+  const currentGraphHash = currentGraph ? await sha256Canonical({ ...currentGraph, versionHash: undefined }) : null;
   return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
@@ -280,7 +282,7 @@ export async function resumeRoutine(workspaceId: string, routineId: string): Pro
       return err('approval_required', 'Routine approval hash no longer matches its current action envelope. Re-approve it.');
     }
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
-    if (!graph || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision) {
+    if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== currentGraphHash) {
       return err('approval_required', 'The skill graph approval is stale. Approve the current skill revision before resuming.');
     }
 
@@ -313,6 +315,8 @@ export async function requestRunNow(
   if (actorType !== 'human') return err('approval_required', 'Only a person may request consequential routine execution');
   const preflight = await getRoutine(workspaceId, routineId);
   const preflightHash = preflight ? await computeRoutineActionHash(preflight) : null;
+  const preflightGraph = preflight ? await getDb().skillGraphs.get(preflight.skillGraphId) : null;
+  const preflightGraphHash = preflightGraph ? await sha256Canonical({ ...preflightGraph, versionHash: undefined }) : null;
   return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'runs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
@@ -324,7 +328,7 @@ export async function requestRunNow(
     const actionHash = preflightHash ?? '';
     if (actionHash !== routine.approvedActionHash || approval.contentHash !== actionHash) return err('approval_required', 'Routine action hash is stale; re-approve before running.');
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
-    if (!graph || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
+    if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== preflightGraphHash) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
     if (routine.executionHostId !== DEFAULT_EXECUTION_HOST_ID) return err('unsupported', 'Routine execution host is not available.');
     const key = idempotencyKey ?? newId('run');
     const existing = (await ctx.db.runs.toArray()).find((candidate) => candidate.idempotencyKey === key);
@@ -370,7 +374,7 @@ export async function settleRun(
   details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider'] } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
-  if (actorType !== 'runner' && actorType !== 'system') return err('approval_required', 'Only the paired runner may settle a run.');
+  if (actorType !== 'runner') return err('approval_required', 'Only the paired runner may settle a run.');
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');

@@ -340,6 +340,7 @@ export async function decideSkillGraphApproval(
     approvedAt: decision === 'approved' ? now : graph.approvedAt ?? null,
     updatedAt: now,
   };
+  next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
   await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals', 'skillVersions'], async (ctx) => {
     await ctx.db.skillGraphs.put(next);
