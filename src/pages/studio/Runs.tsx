@@ -105,6 +105,11 @@ export default function Runs() {
                   <td>
                     <strong>{run.summary}</strong>
                     {run.detail ? <div style={{ fontSize: 13, color: 'var(--color-ink-soft)' }}>{run.detail}</div> : null}
+                    {run.runnerJobId ? <div className="label">runner job: {run.runnerJobId}</div> : null}
+                    {run.idempotencyKey ? <div className="label">idempotency: {run.idempotencyKey}</div> : null}
+                    {run.outputSummary ? <div className="label">output: {run.outputSummary}</div> : null}
+                    {run.error ? <div className="label">error: {run.error}</div> : null}
+                    {run.receiptId ? <div className="label">receipt: {run.receiptId}</div> : null}
                     {run.provider ? (
                       <div className="label">provider: {run.provider.kind} ({run.provider.status}) — verified separately</div>
                     ) : null}

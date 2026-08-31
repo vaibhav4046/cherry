@@ -101,7 +101,7 @@ export interface RunRecord {
   requestedAt?: string;
   startedAt?: string;
   finishedAt?: string;
-  command?: string;
+  command?: string | string[];
   outputSummary?: string;
   error?: string | null;
   receiptId?: string | null;

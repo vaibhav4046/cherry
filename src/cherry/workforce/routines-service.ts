@@ -383,7 +383,7 @@ function redactOutput(value: string | undefined): string | undefined {
 export async function settleRun(
   runId: string,
   status: Exclude<RunStatus, 'queued'>,
-  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string } = {},
+  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string | string[]; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string; startedAt?: string; endedAt?: string } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
   if (actorType !== 'runner') return err('approval_required', 'Only a paired runner may settle a run.');
@@ -407,12 +407,12 @@ export async function settleRun(
   }
   const now = isoNow();
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
-    receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command, adapter: run.adapter,
-    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : now, revision: run.revision + 1, updatedAt: now };
+    receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command ?? details.command, adapter: run.adapter,
+    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? details.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : details.endedAt ?? now, revision: run.revision + 1, updatedAt: now };
   const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
-    if (latest.routineId && !(latest.status === 'running' && (status === 'failed' || status === 'cancelled' || status === 'setup-required'))) {
+    if (latest.routineId && !(status === 'failed' || status === 'cancelled' || status === 'setup-required')) {
       const routine = await ctx.db.routines.get(latest.routineId);
       if (!routine || !routine.enabled || routine.revision !== latest.routineRevision || routine.approvedActionHash !== latest.approvedActionHash) return err('approval_required', 'Routine approval is stale or disabled.');
     }
@@ -450,5 +450,8 @@ export async function settleRoutineRun(
     error: settlement.error,
     receiptId: settlement.receiptId,
     runnerCapabilityToken: settlement.runnerCapabilityToken,
+    startedAt: settlement.startedAt,
+    endedAt: settlement.endedAt,
+    command: settlement.command,
   });
 }
