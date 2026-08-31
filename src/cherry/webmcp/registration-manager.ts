@@ -78,7 +78,7 @@ const SURFACE_STATES: Record<Exclude<ToolSurface, 'default'>, ProductState[]> = 
 const ALL_PRODUCT_STATES: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
 
 function surfaceForTool(name: string): ToolSurface {
-  const resolved = (SAFE_TOOL_NAME_ALIASES as Record<string, string>)[name] ?? name;
+  const resolved = Object.entries(SAFE_TOOL_NAME_ALIASES).find(([, legacy]) => legacy === name)?.[0] ?? name;
   for (const surface of ['inbox', 'crew', 'routines', 'run'] as const) {
     if (TOOL_SURFACE_TABLE[surface].includes(resolved)) return surface;
   }
@@ -272,7 +272,7 @@ export class WebMcpRegistrationManager {
 
   /** Direct execution path used by unit tests and the native bridge. */
   async executeLocal(name: string, input: unknown): Promise<unknown> {
-    const canonicalName = (SAFE_TOOL_NAME_ALIASES as Record<string, string>)[name] ?? name;
+    const canonicalName = Object.entries(SAFE_TOOL_NAME_ALIASES).find(([, legacy]) => legacy === name)?.[0] ?? name;
     const definition = this.definitions.find((candidate) => candidate.name === canonicalName);
     if (!definition) throw new Error(`Unknown tool ${name}`);
     if (this.currentState !== null && !this.activeNamesFor(this.currentState, this.currentSurface).includes(canonicalName)) {
