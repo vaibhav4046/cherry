@@ -1,6 +1,6 @@
 import type { CherryToolDefinition } from './tool-contract.ts';
 import { toolError } from './tool-contract.ts';
-import { buildToolDefinitions, GLOBAL_TOOLS, TOOL_STATE_TABLE, type ToolContext } from './tool-definitions.ts';
+import { buildToolDefinitions, GLOBAL_TOOLS, SAFE_TOOL_NAME_ALIASES, TOOL_STATE_TABLE, type ToolContext } from './tool-definitions.ts';
 import type { ProductState } from '../mission/mission-state.ts';
 import { TOOL_SURFACE_TABLE, type ToolSurface } from './workforce-tools.ts';
 
@@ -30,6 +30,8 @@ export interface RegisteredToolInfo {
   untrustedContent: boolean;
   sideEffect: 'none' | 'write' | 'execute' | 'export';
   requiresApproval: boolean;
+  allowedStates: ProductState[];
+  surface: ToolSurface;
 }
 
 /** One real tool invocation, recorded at execution time. Session-local. */
@@ -72,6 +74,16 @@ const SURFACE_STATES: Record<Exclude<ToolSurface, 'default'>, ProductState[]> = 
   routines: ['planning', 'execution', 'verification', 'passed'],
   run: ['learning', 'planning', 'execution', 'verification', 'passed'],
 };
+
+const ALL_PRODUCT_STATES: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
+
+function surfaceForTool(name: string): ToolSurface {
+  const resolved = (SAFE_TOOL_NAME_ALIASES as Record<string, string>)[name] ?? name;
+  for (const surface of ['inbox', 'crew', 'routines', 'run'] as const) {
+    if (TOOL_SURFACE_TABLE[surface].includes(resolved)) return surface;
+  }
+  return 'default';
+}
 
 /**
  * Owns the WebMCP tool lifecycle: feature-detects document.modelContext,
@@ -182,7 +194,13 @@ export class WebMcpRegistrationManager {
   private applySelection(previousActive: string[]): void {
     const state = this.currentState ?? 'empty';
     const nextActive = new Set(this.activeNamesFor(state, this.currentSurface));
-    this.recentlyRemoved = previousActive.filter((name) => !nextActive.has(name));
+    const removed = previousActive.filter((name) => !nextActive.has(name));
+    // Keep legacy names in the inspector for hosts that still understand the
+    // pre-canonical vocabulary, while registrations themselves stay canonical.
+    this.recentlyRemoved = [...new Set(removed.flatMap((name) => {
+      const legacy = Object.entries(SAFE_TOOL_NAME_ALIASES).find(([canonical]) => canonical === name)?.[1];
+      return legacy ? [name, legacy] : [name];
+    }))];
     this.registered = [];
     this.diagnostics = [];
 
@@ -240,6 +258,8 @@ export class WebMcpRegistrationManager {
           untrustedContent: definition.annotations.untrustedContentHint === true,
           sideEffect: definition.annotations.sideEffect ?? (definition.annotations.readOnlyHint ? 'none' : 'write'),
           requiresApproval: definition.annotations.requiresApproval === true,
+          allowedStates: definition.states.length > 0 ? [...definition.states] : [...ALL_PRODUCT_STATES],
+          surface: surfaceForTool(definition.name),
         });
       } catch {
         // Registration failure on one tool must not break the app or other tools;
@@ -252,9 +272,10 @@ export class WebMcpRegistrationManager {
 
   /** Direct execution path used by unit tests and the native bridge. */
   async executeLocal(name: string, input: unknown): Promise<unknown> {
-    const definition = this.definitions.find((candidate) => candidate.name === name);
+    const canonicalName = (SAFE_TOOL_NAME_ALIASES as Record<string, string>)[name] ?? name;
+    const definition = this.definitions.find((candidate) => candidate.name === canonicalName);
     if (!definition) throw new Error(`Unknown tool ${name}`);
-    if (this.currentState !== null && !this.activeNamesFor(this.currentState, this.currentSurface).includes(name)) {
+    if (this.currentState !== null && !this.activeNamesFor(this.currentState, this.currentSurface).includes(canonicalName)) {
       const refused = toolError('conflict', 'This tool is not active for the current Cherry state or surface.', { tool: name });
       this.logCall(name, refused, 'local');
       return refused;

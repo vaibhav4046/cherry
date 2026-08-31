@@ -982,6 +982,16 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
+  // Canonical public names are the names exposed to WebMCP hosts. Keep the
+  // original names as local/bridge-compatible aliases so existing callers do
+  // not break while the five-tool phase aperture remains bounded.
+  for (const [canonical, legacy] of Object.entries(SAFE_TOOL_NAME_ALIASES)) {
+    const source = definitions.find((definition) => definition.name === legacy);
+    if (source && !definitions.some((definition) => definition.name === canonical)) {
+      definitions.push({ ...source, name: canonical, description: `${source.description} Canonical WebMCP name.` });
+    }
+  }
+
   // After any successful mutating call, re-sync the app shell (UI selection and
   // tool aperture) so an agent-driven journey advances without a human click.
   // Read-only tools skip it; contexts without onMutation (bridge, tests) no-op.
@@ -1026,10 +1036,10 @@ export const SAFE_TOOL_NAME_ALIASES = {
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
   empty: ['start_apprenticeship', 'create_workspace', 'create_mission'],
   onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson'],
-  learning: ['load_lesson', 'import_transcript', 'record_lesson_observation', 'add_source_evidence', 'generate_quick_skill'],
-  planning: ['define_skillgraph', 'propose_memory_rule', 'request_checkpoint_approval', 'revise_checkpoint'],
-  execution: ['write_artifact_file', 'record_task_result', 'request_consequential_action', 'run_cherry_verification'],
-  verification: ['run_cherry_verification', 'apply_verified_repair', 'read_failed_assertions', 'propose_memory_rule', 'write_artifact_file'],
+  learning: ['load_lesson', 'import_transcript', 'record_observation', 'add_source_evidence', 'derive_skill'],
+  planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'revise_checkpoint'],
+  execution: ['write_artifact_file', 'record_task_result', 'request_consequential_action', 'run_verification'],
+  verification: ['run_verification', 'apply_verified_repair', 'read_failed_assertions', 'propose_memory', 'write_artifact_file'],
   passed: ['compile_skill_bundle', 'export_proof_receipt', 'export_workspace', 'prepare_runner_job', 'request_consequential_action'],
 };
 

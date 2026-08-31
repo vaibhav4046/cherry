@@ -125,6 +125,24 @@ describe('WebMCP tool aperture', () => {
     }
   });
 
+  it('registers canonical public names while legacy names remain locally callable', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const names = manager.activeNamesFor('learning');
+    expect(names).toContain('record_observation');
+    expect(names).toContain('derive_skill');
+    expect(names).not.toContain('record_lesson_observation');
+    const canonical = new Set(manager.listDefinitions().map((definition) => definition.name));
+    for (const name of ['record_observation', 'derive_skill', 'request_skill_approval', 'propose_memory', 'run_verification']) {
+      expect(canonical.has(name), name).toBe(true);
+    }
+    // Legacy bridge callers resolve to the canonical implementation.
+    const result = parseResult(await manager.executeLocal('record_lesson_observation', {
+      lessonId: 'missing', timestampSeconds: 1, kind: 'spoken', text: 'legacy call',
+    }));
+    expect(result.error).toBe('not_found');
+  });
+
   it('runtime-validates arguments even if a host claims it validated them', async () => {
     const context = makeContext();
     const manager = new WebMcpRegistrationManager(context);
@@ -244,6 +262,26 @@ describe('WebMCP graceful degradation', () => {
       expect(passedNames).toContain('compile_skill_bundle');
       expect(passedNames).not.toContain('load_lesson');
       manager.dispose();
+    } finally {
+      delete (document as unknown as { modelContext?: unknown }).modelContext;
+    }
+  });
+
+  it('exposes allowed states and owning surface in inspector metadata', () => {
+    const registered: Array<{ name: string }> = [];
+    (document as unknown as { modelContext: unknown }).modelContext = {
+      registerTool: (tool: { name: string }) => { registered.push({ name: tool.name }); },
+    };
+    try {
+      const manager = new WebMcpRegistrationManager(makeContext());
+      manager.syncState('learning');
+      const status = manager.status();
+      const observation = status.registered.find((tool) => tool.name === 'record_observation');
+      expect(observation?.allowedStates).toEqual(['learning']);
+      expect(observation?.surface).toBe('default');
+      const global = status.registered.find((tool) => tool.name === 'get_cherry_status');
+      expect(global?.allowedStates).toEqual(['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed']);
+      expect(registered.map((entry) => entry.name)).toContain('record_observation');
     } finally {
       delete (document as unknown as { modelContext?: unknown }).modelContext;
     }
