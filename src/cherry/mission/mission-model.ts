@@ -65,7 +65,6 @@ export interface MissionTask {
   id: string;
   workspaceId: string;
   missionId: string;
-  routineId?: string | null;
   order: number;
   title: string;
   detail: string;
@@ -90,6 +89,7 @@ export interface RunRecord {
   id: string;
   workspaceId: string;
   missionId: string;
+  routineId?: string | null;
   adapter: 'manual' | 'cherry-verify' | 'cherry-export' | 'shell-safe' | 'codex-cli' | 'claude-cli';
   status: RunStatus;
   mode: 'manual' | 'webmcp' | 'runner';
