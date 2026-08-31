@@ -544,7 +544,10 @@ export function Showcase() {
                     key={chapter.name}
                     className={`showcase-chapter${isCurrent ? ' is-current' : ''}`}
                     open={openChapters[chapter.name] ?? isCurrent}
-                    onToggle={(event) => setOpenChapters((current) => ({ ...current, [chapter.name]: (event.currentTarget as HTMLDetailsElement).open }))}
+                    onToggle={(event) => {
+                      const open = (event.currentTarget as HTMLDetailsElement).open;
+                      setOpenChapters((current) => ({ ...current, [chapter.name]: open }));
+                    }}
                   >
                     <summary>
                       <span className="showcase-chapter-name">{chapter.name}</span>
