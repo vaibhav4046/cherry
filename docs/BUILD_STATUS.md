@@ -36,19 +36,25 @@ flipping one byte of `SKILL.md` (must FAIL) and deleting `references/evidence.md
   10 mocked-provider tests, docs/PRIVY_SETUP.md.
 - **WEBMCP_CHANGELOG.md** (post-Aug-25 evidence) and capability-matrix refresh.
 
-## Queued owner actions (gated by the autonomy contract)
+## Owner-action status (2026-08-31, after "complete all")
 
-1. **Push + deploy:** commits are local only. One command from `D:\project\cherry`:
-   `git push origin main` (Vercel auto-deploys; then smoke /showcase on the live origin).
-2. **Live WebMCP host validation:** your Chrome is 151 (>=149) but `document.modelContext` is
-   undefined — enable the WebMCP testing flag (chrome://flags) or use a ChatGPT desktop browser
-   with Site Tools, open https://cherry-wine.vercel.app/showcase after deploy, and the host panel
-   + Agent View will log real calls. Until then the claim stays experimental/mock-tested.
-3. **Privy smoke test:** set a real `VITE_PRIVY_APP_ID` in .env.local, run one email-OTP login.
-4. **Vercel alias:** remove/redirect `getcherry.vercel.app` (D-020).
-5. **npm audit triage:** the Privy dependency tree added 29 advisories (23 moderate, 6 high) — 
-   advisory-level, review before final submission.
-6. **Demo video + Devpost submission** before 3 Sep 1PM PT.
+1. **Push + deploy:** DONE — pushed to main; Vercel auto-deployed; /showcase smoked live.
+2. **Duplicate origin (D-020):** DONE in code — `vercel.json` now 307-redirects any
+   `getcherry.vercel.app` request to the canonical origin (host-conditional redirect; reversible).
+3. **npm audit triage:** DONE — `npm audit fix` applied (non-breaking); the remaining 29
+   advisories (23 moderate, 6 high) all live in the Privy tree's wallet stacks
+   (metamask/wagmi/reown `ws`/`uuid`/`adm-zip`/`sharp`/`axios` transitives). None of that code is
+   reachable in shipped paths: guest mode never fetches the Privy chunk at all, and the configured
+   mode is `loginMethods: ['email']` — wallet connectors are never initialised. Remaining fixes
+   require `--force` major bumps; deliberately not taken 2 days before the deadline.
+4. **Live WebMCP browser-host validation:** still open — no `modelContext`-enabled host exists on
+   this machine (Chrome 151, flag off; see release evidence for the probe and the flag attempt).
+   Enable the WebMCP testing flag or use a ChatGPT desktop browser with Site Tools, open
+   /showcase, and the host panel + Agent View log real calls. Claim stays experimental until then.
+5. **Privy smoke test:** still open — requires a real `VITE_PRIVY_APP_ID` (account creation is
+   outside the autonomy contract). One email-OTP login after configuring per docs/PRIVY_SETUP.md.
+6. **Demo video (narrated, <3 min) + Devpost submission** before 3 Sep 1PM PT — script ready,
+   /showcase alternate opening included.
 
 ## Known limitations (from release evidence + compatibility matrix)
 

@@ -4,6 +4,12 @@ Every beat below is a real interaction on https://cherry-wine.vercel.app — no 
 hide state. Record at 1440×900+, normal browser profile (or incognito for the true fresh-user shot).
 Total ≈ 2:50, leaving buffer.
 
+> **Alternate opening (added 2026-08-31):** if you prefer to lead with the judge route, open
+> https://cherry-wine.vercel.app/showcase in incognito instead of the landing — it starts from a
+> genuinely blank session, shows the WebMCP host panel honestly, and the 12-step story fills in
+> live as you (or an attached agent) work. The beats below still apply; the showcase's inline
+> approval card replaces the Command Center approval shot at 1:15.
+
 ## 0:00–0:20 — The hook (landing)
 
 Open the landing page. Let the marquee + hero breathe for a beat.

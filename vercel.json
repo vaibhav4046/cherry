@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "getcherry.vercel.app" }],
+      "destination": "https://cherry-wine.vercel.app/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [{ "source": "/((?!assets/|examples/|sw.js|manifest.webmanifest|cherry.svg).*)", "destination": "/index.html" }],
   "headers": [
     {
