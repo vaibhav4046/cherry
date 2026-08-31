@@ -158,6 +158,22 @@ test.describe('golden manual journey', () => {
     await page.getByTestId('routine-approve').click();
     await expect(page.getByTestId('routine-enabled-sticker')).toContainText('enabled');
 
+    // Skill Library: the approved skill is aggregated cross-workspace, marked
+    // install-ready, and exports install files gated to the approved revision.
+    await page.goto('/studio/skills');
+    await expect(page.getByRole('heading', { name: 'Skill Library' })).toBeVisible();
+    const libraryCard = page.getByTestId('library-card').first();
+    await expect(libraryCard).toContainText('install-ready');
+    await page.getByTestId('library-filter-approved').click();
+    await expect(page.getByTestId('library-card')).toHaveCount(1);
+    await libraryCard.click();
+    await expect(page.getByTestId('export-skill-md')).toBeEnabled();
+    await expect(page.getByTestId('copy-agents-md')).toBeEnabled();
+    const skillMdDownload = page.waitForEvent('download');
+    await page.getByTestId('export-skill-md').click();
+    const skillMdFile = await skillMdDownload;
+    expect(skillMdFile.suggestedFilename().endsWith('-SKILL.md')).toBe(true);
+
     // Export the workspace
     await page.getByRole('link', { name: 'Command', exact: true }).first().click();
     const downloadPromise = page.waitForEvent('download');

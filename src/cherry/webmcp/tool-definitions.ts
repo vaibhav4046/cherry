@@ -40,6 +40,8 @@ import { compileSkillBundle } from '../compiler/archive-builder.ts';
 import { generateSkillFromLesson } from '../skillgraph/quick-skill.ts';
 import { createProofReceipt, listReceipts } from '../proof/proof-service.ts';
 import { exportWorkspace } from '../persistence/workspace-archive.ts';
+import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../library/library-service.ts';
+import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
 import { runnerStatus } from '../runner-client/runner-api.ts';
 
@@ -242,6 +244,144 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         workspaceCount: workspaces.length,
         activeTools: context.getActiveToolNames?.() ?? [...GLOBAL_TOOLS, ...(TOOL_STATE_TABLE[state] ?? [])],
         storage: 'local IndexedDB — nothing leaves this browser without an explicit export',
+      });
+    }),
+  });
+
+  const listSkillsSchema = z.object({ status: z.enum(['all', 'approved']).optional() });
+  define({
+    name: 'list_skills',
+    description:
+      'Read the cross-workspace skill library: every skill Cherry has learned, with status, version/revision, approval hash, tags, and install readiness. Read-only and always available. Skills marked installReady are approved by a human at their exact revision.',
+    inputSchema: objectSchema(
+      { status: { type: 'string', description: "Optional filter: 'approved' returns only install-ready skills (default 'all')" } },
+      [],
+    ),
+    annotations: { readOnlyHint: true },
+    states: [],
+    zodSchema: listSkillsSchema,
+    execute: guarded(listSkillsSchema, async (input) => {
+      const entries = await listLibraryEntries();
+      const filtered = input.status === 'approved' ? entries.filter((entry) => entry.installReady) : entries;
+      return toolText({
+        totalCount: filtered.length,
+        skills: filtered.slice(0, 8).map((entry) => ({
+          skillId: entry.skillId,
+          name: entry.name.slice(0, 60),
+          purpose: entry.purpose.slice(0, 80),
+          status: entry.status,
+          installReady: entry.installReady,
+          revision: entry.revision,
+          approvalHash: entry.approvalHash ? entry.approvalHash.slice(0, 16) : null,
+        })),
+        note: 'First 8 shown; recommend_skills ranks by task. get_skill serves install-ready content. Approvals stay human-only.',
+      });
+    }),
+  });
+
+  const recommendSkillsSchema = z.object({ task: z.string().min(3).max(2000), limit: z.number().int().min(1).max(5).optional() });
+  define({
+    name: 'recommend_skills',
+    description:
+      'Given a task description, rank the skills in this library that would help, with explainable lexical matching (no hidden model calls). Returns approved, install-ready skills first, each bound to an exact revision and approval hash. Read-only and always available.',
+    inputSchema: objectSchema(
+      {
+        task: { type: 'string', description: 'What the agent is trying to do right now' },
+        limit: { type: 'number', description: 'Max results (default 3, max 5)' },
+      },
+      ['task'],
+    ),
+    annotations: { readOnlyHint: true },
+    states: [],
+    zodSchema: recommendSkillsSchema,
+    execute: guarded(recommendSkillsSchema, async (input) => {
+      const entries = await listLibraryEntries();
+      const recommendations = rankSkillsForTask(entries, input.task, input.limit ?? 3).map((match) => ({
+        skillId: match.skillId,
+        name: match.name.slice(0, 60),
+        purpose: match.purpose.slice(0, 120),
+        installReady: match.installReady,
+        revision: match.revision,
+        approvalHash: match.approvalHash ? match.approvalHash.slice(0, 16) : null,
+        score: match.score,
+        matchedOn: match.matchedOn.slice(0, 4),
+      }));
+      return toolText({
+        recommendations,
+        note:
+          recommendations.length === 0
+            ? 'No skills match this task yet. A human can teach one from a real source via start_apprenticeship, or in the studio.'
+            : 'Scores are deterministic lexical matches (matchedOn explains each). Use get_skill with a skillId for install-ready content.',
+      });
+    }),
+  });
+
+  const getSkillSchema = z.object({
+    skillId: z.string().min(1),
+    format: z.enum(['summary', 'skill-md', 'agents-md', 'claude-md']).optional(),
+    part: z.number().int().min(1).optional(),
+  });
+  define({
+    name: 'get_skill',
+    description:
+      "Read one skill. format 'summary' (default) returns the contract: goal, steps, guardrails, verification, revision, approval hash. File formats ('skill-md' for Agent Skills/Claude/Hermes, 'agents-md' for Codex, 'claude-md') return install-ready markdown and require a human approval at the exact current revision.",
+    inputSchema: objectSchema(
+      {
+        skillId: { type: 'string', description: 'Skill id from list_skills or recommend_skills' },
+        format: { type: 'string', description: "'summary' | 'skill-md' | 'agents-md' | 'claude-md' (default 'summary')" },
+        part: { type: 'number', description: 'File formats are delivered in bounded parts; request part 1..totalParts (default 1)' },
+      },
+      ['skillId'],
+    ),
+    annotations: { readOnlyHint: true },
+    states: [],
+    zodSchema: getSkillSchema,
+    execute: guarded(getSkillSchema, async (input) => {
+      const format = input.format ?? 'summary';
+      if (format === 'summary') {
+        const graph = await getSkillGraph(input.skillId);
+        if (!graph) return toolError('not_found', 'No skill with that id. Use list_skills first.', { skillId: input.skillId });
+        return toolText({
+          skillId: graph.id,
+          name: graph.name,
+          purpose: graph.purpose,
+          status: graph.status,
+          version: graph.version,
+          revision: graph.revision,
+          approvedRevision: graph.approvedRevision ?? null,
+          installReady: graph.status === 'approved' && graph.approvedRevision === graph.revision,
+          steps: graph.nodes.slice(0, 8).map((node) => ({ title: node.title.slice(0, 60), kind: node.kind, humanGates: node.humanGateIds.length })),
+          guardrails: graph.guardrails.slice(0, 5).map((rule) => ({ effect: rule.effect, title: rule.title.slice(0, 60) })),
+          evaluations: graph.evaluations.slice(0, 5).map((evaluation) => ({ name: evaluation.name.slice(0, 60), severity: evaluation.severity })),
+          formats: ['skill-md', 'agents-md', 'claude-md'],
+        });
+      }
+      const rendered = await exportSkillFile(input.skillId, format);
+      if (!rendered.ok) return toolError(rendered.error.code, rendered.error.message, rendered.error.details);
+      const file = rendered.value;
+      // Results are capped at MAX_RESULT_CHARS, so install files stream in
+      // bounded parts with a full-file hash the agent can verify after joining.
+      const PART_SIZE = 900;
+      const totalParts = Math.max(1, Math.ceil(file.content.length / PART_SIZE));
+      const part = input.part ?? 1;
+      if (part > totalParts) {
+        return toolError('validation', `part ${part} out of range; the file has ${totalParts} parts`, { totalParts });
+      }
+      const contentSha256 = await sha256Text(file.content);
+      return toolText({
+        fileName: file.fileName,
+        format: file.format,
+        revision: file.revision,
+        part,
+        totalParts,
+        contentSha256,
+        content: file.content.slice((part - 1) * PART_SIZE, part * PART_SIZE),
+        install:
+          file.format === 'agents-md'
+            ? 'Append to your project AGENTS.md.'
+            : file.format === 'claude-md'
+              ? 'Drop into your project for Claude Code.'
+              : 'Save as SKILL.md in a skills directory.',
       });
     }),
   });
@@ -1088,7 +1228,15 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   });
 }
 
-export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent'] as const;
+export const GLOBAL_TOOLS = [
+  'read_cherry_context',
+  'list_cherry_capabilities',
+  'get_cherry_status',
+  'introduce_agent',
+  'list_skills',
+  'recommend_skills',
+  'get_skill',
+] as const;
 
 /** Canonical names used in the public brief, retained as mappings for the
  * legacy names shipped by earlier Cherry hosts. */

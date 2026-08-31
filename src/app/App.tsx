@@ -6,6 +6,7 @@ import { Compatibility } from '../pages/Compatibility.tsx';
 import NotFound from '../pages/NotFound.tsx';
 
 const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
+const Connect = lazy(() => import('../pages/Connect.tsx'));
 const Showcase = lazy(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
 const Onboarding = lazy(() => import('../pages/studio/Onboarding.tsx'));
 const MissionNew = lazy(() => import('../pages/studio/MissionNew.tsx'));
@@ -42,6 +43,7 @@ export function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/showcase" element={<Showcase />} />
         <Route path="/compatibility" element={<Compatibility />} />
+        <Route path="/connect" element={<Connect />} />
         <Route path="/studio" element={<StudioLayout />}>
           <Route index element={<CommandCenter />} />
           <Route path="onboarding" element={<Onboarding />} />

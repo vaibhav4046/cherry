@@ -35,13 +35,13 @@ describe('WebMCP tool aperture', () => {
     freshDb();
   });
 
-  it('never exceeds five state tools plus four globals', () => {
+  it('never exceeds five state tools plus seven globals (three are library reads)', () => {
     const context = makeContext();
     const manager = new WebMcpRegistrationManager(context);
     const states: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
     for (const state of states) {
       const names = manager.activeNamesFor(state);
-      expect(names.length, state).toBeLessThanOrEqual(9);
+      expect(names.length, state).toBeLessThanOrEqual(12);
       expect(names).toContain('read_cherry_context');
       expect(names).toContain('list_cherry_capabilities');
       expect(names).toContain('introduce_agent');
@@ -71,7 +71,7 @@ describe('WebMCP tool aperture', () => {
     for (const surface of ['inbox', 'crew', 'run', 'sources'] as const) {
       expect(TOOL_SURFACE_TABLE[surface].length).toBeLessThanOrEqual(5);
       const names = manager.activeNamesFor('learning', surface);
-      expect(names.length).toBeLessThanOrEqual(9);
+      expect(names.length).toBeLessThanOrEqual(12);
       for (const name of TOOL_SURFACE_TABLE[surface]) expect(names).toContain(name);
     }
     // default surface falls back to the state table.

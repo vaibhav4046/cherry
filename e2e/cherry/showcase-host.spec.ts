@@ -67,7 +67,7 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     // Discovery: global reads plus the empty aperture; learning tools must NOT exist yet.
     await expect.poll(() => hostTools(page)).toContain('start_apprenticeship');
     const discovered = await hostTools(page);
-    expect(discovered).toEqual(expect.arrayContaining(['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent']));
+    expect(discovered).toEqual(expect.arrayContaining(['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent', 'list_skills', 'recommend_skills', 'get_skill']));
     expect(discovered).not.toContain('load_lesson');
     expect(discovered).not.toContain('derive_skill');
 
@@ -136,6 +136,43 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     expect((context.payload as { pendingApprovals: unknown[] }).pendingApprovals).toHaveLength(0);
     const status = await callTool(page, 'get_cherry_status', {});
     expect((status.payload as Record<string, unknown>).productState).toBe('planning');
+
+    // The library serves the approved skill back to the visiting agent — the
+    // site upgrades the agent. The three read tools are global (available from
+    // first paint); only now do they have an install-ready skill to serve.
+    const libraryList = await callTool(page, 'list_skills', { status: 'approved' });
+    expect(libraryList.isError).toBe(false);
+    const listedSkills = (libraryList.payload as { skills: Array<Record<string, unknown>> }).skills;
+    expect(listedSkills.length).toBeGreaterThanOrEqual(1);
+    expect(listedSkills[0]!.installReady).toBe(true);
+
+    const recommendation = await callTool(page, 'recommend_skills', { task: 'build a semantic hero section with a single h1' });
+    expect(recommendation.isError).toBe(false);
+    const recommendations = (recommendation.payload as { recommendations: Array<Record<string, unknown>> }).recommendations;
+    expect(recommendations.length).toBeGreaterThanOrEqual(1);
+    expect(recommendations[0]!.installReady).toBe(true);
+    expect((recommendations[0]!.matchedOn as string[]).length).toBeGreaterThan(0);
+
+    // Install content streams in bounded parts (results are size-capped); the
+    // agent joins them and verifies the full-file hash — receipts philosophy
+    // applied to skill delivery.
+    const firstPart = await callTool(page, 'get_skill', { skillId: recommendations[0]!.skillId as string, format: 'skill-md' });
+    expect(firstPart.isError).toBe(false);
+    const firstPayload = firstPart.payload as { content: string; part: number; totalParts: number; contentSha256: string; revision: number };
+    expect(firstPayload.part).toBe(1);
+    expect(firstPayload.content).toContain('name:');
+    expect(firstPayload.revision).toBe(recommendations[0]!.revision);
+    let joined = firstPayload.content;
+    for (let part = 2; part <= firstPayload.totalParts; part += 1) {
+      const next = await callTool(page, 'get_skill', { skillId: recommendations[0]!.skillId as string, format: 'skill-md', part });
+      expect(next.isError).toBe(false);
+      joined += (next.payload as { content: string }).content;
+    }
+    const joinedSha = await page.evaluate(async (text) => {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    }, joined);
+    expect(joinedSha).toBe(firstPayload.contentSha256);
 
     // Event timeline shows both actors — agent mutations and the human decision.
     await expect(page.getByRole('heading', { name: 'Event timeline (append-only)' })).toBeVisible();

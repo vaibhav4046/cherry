@@ -13,6 +13,7 @@ import {
 import type { JsonSchemaObject, SkillGraph, SkillGraphVersion, SkillNode } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
+import { exportSkillFile, type SkillExportFormat } from '../../cherry/library/library-service.ts';
 import { listEvidence } from '../../cherry/evidence/evidence-service.ts';
 import type { EvidenceRecord } from '../../cherry/evidence/evidence-model.ts';
 import { useAppState } from '../../app/AppState.tsx';
@@ -148,6 +149,28 @@ export default function SkillDetail() {
     }
   }
 
+  async function handleExport(format: SkillExportFormat, mode: 'download' | 'copy') {
+    const result = await run(() => exportSkillFile(graph!.id, format));
+    if (!result.ok) return;
+    const file = result.value;
+    if (mode === 'copy') {
+      try {
+        await navigator.clipboard.writeText(file.content);
+        setNotice(`Copied ${file.fileName} (r${file.revision}) to the clipboard`);
+      } catch {
+        setError('Clipboard unavailable in this browser. Use the download instead.');
+      }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([file.content], { type: 'text/markdown' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = file.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setNotice(`Downloaded ${file.fileName} (approved r${file.revision})`);
+  }
+
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
@@ -189,6 +212,36 @@ export default function SkillDetail() {
           title={graph.status !== 'approved' ? 'Compiling requires an approval at the current revision' : 'Download the portable skill bundle'}
         >
           Compile skill bundle (.zip)
+        </button>
+        <button
+          type="button"
+          className="btn"
+          data-testid="export-skill-md"
+          onClick={() => void handleExport('skill-md', 'download')}
+          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'Agent Skills format: Claude Code, Hermes-class agents'}
+        >
+          Download SKILL.md
+        </button>
+        <button
+          type="button"
+          className="btn"
+          data-testid="copy-agents-md"
+          onClick={() => void handleExport('agents-md', 'copy')}
+          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'Copy the AGENTS.md block for Codex'}
+        >
+          Copy AGENTS.md (Codex)
+        </button>
+        <button
+          type="button"
+          className="btn"
+          data-testid="export-claude-md"
+          onClick={() => void handleExport('claude-md', 'download')}
+          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'CLAUDE.md install file for Claude Code'}
+        >
+          Download CLAUDE.md
         </button>
       </div>
 
