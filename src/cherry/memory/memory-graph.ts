@@ -5,10 +5,11 @@ import type { MemoryGraph, MemoryGraphNode, MemoryGraphEdge } from './memory-gra
 
 export async function buildMemoryGraph(workspaceId: string, missionId?: string | null): Promise<Result<MemoryGraph>> {
   const db = getDb(); const nodes: MemoryGraphNode[] = []; const edges: MemoryGraphEdge[] = []; const diagnostics = [] as MemoryGraph['diagnostics'];
-  const add = (id: string, kind: MemoryGraphNode['kind'], recordType: string, r: object, label?: string) => { const d = r as { missionId?: string | null; status?: string; revision?: number; provenance?: Array<{ id: string }> }; nodes.push({ id, kind, type: kind, workspaceId, missionId: d.missionId ?? missionId ?? null, status: d.status, revision: d.revision, provenance: d.provenance?.map((p) => p.id) ?? [], recordType, ...(label ? { label } : {}) }); };
+  const add = (id: string, kind: MemoryGraphNode['kind'], recordType: string, r: object, label?: string) => { const d = r as { missionId?: string | null; status?: string; revision?: number; approvedRevision?: number | null; provenance?: Array<{ id: string }> }; nodes.push({ id, kind, type: kind, workspaceId, missionId: d.missionId ?? missionId ?? null, status: d.status, revision: d.revision, approvedRevision: d.approvedRevision, provenance: d.provenance?.map((p) => p.id) ?? [], recordType, ...(label ? { label } : {}) }); };
   const edge = (id: string, kind: MemoryGraphEdge['kind'], source: string, target: string) => edges.push({ id, kind, type: kind, source, target });
   const lessons = await db.lessons.where('workspaceId').equals(workspaceId).toArray();
-  const lessonIds = new Set(lessons.filter((x) => !missionId || x.missionId === missionId).map((x) => x.id));
+  const selectedMission = missionId ? await db.missions.get(missionId) : undefined;
+  const lessonIds = new Set(lessons.filter((x) => !missionId || x.missionId === missionId || x.id === selectedMission?.lessonId).map((x) => x.id));
   for (const l of lessons) if (lessonIds.has(l.id)) add(l.id, 'source', 'lesson', l, l.title);
   const segments = await db.transcriptSegments.where('workspaceId').equals(workspaceId).toArray();
   for (const s of segments.filter((x) => lessonIds.has(x.lessonId))) { add(s.id, 'transcript-segment', 'transcriptSegment', s); edge(`${s.lessonId}->${s.id}`, 'source→transcript', s.lessonId, s.id); }

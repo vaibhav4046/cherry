@@ -11,6 +11,7 @@ export interface MemoryGraphNode {
   missionId?: string | null;
   status?: string;
   revision?: number;
+  approvedRevision?: number | null;
   provenance?: string[];
   recordType: string;
   label?: string;
