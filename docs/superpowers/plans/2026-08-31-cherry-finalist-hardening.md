@@ -107,6 +107,7 @@
 
 **Files:**
 - Create: `src/pages/studio/MemoryGraph.tsx`
+- Create: `src/components/BrandIcons.tsx`
 - Create: `src/pages/NotFound.tsx`
 - Modify: `src/pages/studio/MemoryVault.tsx`
 - Modify: `src/pages/studio/RoutinesPage.tsx`
@@ -133,7 +134,7 @@
 - [ ] **Step 3: Implement the graph surface.** Lazy-load the graph from `MemoryVault`, map real nodes/edges, open record/provenance details on activation, style proposal/approval/version/rejection states with text and icons, and keep the inbox controls.
 - [ ] **Step 4: Implement routine inspection.** Show approved skill revision, schedule/next run, runner connection/setup, live result fields, failures, receipt links, rerun, and reload survival.
 - [ ] **Step 5: Make source extraction honest.** Surface transcript supplied/local Whisper/tab capture/deterministic sample labels, timestamps/confidence/provenance, official embed wording, and the no-frame-vision limitation.
-- [ ] **Step 6: Apply the glass design system.** Use translucent panels with opaque fallback, real existing icons with labels/ARIA names, restrained wine/pink accents, consistent focus states, simplified mobile navigation, and no ornamental motion under reduced motion.
+- [ ] **Step 6: Apply the glass design system.** Use translucent panels with opaque fallback, Cherry semantic SVG icons for actions, and recognizable inline SVG brand marks from `src/components/BrandIcons.tsx` for named external services (always paired with text and ARIA names). Keep restrained wine/pink accents, consistent focus states, simplified mobile navigation, and no ornamental motion under reduced motion.
 - [ ] **Step 7: Repair showcase resilience and routing.** Make the first viewport explain the transformation, demote reset/refresh, add try/finally error handling, preserve disclosure state, and provide a real not-found route.
 - [ ] **Step 8: Run focused tests and browser checks.** Run `npm test -- tests/cherry/memory-graph.test.tsx && npx playwright test e2e/cherry/memory-routine.spec.ts e2e/cherry/responsive.spec.ts`.
 - [ ] **Step 9: Commit.** `git add src/pages src/app/App.tsx src/design-system tests/cherry e2e/cherry && git commit -m "feat: ship glass studio graph and routine inspection"`
@@ -166,4 +167,3 @@
 - [ ] **Step 6: Verify production preview and deployed routes.** Start `npm run preview`, inspect homepage, showcase, studio, memory, routines, and 3D lab on desktop/mobile for console errors, broken assets, overflow, canonical redirects, and honest capability text. If existing Vercel linkage/credentials are present, deploy the tested commit; otherwise record the owner-action limitation without inventing access.
 - [ ] **Step 7: Commit evidence.** `git add eslint.config.js playwright.config.ts e2e docs && git commit -m "chore: reconcile release evidence and verification"`
 - [ ] **Step 8: Run final verification before claiming completion.** Re-run all gates after the evidence commit and inspect `git status`, `git log --oneline -10`, and the final E2E JSON.
-
