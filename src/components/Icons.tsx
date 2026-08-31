@@ -61,6 +61,9 @@ export const Icons = {
   approve: (size?: number) => (
     <Icon size={size}><circle cx="12" cy="12" r="9" /><path d="M8 12.5l3 3 5-6" /></Icon>
   ),
+  pin: (size?: number) => (
+    <Icon size={size}><path d="M8 3h8l-1 6 3 3v2h-5v7l-1 1-1-1v-7H6v-2l3-3-1-6Z" /></Icon>
+  ),
 };
 
 /** Copy-to-clipboard button used by the connect/install panels. */

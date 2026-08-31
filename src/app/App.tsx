@@ -1,8 +1,9 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
 import { Compatibility } from '../pages/Compatibility.tsx';
+import NotFound from '../pages/NotFound.tsx';
 
 const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
 const Showcase = lazy(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
@@ -62,7 +63,7 @@ export function App() {
           <Route path="agent" element={<AgentView />} />
           <Route path="settings/connections" element={<Connections />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );

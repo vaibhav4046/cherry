@@ -25,6 +25,12 @@ function formatTime(seconds: number): string {
   return `${minutes}:${String(rest).padStart(2, '0')}`;
 }
 
+function sourceLabel(source: string | null | undefined): string | null {
+  if (!source) return null;
+  const labels: Record<string, string> = { user_text: 'Transcript supplied', user_upload: 'Transcript supplied', whisper_local: 'Local Whisper', tab_capture: 'Tab capture', deterministic_sample: 'Deterministic sample' };
+  return labels[source] ?? source.replace(/_/g, ' ');
+}
+
 export default function Watch() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -159,7 +165,7 @@ export default function Watch() {
           <div className="row">
             <span className="sticker">{lesson.kind === 'youtube' ? 'YouTube lesson' : 'Manual lesson'}</span>
             {lesson.permissionAcknowledgedAt ? <span className="sticker sticker-pass">Permission acknowledged</span> : null}
-            {lesson.transcriptSource ? <span className="sticker sticker-blue">Transcript: {lesson.transcriptSource.replace(/_/g, ' ')}</span> : null}
+            {sourceLabel(lesson.transcriptSource) ? <span className="sticker sticker-blue">Source: {sourceLabel(lesson.transcriptSource)}</span> : null}
             <span className="sticker sticker-sunburst">Position {formatTime(positionSeconds)}</span>
           </div>
         </div>
@@ -167,6 +173,7 @@ export default function Watch() {
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
+      <p className="label" role="note">Frame-level vision is not implemented; observations are transcript or user-entered evidence. Official YouTube content is shown through an embed only.</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 1fr)', gap: 'var(--sp-4)' }} className="watch-grid">
         <div className="stack">

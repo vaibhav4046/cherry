@@ -10,6 +10,8 @@ import {
   resumeRoutine,
   setRoutineSchedule,
 } from '../../cherry/workforce/routines-service.ts';
+import { listRuns } from '../../cherry/mission/mission-service.ts';
+import type { RunRecord } from '../../cherry/mission/mission-model.ts';
 import { validateSchedule, type Routine, type ScheduleSpec } from '../../cherry/workforce/workforce-model.ts';
 import type { Result } from '../../cherry/core/result.ts';
 
@@ -85,11 +87,13 @@ export default function RoutineDetail() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [runs, setRuns] = useState<RunRecord[]>([]);
 
   const load = useCallback(async (resetEditor: boolean) => {
     if (!activeWorkspace || !routineId) return;
     const loaded = await getRoutine(activeWorkspace.id, routineId);
     setRoutine(loaded);
+    setRuns((await listRuns(activeWorkspace.id)).filter((run) => run.routineId === routineId));
     if (loaded && resetEditor) setEditor(editorFromRoutine(loaded));
   }, [activeWorkspace, routineId]);
 
@@ -169,7 +173,7 @@ export default function RoutineDetail() {
         </div>
         <p className="subhead" style={{ maxWidth: 680 }}>
           {describeSchedule(routine.schedule)} · host {routine.executionHostId}. Runs on schedule while an
-          approved local or cloud execution host is available.
+          paired local runner is available.
         </p>
         <Link to="/studio/routines" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>Back to Routines</Link>
       </header>
@@ -334,6 +338,11 @@ export default function RoutineDetail() {
           <span className="sticker">policy: {routine.missedRunPolicy.replace(/_/g, ' ')}</span>
         </div>
         <p className="label" style={{ margin: 0 }}>Next run: {fmt(routine.nextRunAt)} · Last run: {fmt(routine.lastRunAt)}</p>
+      </section>
+      <section className="card stack" aria-labelledby="history-heading">
+        <h2 id="history-heading" className="subhead" style={{ fontSize: 20 }}>Persisted run history ({runs.length})</h2>
+        <p className="label" style={{ margin: 0 }}>Runs are stored locally with their runner evidence. No cloud execution is implied.</p>
+        {runs.length === 0 ? <p className="label">No runs yet. Pair a local runner, then use Run now.</p> : <div className="stack">{runs.map((runRecord) => <article key={runRecord.id} className="routine-run-row" data-testid="routine-run-history"><div className="row" style={{ justifyContent: 'space-between' }}><strong>{runRecord.status}</strong><span className="mono">{fmt(runRecord.createdAt)}</span></div><div className="label">{runRecord.summary}</div>{runRecord.provider ? <div className="mono">provider: {runRecord.provider.kind} · {runRecord.provider.status}</div> : null}{runRecord.outputSummary ? <pre className="routine-output">{runRecord.outputSummary}</pre> : null}{runRecord.error ? <p className="field-error">{runRecord.error}</p> : null}{runRecord.receiptId ? <div className="mono">receipt: {runRecord.receiptId}</div> : null}</article>)}</div>}
       </section>
     </div>
   );

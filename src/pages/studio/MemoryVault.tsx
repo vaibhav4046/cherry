@@ -9,6 +9,8 @@ import {
   setMemoryPinned,
 } from '../../cherry/memory/memory-service.ts';
 import { CORRECTION_CLASS_TARGET, CORRECTION_CLASSES, type MemoryRecord } from '../../cherry/memory/memory-model.ts';
+import MemoryGraph from './MemoryGraph.tsx';
+import { Icons } from '../../components/Icons.tsx';
 
 export default function MemoryVault() {
   const { activeWorkspace, activeMission } = useAppState();
@@ -82,6 +84,7 @@ export default function MemoryVault() {
         Explicit, inspectable, source-linked. Nothing here took effect without your approval.
       </p>
       {error ? <p className="field-error" role="alert">{error}</p> : null}
+      <MemoryGraph workspaceId={activeWorkspace.id} missionId={activeMission?.id} />
 
       <section className="card card-wash-lavender stack" aria-labelledby="inbox-heading">
         <h2 id="inbox-heading" className="subhead">Memory Inbox ({inbox.length})</h2>
@@ -202,7 +205,7 @@ export default function MemoryVault() {
                 {visible.map((memory) => (
                   <tr key={memory.id}>
                     <td>
-                      <strong>{memory.pinned ? '📌 ' : ''}{memory.title}</strong>
+                      <strong>{memory.pinned ? <span aria-label="Pinned" title="Pinned">{Icons.pin(14)} </span> : null}{memory.title}</strong>
                       <div style={{ fontSize: 13, color: 'var(--color-ink-soft)' }}>{memory.content.slice(0, 160)}</div>
                     </td>
                     <td>{memory.type} / {memory.scope}</td>

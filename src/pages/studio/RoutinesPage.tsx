@@ -64,7 +64,7 @@ export default function RoutinesPage() {
         <h1 className="display-sm title-3d">Routines</h1>
         <p className="subhead" style={{ maxWidth: 680 }}>
           Schedule an approved skill to run on repeat. Every schedule change needs your re-approval.
-          Runs on schedule while an approved local or cloud execution host is available.
+          Runs on schedule when a paired local runner is available. Cherry does not execute routines in the cloud.
         </p>
       </header>
 
@@ -119,6 +119,11 @@ export default function RoutinesPage() {
             ))}
           </div>
         )}
+      </section>
+      <section className="card stack" aria-label="Local runner pairing">
+        <h2 className="subhead" style={{ fontSize: 20 }}>Local runner</h2>
+        <p style={{ margin: 0 }}>Routines dispatch only to a paired local runner. Pairing and setup are shown here so an unavailable runner is recoverable.</p>
+        <span className="sticker sticker-wait">Setup required until a runner is paired</span>
       </section>
     </div>
   );

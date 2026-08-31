@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BrandMark } from '../components/BrandIcons.tsx';
 
 interface CardRow {
   seconds: number;
@@ -144,6 +145,7 @@ export function Landing() {
               <Link to="/studio" className="link-quiet">Open Studio</Link>
             </div>
             <p className="trust-line" style={{ margin: 0 }}>Local-first · Human-approved · Proof-backed</p>
+            <div className="row" aria-label="Connect your existing tools"><BrandMark brand="slack" /><BrandMark brand="teams" /><BrandMark brand="discord" /><BrandMark brand="telegram" /><BrandMark brand="github" /><BrandMark brand="youtube" /></div>
           </div>
           <LessonCard />
         </section>

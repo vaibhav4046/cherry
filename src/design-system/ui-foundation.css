@@ -56,6 +56,21 @@
 
 .trust-line { opacity: 0.75; font-size: 0.85rem; }
 
+/* Glass surfaces retain an opaque fallback for older browsers. */
+.card, .lesson-card { background: var(--color-paper-white); }
+@supports (background: color-mix(in srgb, white 10%, transparent)) {
+  .card { background: color-mix(in srgb, #fff 8%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+}
+.brand-mark { display: inline-flex; align-items: center; gap: .45rem; min-height: 44px; color: var(--color-carbon); }
+.brand-mark svg { flex: 0 0 auto; }
+.memory-graph-canvas { min-height: 180px; border: 1px solid rgba(255,185,205,.25); border-radius: var(--radius-card); padding: var(--sp-3); overflow: auto; color: #ff9db8; }
+.memory-graph-canvas svg { display: block; width: 100%; min-width: 620px; height: 220px; }
+.memory-graph tr.is-selected { background: rgba(255,79,120,.14); }
+.routine-run-row { border: 1px solid rgba(255,185,205,.24); border-radius: var(--radius-sticker); padding: var(--sp-4); background: rgba(255,255,255,.04); }
+.routine-output { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font: 13px var(--font-mono); }
+.not-found { max-width: 680px; margin: 12vh auto; }
+@media (max-width: 700px) { .not-found { margin: 8vh var(--sp-4); } .watch-grid { grid-template-columns: 1fr !important; } .row > .field { min-width: min(100%, 220px); } }
+
 /* The live lesson card — the product in miniature. */
 .lesson-card {
   display: block;

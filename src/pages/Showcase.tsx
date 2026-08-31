@@ -80,6 +80,7 @@ export function Showcase() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
 
   const loadAll = useCallback(async () => {
     if (!activeWorkspace) {
@@ -88,6 +89,7 @@ export function Showcase() {
     }
     const workspaceId = activeWorkspace.id;
     const mission = activeMission;
+    try {
     const lesson = mission?.lessonId ? ((await getLesson(mission.lessonId)) ?? null) : null;
     const [transcript, observations] = lesson
       ? await Promise.all([listTranscript(lesson.id), listObservations(lesson.id)])
@@ -113,6 +115,10 @@ export function Showcase() {
       receipts,
       events: events.slice(-14).reverse(),
     });
+    setError(null);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load showcase data.');
+    }
   }, [activeWorkspace, activeMission]);
 
   useEffect(() => {
@@ -517,7 +523,8 @@ export function Showcase() {
                   <details
                     key={chapter.name}
                     className={`showcase-chapter${isCurrent ? ' is-current' : ''}`}
-                    open={isCurrent}
+                    open={openChapters[chapter.name] ?? isCurrent}
+                    onToggle={(event) => setOpenChapters((current) => ({ ...current, [chapter.name]: (event.currentTarget as HTMLDetailsElement).open }))}
                   >
                     <summary>
                       <span className="showcase-chapter-name">{chapter.name}</span>
