@@ -104,6 +104,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
   if (data.kind === 'youtube' && !url) return invalid('A YouTube lesson needs a URL');
   if (data.kind === 'youtube' && url && !/youtube\.com|youtu\.be/i.test(new URL(url).hostname)) return invalid('YouTube lessons must use a YouTube URL');
   if (data.kind === 'file' && !content) return invalid('Select a text file before saving a file source');
+  if (data.fetchMethod === 'scrapling_fetch' && !content) return invalid('Scrapling results must be verified before they are saved');
   const contentHash = content ? await sha256Text(content) : null;
   const existing = await duplicate(data.workspaceId, url, contentHash);
   if (existing) return conflict('This source already exists in the workspace', { existingSourceId: existing.id });

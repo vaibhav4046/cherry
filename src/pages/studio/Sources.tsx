@@ -125,7 +125,8 @@ export default function Sources() {
               try {
                 const payload = JSON.parse(polled.value.result?.stdout ?? '{}') as { status?: string; markdown?: string; contentHash?: string; reason?: string };
                 if (payload.status !== 'fetched' || !payload.markdown || !payload.contentHash) { await failSourceFetch(source.id, payload.reason ?? 'Worker returned no readable page'); return; }
-                await completeSourceFetch(source.id, { markdown: payload.markdown, contentHash: payload.contentHash });
+                const completed = await completeSourceFetch(source.id, { markdown: payload.markdown, contentHash: payload.contentHash });
+                if (!completed.ok) { setError(completed.error.message); await reload(); return; }
                 await reload();
                 setNotice('Fetched page is ready for review. Cherry has not promoted it to trusted instructions.');
               } catch (thrown) { await failSourceFetch(source.id, (thrown as Error).message); }

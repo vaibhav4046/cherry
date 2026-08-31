@@ -74,6 +74,16 @@ describe('source inbox domain', () => {
     if (!fetch.ok) expect(fetch.error.message).toContain('LinkedIn');
   });
 
+  it('does not let an unverified Scrapling result masquerade as fetched content', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Sources' }));
+    const result = await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Unverified fetch', url: 'https://example.com/page',
+      fetchMethod: 'scrapling_fetch', permissionAcknowledged: true,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain('verified');
+  });
+
   it('queues only an explicit public-page fetch and completes into the same lesson', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Sources' }));
     const source = unwrap(await createSource({
