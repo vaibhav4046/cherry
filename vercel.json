@@ -4,9 +4,9 @@
   "outputDirectory": "dist",
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "getcherry.vercel.app" }],
-      "destination": "https://cherry-wine.vercel.app/:path*",
+      "destination": "https://cherry-wine.vercel.app/$1",
       "permanent": false
     }
   ],
