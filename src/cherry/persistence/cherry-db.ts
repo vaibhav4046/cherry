@@ -12,6 +12,7 @@ import type { ArtifactSet, ArtifactFile, ArtifactVersion } from '../artifacts/ar
 import type { VerificationReport } from '../verify/assertion-model.ts';
 import type { ProofReceipt } from '../proof/proof-model.ts';
 import type { RunRecord } from '../mission/mission-model.ts';
+import type { SourceRecord } from '../source/source-model.ts';
 import { CHERRY_DB_MIGRATIONS, CHERRY_DB_VERSION } from './migrations.ts';
 
 export class CherryDatabase extends Dexie {
@@ -42,6 +43,7 @@ export class CherryDatabase extends Dexie {
   handoffs!: Table<HandoffRecord, string>;
   executionHosts!: Table<ExecutionHost, string>;
   routines!: Table<Routine, string>;
+  sourceRecords!: Table<SourceRecord, string>;
 
   constructor(name = 'cherry') {
     super(name);
@@ -93,4 +95,5 @@ export const ALL_STORES = [
   'proofEvents',
   'receipts',
   'settings',
+  'sourceRecords',
 ] as const;

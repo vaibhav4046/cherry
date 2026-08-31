@@ -32,6 +32,7 @@ export interface WorkspaceExport {
   proofEvents: unknown[];
   proofReceipts: unknown[];
   settings: Record<string, unknown>;
+  sourceRecords?: unknown[];
   integrity: {
     canonicalization: 'JCS-RFC8785';
     hashAlgorithm: 'SHA-256';
@@ -75,6 +76,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
     proofEvents: await load(db.proofEvents),
     proofReceipts: await load(db.receipts),
     settings: {},
+    sourceRecords: await load(db.sourceRecords),
     integrity: {
       canonicalization: 'JCS-RFC8785',
       hashAlgorithm: 'SHA-256',
@@ -112,6 +114,7 @@ const ARRAY_LIMITS: Array<[keyof WorkspaceExport, number]> = [
   ['runs', 10000],
   ['proofEvents', 200000],
   ['proofReceipts', 10000],
+  ['sourceRecords', 10000],
 ];
 
 /**
@@ -141,6 +144,7 @@ export async function importWorkspace(
   }
   for (const [key, limit] of ARRAY_LIMITS) {
     const value = parsed[key];
+    if (key === 'sourceRecords' && value === undefined) continue;
     if (!Array.isArray(value)) return invalid(`Export field ${String(key)} must be an array`);
     if (value.length > limit) return invalid(`Export field ${String(key)} exceeds the limit of ${limit}`);
   }
@@ -173,7 +177,7 @@ export async function importWorkspace(
   const arrayKeys: Array<keyof WorkspaceExport> = [
     'missions', 'missionTasks', 'lessons', 'transcriptSegments', 'observations', 'evidence',
     'skillGraphs', 'skillVersions', 'memories', 'memoryVersions', 'approvals', 'artifactSets',
-    'artifactFiles', 'artifactVersions', 'verifications', 'runs', 'proofEvents', 'proofReceipts',
+    'artifactFiles', 'artifactVersions', 'verifications', 'runs', 'proofEvents', 'proofReceipts', 'sourceRecords',
   ];
   for (const key of arrayKeys) {
     for (const row of (parsed[key] as unknown[]) ?? []) {
@@ -225,6 +229,7 @@ export async function importWorkspace(
       db.runs,
       db.proofEvents,
       db.receipts,
+      db.sourceRecords,
     ],
     async () => {
       await db.workspaces.add(importedWorkspace as never);
@@ -246,6 +251,7 @@ export async function importWorkspace(
       await db.runs.bulkAdd(remap(parsed.runs) as never[]);
       await db.proofEvents.bulkAdd(remap(parsed.proofEvents ?? []) as never[]);
       await db.receipts.bulkAdd(remap(parsed.proofReceipts ?? []) as never[]);
+      await db.sourceRecords.bulkAdd(remap(parsed.sourceRecords ?? []) as never[]);
     },
   );
   } catch (error) {

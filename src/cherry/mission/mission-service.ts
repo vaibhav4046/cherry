@@ -93,6 +93,7 @@ export async function deleteWorkspace(id: string): Promise<Result<{ deleted: str
     db.runs,
     db.proofEvents,
     db.receipts,
+    db.sourceRecords,
   ];
   await db.transaction('rw', tables, async () => {
     await db.workspaces.delete(id);

@@ -48,6 +48,12 @@ export const CHERRY_DB_MIGRATIONS: CherryMigration[] = [
       routines: 'id, workspaceId, skillGraphId, enabled, nextRunAt',
     },
   },
+  {
+    version: 3,
+    stores: {
+      sourceRecords: 'id, workspaceId, lessonId, kind, status, updatedAt',
+    },
+  },
 ];
 
 export const CHERRY_DB_VERSION = CHERRY_DB_MIGRATIONS[CHERRY_DB_MIGRATIONS.length - 1]!.version;
