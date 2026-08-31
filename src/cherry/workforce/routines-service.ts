@@ -401,9 +401,13 @@ export async function settleRun(
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: details.command ?? run.command, adapter: details.adapter ?? run.adapter,
     provider: details.provider ?? run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
-  await withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
-    await ctx.db.runs.put(next);
+  const settled = await withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
+    const latest = await ctx.db.runs.get(runId);
+    if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
+    const atomicNext = { ...next, revision: latest.revision + 1, updatedAt: isoNow() };
+    await ctx.db.runs.put(atomicNext);
     ctx.emit({ type: 'run.updated', actorType: 'runner', objectType: 'run', objectId: run.id, summary: `Run ${status}`, payload: { status, receiptId: next.receiptId ?? null } });
+    return ok(atomicNext);
   });
-  return ok(next);
+  return settled;
 }
