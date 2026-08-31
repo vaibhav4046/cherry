@@ -257,6 +257,9 @@ export async function recordRun(
   if (run.status === 'succeeded') return { ok: false, error: { code: 'approval_required', message: 'Successful runs require settleRun with a verified receipt.' } };
   const now = isoNow();
   const record: RunRecord = { ...run, id: newId('run'), revision: 1, createdAt: now, updatedAt: now };
+  if (record.mode === 'runner' && record.status === 'waiting_for_runner' && !record.runnerCapabilityToken) {
+    record.runnerCapabilityToken = newId('job');
+  }
   await withWorkspaceTx(record.workspaceId, ['runs'], async (ctx) => {
     await ctx.db.runs.add(record);
     ctx.emit({
