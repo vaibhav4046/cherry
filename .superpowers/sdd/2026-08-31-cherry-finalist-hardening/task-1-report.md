@@ -3,7 +3,7 @@
 Status: COMPLETE (focused implementation and tests pass)
 
 Commit hashes:
-- 82395f6 — initial memory graph/policy/receipt hardening`n- 15cfbd1 — persisted graph relations and actor enforcement`n- 6f13100 — causal receipt expansion and deleted-memory redaction
+- 82395f6 — initial memory graph/policy/receipt hardening`n- 15cfbd1 — persisted graph relations and actor enforcement`n- 6f13100 — causal receipt expansion and deleted-memory redaction`n- 6b19358 — graph metadata fixes and proof regression tests
 
 Files changed:
 - src/cherry/memory/memory-graph-model.ts
@@ -21,7 +21,7 @@ Tests run/results:
 - npm run typecheck — PASS
 - npm test -- --run tests/cherry/memory.test.ts tests/cherry/memory-graph.test.ts — PASS (3 tests)
 - npm test -- --run tests/cherry/schemas.test.ts — PASS (5 tests)
-- npm test -- --run — PASS (138 tests, 2 skipped).
+- npm test -- --run — PASS (141 tests, 2 skipped).
 - npm run lint — repository currently reports existing vendored public/lab/three-d errors; no errors from changed TypeScript files.
 
 Risks/unresolved limitations:
