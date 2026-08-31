@@ -269,7 +269,7 @@ export async function requestSkillGraphApproval(
   const next: SkillGraph = { ...graph, status: 'ready_for_review', updatedAt: now };
   next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
-  await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals'], async (ctx) => {
+  const requested = await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals'], async (ctx) => {
     const pending = await ctx.db.approvals.where('objectId').equals(graph.id).toArray();
     if (pending.some((a) => a.objectType === 'skillgraph' && a.objectRevision === graph.revision && a.decision === 'pending')) {
       return conflict('An approval decision is already pending for this skill graph revision');
@@ -285,6 +285,7 @@ export async function requestSkillGraphApproval(
       payload: { revision: graph.revision, approvalId: approval.id },
     });
   });
+  if (requested && !requested.ok) return requested as Result<{ graph: SkillGraph; approval: ApprovalRecord }>;
   return ok({ graph: next, approval });
 }
 
