@@ -412,7 +412,7 @@ export async function settleRun(
   const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
-    if (latest.routineId) {
+    if (latest.routineId && !(latest.status === 'running' && (status === 'failed' || status === 'cancelled' || status === 'setup-required'))) {
       const routine = await ctx.db.routines.get(latest.routineId);
       if (!routine || !routine.enabled || routine.revision !== latest.routineRevision || routine.approvedActionHash !== latest.approvedActionHash) return err('approval_required', 'Routine approval is stale or disabled.');
     }
