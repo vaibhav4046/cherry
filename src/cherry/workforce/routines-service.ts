@@ -440,3 +440,5 @@ export async function attachRunnerJob(runId: string, runnerJobId: string, capabi
     return ok(next);
   });
 }
+
+export const settleRoutineRun = settleRun;
