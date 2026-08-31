@@ -90,6 +90,8 @@ export interface RunRecord {
   workspaceId: string;
   missionId: string;
   routineId?: string | null;
+  routineRevision?: number;
+  approvedActionHash?: string | null;
   adapter: 'manual' | 'cherry-verify' | 'cherry-export' | 'shell-safe' | 'codex-cli' | 'claude-cli';
   status: RunStatus;
   mode: 'manual' | 'webmcp' | 'runner';
