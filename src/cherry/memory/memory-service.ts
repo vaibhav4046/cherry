@@ -146,7 +146,7 @@ export async function decideMemory(
   decidedBy: string,
   actorType: ActorType = 'human',
 ): Promise<Result<MemoryRecord>> {
-  if (actorType === 'agent') return invalid('Only a person may decide a memory');
+  if (actorType !== 'human') return invalid('Only a person may decide a memory');
   const db = getDb();
   const record = await db.memories.get(memoryId);
   if (!record) return notFound('Memory', memoryId);

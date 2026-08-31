@@ -3,7 +3,7 @@
 Status: COMPLETE (focused implementation and tests pass)
 
 Commit hashes:
-- f68e231 — harden memory graph policy and causal proof receipts
+- 478811c — fix persisted graph relations and memory decision actors
 
 Files changed:
 - src/cherry/memory/memory-graph-model.ts
