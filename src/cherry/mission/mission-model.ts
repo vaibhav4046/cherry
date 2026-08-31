@@ -101,6 +101,7 @@ export interface RunRecord {
   error?: string | null;
   receiptId?: string | null;
   idempotencyKey?: string;
+  runnerCapabilityToken?: string;
   verificationId?: string | null;
   provider?: { kind: string; status: string; exitCode?: number; verifiedSeparately: boolean };
   revision: number;

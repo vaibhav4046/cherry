@@ -343,7 +343,7 @@ export async function requestRunNow(
     const run: RunRecord & { note: string } = {
       id: newId('run'), workspaceId, missionId: graph.missionId, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
       summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner. Start it with: node runner/server.mjs', requestedAt: now,
-      command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key,
+      command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key, runnerCapabilityToken: newId('job'),
       provider: { kind: 'runner', status: 'blocked', verifiedSeparately: true }, revision: 1, createdAt: now, updatedAt: now,
       note: 'Run requested. It executes when an approved execution host picks it up — nothing has run yet.',
     };
@@ -371,19 +371,20 @@ export async function requestRunNow(
 
 function redactOutput(value: string | undefined): string | undefined {
   if (!value) return value;
-  return value.replace(/(token|secret|password|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, '$1=[REDACTED]').slice(0, 4000);
+  return value.replace(/(token|secret|password|api[_-]?key|bearer)\s*[:=]?\s*(sk-|pk-|ghp-)?[^\s,;]+/gi, '$1=[REDACTED]').replace(/\b(sk|pk|ghp)-[A-Za-z0-9_-]+\b/gi, '[REDACTED]').slice(0, 4000);
 }
 
 export async function settleRun(
   runId: string,
   status: Exclude<RunStatus, 'queued' | 'waiting_for_runner'>,
-  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapability?: boolean } = {},
+  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
-  if (actorType !== 'runner' || details.runnerCapability !== true) return err('approval_required', 'Only a paired runner may settle a run.');
+  if (actorType !== 'runner') return err('approval_required', 'Only a paired runner may settle a run.');
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
+  if (!details.runnerCapabilityToken || details.runnerCapabilityToken !== run.runnerCapabilityToken) return err('approval_required', 'Runner capability token is invalid.');
   const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
   if (run.status === 'waiting_for_runner' && status !== 'running') return err('conflict', 'A waiting run must transition to running first.');
   if (run.status === 'running' && !terminal.has(status) && status !== 'running') return err('conflict', 'Invalid run state transition.');
