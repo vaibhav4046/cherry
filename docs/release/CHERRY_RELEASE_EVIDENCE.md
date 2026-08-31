@@ -16,6 +16,21 @@
 > Chrome 151 probed via its own console — `document.modelContext` undefined (WebMCP testing flag
 > not enabled); result recorded as unavailable-in-current-host, no live browser-host claim is
 > made. Live-host validation remains a queued owner action in docs/BUILD_STATUS.md.
+>
+> **Deployed + flag-probe follow-up (2026-08-31, "complete all"):** main pushed and Vercel
+> production deployment verified — /showcase renders live on https://cherry-wine.vercel.app with
+> the honest host panel and zero console errors; `getcherry.vercel.app` now 307-redirects to the
+> canonical origin (vercel.json host-conditional rule). Exhaustive Chrome flag probe: the real
+> Chrome 151 binary was launched five times against the production build with throwaway profiles
+> and candidate flags (`--enable-features=WebMCP`, `WebModelContext`,
+> `WebMachineLearningModelContext`, `--enable-experimental-web-platform-features`, and the
+> combination) — `document.modelContext` was **undefined in every run**, and in every run the app
+> rendered the honest "No WebMCP host" panel (feature detection proven in real Chrome, not just
+> Chromium/jsdom). Conclusion: this machine has no WebMCP-capable host; a ChatGPT desktop browser
+> with Site Tools (or a Chrome build that actually ships the API) is required for live-host
+> evidence. `npm audit fix` applied; the 29 remaining advisories are confined to wallet-stack
+> transitives inside the lazy Privy chunk that shipped paths never load (guest mode never fetches
+> the chunk; configured mode is email-only).
 
 > **v1.2 addendum (2026-08-30, editorial-pack integration):** every gate re-ran fresh on the tree
 > after the god-mode pack landed. Current totals: **119 unit/integration passed + 2 skipped
