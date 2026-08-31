@@ -167,10 +167,10 @@ export async function transitionMission(
   const db = getDb();
   const mission = await db.missions.get(missionId);
   if (!mission) return notFound('Mission', missionId);
-  if (mission.state === to) return ok(mission);
   if (actorType !== 'human' && to === 'EXECUTING') {
     return invalid('Only a person may transition a mission to EXECUTING');
   }
+  if (mission.state === to) return ok(mission);
   if (to === 'EXECUTING') {
     if (!mission.skillGraphId) return invalid('Mission must reference an approved skill graph before execution');
     const graph = await db.skillGraphs.get(mission.skillGraphId);

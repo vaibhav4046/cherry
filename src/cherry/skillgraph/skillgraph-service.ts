@@ -246,11 +246,7 @@ export async function requestSkillGraphApproval(
   if (!graph) return notFound('SkillGraph', skillGraphId);
 
   const recomputedHash = await sha256Canonical({ ...graph, versionHash: undefined });
-  if (graph.versionHash && graph.versionHash !== recomputedHash) return invalid('SkillGraph version hash is invalid');
-  const pending = await db.approvals.where('objectId').equals(graph.id).toArray();
-  if (pending.some((a) => a.objectType === 'skillgraph' && a.objectRevision === graph.revision && a.decision === 'pending')) {
-    return conflict('An approval decision is already pending for this skill graph revision');
-  }
+  if (graph.versionHash !== recomputedHash) return invalid('SkillGraph version hash is invalid');
 
   const issues = validateSkillGraph(graph);
   const blocking = issues.filter((issue) => issue.code !== 'no_evaluations');
@@ -274,6 +270,10 @@ export async function requestSkillGraphApproval(
   next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
   await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals'], async (ctx) => {
+    const pending = await ctx.db.approvals.where('objectId').equals(graph.id).toArray();
+    if (pending.some((a) => a.objectType === 'skillgraph' && a.objectRevision === graph.revision && a.decision === 'pending')) {
+      return conflict('An approval decision is already pending for this skill graph revision');
+    }
     await ctx.db.skillGraphs.put(next);
     await ctx.db.approvals.add(approval);
     ctx.emit({
@@ -319,7 +319,7 @@ export async function decideSkillGraphApproval(
   }
 
   const recomputedVersionHash = await sha256Canonical({ ...graph, versionHash: undefined });
-  if (graph.versionHash && graph.versionHash !== recomputedVersionHash) return invalid('SkillGraph version hash is invalid');
+  if (graph.versionHash !== recomputedVersionHash) return invalid('SkillGraph version hash is invalid');
 
   const now = isoNow();
   const contentHash = await sha256Canonical({ ...graph, versionHash: undefined });

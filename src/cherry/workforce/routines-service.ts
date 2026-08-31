@@ -175,7 +175,9 @@ export async function approveRoutine(
   workspaceId: string,
   routineId: string,
   expectedRevision: number,
+  actorType: ActorType = 'human',
 ): Promise<Result<Routine>> {
+  if (actorType !== 'human') return err('approval_required', 'Only a person may approve a routine');
   // Hashing is async non-Dexie work, so it happens before the transaction.
   const current = await getRoutine(workspaceId, routineId);
   if (!current) return err('not_found', 'Routine not found.');
@@ -366,19 +368,26 @@ export async function settleRun(
   runId: string,
   status: Exclude<RunStatus, 'queued' | 'waiting_for_runner'>,
   details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider'] } = {},
+  actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
+  if (actorType !== 'runner' && actorType !== 'system') return err('approval_required', 'Only the paired runner may settle a run.');
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
+  const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
+  if (run.status === 'waiting_for_runner' && status !== 'running') return err('conflict', 'A waiting run must transition to running first.');
+  if (run.status === 'running' && !terminal.has(status) && status !== 'running') return err('conflict', 'Invalid run state transition.');
+  if (terminal.has(run.status)) return err('conflict', 'Run is already settled.');
   if (status === 'succeeded') {
     if (!details.receiptId) return err('approval_required', 'A verified receipt is required before marking a run successful.');
     const receipt = await db.receipts.get(details.receiptId);
-    if (!receipt) return err('approval_required', 'Receipt could not be verified.');
+    if (!receipt || receipt.runId !== run.id || receipt.workspaceId !== run.workspaceId || receipt.missionId !== run.missionId) return err('approval_required', 'Receipt is not bound to this run.');
+    if (receipt.status !== 'verified' || receipt.provider?.status !== 'completed') return err('approval_required', 'Receipt status/provider is not consistent with success.');
     const verification = await verifyReceipt(receipt);
     if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
   }
   const now = isoNow();
-  const next: RunRecord = { ...run, status, outputSummary: redactOutput(details.outputSummary), error: details.error ? redactOutput(details.error) : null,
+  const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: details.command ?? run.command, adapter: details.adapter ?? run.adapter,
     provider: details.provider ?? run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
   await withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
