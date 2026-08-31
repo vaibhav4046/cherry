@@ -8,7 +8,7 @@
 |---|---|---|
 | Typecheck | `npm run typecheck` | PASS (tsc --noEmit, strict) |
 | Lint | `npm run lint` | PASS (eslint 9 flat config) |
-| Unit/integration | `npm run test` | PASS — 160 passed, 2 skipped (20 files passed, 2 skipped; vitest) — 2026-08-31 |
+| Unit/integration | `npm run test` | PASS — 161 passed, 2 skipped (20 files passed, 2 skipped; vitest) — 2026-08-31 |
 | Runner + bridge + v2 | `npm run test:runner` | PASS — 42 passed (node:test) |
 | Production build | `npm run build` | PASS (vite; largest chunk `transformers.web` ~549 KB) |
 | E2E | `npm run test:e2e` | PASS — 43 passed, 0 unexpected/flaky/skipped (desktop + mobile; Source Inbox, registered-closure host path, and artifact isolation included); see docs/release/e2e-results.json |
