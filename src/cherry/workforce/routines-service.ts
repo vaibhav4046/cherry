@@ -419,3 +419,16 @@ export async function settleRun(
   });
   return settled;
 }
+
+export async function attachRunnerJob(runId: string, runnerJobId: string, capabilityToken: string): Promise<Result<RunRecord>> {
+  const run = await getDb().runs.get(runId);
+  if (!run) return err('not_found', 'Run not found.');
+  if (!capabilityToken || capabilityToken !== run.runnerCapabilityToken) return err('approval_required', 'Runner capability token is invalid.');
+  return withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
+    const latest = await ctx.db.runs.get(runId);
+    if (!latest || latest.revision !== run.revision) return err('conflict', 'Run changed concurrently.');
+    const next = { ...latest, runnerJobId, revision: latest.revision + 1, updatedAt: isoNow() };
+    await ctx.db.runs.put(next);
+    return ok(next);
+  });
+}

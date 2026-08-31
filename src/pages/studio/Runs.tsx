@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppState } from '../../app/AppState.tsx';
 import { listRuns } from '../../cherry/mission/mission-service.ts';
-import { settleRun } from '../../cherry/workforce/routines-service.ts';
+import { settleRun, attachRunnerJob } from '../../cherry/workforce/routines-service.ts';
 import type { RunRecord } from '../../cherry/mission/mission-model.ts';
-import { runnerStatus, submitRunnerJob, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
+import { runnerStatus, submitRunnerJob, pollRunnerJob, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 
 export default function Runs() {
   const { activeWorkspace } = useAppState();
@@ -35,13 +35,16 @@ export default function Runs() {
       workspaceId: run.workspaceId,
       missionId: run.missionId,
       adapter: run.adapter,
-      input: {},
+      input: { bundleDir: run.detail ?? '.' },
     });
     if (!result.ok) {
       setError(result.error.message);
       return;
     }
-    await settleRun(run.id, 'running', { command: `Runner job ${result.value.jobId}`, runnerCapabilityToken: run.runnerCapabilityToken });
+    await attachRunnerJob(run.id, result.value.jobId, run.runnerCapabilityToken ?? '');
+    await settleRun(run.id, 'running', { runnerCapabilityToken: run.runnerCapabilityToken });
+    const polled = await pollRunnerJob(result.value.jobId);
+    if (polled.ok && polled.value.status === 'failed') await settleRun(run.id, 'failed', { error: polled.value.result?.stderr, outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
     await load();
   }
 
