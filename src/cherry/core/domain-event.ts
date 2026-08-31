@@ -30,6 +30,7 @@ export const PROOF_EVENT_TYPES = [
   'memory.rejected',
   'memory.superseded',
   'memory.deleted',
+  'memory.pinned',
   'artifact.file_written',
   'artifact.file_deleted',
   'artifact.preview_error',

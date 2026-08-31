@@ -104,6 +104,7 @@ export interface ProofReceipt {
   provider?: ProofProvider;
   receiptHash: string;
   createdAt: string;
+  truncation?: { truncated: boolean; omittedCount: number };
 }
 
 export const RECEIPT_HASH_EXCLUSIONS = ['receiptHash'] as const;

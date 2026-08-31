@@ -45,16 +45,22 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const graph = await db.skillGraphs.get(mission.skillGraphId);
   if (!graph) return notFound('SkillGraph', mission.skillGraphId);
 
-  const events = await listProofEvents(mission.workspaceId);
-  const missionEvents = events.filter(
-    (event) =>
-      event.objectId === mission.id ||
-      event.objectType === 'workspace' ||
-      event.workspaceId === mission.workspaceId,
-  );
+  const [events, runs, artifactFiles, verificationRows, evidenceRows, memoryRows] = await Promise.all([
+    listProofEvents(mission.workspaceId),
+    db.runs.where('missionId').equals(mission.id).toArray(),
+    mission.artifactSetId ? db.artifactFiles.where('artifactSetId').equals(mission.artifactSetId).toArray() : Promise.resolve([]),
+    db.verifications.where('workspaceId').equals(mission.workspaceId).toArray(),
+    db.evidence.where('workspaceId').equals(mission.workspaceId).toArray(),
+    db.memories.where('workspaceId').equals(mission.workspaceId).toArray(),
+  ]);
+  const missionRunIds = new Set(runs.map((r) => r.id));
+  const missionVerificationIds = new Set(verificationRows.filter((v) => v.missionId === mission.id).map((v) => v.id));
+  const causalIds = new Set([mission.id, graph.id, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...memoryRows.filter((m) => m.missionId === mission.id || (m.scope === 'workspace' && m.workspaceId === mission.workspaceId)).map((m) => m.id)]);
+  const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.transcript_imported', 'lesson.playback', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
+  const missionEvents = events.filter((event) => causalTypes.has(event.type) && (causalIds.has(event.objectId) || (event.objectType === 'run' && missionRunIds.has(event.objectId))));
 
   const approvals = (await db.approvals.where('workspaceId').equals(mission.workspaceId).toArray())
-    .filter((approval) => approval.decision !== 'pending')
+    .filter((approval) => approval.decision !== 'pending' && causalIds.has(approval.objectId))
     .map<ProofApproval>((approval) => ({
       id: approval.id,
       objectType: approval.objectType === 'consequential_action' ? 'runner-job' : (approval.objectType as ProofApproval['objectType']),
@@ -132,12 +138,14 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
       : 'failed'
     : 'blocked';
 
+  const eventLimit = 2000;
+  const omittedCount = Math.max(0, missionEvents.length - eventLimit);
   const receipt: ProofReceipt = {
     schemaVersion: '1.0.0',
     receiptId: newId('rc'),
     workspaceId: mission.workspaceId,
     missionId: mission.id,
-    runId: null,
+    runId: runs.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.id ?? null,
     skillGraphId: graph.id,
     skillGraphVersion: graph.version,
     skillGraphRevision: graph.revision,
@@ -147,15 +155,16 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
       hashAlgorithm: 'SHA-256',
       exclusions: [...RECEIPT_HASH_EXCLUSIONS],
     },
-    events: missionEvents.slice(-2000).map(toReceiptEvent),
+    events: missionEvents.slice(-eventLimit).map(toReceiptEvent),
     approvals,
     artifacts,
     assertions,
     failuresAndRepairs,
     exports: [],
-    provider: { kind: 'manual', status: 'not-used', verifiedSeparately: true, exitCode: null },
+    provider: (() => { const run = runs.find((r) => r.id === (runs.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.id)); return run?.provider ? { kind: run.provider.kind as 'manual', status: run.provider.status as 'not-used', verifiedSeparately: true, exitCode: run.provider.exitCode ?? null } : { kind: 'manual' as const, status: 'not-used' as const, verifiedSeparately: true, exitCode: null }; })(),
     receiptHash: '',
     createdAt: isoNow(),
+    truncation: { truncated: omittedCount > 0, omittedCount },
   };
 
   receipt.receiptHash = await sha256CanonicalExcluding(

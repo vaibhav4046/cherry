@@ -171,6 +171,15 @@
     "createdAt": {
       "type": "string",
       "format": "date-time"
+    },
+    "truncation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["truncated", "omittedCount"],
+      "properties": {
+        "truncated": { "type": "boolean" },
+        "omittedCount": { "type": "integer", "minimum": 0 }
+      }
     }
   },
   "$defs": {

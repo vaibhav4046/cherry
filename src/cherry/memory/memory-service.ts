@@ -19,6 +19,7 @@ export const proposeMemoryInput = z.object({
   workspaceId: z.string().min(1),
   missionId: z.string().min(1).nullish(),
   runId: z.string().min(1).nullish(),
+  projectId: z.string().min(1).nullish(),
   type: z.enum(['identity', 'preference', 'project', 'procedure', 'correction', 'policy', 'episode']),
   title: z.string().trim().min(1).max(200),
   content: z.string().trim().min(1).max(8000),
@@ -85,7 +86,7 @@ export async function proposeMemory(
     schemaVersion: '1.0.0',
     id: newId('mem'),
     workspaceId: data.workspaceId,
-    projectId: null,
+    projectId: data.projectId ?? null,
     missionId: data.missionId ?? null,
     runId: data.runId ?? null,
     type: data.type,
@@ -143,7 +144,9 @@ export async function decideMemory(
   memoryId: string,
   decision: 'approved' | 'rejected',
   decidedBy: string,
+  actorType: ActorType = 'human',
 ): Promise<Result<MemoryRecord>> {
+  if (actorType === 'agent') return invalid('Only a person may decide a memory');
   const db = getDb();
   const record = await db.memories.get(memoryId);
   if (!record) return notFound('Memory', memoryId);
@@ -184,47 +187,56 @@ export async function supersedeMemory(
   const old = await db.memories.get(oldMemoryId);
   if (!old) return notFound('Memory', oldMemoryId);
 
-  const proposal = await proposeMemory(replacement, actorType);
-  if (!proposal.ok) return proposal;
-
   const now = isoNow();
+  if (replacement.workspaceId !== old.workspaceId) return conflict('Replacement memory must be in the same workspace');
+  const parsed = proposeMemoryInput.safeParse(replacement);
+  if (!parsed.success) return invalid('Memory input is invalid', { issues: parsed.error.issues });
+  const data = parsed.data;
+  const proposalRecord: MemoryRecord = {
+    schemaVersion: '1.0.0', id: newId('mem'), workspaceId: old.workspaceId, projectId: data.projectId ?? null,
+    missionId: data.missionId ?? null, runId: data.runId ?? null, type: data.type, title: data.title, content: data.content,
+    status: 'proposed', scope: data.scope, sensitivity: data.sensitivity, confidence: data.confidence, tags: data.tags,
+    provenance: data.provenance.map((entry) => ({ id: newId('mem'), sourceType: entry.sourceType, sourceId: entry.sourceId ?? null, uri: entry.uri ?? null, trust: entry.trust, capturedAt: now, description: entry.description, ...(typeof entry.timestampSeconds === 'number' ? { timestampSeconds: entry.timestampSeconds } : {}) })),
+    derivedFromMemoryIds: [], supersedesId: old.id, supersededById: null, revision: 1, approvedRevision: null, approvedBy: null, approvedAt: null, expiresAt: null, reviewAt: null, lastUsedAt: null, useCount: 0, createdAt: now, updatedAt: now,
+  };
   const supersededOld: MemoryRecord = {
     ...old,
     status: 'superseded',
-    supersededById: proposal.value.id,
+    supersededById: proposalRecord.id,
     revision: old.revision + 1,
     updatedAt: now,
   };
-  const linkedNew: MemoryRecord = { ...proposal.value, supersedesId: old.id, updatedAt: now };
-
   await withWorkspaceTx(old.workspaceId, ['memories', 'memoryVersions'], async (ctx) => {
     await ctx.db.memories.put(supersededOld);
-    await ctx.db.memories.put(linkedNew);
-    await ctx.db.memoryVersions.add(makeVersion(supersededOld, `Superseded by ${linkedNew.id}`));
+    await ctx.db.memories.add(proposalRecord);
+    await ctx.db.memoryVersions.add(makeVersion(proposalRecord, `Supersedes ${old.id}`));
+    await ctx.db.memoryVersions.add(makeVersion(supersededOld, `Superseded by ${proposalRecord.id}`));
     ctx.emit({
       type: 'memory.superseded',
       actorType,
       objectType: 'memory',
       objectId: old.id,
-      summary: `Memory "${old.title}" superseded by proposal "${linkedNew.title}"`,
-      payload: { supersededById: linkedNew.id },
+      summary: `Memory superseded by proposal ${proposalRecord.id}`,
+      payload: { supersededById: proposalRecord.id },
     });
   });
-  return ok({ superseded: supersededOld, proposal: linkedNew });
+  return ok({ superseded: supersededOld, proposal: proposalRecord });
 }
 
 export async function deleteMemory(memoryId: string, actorType: ActorType = 'human'): Promise<Result<{ deleted: string }>> {
   const db = getDb();
   const record = await db.memories.get(memoryId);
   if (!record) return notFound('Memory', memoryId);
-  await withWorkspaceTx(record.workspaceId, ['memories'], async (ctx) => {
+  await withWorkspaceTx(record.workspaceId, ['memories', 'memoryVersions'], async (ctx) => {
     await ctx.db.memories.delete(memoryId);
+    await ctx.db.memoryVersions.add({ ...makeVersion({ ...record, status: 'deleted', title: '[redacted]', content: '[redacted]' }, 'Deleted'), snapshot: { ...record, status: 'deleted', title: '[redacted]', content: '[redacted]' } });
     ctx.emit({
       type: 'memory.deleted',
       actorType,
       objectType: 'memory',
       objectId: memoryId,
-      summary: `Memory "${record.title}" deleted`,
+      summary: `Memory ${memoryId} deleted (content redacted)`,
+      payload: { redacted: true },
     });
   });
   return ok({ deleted: memoryId });
@@ -235,7 +247,11 @@ export async function setMemoryPinned(memoryId: string, pinned: boolean): Promis
   const record = await db.memories.get(memoryId);
   if (!record) return notFound('Memory', memoryId);
   const next: MemoryRecord = { ...record, pinned, revision: record.revision + 1, updatedAt: isoNow() };
-  await db.memories.put(next);
+  await withWorkspaceTx(record.workspaceId, ['memories', 'memoryVersions'], async (ctx) => {
+    await ctx.db.memories.put(next);
+    await ctx.db.memoryVersions.add(makeVersion(next, pinned ? 'Pinned' : 'Unpinned'));
+    ctx.emit({ type: 'memory.pinned', actorType: 'human', objectType: 'memory', objectId: memoryId, summary: `Memory ${pinned ? 'pinned' : 'unpinned'}`, payload: { pinned, revision: next.revision } });
+  });
   return ok(next);
 }
 
