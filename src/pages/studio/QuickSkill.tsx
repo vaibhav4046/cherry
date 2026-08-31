@@ -12,7 +12,6 @@ import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
 import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
 import { createArtifactSet, writeArtifactFile } from '../../cherry/artifacts/artifact-service.ts';
 import { getMission } from '../../cherry/mission/mission-service.ts';
-import { Icons } from '../../components/Icons.tsx';
 import {
   buildBriefingDoc,
   buildFaq,
