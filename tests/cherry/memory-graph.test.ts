@@ -3,7 +3,7 @@ import { freshDb } from '../setup.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import { createWorkspace } from '../../src/cherry/mission/mission-service.ts';
 import { createMission } from '../../src/cherry/mission/mission-service.ts';
-import { draftSkillGraph } from '../../src/cherry/skillgraph/skillgraph-service.ts';
+import { draftSkillGraph, requestSkillGraphApproval, decideSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { proposeMemory } from '../../src/cherry/memory/memory-service.ts';
 import { buildMemoryGraph } from '../../src/cherry/memory/memory-graph.ts';
 import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
@@ -36,5 +36,13 @@ describe('memory graph projection', () => {
     await getDb().artifactFiles.add({ id: 'af-1', workspaceId: ws.id, artifactSetId: 'as-1', path: 'index.html', mediaType: 'text/html', content: '<p>x</p>', sizeBytes: 8, sha256: 'a'.repeat(64), revision: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), updatedBy: 'human' });
     const graph = unwrap(await buildMemoryGraph(ws.id, mission.id));
     expect(graph.nodes.find((n) => n.id === 'af-1')?.revision).toBe(2);
+  });
+  it('preserves approved revision metadata and reports orphaned relationships', async () => {
+    const ws = unwrap(await createWorkspace({ name: 'Status' }));
+    const g = unwrap(await draftSkillGraph({ workspaceId: ws.id, name: 'G', purpose: 'p', nodes: [{ kind: 'build', title: 'n', goal: 'g' }] }));
+    const req = unwrap(await requestSkillGraphApproval(g.id, 'review', 'user'));
+    unwrap(await decideSkillGraphApproval(req.approval.id, 'approved', 'user'));
+    const graph = unwrap(await buildMemoryGraph(ws.id));
+    expect(graph.nodes.find((n) => n.kind === 'approved-skill-revision')?.approvedRevision).toBe(1);
   });
 });
