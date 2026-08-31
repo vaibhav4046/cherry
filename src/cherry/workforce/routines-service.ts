@@ -186,6 +186,8 @@ export async function approveRoutine(
     return err('conflict', `Routine is at revision ${current.revision}, not ${expectedRevision}. Re-read before approving.`);
   }
   const actionHash = await computeRoutineActionHash(current);
+  const graph = await getDb().skillGraphs.get(current.skillGraphId);
+  if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.revision !== current.skillGraphRevision || graph.versionHash !== await sha256Canonical({ ...graph, versionHash: undefined })) return err('approval_required', 'Routine requires approval of the current skill graph revision.');
 
   return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'missions'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
@@ -263,7 +265,8 @@ export async function pauseRoutine(workspaceId: string, routineId: string): Prom
 }
 
 /** Re-enable a paused routine. Only valid while its exact-revision approval stands. */
-export async function resumeRoutine(workspaceId: string, routineId: string): Promise<Result<Routine>> {
+export async function resumeRoutine(workspaceId: string, routineId: string, actorType: ActorType = 'human'): Promise<Result<Routine>> {
+  if (actorType !== 'human') return err('approval_required', 'Only a person may resume a routine');
   const current = await getRoutine(workspaceId, routineId);
   const currentHash = current ? await computeRoutineActionHash(current) : null;
   const currentGraph = current ? await getDb().skillGraphs.get(current.skillGraphId) : null;
@@ -342,7 +345,7 @@ export async function requestRunNow(
     if (existing) return err('conflict', 'A run with this idempotency key already exists.');
     const now = isoNow();
     const run: RunRecord & { note: string } = {
-      id: newId('run'), workspaceId, missionId: graph.missionId, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
+      id: newId('run'), workspaceId, missionId: graph.missionId, routineId: routine.id, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner', runnerJobId: null,
       summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner. Start it with: node runner/server.mjs', requestedAt: now,
       command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key, runnerCapabilityToken: newId('job'),
       provider: { kind: 'runner', status: 'blocked', verifiedSeparately: true }, revision: 1, createdAt: now, updatedAt: now,
@@ -377,7 +380,7 @@ function redactOutput(value: string | undefined): string | undefined {
 
 export async function settleRun(
   runId: string,
-  status: Exclude<RunStatus, 'queued' | 'waiting_for_runner'>,
+  status: Exclude<RunStatus, 'queued'>,
   details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
@@ -387,7 +390,7 @@ export async function settleRun(
   if (!run) return err('not_found', 'Run not found.');
   if (!details.runnerCapabilityToken || details.runnerCapabilityToken !== run.runnerCapabilityToken) return err('approval_required', 'Runner capability token is invalid.');
   const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
-  if (run.status === 'waiting_for_runner' && status !== 'running') return err('conflict', 'A waiting run must transition to running first.');
+  if (run.status === 'waiting_for_runner' && status !== 'running' && status !== 'setup-required' && status !== 'cancelled') return err('conflict', 'A waiting run must transition to running, setup-required, or cancelled.');
   if (run.status === 'running' && !terminal.has(status) && status !== 'running') return err('conflict', 'Invalid run state transition.');
   if (terminal.has(run.status)) return err('conflict', 'Run is already settled.');
   if (status === 'succeeded') {
@@ -400,13 +403,17 @@ export async function settleRun(
   }
   const now = isoNow();
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
-    receiptId: details.receiptId ?? run.receiptId ?? null, command: details.command ?? run.command, adapter: details.adapter ?? run.adapter,
+    receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command, adapter: run.adapter,
     provider: details.provider ?? run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
-  const settled = await withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
+  const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
     const atomicNext = { ...next, revision: latest.revision + 1, updatedAt: isoNow() };
     await ctx.db.runs.put(atomicNext);
+    if (atomicNext.routineId && status !== 'running') {
+      const routine = await ctx.db.routines.get(atomicNext.routineId);
+      if (routine) await ctx.db.routines.put({ ...routine, lastRunAt: atomicNext.finishedAt ?? isoNow(), updatedAt: isoNow() });
+    }
     ctx.emit({ type: 'run.updated', actorType: 'runner', objectType: 'run', objectId: run.id, summary: `Run ${status}`, payload: { status, receiptId: next.receiptId ?? null } });
     return ok(atomicNext);
   });

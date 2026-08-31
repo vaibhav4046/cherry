@@ -65,6 +65,7 @@ export interface MissionTask {
   id: string;
   workspaceId: string;
   missionId: string;
+  routineId?: string | null;
   order: number;
   title: string;
   detail: string;
@@ -79,6 +80,7 @@ export interface MissionTask {
 export type RunStatus =
   | 'queued'
   | 'waiting_for_runner'
+  | 'setup-required'
   | 'running'
   | 'succeeded'
   | 'failed'
@@ -102,6 +104,7 @@ export interface RunRecord {
   receiptId?: string | null;
   idempotencyKey?: string;
   runnerCapabilityToken?: string;
+  runnerJobId?: string | null;
   verificationId?: string | null;
   provider?: { kind: string; status: string; exitCode?: number; verifiedSeparately: boolean };
   revision: number;

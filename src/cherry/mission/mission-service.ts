@@ -175,7 +175,7 @@ export async function transitionMission(
   if (to === 'EXECUTING') {
     if (!mission.skillGraphId) return invalid('Mission must reference an approved skill graph before execution');
     const graph = await db.skillGraphs.get(mission.skillGraphId);
-    if (!graph || graph.workspaceId !== mission.workspaceId || graph.missionId && graph.missionId !== mission.id || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.versionHash !== await sha256Canonical({ ...graph, versionHash: undefined })) {
+    if (!graph || graph.workspaceId !== mission.workspaceId || graph.missionId !== mission.id || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.versionHash !== await sha256Canonical({ ...graph, versionHash: undefined })) {
       return invalid('Mission execution requires approval of the current skill graph revision');
     }
   }
@@ -254,6 +254,7 @@ export async function recordRun(
   run: Omit<RunRecord, 'id' | 'revision' | 'createdAt' | 'updatedAt'>,
   actorType: ActorType = 'human',
 ): Promise<Result<RunRecord>> {
+  if (run.status === 'succeeded' && actorType !== 'runner') return { ok: false, error: { code: 'approval_required', message: 'Successful runs require runner settlement with a verified receipt.' } };
   const now = isoNow();
   const record: RunRecord = { ...run, id: newId('run'), revision: 1, createdAt: now, updatedAt: now };
   await withWorkspaceTx(record.workspaceId, ['runs'], async (ctx) => {
@@ -275,7 +276,7 @@ export async function updateRun(
   patch: Partial<RunRecord>,
   actorType: ActorType = 'system',
 ): Promise<Result<RunRecord>> {
-  const lifecycle = ['status','outputSummary','receiptId','finishedAt','startedAt','error','command','adapter','provider','detail','workspaceId','missionId','idempotencyKey','runnerCapabilityToken'];
+  const lifecycle = ['status','outputSummary','receiptId','finishedAt','startedAt','error','command','adapter','provider','detail','workspaceId','missionId','idempotencyKey','runnerCapabilityToken','id','revision','createdAt','updatedAt'];
   if (lifecycle.some((key) => key in patch)) return { ok: false, error: { code: 'approval_required', message: 'Use settleRun with runner authorization for lifecycle updates.' } };
   const db = getDb();
   const run = await db.runs.get(runId);
