@@ -145,6 +145,19 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Approve', exact: true }).click();
     await expect(page.getByTestId('memory-proposal')).toHaveCount(0);
 
+    // Routine reuse: schedule the approved skill on repeat. The draft form only
+    // offers approved skills, the routine binds to the exact approved revision,
+    // and it stays disabled until the human approves the schedule revision.
+    await page.getByRole('link', { name: 'Routines', exact: true }).first().click();
+    const routineForm = page.getByTestId('routine-draft-form');
+    await expect(routineForm).toBeVisible();
+    await expect(routineForm.locator('select[name="skillGraphId"] option').first()).toContainText('approved r');
+    await page.getByTestId('routine-draft-submit').click();
+    await page.getByTestId('routine-row').first().click();
+    await expect(page.getByTestId('routine-enabled-sticker')).toContainText('disabled');
+    await page.getByTestId('routine-approve').click();
+    await expect(page.getByTestId('routine-enabled-sticker')).toContainText('enabled');
+
     // Export the workspace
     await page.getByRole('link', { name: 'Command', exact: true }).first().click();
     const downloadPromise = page.waitForEvent('download');
