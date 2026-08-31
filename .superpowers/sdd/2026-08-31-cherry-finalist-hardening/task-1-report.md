@@ -3,7 +3,7 @@
 Status: COMPLETE (focused implementation and tests pass)
 
 Commit hashes:
-- 478811c — fix persisted graph relations and memory decision actors
+- 15cfbd1 — fix persisted graph relations and memory decision actors
 
 Files changed:
 - src/cherry/memory/memory-graph-model.ts
