@@ -441,4 +441,14 @@ export async function attachRunnerJob(runId: string, runnerJobId: string, capabi
   });
 }
 
-export const settleRoutineRun = settleRun;
+export async function settleRoutineRun(
+  runId: string,
+  settlement: { status: Exclude<RunStatus, 'queued'>; startedAt?: string; endedAt?: string; output?: string; error?: string; receiptId?: string; command?: string[]; runnerCapabilityToken: string },
+): Promise<Result<RunRecord>> {
+  return settleRun(runId, settlement.status, {
+    outputSummary: settlement.output,
+    error: settlement.error,
+    receiptId: settlement.receiptId,
+    runnerCapabilityToken: settlement.runnerCapabilityToken,
+  });
+}
