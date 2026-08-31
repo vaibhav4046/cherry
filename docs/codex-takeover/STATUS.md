@@ -35,3 +35,5 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 1. Live host validation session (open getcherry.vercel.app in a WebMCP-capable ChatGPT/Codex
    browser; the Agent page brief drives it).
 2. Record the <3-minute video; submit on Devpost before Sep 3, 1 PM PT.
+
+2026-09-01 00:20 claude PACK PUBLISHED — master directive + tickets T1-T7 in docs/codex-takeover/; production restored (blank-page incident closed at c450b50); Codex lane: start T1

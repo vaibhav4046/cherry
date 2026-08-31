@@ -16,3 +16,11 @@ Read `docs/CHERRY_DECISIONS.md` and `docs/CHERRY_REPO_MAP.md` before changing co
 - Never request, store, log, or commit secrets. Core Cherry needs none.
 - Gates before "done": `npm run typecheck && npm run lint && npm run test && npm run test:runner && npm run build`,
   plus `npm run test:e2e` for UI-affecting changes.
+
+## ACTIVE DIRECTIVE — final sprint (added 2026-09-01)
+
+`docs/codex-takeover/00_MASTER_PROMPT.md` governs all work until the Devpost deadline. Read it
+and `docs/codex-takeover/01_STATE_OF_CHERRY.md` before any change. Ticket queue:
+`docs/codex-takeover/02_TICKETS.md`. Two rules above all: deploys happen only through the release
+manager (never run `vercel deploy`), and `package.json`/`package-lock.json` change only together
+(`installCommand` is pinned to `npm ci`).
