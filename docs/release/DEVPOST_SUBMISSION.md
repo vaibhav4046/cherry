@@ -20,7 +20,8 @@ Teach once. Cherry remembers. Every agent gets better.
 
 ## Inspiration
 
-Every useful thing we teach an AI agent dies in a chat transcript. The process, the corrections, the
+You learn your craft from creators — YouTube videos, articles, posts. Your agents can't: every
+useful thing we teach an AI agent dies in a chat transcript. The process, the corrections, the
 "no, do it this way" — gone next session, unusable in the next tool. And when an agent says "done",
 we're expected to take its word for it. We wanted the layer underneath: user-owned memory of how work
 gets done, with approval boundaries and receipts.
@@ -40,6 +41,16 @@ Learning tools exist only while learning; export tools only after verification p
 register and unregister live as the mission's state machine advances, agents can request but never
 grant approvals, and every tool call lands in a visible inspector (Agent View). In a browser without
 WebMCP, the complete product works manually — the agent path and the human path are the same product.
+
+And the inversion we think judges haven't seen: most WebMCP sites let an agent operate them —
+Cherry's site upgrades the agent. Three always-on read tools serve your cross-workspace Skill
+Library to whoever visits: `list_skills`, `recommend_skills` (deterministic, explainable ranking —
+no hidden model call), and `get_skill`, which streams install-ready SKILL.md / AGENTS.md / CLAUDE.md
+in bounded parts with a full-file sha256 the agent recomputes after joining. Only human-approved
+exact revisions are installable, each pinned to its approval hash. `/connect` onboards each host
+honestly (ChatGPT in-app browser, Chrome flag, Codex `config.toml` for the MCP bridge, Claude Code,
+Hermes-class skills dirs), and opt-in Privy sign-in exists without ever putting a login wall in
+front of judges — guest mode is the complete product.
 
 On top sits a workforce layer: a crew of named agent seats, a work inbox with legal state
 transitions (an agent can never mark its own work SUCCEEDED), routines with action-hash approvals,
@@ -65,7 +76,7 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
 
 ## Accomplishments
 
-- 154 unit (+2 opt-in skips) + 42 runner/bridge + 41 e2e tests, including a hostile-artifact sandbox probe, axe
+- 168 unit (+2 opt-in skips) + 42 runner/bridge + 43 e2e tests, including a hostile-artifact sandbox probe, axe
   audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
 - A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
   the actual test behind the label — including what we did NOT test.
@@ -75,11 +86,16 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
   session is claimed by this release pass.
 - An adversarial security pass that tried to refute our own claims — and the one it broke
   (postMessage origin wording) was fixed the same day and documented.
+- The library host-path e2e proves the inversion end to end: the visiting agent asks
+  `recommend_skills` mid-task, receives the human-approved skill with revision + approval hash,
+  streams the install file in parts, and verifies the joined sha256 in-page.
 
 ## What's next
 
-Live-host validation in WebMCP-enabled clients, encrypted cross-device sync (with guest-first auth
-riding along), richer graph editing, and a skill-sharing format built on the same receipts.
+Live-host validation in WebMCP-enabled clients, creator channel watchers (new upload → transcript →
+draft skill in your review queue, on a schedule you approved), creator-published verified skill
+packs, team libraries, encrypted cross-device sync on the opt-in auth, and a community skill
+registry built on the same receipts.
 
 ## Built with
 
@@ -95,3 +111,6 @@ mcp (stdio), node, playwright, vitest
   guided example is a genuine exported workspace.
 - **Safety story:** untrusted-by-default evidence, human-only trust/approval/memory promotion,
   exact-revision approvals, sandboxed previews, recomputable proof.
+- **The inversion:** the site makes the visiting agent smarter — library reads are global, installs
+  are hash-pinned to human approvals, and the same skills follow you into Codex, Claude Code, and
+  Hermes-class agents through open conventions (WebMCP, MCP, Agent Skills).

@@ -119,3 +119,18 @@ and `start_apprenticeship`.
   the fresh journey exclusively through closures registered on `document.modelContext` — mock host
   installed before app load, approval clicked by the "human" in the UI, agent provably unable to
   approve (no registered tool name matches approve/decide).
+
+## 2026-08-31 — library reads go global (the site upgrades the agent)
+
+- Three new global read-only tools serve the cross-workspace skill library to any attached host:
+  `list_skills` (bounded to 8 rows + totalCount), `recommend_skills` (deterministic, explainable
+  lexical ranking; approved skills boosted; no hidden model calls), and `get_skill` (summary, or
+  install files `skill-md` / `agents-md` / `claude-md` for human-approved exact revisions only).
+- Install files stream in bounded parts (`part`/`totalParts`, 900 chars) with a full-file
+  `contentSha256` the agent recomputes after joining — receipts philosophy applied to delivery,
+  and every payload stays inside MAX_RESULT_CHARS.
+- Aperture rationale: mutation tools remain capped at 5 per surface. Globals grow 4 → 7, all
+  read-only; `tests/cherry/webmcp.test.ts` now pins ≤ 5 state tools + 7 globals (≤ 12 total).
+- Host-path e2e extension: after the human approval, the visiting agent asks `recommend_skills`
+  for its current task, receives the approved skill with revision + approval hash, streams the
+  SKILL.md parts, and verifies the joined sha256 in-page.

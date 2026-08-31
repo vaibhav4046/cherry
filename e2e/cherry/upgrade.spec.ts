@@ -33,8 +33,10 @@ test.describe('landing upgrade', () => {
     // The live-host row is honestly labelled Experimental, not Validated.
     const chatgptRow = rows.locator('.card', { hasText: 'ChatGPT / Codex in-app browser' });
     await expect(chatgptRow.getByText('Experimental')).toBeVisible();
-    const authRow = rows.locator('.card', { hasText: 'Accounts / auth' });
-    await expect(authRow.getByText('Roadmap')).toBeVisible();
+    const authRow = rows.locator('.card', { hasText: 'Accounts (Privy, opt-in)' });
+    await expect(authRow.getByText('Shipped')).toBeVisible();
+    const libraryRow = rows.locator('.card', { hasText: 'Skill Library + global library tools' });
+    await expect(libraryRow.getByText('Validated')).toBeVisible();
   });
 });
 

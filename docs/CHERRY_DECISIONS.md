@@ -235,3 +235,18 @@ that never touches `executeLocal`.
   remains supported. Fetched pages are still untrusted until human review.
 - **Rollback:** Remove the Sources route and migration v3, or disable the optional `scrapling-fetch`
   adapter; existing lesson/evidence records remain intact.
+
+## D-023 — Skill Library serves agents through global reads, not a new surface
+
+Date: 2026-08-31. The cross-workspace Skill Library (`/studio/skills`, `src/cherry/library/`)
+is a pure read layer over existing services: aggregation, filtering, deterministic ranking, and
+install-file rendering reuse the compiler and approval gates untouched (exports require an
+approval at the exact current revision, same rule as the bundle). Its three WebMCP tools ship as
+always-on global reads instead of a routed surface because the whole point is availability
+mid-task from anywhere; the 5-mutation-per-surface aperture is unchanged. `get_skill` chunks
+install files with a verifiable full-file sha256 rather than raising MAX_RESULT_CHARS, keeping
+the bounded-result contract intact. Ranking is intentionally lexical and explainable (matchedOn
+per result): the visiting agent brings the reasoning, Cherry brings the memory, and no hidden
+model call can editorialize what the human approved. Privy stays opt-in (D-008 reversal is
+scoped: guest-first default is untouched; the app id arrived and the Vercel env is set, so the
+next production build activates email sign-in).

@@ -49,6 +49,11 @@ const ROWS: Row[] = [
     evidence: 'Same code path as above; feature detection means Cherry lights up wherever document.modelContext exists. Not tested against a flagged Chrome build in this release.',
   },
   {
+    surface: 'Skill Library + global library tools (list / recommend / get)',
+    status: 'validated',
+    evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. Mutation aperture unchanged (max 5 per surface); globals grew to 7 read-only tools.',
+  },
+  {
     surface: 'Agent Skills bundle export (SKILL.md + targets)',
     status: 'validated',
     evidence: 'Unit tests: frontmatter name matches directory, < 500 lines, full required tree, every MANIFEST hash recomputes, embedded receipt hash recomputable, unapproved graphs refuse to compile, traversal archives rejected.',
@@ -109,9 +114,9 @@ const ROWS: Row[] = [
     evidence: 'Deliberately outside golden v1. No UI pretends it exists.',
   },
   {
-    surface: 'Accounts / auth',
-    status: 'roadmap',
-    evidence: 'Cherry is guest-first by design: zero-dollar core, no server, nothing to log into. Third-party auth (e.g. Privy) was assessed and declined for v1 — it adds an external dependency and demo friction without unlocking any current capability (decision D-008).',
+    surface: 'Accounts (Privy, opt-in)',
+    status: 'shipped',
+    evidence: 'Guest-first stays the default: every feature works with zero configuration and judges never hit a login wall. Privy sign-in activates only when VITE_PRIVY_APP_ID is present at build time (the SDK lives in a lazy chunk that guest mode never downloads). D-008 originally declined auth for v1; it returned strictly opt-in.',
   },
 ];
 

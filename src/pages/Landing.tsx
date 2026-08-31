@@ -124,6 +124,7 @@ export function Landing() {
           <div className="row nav-links" style={{ flex: 1, justifyContent: 'center' }}>
             <a href="#how" className="nav-pill">How it works</a>
             <Link to="/showcase" className="nav-pill">Showcase</Link>
+            <Link to="/connect" className="nav-pill">Connect</Link>
             <Link to="/compatibility" className="nav-pill">What's proven</Link>
           </div>
           <Link to="/studio" className="btn btn-primary">Open Studio</Link>
@@ -134,11 +135,11 @@ export function Landing() {
         <section className="home-hero page-enter" aria-labelledby="hero-heading">
           <div className="stack" style={{ gap: 'var(--sp-4)' }}>
             <p className="home-eyebrow" style={{ margin: 0 }}>Cherry / Skill studio</p>
-            <h1 id="hero-heading" className="home-headline">Turn a lesson into a skill you can run.</h1>
+            <h1 id="hero-heading" className="home-headline">Turn a lesson into a skill every agent you own can run.</h1>
             <p className="subhead" style={{ margin: 0, maxWidth: 480 }}>
-              Give Cherry a lesson you're allowed to learn from. It drafts the method with timestamped
-              evidence, waits for your approval, then verifies the result — and seals it with a receipt
-              anyone can recompute.
+              Give Cherry a source you're allowed to learn from. It drafts the method from timestamped
+              evidence, waits for your approval, verifies the result — then serves the finished skill
+              to the agents you already pay for: ChatGPT, Codex, Claude, and beyond. No API keys.
             </p>
             <div className="row" data-testid="hero-ctas" style={{ marginTop: 'var(--sp-2)' }}>
               <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
@@ -189,11 +190,27 @@ export function Landing() {
             </picture>
           </div>
         </section>
+        <section className="band band-cream" aria-labelledby="agents-heading">
+          <div className="band-inner stack" style={{ gap: 'var(--sp-4)' }}>
+            <h2 id="agents-heading" className="display-sm" style={{ margin: 0 }}>Teach once. Every agent gets better.</h2>
+            <p className="subhead" style={{ margin: 0, maxWidth: 760 }}>
+              Approved skills live in your library and follow you into every agent you use: ChatGPT
+              and Codex through WebMCP and the MCP bridge, Claude Code and Hermes-class agents through
+              Agent Skills bundles. An agent visiting this site can call <code>recommend_skills</code>{' '}
+              mid-task and leave more capable — every install pinned to the exact revision you approved,
+              with a hash it can verify.
+            </p>
+            <div className="row">
+              <Link to="/connect" className="btn btn-primary">Connect your agent</Link>
+              <Link to="/studio/skills" className="link-quiet">Browse the Skill Library</Link>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="band band-cream">
         <div className="band-inner row" style={{ justifyContent: 'space-between' }}>
-          <span className="label">Cherry — the apprenticeship layer for AI agents</span>
+          <span className="label">Cherry — teach once; every agent gets better</span>
           <span className="label">
             MIT licensed · local-first · WebMCP Challenge 2026 ·{' '}
             <a href="/lab/cherry-3d/" className="link-quiet">Brand lab (3D)</a>

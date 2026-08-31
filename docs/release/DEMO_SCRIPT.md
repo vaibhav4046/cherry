@@ -12,12 +12,13 @@ Total ≈ 2:50, leaving buffer.
 
 ## 0:00–0:20 — The hook (landing)
 
-Open the landing page. Let the marquee + hero breathe for a beat.
+Open the landing page. Let the hero and the live lesson card breathe for a beat.
 
-> "Every time you teach an AI agent how you work, that lesson dies with the chat. Cherry is where it
-> survives. Teach a workflow once — Cherry turns it into memory, a portable skill, and proof."
+> "You learn your craft from creators. Your agents can not — every lesson you teach them dies with
+> the chat. Cherry is where it survives. Teach a workflow once — Cherry turns it into evidence, an
+> approved skill, and proof, and serves it to every agent you already pay for."
 
-**Tap the cherry** — it bursts, you land in the Studio. (One click, big smile moment.)
+The hero says it: **Turn a lesson into a skill every agent you own can run.**
 
 ## 0:20–0:50 — Guided example (real state, one click)
 
@@ -57,20 +58,26 @@ Walkthrough lands on **Agent View**.
 > registered, nothing fake."
 
 (If recording inside a WebMCP-capable client instead: show the live registrations and ask the agent
-to `read_cherry_context` — the call appears in the log.)
+to `read_cherry_context` — the call appears in the log. Then the money shot: ask it to
+`recommend_skills` for a task you just taught — it gets your approved skill back, pinned to the
+revision and approval hash, and can pull the install file with `get_skill`.)
 
 ## 2:05–2:35 — Take it anywhere
 
-Skills page → open the skill → **Compile skill bundle**. Show the downloaded zip's tree briefly
-(SKILL.md, targets/codex, targets/claude-code, scripts/verify.mjs).
+**Skill Library** (`/studio/skills`) → search, point at the install-ready sticker and the approval
+hash chip → open the skill → **Download SKILL.md**, **Copy AGENTS.md (Codex)**, **Compile skill
+bundle**. Then flash `/connect` and its Codex `config.toml` block.
 
-> "Approved skills compile to a standards-aligned Agent Skills bundle — Codex and Claude Code install
-> targets, the evidence, the policies, and a standalone verify script that fails on tampering.
-> The workspace itself exports as hash-verified JSON. Your data, your browser, your skills."
+> "Every approved skill lands in one library. From here it installs into the agents you already
+> have: SKILL.md for Claude Code and Hermes-class agents, an AGENTS.md block for Codex, the full
+> bundle with a standalone verify script that fails on tampering. And agents do not even need the
+> download — visiting this site, they can ask recommend_skills mid-task and pull the install file
+> themselves, hash-pinned to the exact revision I approved. Your data, your browser, your skills —
+> in every agent."
 
 ## 2:35–2:50 — Close
 
-Back to landing, scroll to the maroon CHERRY OS band.
+Back to landing, scroll to the **Teach once. Every agent gets better.** band.
 
 > "No API key, no account, no cloud — the core is free forever, and attaching an agent accelerates
 > the same product instead of unlocking a different one. Cherry: teach once. Every agent gets better."
