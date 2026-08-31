@@ -197,6 +197,8 @@ export async function approveRoutine(
     }
     const graphNow = await ctx.db.skillGraphs.get(routine.skillGraphId);
     if (!graphNow || graphNow.revision !== routine.skillGraphRevision || graphNow.status !== 'approved' || graphNow.approvedRevision !== graphNow.revision || graphNow.versionHash !== graph.versionHash) return err('approval_required', 'Skill graph changed while approving routine.');
+    const missionNow = graphNow.missionId ? await ctx.db.missions.get(graphNow.missionId) : null;
+    if (!missionNow || missionNow.workspaceId !== workspaceId || (missionNow.skillGraphId && missionNow.skillGraphId !== graphNow.id)) return err('validation', 'Routine graph is not the mission\'s active graph.');
 
     const now = isoNow();
     const approval: ApprovalRecord = {
@@ -290,7 +292,7 @@ export async function resumeRoutine(workspaceId: string, routineId: string, acto
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
     if (!graph?.missionId || routine.missionId !== graph.missionId) return err('validation', 'Routine must be bound to its skill graph mission before it can run.');
     const mission = await ctx.db.missions.get(graph.missionId);
-    if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
+    if (!mission || mission.workspaceId !== workspaceId || (mission.skillGraphId && mission.skillGraphId !== graph.id)) return err('validation', 'Routine graph is not the mission\'s active graph.');
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== currentGraphHash) {
       return err('approval_required', 'The skill graph approval is stale. Approve the current skill revision before resuming.');
     }
@@ -340,7 +342,7 @@ export async function requestRunNow(
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== preflightGraphHash) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
     if (!graph.missionId || routine.missionId !== graph.missionId) return err('validation', 'Routine must be bound to its skill graph mission before it can run.');
     const mission = await ctx.db.missions.get(graph.missionId);
-    if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
+    if (!mission || mission.workspaceId !== workspaceId || (mission.skillGraphId && mission.skillGraphId !== graph.id)) return err('validation', 'Routine graph is not the mission\'s active graph.');
     if (routine.executionHostId !== DEFAULT_EXECUTION_HOST_ID) return err('unsupported', 'Routine execution host is not available.');
     const key = idempotencyKey ?? newId('run');
     const existing = (await ctx.db.runs.toArray()).find((candidate) => candidate.idempotencyKey === key);
@@ -391,6 +393,8 @@ export async function settleRun(
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
   if (!details.runnerCapabilityToken || details.runnerCapabilityToken !== run.runnerCapabilityToken) return err('approval_required', 'Runner capability token is invalid.');
+  const preflightGraph = run.routineId ? await db.skillGraphs.get((await db.routines.get(run.routineId))?.skillGraphId ?? '') : null;
+  const preflightGraphHash = preflightGraph ? await sha256Canonical({ ...preflightGraph, versionHash: undefined }) : null;
   if (details.adapter && details.adapter !== run.adapter) return err('conflict', 'Runner adapter does not match the approved run envelope.');
   if (details.command && run.command && JSON.stringify(details.command) !== JSON.stringify(run.command)) return err('conflict', 'Runner command does not match the approved run envelope.');
   const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
@@ -408,15 +412,22 @@ export async function settleRun(
     if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
   }
   const now = isoNow();
-  const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
+  const terminalProviderStatus = status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider?.status;
+  const nextProvider = run.provider
+    ? { ...run.provider, ...(terminalProviderStatus ? { status: terminalProviderStatus } : {}), ...(details.provider?.exitCode !== undefined ? { exitCode: details.provider.exitCode } : {}) }
+    : run.provider;
+  const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : details.error === null ? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command ?? details.command, adapter: run.adapter,
-    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? details.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : details.endedAt ?? now, revision: run.revision + 1, updatedAt: now };
-  const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
+    provider: nextProvider, startedAt: run.startedAt ?? details.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : details.endedAt ?? now, revision: run.revision + 1, updatedAt: now };
+  const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines', 'skillGraphs', 'missions'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
     if (latest.routineId && !(status === 'failed' || status === 'cancelled' || status === 'setup-required')) {
       const routine = await ctx.db.routines.get(latest.routineId);
       if (!routine || !routine.enabled || routine.revision !== latest.routineRevision || routine.approvedActionHash !== latest.approvedActionHash) return err('approval_required', 'Routine approval is stale or disabled.');
+      const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
+      const mission = await ctx.db.missions.get(latest.missionId);
+      if (!graph || !mission || graph.workspaceId !== latest.workspaceId || graph.missionId !== latest.missionId || (mission.skillGraphId && mission.skillGraphId !== graph.id) || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== preflightGraph?.versionHash || graph.versionHash !== preflightGraphHash) return err('approval_required', 'Skill graph approval is stale or invalid.');
     }
     const atomicNext = { ...next, revision: latest.revision + 1, updatedAt: isoNow() };
     await ctx.db.runs.put(atomicNext);

@@ -52,9 +52,10 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const graph = await db.skillGraphs.get(mission.skillGraphId);
   if (!graph) return notFound('SkillGraph', mission.skillGraphId);
 
-  const [events, runs, artifactFiles, verificationRows, evidenceRows, memoryRows, memoryVersions] = await Promise.all([
+  const [events, runs, routineRows, artifactFiles, verificationRows, evidenceRows, memoryRows, memoryVersions] = await Promise.all([
     listProofEvents(mission.workspaceId),
     db.runs.where('missionId').equals(mission.id).toArray(),
+    db.routines.where('workspaceId').equals(mission.workspaceId).toArray(),
     mission.artifactSetId ? db.artifactFiles.where('artifactSetId').equals(mission.artifactSetId).toArray() : Promise.resolve([]),
     db.verifications.where('workspaceId').equals(mission.workspaceId).toArray(),
     db.evidence.where('workspaceId').equals(mission.workspaceId).toArray(),
@@ -62,7 +63,10 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
     db.memoryVersions.where('workspaceId').equals(mission.workspaceId).toArray(),
   ]);
   const missionRunIds = new Set(runs.map((r) => r.id));
-  const routineIds = new Set(runs.map((r) => r.routineId).filter((id): id is string => Boolean(id)));
+  const routineIds = new Set([
+    ...runs.map((r) => r.routineId).filter((id): id is string => Boolean(id)),
+    ...routineRows.filter((routine) => routine.missionId === mission.id || routine.skillGraphId === graph.id).map((routine) => routine.id),
+  ]);
   const missionVerificationIds = new Set(verificationRows.filter((v) => v.missionId === mission.id).map((v) => v.id));
   const linkedMemoryIds = memoryRows.filter((m) => m.missionId === mission.id || (m.runId && missionRunIds.has(m.runId))).map((m) => m.id);
   const requiredMemoryIds = new Set(mission.requiredMemoryIds ?? []);

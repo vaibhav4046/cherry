@@ -52,9 +52,13 @@ export default function Runs() {
         if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 500));
         continue;
       }
-      if (polled.value.status === 'failed') await settleRun(run.id, 'failed', { error: polled.value.result?.stderr, outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
-      if (polled.value.status === 'cancelled') await settleRun(run.id, 'cancelled', { outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
-      if (polled.value.status === 'succeeded') setError('Runner completed; attach a verified receipt before this run can be marked successful.');
+      const provider = { kind: 'runner', status: polled.value.status === 'failed' ? 'failed' : polled.value.status === 'cancelled' ? 'cancelled' : 'completed', exitCode: polled.value.result?.exitCode, verifiedSeparately: true as const };
+      if (polled.value.status === 'failed') await settleRun(run.id, 'failed', { error: polled.value.result?.stderr, outputSummary: polled.value.result?.stdout, provider, runnerCapabilityToken: run.runnerCapabilityToken });
+      if (polled.value.status === 'cancelled') await settleRun(run.id, 'cancelled', { outputSummary: polled.value.result?.stdout, provider, runnerCapabilityToken: run.runnerCapabilityToken });
+      if (polled.value.status === 'succeeded') {
+        await settleRun(run.id, 'setup-required', { outputSummary: polled.value.result?.stdout, error: 'Runner completed; attach a verified receipt before this run can be marked successful.', provider, runnerCapabilityToken: run.runnerCapabilityToken });
+        setError('Runner completed; attach a verified receipt before this run can be marked successful.');
+      }
       break;
     }
     await load();

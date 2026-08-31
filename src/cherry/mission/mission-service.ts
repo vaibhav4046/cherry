@@ -260,6 +260,9 @@ export async function recordRun(
   if (record.mode === 'runner' && record.status === 'waiting_for_runner' && !record.runnerCapabilityToken) {
     record.runnerCapabilityToken = newId('job');
   }
+  if (record.mode === 'runner' && !record.provider) {
+    record.provider = { kind: 'runner', status: 'blocked', verifiedSeparately: true };
+  }
   await withWorkspaceTx(record.workspaceId, ['runs'], async (ctx) => {
     await ctx.db.runs.add(record);
     ctx.emit({
