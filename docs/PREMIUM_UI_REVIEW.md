@@ -47,8 +47,8 @@ zero page errors on every capture).
 
 ## Interaction tests (commands + results, 2026-08-31)
 
-Serial integrated run: typecheck ✅ · lint ✅ · unit **135 passed + 2 skipped** · runner **42
-passed** (pre-sprint serial run; runner untouched) · build ✅ · **e2e 39 passed** (golden manual
+Serial integrated run: typecheck ✅ · lint ✅ · unit **152 passed + 2 skipped** · runner **42
+passed** · build ✅ · **e2e 41 passed** (golden manual
 journey, registered-closure WebMCP host path, workforce, responsive incl. new /showcase mobile
 no-overflow, landing lesson-card navigation incl. reduced-motion) · verify:pack **6/6** ·
 audit:submission **0 FAIL 0 WARN**. Post-polish re-run: upgrade+showcase-host 16 passed, responsive

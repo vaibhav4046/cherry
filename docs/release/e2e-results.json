@@ -3,8 +3,7 @@
     "argv": [
       "D:\\node.exe",
       "D:\\project\\cherry\\node_modules\\@playwright\\test\\cli.js",
-      "test",
-      "--project=desktop"
+      "test"
     ],
     "configFile": "D:\\project\\cherry\\playwright.config.ts",
     "rootDir": "D:/project/cherry/e2e",
@@ -115,12 +114,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6079,
+                      "duration": 8356,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:39.259Z",
+                      "startTime": "2026-08-31T19:25:31.497Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -131,6 +130,91 @@
               "id": "417ea86cbde4b6cab3c9-3678f8e5665e0a4349bb",
               "file": "cherry/golden-manual.spec.ts",
               "line": 10,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\memory-routine.spec.ts",
+      "file": "cherry/memory-routine.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "memory and routine surfaces",
+          "file": "cherry/memory-routine.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "unknown routes render a not-found page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 323,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:25:40.034Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-865ef482495c6c20a4a9",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "memory vault exposes graph fallback and no overflow on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1701,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:25:40.370Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-bf3f12bc5e022de33d96",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 9,
               "column": 3
             }
           ]
@@ -166,12 +250,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 718,
+                      "duration": 822,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:45.588Z",
+                      "startTime": "2026-08-31T19:25:42.231Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -200,12 +284,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 734,
+                      "duration": 863,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:46.313Z",
+                      "startTime": "2026-08-31T19:25:43.066Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -234,12 +318,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 712,
+                      "duration": 860,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:47.056Z",
+                      "startTime": "2026-08-31T19:25:43.943Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -268,12 +352,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 732,
+                      "duration": 830,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:47.775Z",
+                      "startTime": "2026-08-31T19:25:44.817Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -302,12 +386,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 584,
+                      "duration": 673,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:48.521Z",
+                      "startTime": "2026-08-31T19:25:45.666Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -336,12 +420,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 259,
+                      "duration": 357,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:49.112Z",
+                      "startTime": "2026-08-31T19:25:46.355Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -370,12 +454,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 923,
+                      "duration": 1093,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:49.381Z",
+                      "startTime": "2026-08-31T19:25:46.726Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -404,12 +488,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1630,
+                      "duration": 1763,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:50.313Z",
+                      "startTime": "2026-08-31T19:25:47.832Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -438,12 +522,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1155,
+                      "duration": 1240,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:51.950Z",
+                      "startTime": "2026-08-31T19:25:49.609Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -452,6 +536,312 @@
                 }
               ],
               "id": "764551a30f0c3008a13d-1c39e56adedefe354645",
+              "file": "cherry/responsive.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 838,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:20.076Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-dc6947ce380c08ef4561",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at tablet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 714,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:21.074Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-4cd0fb3682d24842624a",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at laptop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 704,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:21.797Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-02fb7a072c3c998c8809",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at desktop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 733,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:22.508Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-41368cb6d16e4100f64e",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "showcase renders without horizontal overflow at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 632,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:23.250Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-65694f3174ba0d979e80",
+              "file": "cherry/responsive.spec.ts",
+              "line": 27,
+              "column": 3
+            },
+            {
+              "title": "mobile shows bottom navigation instead of the rail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 346,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:23.899Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-0a1345933574ec8a9827",
+              "file": "cherry/responsive.spec.ts",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "landing has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1069,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:24.259Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-5d4f9665739af17041bc",
+              "file": "cherry/responsive.spec.ts",
+              "line": 42,
+              "column": 3
+            },
+            {
+              "title": "studio empty state has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1701,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:25.349Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-3122323984b14f7332cb",
+              "file": "cherry/responsive.spec.ts",
+              "line": 49,
+              "column": 3
+            },
+            {
+              "title": "keyboard-only: workspace creation works without a mouse",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1212,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:27.069Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-39496e0e227ebc83b50a",
               "file": "cherry/responsive.spec.ts",
               "line": 57,
               "column": 3
@@ -480,12 +870,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1804,
+                      "duration": 2057,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:53.112Z",
+                      "startTime": "2026-08-31T19:25:50.860Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -494,6 +884,40 @@
                 }
               ],
               "id": "764551a30f0c3008a13d-fdd6f4c278936d8d0abc",
+              "file": "cherry/responsive.spec.ts",
+              "line": 67,
+              "column": 3
+            },
+            {
+              "title": "malicious artifact cannot reach Cherry storage or the network",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2091,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-31T19:26:28.293Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-fd2ad95702f3310912db",
               "file": "cherry/responsive.spec.ts",
               "line": 67,
               "column": 3
@@ -512,7 +936,7 @@
         {
           "title": "showcase: fresh journey through registered WebMCP closures",
           "file": "cherry/showcase-host.spec.ts",
-          "line": 53,
+          "line": 56,
           "column": 6,
           "specs": [
             {
@@ -531,12 +955,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 941,
+                      "duration": 1097,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:54.933Z",
+                      "startTime": "2026-08-31T19:25:52.959Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -546,7 +970,7 @@
               ],
               "id": "6d8e5e06fac85e388c9f-e85bfd21a61f8fa64d45",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 54,
+              "line": 57,
               "column": 3
             },
             {
@@ -565,12 +989,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 733,
+                      "duration": 831,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:55.882Z",
+                      "startTime": "2026-08-31T19:25:54.070Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -580,7 +1004,7 @@
               ],
               "id": "6d8e5e06fac85e388c9f-28a41d1f48be29dec301",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 136,
+              "line": 146,
               "column": 3
             },
             {
@@ -599,12 +1023,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 710,
+                      "duration": 803,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:56.622Z",
+                      "startTime": "2026-08-31T19:25:54.913Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -614,7 +1038,7 @@
               ],
               "id": "6d8e5e06fac85e388c9f-5e148731d59ddbec2da8",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 145,
+              "line": 155,
               "column": 3
             },
             {
@@ -633,12 +1057,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 916,
+                      "duration": 1032,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:57.340Z",
+                      "startTime": "2026-08-31T19:25:55.731Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -648,7 +1072,7 @@
               ],
               "id": "6d8e5e06fac85e388c9f-cf79cff17fe77c91d90b",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 153,
+              "line": 163,
               "column": 3
             }
           ]
@@ -684,12 +1108,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1277,
+                      "duration": 958,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:58.268Z",
+                      "startTime": "2026-08-31T19:25:56.803Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -718,12 +1142,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 431,
+                      "duration": 596,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:59.551Z",
+                      "startTime": "2026-08-31T19:25:57.773Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -752,12 +1176,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 309,
+                      "duration": 370,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:41:59.988Z",
+                      "startTime": "2026-08-31T19:25:58.382Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -794,12 +1218,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2874,
+                      "duration": 3274,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:00.305Z",
+                      "startTime": "2026-08-31T19:25:58.766Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -828,12 +1252,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1275,
+                      "duration": 2134,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:03.186Z",
+                      "startTime": "2026-08-31T19:26:02.058Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -870,12 +1294,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1266,
+                      "duration": 1389,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:04.469Z",
+                      "startTime": "2026-08-31T19:26:04.210Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -904,12 +1328,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1574,
+                      "duration": 1723,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:05.743Z",
+                      "startTime": "2026-08-31T19:26:05.613Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -946,12 +1370,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 965,
+                      "duration": 1097,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:07.325Z",
+                      "startTime": "2026-08-31T19:26:07.349Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -980,12 +1404,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1909,
+                      "duration": 2111,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:08.297Z",
+                      "startTime": "2026-08-31T19:26:08.459Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1022,12 +1446,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1663,
+                      "duration": 1440,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:10.214Z",
+                      "startTime": "2026-08-31T19:26:10.586Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1056,12 +1480,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1302,
+                      "duration": 1433,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:11.883Z",
+                      "startTime": "2026-08-31T19:26:12.041Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1098,12 +1522,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1521,
+                      "duration": 1863,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:13.192Z",
+                      "startTime": "2026-08-31T19:26:13.491Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1149,12 +1573,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2224,
+                      "duration": 2597,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:14.733Z",
+                      "startTime": "2026-08-31T19:26:15.392Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1183,12 +1607,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1242,
+                      "duration": 1297,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-31T13:42:16.964Z",
+                      "startTime": "2026-08-31T19:26:18.003Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1208,9 +1632,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-31T13:41:11.587Z",
-    "duration": 67040.589,
-    "expected": 29,
+    "startTime": "2026-08-31T19:24:48.576Z",
+    "duration": 102220.523,
+    "expected": 41,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

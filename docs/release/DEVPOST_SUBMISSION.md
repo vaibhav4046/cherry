@@ -64,14 +64,14 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
 
 ## Accomplishments
 
-- 119 unit + 42 runner/bridge + 33 e2e tests, including a hostile-artifact sandbox probe, axe
+- 152 unit (+2 opt-in skips) + 42 runner/bridge + 41 e2e tests, including a hostile-artifact sandbox probe, axe
   audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
 - A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
   the actual test behind the label — including what we did NOT test.
 - Proof receipts a stranger can recompute; `npm run verify:pack` proves it — a one-byte tamper or a
   deleted evidence file fails verification.
-- The native MCP bridge live-validated from a real host session: workspace integrity and receipt
-  hashes recomputed over the bridge and matched byte-for-byte.
+- The native MCP bridge is covered by deterministic runner/bridge tests; no live external host
+  session is claimed by this release pass.
 - An adversarial security pass that tried to refute our own claims — and the one it broke
   (postMessage origin wording) was fixed the same day and documented.
 

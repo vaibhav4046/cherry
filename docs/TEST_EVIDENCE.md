@@ -1,7 +1,7 @@
 # Cherry test evidence index
 
-**Date:** 2026-08-30 · **Commit:** 5297dad. Every count below is from the gate run executed
-on this date and commit unless a different source is named.
+**Date:** 2026-08-31 · **Commit:** release evidence commit pending. Counts below come from the
+fresh final gate run on the current tree unless a historical source is explicitly named.
 
 ## Commands and what they cover
 
@@ -9,7 +9,7 @@ on this date and commit unless a different source is named.
 |---|---|---|
 | `npm run typecheck` | `tsc --noEmit`, strict + `noUncheckedIndexedAccess` + `verbatimModuleSyntax` | PASS |
 | `npm run lint` | eslint 9 flat config over the repo; `no-explicit-any`, `no-console` in app code | PASS |
-| `npm run test` | vitest (jsdom + fake-indexeddb): domain flows, watch/transcripts, quick-skill, webmcp aperture, workforce, routines, whisper formatting, digest, schemas, compiler, core | 135 passed, 2 skipped, 15 files (2026-08-31: +10 auth boundary/panel, +6 fresh-journey/mutation-sync webmcp) |
+| `npm run test` | vitest (jsdom + fake-indexeddb): domain flows, watch/transcripts, quick-skill, webmcp aperture, workforce, routines, whisper formatting, digest, schemas, compiler, core | 152 passed, 2 skipped, 18 files passed + 2 skipped (2026-08-31) |
 | `npm run test:runner` | node:test — runner security/pairing/allowlists, MCP bridge stdio JSON-RPC, runner v2 durable queue/scheduler/events (v2.test.mjs is imported by runner.test.mjs) | 42 passed |
 | `npm run build` | vite production build, code-split routes | PASS (largest chunk `transformers.web` ~549 KB) |
 | `npm run test:e2e` | Playwright golden journey, responsive/overflow, axe a11y, hostile-artifact sandbox probe, workforce, upgrade | See `docs/release/e2e-results.json` (below) |
@@ -27,7 +27,7 @@ skipped by default), `bundle-writer.gen` (opt-in, skipped by default).
 Playwright JSON report from the latest recorded run (started 2026-08-30T12:43:52Z,
 duration ~51 s, projects `desktop` + `mobile` against `npm run build && npm run preview`):
 
-- **36 expected (passed), 0 unexpected, 0 flaky, 0 skipped** (2026-08-31 run; +3 registered-closure showcase-host tests that drive the fresh journey through document.modelContext closures, never executeLocal).
+- **41 expected (passed), 0 unexpected, 0 flaky, 0 skipped** (2026-08-31 final run; includes registered-closure showcase-host tests that drive the fresh journey through document.modelContext closures, never executeLocal).
 - Specs: `e2e/cherry/golden-manual.spec.ts`, `responsive.spec.ts`, `workforce.spec.ts`,
   `upgrade.spec.ts`, `showcase-host.spec.ts` (registered-closure host path, added 2026-08-31).
 
@@ -61,5 +61,5 @@ duration ~51 s, projects `desktop` + `mobile` against `npm run build && npm run 
 - This file — 2026-08-30, commit 5297dad: 119 unit (+2 skipped) + 42 runner + 33 e2e
   (per `e2e-results.json`). Growth reflects workforce/routines/transcribe/digest suites
   added after v1.1.
-- 2026-08-31, working tree after 7058c78: 135 unit (+2 skipped) + 42 runner + 36 e2e +
+- 2026-08-31, final hardening tree: 152 unit (+2 skipped) + 42 runner + 41 e2e +
   verify:pack 6/6 + audit:submission 0 FAIL, 0 WARN.

@@ -1,6 +1,6 @@
 # Cherry build status
 
-**Date:** 2026-08-31 · **Commit:** working tree after 7058c78 (commit pending) · **Branch/tree:** main working tree at `D:\project\cherry`
+**Date:** 2026-08-31 · **Commit:** release evidence commit pending · **Branch/tree:** main working tree at `D:\project\cherry`
 
 ## Gates (full suite re-run 2026-08-31 on the current tree)
 
@@ -8,10 +8,10 @@
 |---|---|---|
 | Typecheck | `npm run typecheck` | PASS (tsc --noEmit, strict) |
 | Lint | `npm run lint` | PASS (eslint 9 flat config) |
-| Unit/integration | `npm run test` | PASS — 135 passed, 2 skipped (15 files, vitest) — 2026-08-31 |
+| Unit/integration | `npm run test` | PASS — 152 passed, 2 skipped (18 files passed, 2 skipped; vitest) — 2026-08-31 |
 | Runner + bridge + v2 | `npm run test:runner` | PASS — 42 passed (node:test) |
 | Production build | `npm run build` | PASS (vite; largest chunk `transformers.web` ~549 KB) |
-| E2E | `npm run test:e2e` | PASS — 36 passed (incl. 3 registered-closure showcase-host tests), 2026-08-31; see docs/release/e2e-results.json |
+| E2E | `npm run test:e2e` | PASS — 41 passed, 0 unexpected/flaky/skipped (desktop + mobile; registered-closure host path included); see docs/release/e2e-results.json |
 | Pack verify | `npm run verify:pack` | PASS — 6/6 checks (zip hash matches meta, standalone verifier passes, one-byte tamper FAILS, missing evidence FAILS) |
 | Submission audit | `npm run audit:submission` | PASS — 13 checks, 0 FAIL, 0 WARN |
 
@@ -38,22 +38,17 @@ flipping one byte of `SKILL.md` (must FAIL) and deleting `references/evidence.md
 
 ## Owner-action status (2026-08-31, after "complete all")
 
-1. **Push + deploy:** DONE — pushed to main; Vercel auto-deployed; /showcase smoked live.
-2. **Duplicate origin (D-020):** DONE in code — `vercel.json` now 307-redirects any
-   `getcherry.vercel.app` request to the canonical origin (host-conditional redirect; reversible).
-3. **npm audit triage:** DONE — `npm audit fix` applied (non-breaking); the remaining 29
-   advisories (23 moderate, 6 high) all live in the Privy tree's wallet stacks
-   (metamask/wagmi/reown `ws`/`uuid`/`adm-zip`/`sharp`/`axios` transitives). None of that code is
-   reachable in shipped paths: guest mode never fetches the Privy chunk at all, and the configured
-   mode is `loginMethods: ['email']` — wallet connectors are never initialised. Remaining fixes
-   require `--force` major bumps; deliberately not taken 2 days before the deadline.
-4. **Live WebMCP browser-host validation:** still open — no `modelContext`-enabled host exists on
+1. **Push + deploy:** NOT PERFORMED by this task. No credentials or deployment linkage were
+   provided; a public URL/HTTP response is not treated as deployment or client-rendering proof.
+2. **Duplicate origin (D-020):** redirect rule is present in `vercel.json`; live redirect behavior
+   remains an owner check until a linked deployment is explicitly authorized.
+3. **Live WebMCP browser-host validation:** still open — no `modelContext`-enabled host exists on
    this machine (Chrome 151, flag off; see release evidence for the probe and the flag attempt).
    Enable the WebMCP testing flag or use a ChatGPT desktop browser with Site Tools, open
    /showcase, and the host panel + Agent View log real calls. Claim stays experimental until then.
-5. **Privy smoke test:** still open — requires a real `VITE_PRIVY_APP_ID` (account creation is
+4. **Privy smoke test:** still open — requires a real `VITE_PRIVY_APP_ID` (account creation is
    outside the autonomy contract). One email-OTP login after configuring per docs/PRIVY_SETUP.md.
-6. **Demo video (narrated, <3 min) + Devpost submission** before 3 Sep 1PM PT — script ready,
+5. **Demo video (narrated, <3 min) + Devpost submission** before 3 Sep 1PM PT — script ready,
    /showcase alternate opening included.
 
 ## Known limitations (from release evidence + compatibility matrix)

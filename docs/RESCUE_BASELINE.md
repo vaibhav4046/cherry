@@ -1,10 +1,10 @@
 # Rescue baseline — 2026-08-31
 
-Baseline commit: `c11f150` (deployed). Rescue pass applied on top; see the two commits following it.
+Baseline commit: `c11f150` (historical). Rescue pass applied on top; deployment is not asserted here.
 
 ## What works in a fresh browser (verified, not assumed)
 
-Verified with clean Playwright contexts (no seeded storage) and pinned by 37 e2e tests:
+Verified with clean Playwright contexts (no seeded storage) and pinned by 41 e2e tests:
 
 - `/` — landing renders, all CTAs route, brand clips play in-view with posters, zero page errors.
 - `/showcase` — starts from a genuinely blank session ("Fresh session — no workspace exists in
@@ -54,9 +54,9 @@ Verified with clean Playwright contexts (no seeded storage) and pinned by 37 e2e
 ## Failing tests / missing environment variables
 
 - No failing tests. Gate results (2026-08-31, serial, commands in docs/TEST_EVIDENCE.md):
-  typecheck PASS · lint PASS · unit 135 passed + 2 skipped · runner 42 passed · build PASS ·
-  e2e 37 passed · verify:pack 6/6 · audit:submission 0 FAIL 0 WARN.
-- Optional env (all absent by design in the deployed build): `VITE_PRIVY_APP_ID`,
+  typecheck PASS · lint PASS · unit 152 passed + 2 skipped · runner 42 passed · build PASS ·
+  e2e 41 passed · verify:pack 6/6 · audit:submission 0 FAIL 0 WARN.
+- Optional env (all absent by design in the verified local build): `VITE_PRIVY_APP_ID`,
   `VITE_PRIVY_CLIENT_ID` (see `.env.example`). Core needs none.
 
 ## Redesign decision (recorded deliberately)
@@ -64,7 +64,7 @@ Verified with clean Playwright contexts (no seeded storage) and pinned by 37 e2e
 A ground-up "Apple-restraint" reskin was **not** performed: the shipped system already commits
 to one coherent identity (wine ground, cream/blush cards, copper-pink accent, script + condensed
 display + grotesk body, reduced-motion discipline, state-complete screens), passed visual QA and
-axe, and 37 e2e tests pin its selectors. Two days before the deadline, a reskin risks the
+axe, and 41 e2e tests pin its selectors. Two days before the deadline, a reskin risks the
 working golden path for aesthetic delta. Applied instead: judge script on /showcase, demo-only
 reset control, host-panel timestamp + clearer error wording. The oversized hero words on the
 landing are brand identity retained on purpose; /showcase (the judge's route) is restrained.

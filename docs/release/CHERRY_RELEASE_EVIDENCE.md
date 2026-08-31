@@ -1,14 +1,14 @@
 # Cherry release evidence
 
-> **v1.3 addendum (2026-08-31, god-mode master execution):** full gate suite re-run after the
-> /showcase + fresh-journey + Privy work: **135 unit passed + 2 skipped (15 files) + 42
-> runner/bridge (node:test) + 36 e2e (Playwright)**, typecheck/lint clean, production build clean,
+> **Finalist hardening addendum (2026-08-31):** full gate suite re-run after the
+> Memory Vault, routines, WebMCP, and glass UI work: **152 unit passed + 2 skipped + 42
+> runner/bridge (node:test) + 41 e2e (Playwright)**, typecheck/lint clean, production build clean,
 > verify:pack 6/6, audit:submission 13 checks 0 FAIL. New evidence class: a **registered-closure
 > host-path e2e** (`e2e/cherry/showcase-host.spec.ts`) installs a mock `document.modelContext`
 > BEFORE app load and drives the entire fresh journey through the closures the app actually
 > registered — discovery, introduce_agent, start_apprenticeship, aperture advancing with no human
 > click, load_lesson, import_transcript, add_source_evidence, generate_quick_skill,
-> request_checkpoint_approval — then the human approves in the /showcase UI and the agent
+> request_skill_approval — then the human approves in the /showcase UI and the agent
 > continues. It also asserts no registered tool name can approve/decide. Fresh-journey defects
 > fixed same day (D-021): mutation→shell sync, onboarding-aperture lesson deadlock, quick-skill
 > mission linking. Privy auth boundary landed per D-019 (guest-first, setup_required without
@@ -17,20 +17,10 @@
 > not enabled); result recorded as unavailable-in-current-host, no live browser-host claim is
 > made. Live-host validation remains a queued owner action in docs/BUILD_STATUS.md.
 >
-> **Deployed + flag-probe follow-up (2026-08-31, "complete all"):** main pushed and Vercel
-> production deployment verified — /showcase renders live on https://cherry-wine.vercel.app with
-> the honest host panel and zero console errors; `getcherry.vercel.app` now 307-redirects to the
-> canonical origin (vercel.json host-conditional rule). Exhaustive Chrome flag probe: the real
-> Chrome 151 binary was launched five times against the production build with throwaway profiles
-> and candidate flags (`--enable-features=WebMCP`, `WebModelContext`,
-> `WebMachineLearningModelContext`, `--enable-experimental-web-platform-features`, and the
-> combination) — `document.modelContext` was **undefined in every run**, and in every run the app
-> rendered the honest "No WebMCP host" panel (feature detection proven in real Chrome, not just
-> Chromium/jsdom). Conclusion: this machine has no WebMCP-capable host; a ChatGPT desktop browser
-> with Site Tools (or a Chrome build that actually ships the API) is required for live-host
-> evidence. `npm audit fix` applied; the 29 remaining advisories are confined to wallet-stack
-> transitives inside the lazy Privy chunk that shipped paths never load (guest mode never fetches
-> the chunk; configured mode is email-only).
+> **Deployment/host boundary:** no deployment or push was performed by this release pass because
+> no credentials or project linkage were provided. An HTTP response from a public URL is not
+> treated as client-rendering or deployment proof. A compatible live WebMCP browser host remains
+> unverified; the registered-closure Playwright journey uses a mock `document.modelContext` host.
 
 > **v1.2 addendum (2026-08-30, editorial-pack integration):** every gate re-ran fresh on the tree
 > after the god-mode pack landed. Current totals: **119 unit/integration passed + 2 skipped
@@ -241,17 +231,10 @@ boundaries), decision log, repo map, baseline, and this evidence file are in the
 
 ## deployment_smoke
 
-Deployed to Vercel production: **https://cherry-wine.vercel.app** (project cherry, account
-vaibhav4046, static dist/ with vercel.json headers). Fresh-browser-profile smoke test executed with
-Playwright against the live URL:
-
-- CSP, X-Content-Type-Options: nosniff, Referrer-Policy present on responses;
-- landing renders with the correct title;
-- deep link /studio/settings/connections returns 200 and renders (SPA rewrite);
-- manual golden journey begins with zero developer state (workspace created on the live site);
-- /examples/example-workspace.json, /manifest.webmanifest, /sw.js all 200.
-
-**PASSED**
+**NOT RUN / NOT CLAIMED.** No deployment or push was authorized or performed in this release pass.
+The listed public URL is retained as submission metadata only; an HTTP 200/static SPA fallback does
+not prove that this tree is deployed or that the client rendered successfully. Run this smoke gate
+only after linking the intended deployment project and explicitly authorizing the action.
 
 ## local_runner (optional gate)
 
