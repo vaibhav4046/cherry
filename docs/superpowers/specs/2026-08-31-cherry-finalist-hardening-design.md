@@ -35,7 +35,7 @@ Out of scope:
 4. **Execution is local and observable.** A routine run is only successful when a connected local runner returns a verified result. No runner means setup-required; a non-zero exit means failed.
 5. **Evidence is scoped.** Receipts include only records and events causally linked to the mission/run; unrelated workspace activity is excluded. Redacted deletion references remain explainable without retaining sensitive content.
 6. **Honest source labels.** Every lesson displays its extraction mode, timestamp/confidence where available, trust level, and provenance. The UI explicitly says when frame-level vision is not implemented.
-7. **Quiet visual hierarchy.** Paper/ink/berry tokens, one display face plus one UI face, fewer cards, strong whitespace and focus states. Motion explains state transitions only and is disabled for non-essential motion under `prefers-reduced-motion`.
+7. **Premium glass visual hierarchy.** The attached reference is treated as visual direction only: a warm paper/ink canvas carries translucent frosted panels, thin carbon outlines, subtle backdrop blur, and icon-led wayfinding. Cherry wine/pink remains the accent rather than a full-screen gradient. One display face plus one UI face, fewer cards, strong whitespace, and visible focus states keep the glass from becoming ornamental. Motion explains state transitions only and is disabled for non-essential motion under `prefers-reduced-motion`.
 
 ## Architecture
 
@@ -99,7 +99,7 @@ No tool decides a skill, memory, or routine approval. `run_verification` and `ex
 
 Source UI labels the extraction mode exactly: “Transcript supplied”, “Local Whisper”, “Tab capture”, or “Deterministic sample”. Official YouTube embed is an embed only; pasted transcript remains user supplied. Confidence/timestamps are shown only when present. A note states that frame-level vision is not implemented.
 
-Tokens are consolidated in `src/design-system/tokens.css` and shared CSS: deep cherry, wine, blush, paper, ink, and mint/status colors; no decorative gradients or shadows; minimum 44px controls; visible `:focus-visible`; responsive stacking; and one earned transition per approval/verification/receipt beat.
+Tokens are consolidated in `src/design-system/tokens.css` and shared CSS: deep cherry, wine, blush, paper, ink, glass-white, glass-border, and mint/status colors; translucent surfaces use `backdrop-filter` with an opaque fallback; shadows and gradients are limited to one soft ambient canvas treatment and never carry information; minimum 44px controls; visible `:focus-visible`; responsive stacking; and one earned transition per approval/verification/receipt beat. Navigation, graph nodes, source modes, approval states, and runner states use the existing `src/components/Icons.tsx` icon primitives (with text labels and ARIA names), never emoji or decorative glyphs.
 
 ## Error and trust handling
 
