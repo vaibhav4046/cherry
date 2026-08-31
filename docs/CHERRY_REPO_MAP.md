@@ -24,6 +24,7 @@ Module map (spec responsibility → file):
 | Mission model/state machine/services + runs | `src/cherry/mission/*` |
 | Evidence ledger (untrusted-by-default) | `src/cherry/evidence/*` |
 | Cherry Watch (YouTube URL, transcript parsers, coverage, observations) | `src/cherry/watch/*` |
+| Source Inbox domain + provenance records | `src/cherry/source/*`, `src/pages/studio/Sources.tsx` |
 | Approvals (exact revision) | `src/cherry/approval/*`, enforcement in `skillgraph-service.ts` |
 | SkillGraph model/validator/versions/approval/rollback | `src/cherry/skillgraph/*` |
 | Memory Vault, inbox, correction compiler | `src/cherry/memory/*` |
@@ -34,6 +35,7 @@ Module map (spec responsibility → file):
 | WebMCP tool contract/definitions/aperture/registration | `src/cherry/webmcp/*` |
 | Runner client (pairing, jobs) | `src/cherry/runner-client/*` |
 | Local runner (loopback, pairing, adapters) | `runner/server.mjs` (see D-004) |
+| Optional compliant Scrapling worker | `scraper/worker.py`, `runner/lib/adapters.mjs`, `docs/SCRAPLING_SETUP.md` |
 | Native MCP bridge (stdio, read/verify) | `runner/mcp/server.mjs` (see D-005) |
 | Design system | `src/design-system/tokens.css` (Slush sticker-book, see D-002) |
 | Routes | `src/app/App.tsx`, pages under `src/pages/` |

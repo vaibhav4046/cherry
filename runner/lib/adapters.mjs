@@ -17,7 +17,7 @@ const MAX_EXPORT_FILES = 2000;
 const PROVIDER_NOTE = 'Provider CLI completion is not verification. Run cherry-verify afterwards.';
 
 /** Shell-free process runner with timeout + abort-signal support. */
-export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal } = {}) {
+export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal, stdinText } = {}) {
   return new Promise((resolvePromise, rejectPromise) => {
     let stdout = '';
     let stderr = '';
@@ -25,9 +25,13 @@ export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal 
     const child = spawn(executable, argv, {
       cwd,
       shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [stdinText === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true,
     });
+    if (stdinText !== undefined) {
+      child.stdin.write(stdinText);
+      child.stdin.end();
+    }
     const settle = (fn, value) => {
       if (finished) return;
       finished = true;
@@ -177,12 +181,26 @@ export function createAdapters(config) {
     return { status: run.exitCode === 0 ? 'completed' : 'failed', ...run };
   }
 
+  /** Optional ordinary-fetch Scrapling worker. Python and the fixed worker
+   * path must both be explicitly configured; no arbitrary command is accepted. */
+  async function scraplingFetch(envelope, context) {
+    const payload = parsePayload(envelope);
+    const executable = allowedExecutables.has('python') ? 'python' : allowedExecutables.has('python3') ? 'python3' : null;
+    if (!executable) throw new Error('scrapling-fetch requires --allow-exec python (or python3)');
+    const worker = join(allowedRoots[0], 'scraper', 'worker.py');
+    if (!existsSync(worker)) throw new Error('scraper/worker.py is not installed under the approved root');
+    const run = await runProcess(executable, [worker], allowedRoots[0], { ...context, stdinText: JSON.stringify(payload), timeoutMs: 30_000 });
+    if (run.exitCode !== 0) return { status: 'failed', ...run, providerNote: 'Scrapling extraction is untrusted source material, not verification.' };
+    return { status: 'completed', ...run, providerNote: 'Scrapling extraction is untrusted source material, not verification.' };
+  }
+
   const adapters = {
     'cherry-verify': cherryVerify,
     'cherry-export': cherryExport,
     'codex-cli': (envelope, context) => providerCli('codex', envelope, context),
     'claude-cli': (envelope, context) => providerCli('claude', envelope, context),
     'safe-command': safeCommand,
+    'scrapling-fetch': scraplingFetch,
   };
 
   return {

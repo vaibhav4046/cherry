@@ -1,6 +1,6 @@
 # Cherry capability matrix
 
-**Date:** 2026-08-30 · **Commit:** 5297dad
+**Date:** 2026-08-31 · **Commit:** source-inbox implementation
 
 States used: `live_local` (works now, in-browser, no setup), `live_with_user_consent`
 (works now but requires an explicit user permission/gesture), `setup_required` (works after
@@ -17,6 +17,8 @@ Rows marked "not implemented" have no code behind them; nothing in the UI preten
 | Tab-audio capture | live_with_user_consent | `getDisplayMedia({ audio: true })` — user must pick the tab and tick "share tab audio"; recording stays local | `src/cherry/transcribe/local-whisper.ts` (`startTabAudioCapture`), UI `src/pages/studio/QuickSkill.tsx` |
 | On-device Whisper transcription (file + tab audio) | live_local | Whisper tiny.en via transformers.js, WebGPU → WASM fallback; model weights download once from the Hugging Face CDN then cache (first use needs network); output labelled a draft | `src/cherry/transcribe/local-whisper.ts`, `src/cherry/transcribe/whisper-format.ts`, tests `tests/cherry/whisper-format.test.ts` |
 | Transcript paste/upload (.txt/.srt/.vtt) | live_local | YouTube "Show transcript" copy formats parsed natively; content enters the ledger untrusted | `src/cherry/watch/transcript-parser.ts`, tests `tests/cherry/watch.test.ts` |
+| Source Inbox (YouTube, article/post, note, text file) | live_local | Four explicit save modes; source metadata, content hash, linked lesson, filters, archive, and export/import. Content remains untrusted | `src/pages/studio/Sources.tsx`, `src/cherry/source/`, `tests/cherry/source.test.ts`, `e2e/cherry/sources.spec.ts` |
+| Compliant public article fetch via Scrapling | setup_required | One visible user-selected fetch through a paired local runner; ordinary fetcher only, robots fail-closed, bounded/sanitized Markdown. YouTube and LinkedIn are blocked | `scraper/worker.py`, `runner/lib/adapters.mjs`, `docs/SCRAPLING_SETUP.md` |
 | Timestamped observations + computed coverage | live_local | Coverage computed against declared segments/criteria, never invented; gaps shown honestly | `src/cherry/watch/coverage.ts`, golden journey e2e |
 | Evidence ledger / trust promotion | live_local | Everything external starts `untrusted`; `setEvidenceTrust` rejects non-human actors | `src/cherry/evidence/evidence-service.ts`, test "evidence trust boundary" in `tests/cherry/domain-flow.test.ts` |
 | SkillGraph editing + versioning | live_local | Editable, versioned, vendor-neutral; validator + rollback | `src/cherry/skillgraph/skillgraph-service.ts`, `skillgraph-validator.ts` |
@@ -36,7 +38,7 @@ Rows marked "not implemented" have no code behind them; nothing in the UI preten
 | Guided example + replayable walkthrough | live_local | Imports a real exported example workspace on explicit click; steps navigate real records (D-010) | `src/components/GuidedTour.tsx`, `public/examples/example-workspace.json`, `/studio?demo=1` link in `src/pages/Landing.tsx` |
 | /showcase judge route (fresh linear apprenticeship story) | live_local | Single linear walkthrough of a fresh apprenticeship, built for judging (added 2026-08-31) | `src/pages/Showcase.tsx` |
 | PWA install / offline shell | setup_required | Manifest + service worker cache the static shell only; install prompt needs the HTTPS deployment | `docs/release/CHERRY_RELEASE_EVIDENCE.md` (pwa_offline), `public/` |
-| PDF / DOCX / EPUB / web-article import | not implemented | No parser or importer for these formats exists in `src/` (grep for pdf/docx/epub: zero hits). Lesson sources are YouTube embed, pasted/uploaded transcripts, local audio/video files, and manual material | absence verified by grep over `src/` 2026-08-30 |
+| PDF / DOCX / EPUB import | not implemented | No binary document parser is included. Users can paste/export permitted text into the Article or post source path | `src/pages/studio/Sources.tsx` |
 | Privy authentication (email OTP) | setup_required | Guest mode is the default and stays fully functional; auth activates only when `VITE_PRIVY_APP_ID` is configured — see `docs/PRIVY_SETUP.md` | `src/cherry/auth/` |
 | Encrypted cross-device sync | not implemented | Local IndexedDB remains authoritative; no sync backend configured or built. Guest-first, zero-dollar core (decision D-008) — billing likewise not implemented; encrypted sync explicitly out of golden v1 | `docs/CHERRY_DECISIONS.md` D-008, README "Zero-dollar core" |
 | Cloud computer control / consumer-site automation | disabled_for_safety | Not built. No login automation, no scraping, no remote control of third-party sites; the security audit's consumer-site-automation section records "None" | `docs/release/CHERRY_SECURITY_AUDIT.md` ("Consumer-site automation"), CSP in `public/_headers` |

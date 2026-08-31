@@ -12,6 +12,7 @@ export const PROOF_EVENT_TYPES = [
   'mission.updated',
   'mission.state_changed',
   'lesson.loaded',
+  'lesson.updated',
   'lesson.transcript_imported',
   'lesson.playback',
   'source.saved',

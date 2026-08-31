@@ -19,6 +19,7 @@ import {
   importTranscript,
   lessonCoverage,
   listLessons,
+  getLesson,
   loadLesson,
   recordObservation,
   updateLesson,
@@ -39,6 +40,8 @@ import { compileSkillBundle } from '../compiler/archive-builder.ts';
 import { generateSkillFromLesson } from '../skillgraph/quick-skill.ts';
 import { createProofReceipt, listReceipts } from '../proof/proof-service.ts';
 import { exportWorkspace } from '../persistence/workspace-archive.ts';
+import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
+import { runnerStatus } from '../runner-client/runner-api.ts';
 
 /**
  * Active workspace/mission context is injected by the registration manager so
@@ -73,6 +76,70 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   const define = <I>(definition: CherryToolDefinition<I>): void => {
     definitions.push(definition as CherryToolDefinition);
   };
+
+  // ---------- Sources surface (route-scoped, never approves or fetches implicitly) ----------
+  const sourceKinds = ['youtube', 'article', 'note', 'file'] as const;
+  const sourceContentFormats = ['plain', 'markdown', 'json', 'srt', 'vtt'] as const;
+  const sourceSaveSchema = z.object({
+    kind: z.enum(sourceKinds), title: z.string().min(1).max(300), creator: z.string().max(200).optional(),
+    url: z.string().max(2048).optional(), content: z.string().max(2 * 1024 * 1024).optional(),
+    contentFormat: z.enum(sourceContentFormats).optional(), permissionAcknowledged: z.boolean().default(false), permissionNote: z.string().max(1000).optional(),
+  });
+  define({
+    name: 'list_sources', description: 'List saved source metadata and statuses for the active workspace. Bodies are never returned.',
+    inputSchema: objectSchema({ includeArchived: { type: 'boolean' } }, []), annotations: { readOnlyHint: true, untrustedContentHint: true }, states: [], zodSchema: z.object({ includeArchived: z.boolean().optional() }),
+    execute: guarded(z.object({ includeArchived: z.boolean().optional() }), async (input) => {
+      const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId;
+      const rows = await listSources(workspaceId, { includeArchived: input.includeArchived === true });
+      return toolText(rows.slice(0, 50).map((source) => ({ id: source.id, lessonId: source.lessonId, kind: source.kind, status: source.status, title: source.title, creator: source.creator, url: source.url, fetchStatus: source.fetchStatus, updatedAt: source.updatedAt })));
+    }),
+  });
+  define({
+    name: 'save_source', description: 'Save user-supplied source metadata/content in the active workspace. This tool never fetches the URL.',
+    inputSchema: objectSchema({ kind: { type: 'string', enum: [...sourceKinds] }, title: { type: 'string' }, creator: { type: 'string' }, url: { type: 'string' }, content: { type: 'string' }, contentFormat: { type: 'string', enum: [...sourceContentFormats] }, permissionAcknowledged: { type: 'boolean' }, permissionNote: { type: 'string' } }, ['kind', 'title']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'write' }, states: [], zodSchema: sourceSaveSchema,
+    execute: guarded(sourceSaveSchema, async (input) => {
+      const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId;
+      const result = await createSource({ workspaceId, ...input }, 'agent');
+      return fromResult(result, (source) => ({ sourceId: source.id, lessonId: source.lessonId, status: source.status, next: `/studio/quick?sourceId=${encodeURIComponent(source.id)}` }));
+    }),
+  });
+  const sourceIdSchema = z.object({ sourceId: z.string().min(1) });
+  define({
+    name: 'request_source_fetch', description: 'Request one explicit fetch for an allowlisted public page through the paired local Scrapling adapter. Never fetches YouTube or LinkedIn.',
+    inputSchema: objectSchema({ sourceId: { type: 'string' } }, ['sourceId']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'execute' }, states: [], zodSchema: sourceIdSchema,
+    execute: guarded(sourceIdSchema, async (input) => {
+      const source = await getSource(input.sourceId); if (!source) return toolError('not_found', `Source ${input.sourceId} was not found`);
+      const status = await runnerStatus();
+      if (!status.paired || !(status.adapters ?? []).includes('scrapling-fetch')) return toolError('temporary', 'Local Scrapling fetcher is not connected. Start and pair the optional runner first.');
+      return fromResult(await requestSourceFetch(input.sourceId, 'agent'), (value) => ({ sourceId: value.id, fetchStatus: value.fetchStatus, note: 'Queued for the paired local worker; content remains untrusted.' }));
+    }),
+  });
+  define({
+    name: 'archive_source', description: 'Recoverably archive one source without deleting its lesson or evidence.',
+    inputSchema: objectSchema({ sourceId: { type: 'string' } }, ['sourceId']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'write' }, states: [], zodSchema: sourceIdSchema,
+    execute: guarded(sourceIdSchema, async (input) => { const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId; const source = await getSource(input.sourceId); if (!source || source.workspaceId !== workspaceId) return toolError('not_found', 'Source was not found in the active workspace'); return fromResult(await archiveSource(input.sourceId, 'agent'), (value) => ({ sourceId: value.id, status: value.status })); }),
+  });
+  define({
+    name: 'prepare_source_for_skill', description: 'Link a saved source lesson to a new draft mission and return the manual Quick Skill route. Does not approve or promote trust.',
+    inputSchema: objectSchema({ sourceId: { type: 'string' }, missionTitle: { type: 'string' } }, ['sourceId']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'write' }, states: [], zodSchema: z.object({ sourceId: z.string().min(1), missionTitle: z.string().max(160).optional() }),
+    execute: guarded(z.object({ sourceId: z.string().min(1), missionTitle: z.string().max(160).optional() }), async (input) => {
+      const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId;
+      const source = await getSource(input.sourceId); if (!source || source.workspaceId !== workspaceId) return toolError('not_found', 'Source was not found in the active workspace');
+      const lesson = await getLesson(source.lessonId); if (!lesson) return toolError('not_found', 'Source lesson was not found');
+      let mission = lesson.missionId ? await getMission(lesson.missionId) : null;
+      if (!mission) {
+        const created = await createMission({ workspaceId, title: input.missionTitle ?? source.title, objective: `Turn ${source.title} into an approved, portable skill.`, definitionOfDone: ['Evidence is linked to the source', 'The human approves the exact skill revision', 'Verification passes'] }, 'agent');
+        if (!created.ok) return toolError(created.error.code, created.error.message, created.error.details);
+        mission = created.value;
+        const linked = await updateLesson(source.lessonId, { missionId: mission.id }, 'agent');
+        if (!linked.ok) return toolError(linked.error.code, linked.error.message, linked.error.details);
+        const attached = await updateMission(mission.id, { lessonId: source.lessonId }, 'agent');
+        if (!attached.ok) return toolError(attached.error.code, attached.error.message, attached.error.details);
+        context.setActiveIds?.({ workspaceId, missionId: mission.id });
+      }
+      return toolText({ sourceId: source.id, lessonId: source.lessonId, missionId: mission.id, next: `/studio/quick?sourceId=${encodeURIComponent(source.id)}`, note: 'Continue manually; approval remains human-only.' });
+    }),
+  });
 
   // ---------- Global read-only ----------
   define({

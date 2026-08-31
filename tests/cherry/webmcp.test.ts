@@ -68,7 +68,7 @@ describe('WebMCP tool aperture', () => {
   it('surface apertures stay within five tools plus globals and select by route surface', () => {
     const context = makeContext();
     const manager = new WebMcpRegistrationManager(context);
-    for (const surface of ['inbox', 'crew', 'run'] as const) {
+    for (const surface of ['inbox', 'crew', 'run', 'sources'] as const) {
       expect(TOOL_SURFACE_TABLE[surface].length).toBeLessThanOrEqual(5);
       const names = manager.activeNamesFor('learning', surface);
       expect(names.length).toBeLessThanOrEqual(9);
@@ -81,6 +81,19 @@ describe('WebMCP tool aperture', () => {
     for (const names of Object.values(TOOL_SURFACE_TABLE)) {
       for (const name of names) expect(defined.has(name), name).toBe(true);
     }
+  });
+
+  it('Sources surface exposes five safe tools and saves without fetching URLs', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const workspace = parseResult(await manager.executeLocal('create_workspace', { name: 'Source tools' }));
+    context.workspaceId = workspace.workspaceId as string;
+    manager.setSurface('sources');
+    manager.syncState('onboarding');
+    expect(manager.activeNamesFor('onboarding', 'sources')).toEqual([...GLOBAL_TOOLS, ...TOOL_SURFACE_TABLE.sources]);
+    const saved = parseResult(await manager.executeLocal('save_source', { kind: 'note', title: 'Agent note', content: 'A human-supplied note', permissionAcknowledged: false }));
+    expect(saved.status).toBe('ready');
+    expect(parseResult(await manager.executeLocal('list_sources', {}))).toHaveLength(1);
   });
 
   it('inbox tools create and advance a work item honestly, never past QUEUED', async () => {

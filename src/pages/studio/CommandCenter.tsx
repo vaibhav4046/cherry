@@ -358,6 +358,10 @@ export default function CommandCenter() {
               Plays in the official player. Cherry reads the transcript you paste or upload — it does not scrape captions.
             </span>
           </Link>
+          <Link to="/studio/sources" className="source-option" onClick={closeSourceDialog}>
+            <span className="source-option-title">Sources inbox</span>
+            <span className="source-option-copy">Save YouTube lessons, articles, notes, and text files with provenance before choosing a skill.</span>
+          </Link>
           <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
             <span className="source-option-title">Paste a transcript</span>
             <span className="source-option-copy">Text, .srt or .vtt becomes timestamped evidence.</span>

@@ -1,5 +1,25 @@
 # Cherry release notes
 
+## v1.5.0 — Source Inbox + compliant public-page fetch (2026-08-31)
+
+### Added
+- **Sources** (`/studio/sources`): save a YouTube lesson, article/post export, private note, or
+  local text file with a linked lesson, normalized URL/content hash, recoverable archive, and
+  metadata-only proof events.
+- **Quick Skill reuse**: `?sourceId=` opens the existing lesson instead of creating a duplicate,
+  preserving the transcript → evidence → approval → verification flow.
+- **Sources WebMCP aperture**: five route-scoped tools (`list_sources`, `save_source`,
+  `request_source_fetch`, `archive_source`, `prepare_source_for_skill`) with no approval or trust
+  promotion tool.
+- **Optional Scrapling worker**: a paired local runner can fetch one allowlisted public page after a
+  visible click. Ordinary fetch only, robots fail-closed, bounded/sanitized Markdown, no stealth,
+  proxies, CAPTCHA, cookies, CDP, YouTube, LinkedIn, or background crawling.
+
+### Honest limits
+Cherry does not watch every video automatically, scrape LinkedIn, train a private foundation model,
+access ChatGPT/Codex subscriptions invisibly, execute in the cloud without a configured runner,
+auto-approve skills or memories, or claim frame-level video understanding.
+
 ## v1.4.0 — The Notebook (2026-08-29)
 
 NotebookLM-grade autonomy, zero-dollar honest. Drop sources → instant overview → one-click studio

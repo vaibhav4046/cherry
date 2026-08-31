@@ -219,3 +219,19 @@ did not link the drafted graph to the mission on the agent path. Two tools were 
 `get_cherry_status` (4th global read) and `start_apprenticeship` (empty/onboarding) — and the
 whole path is pinned by a registered-closure Playwright journey (`e2e/cherry/showcase-host.spec.ts`)
 that never touches `executeLocal`.
+
+## D-022 — Source Inbox and opt-in Scrapling adapter (2026-08-31)
+
+- **Decision:** Add a durable Sources surface for four user-selected source kinds, linked lessons,
+  metadata-only proof events, and export/import remapping. Add Scrapling only as an optional local
+  runner adapter for one allowlisted public article fetch at a time.
+- **Reason:** The product needs a reusable ingestion boundary without promising autonomous video
+  watching, LinkedIn scraping, cloud execution, invisible subscription access, private foundation
+  model training, auto-approval, or frame-level understanding. Scrapling's ordinary fetcher is
+  useful for permitted public pages, but its stealth/proxy/browser features are intentionally out of
+  scope.
+- **Consequence:** `/studio/sources` remains fully usable without Python or a runner. YouTube uses
+  the official embed/transcript path; LinkedIn URLs fail closed for fetch while pasted/exported text
+  remains supported. Fetched pages are still untrusted until human review.
+- **Rollback:** Remove the Sources route and migration v3, or disable the optional `scrapling-fetch`
+  adapter; existing lesson/evidence records remain intact.

@@ -20,6 +20,7 @@ const Proof = lazy(() => import('../pages/studio/Proof.tsx'));
 const Connections = lazy(() => import('../pages/studio/Connections.tsx'));
 const AgentView = lazy(() => import('../pages/studio/AgentView.tsx'));
 const QuickSkill = lazy(() => import('../pages/studio/QuickSkill.tsx'));
+const Sources = lazy(() => import('../pages/studio/Sources.tsx'));
 const WorkInbox = lazy(() => import('../pages/studio/WorkInbox.tsx'));
 const WorkThread = lazy(() => import('../pages/studio/WorkThread.tsx'));
 const CrewPage = lazy(() => import('../pages/studio/CrewPage.tsx'));
@@ -45,6 +46,7 @@ export function App() {
           <Route index element={<CommandCenter />} />
           <Route path="onboarding" element={<Onboarding />} />
           <Route path="quick" element={<QuickSkill />} />
+          <Route path="sources" element={<Sources />} />
           <Route path="inbox" element={<WorkInbox />} />
           <Route path="work/:workItemId" element={<WorkThread />} />
           <Route path="crew" element={<CrewPage />} />

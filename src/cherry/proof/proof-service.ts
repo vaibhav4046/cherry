@@ -52,7 +52,7 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const graph = await db.skillGraphs.get(mission.skillGraphId);
   if (!graph) return notFound('SkillGraph', mission.skillGraphId);
 
-  const [events, runs, routineRows, artifactFiles, verificationRows, evidenceRows, memoryRows, memoryVersions] = await Promise.all([
+  const [events, runs, routineRows, artifactFiles, verificationRows, evidenceRows, memoryRows, memoryVersions, sourceRows] = await Promise.all([
     listProofEvents(mission.workspaceId),
     db.runs.where('missionId').equals(mission.id).toArray(),
     db.routines.where('workspaceId').equals(mission.workspaceId).toArray(),
@@ -61,6 +61,7 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
     db.evidence.where('workspaceId').equals(mission.workspaceId).toArray(),
     db.memories.where('workspaceId').equals(mission.workspaceId).toArray(),
     db.memoryVersions.where('workspaceId').equals(mission.workspaceId).toArray(),
+    db.sourceRecords.where('workspaceId').equals(mission.workspaceId).toArray(),
   ]);
   const missionRunIds = new Set(runs.map((r) => r.id));
   const routineIds = new Set([
@@ -72,8 +73,9 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const requiredMemoryIds = new Set(mission.requiredMemoryIds ?? []);
   const deletedLinkedMemoryIds = memoryVersions.filter((v) => v.snapshot.status === 'deleted' && (requiredMemoryIds.has(v.memoryId) || v.snapshot.missionId === mission.id || (v.snapshot.runId && missionRunIds.has(v.snapshot.runId)))).map((v) => v.memoryId);
   const lessonLinkedIds = mission.lessonId ? [...(await db.transcriptSegments.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id), ...(await db.observations.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id)] : [];
-  const causalIds = new Set([mission.id, graph.id, ...routineIds, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...(graph.knowledge ?? []).map((k) => k.evidenceId), ...mission.requiredMemoryIds, ...lessonLinkedIds, ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
-  const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.transcript_imported', 'lesson.playback', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
+  const linkedSourceRows = sourceRows.filter((source) => source.lessonId === mission.lessonId);
+  const causalIds = new Set([mission.id, graph.id, ...routineIds, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...(graph.knowledge ?? []).map((k) => k.evidenceId), ...mission.requiredMemoryIds, ...lessonLinkedIds, ...linkedSourceRows.map((source) => source.id), ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
+  const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.updated', 'lesson.transcript_imported', 'lesson.playback', 'source.saved', 'source.updated', 'source.fetch_requested', 'source.fetch_completed', 'source.fetch_failed', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
   for (const type of ['routine.drafted','routine.schedule_set','routine.approved','routine.enabled','routine.paused','routine.run_requested']) causalTypes.add(type);
   const missionEvents = events.filter((event) => causalTypes.has(event.type) && (causalIds.has(event.objectId) || (event.objectType === 'run' && missionRunIds.has(event.objectId))));
 

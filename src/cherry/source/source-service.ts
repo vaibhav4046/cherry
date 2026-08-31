@@ -179,6 +179,7 @@ export async function requestSourceFetch(sourceId: string, actorType: ActorType 
 
 export async function completeSourceFetch(sourceId: string, input: { markdown: string; contentHash: string }, actorType: ActorType = 'runner'): Promise<Result<SourceRecord>> {
   if (!input.markdown.trim() || input.markdown.length > MAX_CONTENT) return invalid('Fetched content is empty or exceeds the 2 MiB limit');
+  if (!/^[a-f0-9]{64}$/i.test(input.contentHash) || await sha256Text(input.markdown) !== input.contentHash.toLowerCase()) return invalid('Fetched content hash does not match the returned Markdown');
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
   if (current.fetchStatus !== 'queued') return conflict('Source fetch is not queued');
   const imported = await importTranscript(current.lessonId, input.markdown, 'user_text', undefined, actorType);

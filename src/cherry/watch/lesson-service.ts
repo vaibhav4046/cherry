@@ -100,13 +100,17 @@ export async function listLessons(workspaceId: string): Promise<Lesson[]> {
 
 export async function updateLesson(
   lessonId: string,
-  patch: Partial<Pick<Lesson, 'title' | 'durationSeconds' | 'lastPositionSeconds' | 'creator' | 'coverageCriteria'>>,
+  patch: Partial<Pick<Lesson, 'title' | 'durationSeconds' | 'lastPositionSeconds' | 'creator' | 'coverageCriteria' | 'missionId'>>,
+  actorType: ActorType = 'human',
 ): Promise<Result<Lesson>> {
   const db = getDb();
   const lesson = await db.lessons.get(lessonId);
   if (!lesson) return notFound('Lesson', lessonId);
   const next: Lesson = { ...lesson, ...patch, revision: lesson.revision + 1, updatedAt: isoNow() };
-  await db.lessons.put(next);
+  await withWorkspaceTx(lesson.workspaceId, ['lessons'], async (ctx) => {
+    await ctx.db.lessons.put(next);
+    ctx.emit({ type: 'lesson.updated', actorType, objectType: 'lesson', objectId: lesson.id, summary: `Lesson "${next.title}" updated`, payload: { fields: Object.keys(patch) } });
+  });
   return ok(next);
 }
 

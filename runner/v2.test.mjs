@@ -504,7 +504,7 @@ describe('runner v2 HTTP wiring', () => {
     const body = await response.json();
     assert.deepEqual(
       body.v2.adapters.sort(),
-      ['cherry-export', 'cherry-verify', 'claude-cli', 'codex-cli', 'safe-command'].sort(),
+      ['cherry-export', 'cherry-verify', 'claude-cli', 'codex-cli', 'safe-command', 'scrapling-fetch'].sort(),
     );
   });
 

@@ -151,7 +151,18 @@ async function adapterCli(binary, job) {
   return result;
 }
 
-function runProcess(executable, processArguments, cwd, timeoutMs) {
+/** Fixed-path optional Scrapling worker. It is enabled only when Python is
+ * explicitly allowlisted and never claims that extraction is verification. */
+async function adapterScrapling(job) {
+  const executable = allowedExecutables.has('python') ? 'python' : allowedExecutables.has('python3') ? 'python3' : null;
+  if (!executable) throw new Error('scrapling-fetch requires --allow-exec python (or python3)');
+  const worker = join(allowedRoots[0], 'scraper', 'worker.py');
+  if (!existsSync(worker)) throw new Error('scraper/worker.py is not installed under the approved root');
+  const payload = job.input && typeof job.input === 'object' ? JSON.stringify(job.input) : '{}';
+  return runProcess(executable, [worker], allowedRoots[0], job.timeoutMs, payload);
+}
+
+function runProcess(executable, processArguments, cwd, timeoutMs, stdinText) {
   return new Promise((resolvePromise, rejectPromise) => {
     let stdout = '';
     let stderr = '';
@@ -159,9 +170,13 @@ function runProcess(executable, processArguments, cwd, timeoutMs) {
     const child = spawn(executable, processArguments, {
       cwd,
       shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [stdinText === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true,
     });
+    if (stdinText !== undefined) {
+      child.stdin.write(stdinText);
+      child.stdin.end();
+    }
     const timer = setTimeout(() => {
       if (!finished) {
         finished = true;
@@ -203,6 +218,7 @@ const ADAPTERS = {
   'shell-safe': adapterShellSafe,
   'codex-cli': (job) => adapterCli('codex', job),
   'claude-cli': (job) => adapterCli('claude', job),
+  'scrapling-fetch': adapterScrapling,
 };
 
 // ---------------- queue (one at a time) ----------------
@@ -312,6 +328,7 @@ const server = createServer((request, response) => {
         paired: authorized,
         queueDepth: jobs.filter((job) => job.status === 'queued' || job.status === 'running').length,
         adapters: Object.keys(ADAPTERS),
+        scraplingReady: (allowedExecutables.has('python') || allowedExecutables.has('python3')) && existsSync(join(allowedRoots[0], 'scraper', 'worker.py')),
         v2: {
           adapters: v2Adapters.names,
           concurrency: v2Concurrency,

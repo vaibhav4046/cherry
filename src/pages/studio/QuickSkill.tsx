@@ -1,8 +1,8 @@
-import { useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
-import { importTranscript, listTranscript, loadLesson } from '../../cherry/watch/lesson-service.ts';
+import { getLesson, importTranscript, listTranscript, loadLesson, updateLesson } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
@@ -27,6 +27,7 @@ import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { DerivedSkillDraft } from '../../cherry/skillgraph/auto-draft.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { Icons } from '../../components/Icons.tsx';
+import { getSource, updateSource } from '../../cherry/source/source-service.ts';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
@@ -39,6 +40,8 @@ type Stage = 'source' | 'transcript' | 'review' | 'ready';
 export default function QuickSkill() {
   const { activeWorkspace, refresh } = useAppState();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sourceId = searchParams.get('sourceId');
   const [stage, setStage] = useState<Stage>('source');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,6 +62,45 @@ export default function QuickSkill() {
   const captureRef = useRef<TabCapture | null>(null);
   const [autoProgress, setAutoProgress] = useState<TranscribeProgress | null>(null);
   const [capturing, setCapturing] = useState(false);
+
+  useEffect(() => {
+    if (!sourceId || !activeWorkspace) return;
+    let cancelled = false;
+    void (async () => {
+      setBusy(true); setError(null);
+      try {
+        const source = await getSource(sourceId);
+        if (!source || source.workspaceId !== activeWorkspace.id) throw new Error('That source is not available in the active workspace');
+        let loaded = await getLesson(source.lessonId);
+        if (!loaded) throw new Error('The source lesson could not be found');
+        let mission = loaded.missionId ? await getMission(loaded.missionId) : null;
+        if (!mission) {
+          const created = await createMission({ workspaceId: activeWorkspace.id, title: source.title, objective: `Turn ${source.title} into an approved, portable skill.`, definitionOfDone: ['Evidence is linked to the source', 'The human approves the exact skill revision', 'Verification passes'] });
+          if (!created.ok) throw new Error(created.error.message);
+          mission = created.value;
+          const linked = await updateMission(mission.id, { lessonId: source.lessonId });
+          if (!linked.ok) throw new Error(linked.error.message);
+          const lessonLinked = await updateLesson(source.lessonId, { missionId: mission.id });
+          if (!lessonLinked.ok) throw new Error(lessonLinked.error.message);
+          loaded = lessonLinked.value;
+          await transitionMission(mission.id, 'LEARNING');
+        } else if (mission.state === 'DRAFT') {
+          await transitionMission(mission.id, 'LEARNING');
+        }
+        const segments = await listTranscript(loaded.id);
+        if (cancelled) return;
+        setLesson(loaded); setSkillName(source.title); setSourceCount(segments.length > 0 ? 1 : 0);
+        if (segments.length > 0) {
+          const preview = await previewQuickSkill(loaded.id);
+          if (!preview.ok) throw new Error(preview.error.message);
+          setDraft(preview.value); setKept(new Set(preview.value.steps.map((_, index) => index))); setDigest(digestSegments(segments)); setStage('review');
+        } else setStage('transcript');
+        await refresh();
+      } catch (thrown) { if (!cancelled) setError((thrown as Error).message); }
+      finally { if (!cancelled) setBusy(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [activeWorkspace?.id, refresh, sourceId]);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -134,6 +176,7 @@ export default function QuickSkill() {
       setDigest(digestSegments(await listTranscript(lesson!.id)));
       setAddingSource(false);
       setStage('review');
+      if (sourceId) await updateSource(sourceId, { status: 'ready', contentHash: undefined }, 'human');
     });
   }
 

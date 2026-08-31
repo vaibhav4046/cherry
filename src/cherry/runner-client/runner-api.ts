@@ -7,6 +7,7 @@ export interface RunnerStatus {
   version?: string;
   queueDepth?: number;
   adapters?: string[];
+  scraplingReady?: boolean;
 }
 
 const RUNNER_ORIGIN = 'http://127.0.0.1:47821';
@@ -53,13 +54,14 @@ export async function runnerStatus(): Promise<RunnerStatus> {
   try {
     const response = await runnerFetch('/status');
     if (!response.ok) return { paired: false, reachable: true };
-    const body = (await response.json()) as { version?: string; queueDepth?: number; adapters?: string[]; paired?: boolean };
+    const body = (await response.json()) as { version?: string; queueDepth?: number; adapters?: string[]; paired?: boolean; scraplingReady?: boolean };
     return {
       paired: body.paired === true,
       reachable: true,
       ...(body.version ? { version: body.version } : {}),
       ...(typeof body.queueDepth === 'number' ? { queueDepth: body.queueDepth } : {}),
       ...(body.adapters ? { adapters: body.adapters } : {}),
+      scraplingReady: body.scraplingReady === true,
     };
   } catch {
     return { paired: false, reachable: false };
@@ -86,7 +88,7 @@ export async function pairRunner(token: string): Promise<Result<{ paired: true }
 export interface RunnerJobRequest {
   workspaceId: string;
   missionId: string;
-  adapter: 'cherry-verify' | 'cherry-export';
+  adapter: 'cherry-verify' | 'cherry-export' | 'scrapling-fetch';
   input: Record<string, unknown>;
   idempotencyKey?: string;
   workingDirectory?: string;

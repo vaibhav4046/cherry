@@ -13,6 +13,7 @@ import {
 import { listTranscript } from '../../src/cherry/watch/lesson-service.ts';
 import { exportWorkspace, importWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
 import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
+import { sha256Text } from '../../src/cherry/core/hash.ts';
 
 describe('source inbox domain', () => {
   beforeEach(() => freshDb());
@@ -77,7 +78,8 @@ describe('source inbox domain', () => {
     expect(source.fetchStatus).toBe('not_requested');
     const queued = unwrap(await requestSourceFetch(source.id));
     expect(queued.fetchStatus).toBe('queued');
-    const fetched = unwrap(await completeSourceFetch(source.id, { markdown: '# Guide\n\nUse clear evidence.', contentHash: 'a'.repeat(64) }));
+    const markdown = '# Guide\n\nUse clear evidence.';
+    const fetched = unwrap(await completeSourceFetch(source.id, { markdown, contentHash: await sha256Text(markdown) }));
     expect(fetched.fetchStatus).toBe('fetched');
     expect(fetched.fetchMethod).toBe('scrapling_fetch');
     expect(fetched.status).toBe('ready');

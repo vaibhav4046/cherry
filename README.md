@@ -24,6 +24,10 @@ WATCH / READ / OBSERVE  →  UNDERSTAND AND STRUCTURE  →  APPROVE THE SKILLGRA
 - **Cherry Watch** — learn from a permitted YouTube lesson (official player only) or manual material.
   Paste/upload transcripts (.txt/.srt/.vtt), record timestamped observations, and see computed —
   never invented — coverage with declared criteria and honest gaps.
+- **Source Inbox** — save YouTube lessons, article/post exports, private notes, and local text files
+  as provenance-linked lessons. A visible, one-page-at-a-time Scrapling fetch is optional for an
+  allowlisted public article when your paired local runner is configured; it never fetches YouTube
+  or LinkedIn and never runs in the background.
 - **Evidence Ledger** — every claim is a record with provenance and a trust label. Everything from
   the outside world starts **untrusted**; only a human can raise trust.
 - **SkillGraph** — an editable, versioned, vendor-neutral workflow representation. Approvals bind to
@@ -107,6 +111,9 @@ every domain mutation emits a ProofEvent in the same transaction. See `docs/CHER
 - The runner runs while your machine is on — it is not a cloud.
 - "Full lesson coverage" means declared segments/criteria were processed, not that every video frame
   was semantically understood.
+- Cherry does not watch every video automatically, scrape LinkedIn, train a private foundation model,
+  access a ChatGPT/Codex subscription invisibly, execute in the cloud without a configured runner,
+  auto-approve skills or memories, or claim to understand every frame of a video.
 - The native MCP bridge is read/verify over exports (browser IndexedDB is unreachable from Node).
 - Optional encrypted sync is not in golden v1.
 
