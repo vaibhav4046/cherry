@@ -93,8 +93,14 @@ export interface RunRecord {
   mode: 'manual' | 'webmcp' | 'runner';
   summary: string;
   detail?: string;
+  requestedAt?: string;
   startedAt?: string;
   finishedAt?: string;
+  command?: string;
+  outputSummary?: string;
+  error?: string | null;
+  receiptId?: string | null;
+  idempotencyKey?: string;
   verificationId?: string | null;
   provider?: { kind: string; status: string; exitCode?: number; verifiedSeparately: boolean };
   revision: number;

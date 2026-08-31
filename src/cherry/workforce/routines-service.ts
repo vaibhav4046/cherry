@@ -11,6 +11,9 @@ import { withWorkspaceTx } from '../persistence/transactions.ts';
 import { newId } from '../core/ids.ts';
 import { isoNow } from '../core/clock.ts';
 import { fail as err, ok, type Result } from '../core/result.ts';
+import type { ActorType } from '../core/domain-event.ts';
+import type { RunRecord, RunStatus } from '../mission/mission-model.ts';
+import { verifyReceipt } from '../proof/proof-verifier.ts';
 import { sha256Canonical } from '../core/hash.ts';
 import type { ApprovalRecord } from '../approval/approval-model.ts';
 import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
@@ -181,7 +184,7 @@ export async function approveRoutine(
   }
   const actionHash = await computeRoutineActionHash(current);
 
-  return withWorkspaceTx(workspaceId, ['routines', 'approvals'], async (ctx) => {
+  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
     if (routine.revision !== expectedRevision) {
@@ -258,15 +261,25 @@ export async function pauseRoutine(workspaceId: string, routineId: string): Prom
 
 /** Re-enable a paused routine. Only valid while its exact-revision approval stands. */
 export async function resumeRoutine(workspaceId: string, routineId: string): Promise<Result<Routine>> {
-  return withWorkspaceTx(workspaceId, ['routines', 'approvals'], async (ctx) => {
+  const current = await getRoutine(workspaceId, routineId);
+  const currentHash = current ? await computeRoutineActionHash(current) : null;
+  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
     if (!routine.approvalId) {
       return err('approval_required', 'This routine has no standing approval. Approve the current revision to enable it.');
     }
     const approval = await ctx.db.approvals.get(routine.approvalId);
-    if (!approval || approval.objectRevision !== routine.revision) {
+    if (!approval || approval.objectRevision !== routine.revision || approval.decision !== 'approved') {
       return err('approval_required', 'The routine changed since it was approved. Approve the current revision to enable it.');
+    }
+    const actionHash = currentHash ?? '';
+    if (approval.contentHash !== actionHash || routine.approvedActionHash !== actionHash) {
+      return err('approval_required', 'Routine approval hash no longer matches its current action envelope. Re-approve it.');
+    }
+    const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
+    if (!graph || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision) {
+      return err('approval_required', 'The skill graph approval is stale. Approve the current skill revision before resuming.');
     }
 
     const now = isoNow();
@@ -289,10 +302,40 @@ export async function resumeRoutine(workspaceId: string, routineId: string): Pro
  * only when an approved execution host picks the request up, and lastRunAt is
  * written by that host — never by this function.
  */
-export async function requestRunNow(workspaceId: string, routineId: string): Promise<Result<{ note: string }>> {
-  return withWorkspaceTx(workspaceId, ['routines'], async (ctx) => {
+export async function requestRunNow(
+  workspaceId: string,
+  routineId: string,
+  actorType: ActorType = 'human',
+  idempotencyKey?: string,
+): Promise<Result<RunRecord & { note: string }>> {
+  if (actorType !== 'human') return err('approval_required', 'Only a person may request consequential routine execution');
+  const preflight = await getRoutine(workspaceId, routineId);
+  const preflightHash = preflight ? await computeRoutineActionHash(preflight) : null;
+  return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'runs'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
+
+    if (!routine.enabled) return err('approval_required', 'Routine is disabled. Approve and enable it before running.');
+    if (!routine.approvalId || !routine.approvedActionHash) return err('approval_required', 'Routine has no standing approval.');
+    const approval = await ctx.db.approvals.get(routine.approvalId);
+    if (!approval || approval.decision !== 'approved' || approval.objectRevision !== routine.revision) return err('approval_required', 'Routine approval is missing or stale.');
+    const actionHash = preflightHash ?? '';
+    if (actionHash !== routine.approvedActionHash || approval.contentHash !== actionHash) return err('approval_required', 'Routine action hash is stale; re-approve before running.');
+    const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
+    if (!graph || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
+    if (routine.executionHostId !== DEFAULT_EXECUTION_HOST_ID) return err('unsupported', 'Routine execution host is not available.');
+    const key = idempotencyKey ?? newId('run');
+    const existing = (await ctx.db.runs.toArray()).find((candidate) => candidate.idempotencyKey === key);
+    if (existing) return err('conflict', 'A run with this idempotency key already exists.');
+    const now = isoNow();
+    const run: RunRecord & { note: string } = {
+      id: newId('run'), workspaceId, missionId: graph.missionId ?? routine.id, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
+      summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner.', requestedAt: now,
+      command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key,
+      provider: { kind: 'runner', status: 'blocked', verifiedSeparately: true }, revision: 1, createdAt: now, updatedAt: now,
+      note: 'Run requested. It executes when an approved execution host picks it up — nothing has run yet.',
+    };
+    await ctx.db.runs.add(run);
 
     ctx.emit({
       type: 'routine.run_requested',
@@ -300,10 +343,47 @@ export async function requestRunNow(workspaceId: string, routineId: string): Pro
       objectType: 'routine',
       objectId: routineId,
       summary: `Run requested for routine "${routine.name}" r${routine.revision}`,
-      payload: { revision: routine.revision, executionHostId: routine.executionHostId },
+      payload: { revision: routine.revision, executionHostId: routine.executionHostId, runId: run.id, idempotencyKey: key },
     });
-    return ok({
-      note: 'Run requested. It executes when an approved execution host picks it up — nothing has run yet.',
+    ctx.emit({
+      type: 'run.queued',
+      actorType: 'human',
+      objectType: 'run',
+      objectId: run.id,
+      summary: run.summary,
+      payload: { adapter: run.adapter, mode: run.mode, status: run.status, idempotencyKey: key },
     });
+    return ok(run);
   });
+}
+
+function redactOutput(value: string | undefined): string | undefined {
+  if (!value) return value;
+  return value.replace(/(token|secret|password|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, '$1=[REDACTED]').slice(0, 4000);
+}
+
+export async function settleRun(
+  runId: string,
+  status: Exclude<RunStatus, 'queued' | 'waiting_for_runner'>,
+  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string; adapter?: RunRecord['adapter']; provider?: RunRecord['provider'] } = {},
+): Promise<Result<RunRecord>> {
+  const db = getDb();
+  const run = await db.runs.get(runId);
+  if (!run) return err('not_found', 'Run not found.');
+  if (status === 'succeeded') {
+    if (!details.receiptId) return err('approval_required', 'A verified receipt is required before marking a run successful.');
+    const receipt = await db.receipts.get(details.receiptId);
+    if (!receipt) return err('approval_required', 'Receipt could not be verified.');
+    const verification = await verifyReceipt(receipt);
+    if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
+  }
+  const now = isoNow();
+  const next: RunRecord = { ...run, status, outputSummary: redactOutput(details.outputSummary), error: details.error ? redactOutput(details.error) : null,
+    receiptId: details.receiptId ?? run.receiptId ?? null, command: details.command ?? run.command, adapter: details.adapter ?? run.adapter,
+    provider: details.provider ?? run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
+  await withWorkspaceTx(run.workspaceId, ['runs'], async (ctx) => {
+    await ctx.db.runs.put(next);
+    ctx.emit({ type: 'run.updated', actorType: 'runner', objectType: 'run', objectId: run.id, summary: `Run ${status}`, payload: { status, receiptId: next.receiptId ?? null } });
+  });
+  return ok(next);
 }

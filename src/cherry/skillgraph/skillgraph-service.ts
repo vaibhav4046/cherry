@@ -245,6 +245,13 @@ export async function requestSkillGraphApproval(
   const graph = await db.skillGraphs.get(skillGraphId);
   if (!graph) return notFound('SkillGraph', skillGraphId);
 
+  const recomputedHash = await sha256Canonical({ ...graph, versionHash: undefined });
+  if (graph.versionHash && graph.versionHash !== recomputedHash) return invalid('SkillGraph version hash is invalid');
+  const pending = await db.approvals.where('objectId').equals(graph.id).toArray();
+  if (pending.some((a) => a.objectType === 'skillgraph' && a.objectRevision === graph.revision && a.decision === 'pending')) {
+    return conflict('An approval decision is already pending for this skill graph revision');
+  }
+
   const issues = validateSkillGraph(graph);
   const blocking = issues.filter((issue) => issue.code !== 'no_evaluations');
   if (blocking.length > 0) {
@@ -264,6 +271,7 @@ export async function requestSkillGraphApproval(
     requestReason: reason,
   };
   const next: SkillGraph = { ...graph, status: 'ready_for_review', updatedAt: now };
+  next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
   await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals'], async (ctx) => {
     await ctx.db.skillGraphs.put(next);
@@ -286,7 +294,15 @@ export async function decideSkillGraphApproval(
   decision: 'approved' | 'rejected',
   decidedBy: string,
   comment?: string,
+  actorType: ActorType = 'human',
 ): Promise<Result<{ graph: SkillGraph; approval: ApprovalRecord }>> {
+  // Backwards/forwards compatible calling convention: some protocol layers
+  // pass actorType as the fourth argument (where older callers used comment).
+  if (actorType === 'human' && (comment === 'agent' || comment === 'system' || comment === 'runner')) {
+    actorType = comment;
+    comment = undefined;
+  }
+  if (actorType !== 'human') return invalid('Only a person may decide a skill graph approval');
   const db = getDb();
   const approval = await db.approvals.get(approvalId);
   if (!approval) return notFound('Approval', approvalId);
@@ -301,6 +317,9 @@ export async function decideSkillGraphApproval(
       { actual: graph.revision, requested: approval.objectRevision },
     );
   }
+
+  const recomputedVersionHash = await sha256Canonical({ ...graph, versionHash: undefined });
+  if (graph.versionHash && graph.versionHash !== recomputedVersionHash) return invalid('SkillGraph version hash is invalid');
 
   const now = isoNow();
   const contentHash = await sha256Canonical({ ...graph, versionHash: undefined });

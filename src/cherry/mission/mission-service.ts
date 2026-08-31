@@ -168,6 +168,16 @@ export async function transitionMission(
   const mission = await db.missions.get(missionId);
   if (!mission) return notFound('Mission', missionId);
   if (mission.state === to) return ok(mission);
+  if (actorType !== 'human' && to === 'EXECUTING') {
+    return invalid('Only a person may transition a mission to EXECUTING');
+  }
+  if (to === 'EXECUTING') {
+    if (!mission.skillGraphId) return invalid('Mission must reference an approved skill graph before execution');
+    const graph = await db.skillGraphs.get(mission.skillGraphId);
+    if (!graph || graph.status !== 'approved' || graph.approvedRevision !== graph.revision) {
+      return invalid('Mission execution requires approval of the current skill graph revision');
+    }
+  }
   if (!canTransition(mission.state, to)) {
     return conflict(`Mission cannot move from ${mission.state} to ${to}`, { from: mission.state, to });
   }

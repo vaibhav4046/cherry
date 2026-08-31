@@ -351,6 +351,11 @@ const server = createServer((request, response) => {
           return send(response, 400, { error: 'workingDirectory outside approved roots' }, origin);
         }
       }
+      if (body.idempotencyKey !== undefined) {
+        const key = String(body.idempotencyKey);
+        const duplicate = jobs.find((candidate) => candidate.idempotencyKey === key);
+        if (duplicate) return send(response, 409, { error: 'duplicate idempotencyKey', jobId: duplicate.id }, origin);
+      }
       const job = {
         id: `job-${randomBytes(8).toString('hex')}`,
         workspaceId: String(body.workspaceId ?? 'unknown').slice(0, 160),
@@ -361,6 +366,7 @@ const server = createServer((request, response) => {
         timeoutMs: Math.min(Number(body.timeoutMs) || DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS),
         status: 'queued',
         createdAt: new Date().toISOString(),
+        ...(body.idempotencyKey !== undefined ? { idempotencyKey: String(body.idempotencyKey).slice(0, 200) } : {}),
       };
       jobs.push(job);
       saveJobs(jobs);

@@ -88,6 +88,8 @@ export interface RunnerJobRequest {
   missionId: string;
   adapter: 'cherry-verify' | 'cherry-export';
   input: Record<string, unknown>;
+  idempotencyKey?: string;
+  workingDirectory?: string;
 }
 
 export async function submitRunnerJob(request: RunnerJobRequest): Promise<Result<{ jobId: string }>> {
@@ -101,4 +103,33 @@ export async function submitRunnerJob(request: RunnerJobRequest): Promise<Result
   } catch {
     return fail('temporary', 'Runner is not reachable; the job stays queued locally');
   }
+}
+
+export interface RunnerJobStatus {
+  id: string;
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  result?: { exitCode?: number; stdout?: string; stderr?: string };
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+export async function pollRunnerJob(jobId: string): Promise<Result<RunnerJobStatus>> {
+  try {
+    const response = await runnerFetch(`/jobs/${encodeURIComponent(jobId)}`);
+    if (response.status === 401) return fail('approval_required', 'Runner pairing token missing or invalid');
+    if (response.status === 404) return fail('not_found', 'Runner job not found');
+    if (!response.ok) return fail('temporary', `Runner returned ${response.status}`);
+    const body = (await response.json()) as { job?: RunnerJobStatus };
+    return body.job ? ok(body.job) : fail('internal', 'Runner returned no job status');
+  } catch { return fail('temporary', 'Runner is not reachable'); }
+}
+
+export async function cancelRunnerJob(jobId: string): Promise<Result<RunnerJobStatus>> {
+  try {
+    const response = await runnerFetch(`/jobs/${encodeURIComponent(jobId)}/cancel`, { method: 'POST', body: '{}' });
+    if (response.status === 401) return fail('approval_required', 'Runner pairing token missing or invalid');
+    if (!response.ok) return fail('temporary', `Runner returned ${response.status}`);
+    const body = (await response.json()) as { job?: RunnerJobStatus };
+    return body.job ? ok(body.job) : fail('internal', 'Runner returned no job');
+  } catch { return fail('temporary', 'Runner is not reachable'); }
 }
