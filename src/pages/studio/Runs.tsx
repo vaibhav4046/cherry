@@ -35,7 +35,7 @@ export default function Runs() {
       workspaceId: run.workspaceId,
       missionId: run.missionId,
       adapter: run.adapter,
-      input: { bundleDir: run.detail ?? '.' },
+      input: run.adapter === 'cherry-verify' ? { bundleDir: '.' } : { dir: '.' },
     });
     if (!result.ok) {
       setError(result.error.message);
