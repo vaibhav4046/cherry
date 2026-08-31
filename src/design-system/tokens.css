@@ -4,6 +4,16 @@
 
 :root {
   /* Apple palette — the blue is reserved for action and selection. */
+  /* Cherry Wine accent — the ONLY accent (see docs/codex-takeover/03_DESIGN_DIRECTIVE.md) */
+  --color-cherry-wine: #8c1d2f;
+  --color-cherry-wine-deep: #731826;
+  --color-cherry-tint: #f7ecee;
+  --color-cherry-ink: #5e1420;
+  --color-accent: var(--color-cherry-wine);
+  --color-accent-deep: var(--color-cherry-wine-deep);
+  --color-accent-tint: var(--color-cherry-tint);
+  --color-accent-ink: var(--color-cherry-ink);
+  /* Apple reference palette (kept for the token contract; no longer the accent) */
   --color-apple-blue: #0071e3;
   --color-link-blue: #0066cc;
   --color-signal-blue: #2997ff;
