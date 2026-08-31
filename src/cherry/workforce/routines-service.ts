@@ -330,7 +330,7 @@ export async function requestRunNow(
     const now = isoNow();
     const run: RunRecord & { note: string } = {
       id: newId('run'), workspaceId, missionId: graph.missionId ?? routine.id, adapter: 'cherry-verify', status: 'waiting_for_runner', mode: 'runner',
-      summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner.', requestedAt: now,
+      summary: `Run requested for routine "${routine.name}"`, detail: 'Waiting for an approved local runner. Start it with: node runner/server.mjs', requestedAt: now,
       command: 'cherry-verify', outputSummary: undefined, error: null, receiptId: null, idempotencyKey: key,
       provider: { kind: 'runner', status: 'blocked', verifiedSeparately: true }, revision: 1, createdAt: now, updatedAt: now,
       note: 'Run requested. It executes when an approved execution host picks it up — nothing has run yet.',
