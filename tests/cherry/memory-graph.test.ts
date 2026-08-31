@@ -6,6 +6,7 @@ import { createMission } from '../../src/cherry/mission/mission-service.ts';
 import { draftSkillGraph } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { proposeMemory } from '../../src/cherry/memory/memory-service.ts';
 import { buildMemoryGraph } from '../../src/cherry/memory/memory-graph.ts';
+import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
 
 describe('memory graph projection', () => {
   beforeEach(() => freshDb());
@@ -27,5 +28,13 @@ describe('memory graph projection', () => {
     expect(graph.nodes.some((n) => n.id === g1.nodes[0]?.id)).toBe(true);
     expect(graph.nodes.some((n) => n.id === g2.nodes[0]?.id)).toBe(false);
     expect(graph.nodes.filter((n) => n.kind === 'source').every((n) => !n.id.startsWith('source:'))).toBe(true);
+  });
+  it('projects artifact file metadata from the persisted file record', async () => {
+    const ws = unwrap(await createWorkspace({ name: 'Artifacts' }));
+    const mission = unwrap(await createMission({ workspaceId: ws.id, title: 'M', objective: 'm', definitionOfDone: ['done'] }));
+    await getDb().artifactSets.add({ id: 'as-1', workspaceId: ws.id, missionId: mission.id, name: 'A', entryPath: 'index.html', revision: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    await getDb().artifactFiles.add({ id: 'af-1', workspaceId: ws.id, artifactSetId: 'as-1', path: 'index.html', mediaType: 'text/html', content: '<p>x</p>', sizeBytes: 8, sha256: 'a'.repeat(64), revision: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), updatedBy: 'human' });
+    const graph = unwrap(await buildMemoryGraph(ws.id, mission.id));
+    expect(graph.nodes.find((n) => n.id === 'af-1')?.revision).toBe(2);
   });
 });
