@@ -67,9 +67,18 @@ function urlDomain(url: string | null): string | null {
 function isBlockedFetchDomain(url: string | null): string | null {
   if (!url) return 'A public URL is required for a page fetch';
   const domain = urlDomain(url) ?? '';
+  if (isPrivateHost(domain)) return 'Private or loopback addresses cannot be fetched';
   if (domain === 'youtube.com' || domain.endsWith('.youtube.com') || domain === 'youtu.be') return 'YouTube stays official-player/transcript-only; Scrapling never fetches it';
   if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com')) return 'LinkedIn fetching is disabled; paste or upload the text instead';
   return null;
+}
+
+function isPrivateHost(host: string): boolean {
+  const value = host.replace(/^\[|\]$/g, '').toLowerCase();
+  if (value === 'localhost' || value.endsWith('.localhost') || value.endsWith('.local') || value === '::1') return true;
+  if (!/^\d+(?:\.\d+){3}$/.test(value)) return value.includes(':') && (value.startsWith('fc') || value.startsWith('fd') || value.startsWith('fe8') || value.startsWith('fe9') || value.startsWith('fea') || value.startsWith('feb'));
+  const octets = value.split('.').map(Number);
+  return octets[0] === 10 || octets[0] === 127 || (octets[0] === 172 && octets[1]! >= 16 && octets[1]! <= 31) || (octets[0] === 192 && octets[1] === 168) || octets[0] === 169 && octets[1] === 254;
 }
 
 function sourceEventPayload(source: SourceRecord): Record<string, string | null> {
@@ -94,6 +103,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
   }
   if (data.kind === 'youtube' && !url) return invalid('A YouTube lesson needs a URL');
   if (data.kind === 'youtube' && url && !/youtube\.com|youtu\.be/i.test(new URL(url).hostname)) return invalid('YouTube lessons must use a YouTube URL');
+  if (data.kind === 'file' && !content) return invalid('Select a text file before saving a file source');
   const contentHash = content ? await sha256Text(content) : null;
   const existing = await duplicate(data.workspaceId, url, contentHash);
   if (existing) return conflict('This source already exists in the workspace', { existingSourceId: existing.id });

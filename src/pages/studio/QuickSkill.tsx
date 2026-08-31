@@ -176,7 +176,7 @@ export default function QuickSkill() {
       setDigest(digestSegments(await listTranscript(lesson!.id)));
       setAddingSource(false);
       setStage('review');
-      if (sourceId) await updateSource(sourceId, { status: 'ready', contentHash: undefined }, 'human');
+      if (sourceId) await updateSource(sourceId, { status: 'ready' }, 'human');
     });
   }
 

@@ -60,6 +60,10 @@ describe('source inbox domain', () => {
     const workspace = unwrap(await createWorkspace({ name: 'Sources' }));
     const credential = await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Bad', url: 'https://me:secret@example.com/a', permissionAcknowledged: true });
     expect(credential.ok).toBe(false);
+    const privatePage = unwrap(await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Private page', url: 'http://192.168.0.10/page', permissionAcknowledged: true }));
+    const privateFetch = await requestSourceFetch(privatePage.id);
+    expect(privateFetch.ok).toBe(false);
+    if (!privateFetch.ok) expect(privateFetch.error.message).toContain('Private');
 
     const linkedIn = unwrap(await createSource({
       workspaceId: workspace.id, kind: 'article', title: 'Exported post', url: 'https://www.linkedin.com/posts/example',
