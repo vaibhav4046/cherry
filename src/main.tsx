@@ -6,6 +6,7 @@ import './design-system/ui-foundation.css';
 import './design-system/shell.css';
 import './design-system/showcase.css';
 import './design-system/contract.css';
+import './design-system/apple.css';
 import { App } from './app/App.tsx';
 import { AppStateProvider } from './app/AppState.tsx';
 import { AuthBoundary } from './cherry/auth/auth-boundary.tsx';
