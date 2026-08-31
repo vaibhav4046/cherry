@@ -71,7 +71,7 @@ const ROWS: Row[] = [
   {
     surface: 'Native MCP bridge (stdio, read/verify)',
     status: 'validated',
-    evidence: '6 stdio JSON-RPC integration tests, PLUS a live registration in a real Claude Code host on 2026-08-29: claude mcp add cherry-wine … → claude mcp list reported ✔ Connected against a real workspace export.',
+    evidence: '6 stdio JSON-RPC integration tests, PLUS a live registration in a real Claude Code host on 2026-08-29: claude mcp add cherry-wine … → claude mcp list reported Connected against a real workspace export.',
   },
   {
     surface: 'Local runner (pairing, allowlists, deterministic jobs)',
