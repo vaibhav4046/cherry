@@ -69,7 +69,7 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     const discovered = await hostTools(page);
     expect(discovered).toEqual(expect.arrayContaining(['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent']));
     expect(discovered).not.toContain('load_lesson');
-    expect(discovered).not.toContain('generate_quick_skill');
+    expect(discovered).not.toContain('derive_skill');
 
     // The agent introduces itself and starts the apprenticeship — registered closures only.
     await callTool(page, 'introduce_agent', { name: 'Codex (e2e host)' });
@@ -111,12 +111,12 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     await expect(page.getByTestId('showcase-steps')).toContainText('evidence record');
 
     // Draft a skill from the lesson, then request approval — the agent can only request.
-    const skill = await callTool(page, 'generate_quick_skill', { lessonId });
+    const skill = await callTool(page, 'derive_skill', { lessonId });
     expect(skill.isError).toBe(false);
     const skillGraphId = (skill.payload as Record<string, unknown>).skillGraphId as string;
 
-    await expect.poll(() => hostTools(page)).toContain('request_checkpoint_approval');
-    const request = await callTool(page, 'request_checkpoint_approval', {
+    await expect.poll(() => hostTools(page)).toContain('request_skill_approval');
+    const request = await callTool(page, 'request_skill_approval', {
       skillGraphId,
       reason: 'Draft derived from the lesson; requesting human review of r1.',
     });
