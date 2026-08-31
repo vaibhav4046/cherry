@@ -1,4 +1,5 @@
 import type { CherryToolDefinition } from './tool-contract.ts';
+import { toolError } from './tool-contract.ts';
 import { buildToolDefinitions, GLOBAL_TOOLS, TOOL_STATE_TABLE, type ToolContext } from './tool-definitions.ts';
 import type { ProductState } from '../mission/mission-state.ts';
 import { TOOL_SURFACE_TABLE, type ToolSurface } from './workforce-tools.ts';
@@ -27,6 +28,8 @@ export interface RegisteredToolInfo {
   description: string;
   readOnly: boolean;
   untrustedContent: boolean;
+  sideEffect: 'none' | 'write' | 'execute' | 'export';
+  requiresApproval: boolean;
 }
 
 /** One real tool invocation, recorded at execution time. Session-local. */
@@ -51,9 +54,21 @@ export interface WebMcpStatus {
   agent: { attached: boolean; name: string | null };
   /** Route-driven tool surface currently selected. */
   surface: ToolSurface;
+  /** Registration/runtime diagnostics safe to render in the UI. */
+  diagnostics: Array<{ code: 'registration_failed' | 'unsupported'; message: string; tool?: string }>;
 }
 
 type StatusListener = (status: WebMcpStatus) => void;
+
+/** Route surfaces are intentionally state-independent: their domain services
+ * return a safe conflict when no workspace/approval exists. Keeping the
+ * allowlist explicit makes the route × state intersection auditable. */
+const SURFACE_STATES: Record<Exclude<ToolSurface, 'default'>, ProductState[]> = {
+  inbox: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  crew: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  routines: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  run: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+};
 
 /**
  * Owns the WebMCP tool lifecycle: feature-detects document.modelContext,
@@ -71,12 +86,18 @@ export class WebMcpRegistrationManager {
   private callLog: ToolCallLogEntry[] = [];
   private agentName: string | null = null;
   private currentSurface: ToolSurface = 'default';
+  private diagnostics: WebMcpStatus['diagnostics'] = [];
+  private currentWorkspaceId: string | null = null;
+  private currentMissionId: string | null = null;
+  private context: ToolContext;
 
   constructor(context: ToolContext) {
+    this.context = context;
     context.setAgentName = (name: string) => {
       this.agentName = name;
       this.notify();
     };
+    context.getActiveToolNames = () => this.activeNamesFor(this.currentState ?? 'empty', this.currentSurface);
     this.definitions = buildToolDefinitions(context);
   }
 
@@ -93,6 +114,7 @@ export class WebMcpRegistrationManager {
       recentCalls: [...this.callLog],
       agent: { attached: this.supported, name: this.agentName },
       surface: this.currentSurface,
+      diagnostics: [...this.diagnostics],
     };
   }
 
@@ -123,11 +145,15 @@ export class WebMcpRegistrationManager {
 
   /** Returns the names that should be active for a state (aperture ≤ 5 phase tools + the global set). */
   activeNamesFor(state: ProductState, surface: ToolSurface = 'default'): string[] {
-    if (surface !== 'default') {
-      return [...GLOBAL_TOOLS, ...(TOOL_SURFACE_TABLE[surface] ?? []).slice(0, 5)];
-    }
-    const stateTools = TOOL_STATE_TABLE[state] ?? [];
-    return [...GLOBAL_TOOLS, ...stateTools.slice(0, 5)];
+    // Workforce surfaces are a second, route-scoped aperture. Their domain
+    // services still enforce workspace/approval state, so they remain useful
+    // while a mission is in any phase; the state table is used on the default
+    // product surfaces. This keeps each route bounded to the narrow 5-tool
+    // set while avoiding an unusable empty inbox during onboarding.
+    const candidates = surface === 'default' || !SURFACE_STATES[surface].includes(state)
+      ? (surface === 'default' ? (TOOL_STATE_TABLE[state] ?? []) : [])
+      : (TOOL_SURFACE_TABLE[surface] ?? []);
+    return [...GLOBAL_TOOLS, ...candidates.slice(0, 5)];
   }
 
   /** Route-driven surface selection; re-registers when it changes. */
@@ -140,9 +166,13 @@ export class WebMcpRegistrationManager {
 
   /** Re-register tools for the given product state. Old registrations abort. */
   syncState(state: ProductState): void {
-    if (state === this.currentState) return;
+    const workspaceId = this.context.getActiveWorkspaceId() ?? null;
+    const missionId = this.context.getActiveMissionId() ?? null;
+    if (state === this.currentState && workspaceId === this.currentWorkspaceId && missionId === this.currentMissionId) return;
     const previousActive = this.currentState ? this.activeNamesFor(this.currentState, this.currentSurface) : [];
     this.currentState = state;
+    this.currentWorkspaceId = workspaceId;
+    this.currentMissionId = missionId;
     this.applySelection(previousActive);
   }
 
@@ -151,8 +181,10 @@ export class WebMcpRegistrationManager {
     const nextActive = new Set(this.activeNamesFor(state, this.currentSurface));
     this.recentlyRemoved = previousActive.filter((name) => !nextActive.has(name));
     this.registered = [];
+    this.diagnostics = [];
 
     if (!this.supported) {
+      this.diagnostics.push({ code: 'unsupported', message: 'This browser does not expose document.modelContext; manual mode remains available.' });
       this.notify();
       return;
     }
@@ -162,18 +194,28 @@ export class WebMcpRegistrationManager {
     this.controller?.abort();
     this.controller = new AbortController();
     const { signal } = this.controller;
+    const registrationWorkspaceId = this.currentWorkspaceId;
+    const registrationMissionId = this.currentMissionId;
 
     const active = new Set(this.activeNamesFor(state, this.currentSurface));
     for (const definition of this.definitions) {
       if (!active.has(definition.name)) continue;
       try {
-        document.modelContext!.registerTool(
+        const registration = document.modelContext!.registerTool(
           {
             name: definition.name,
             description: definition.description,
             inputSchema: definition.inputSchema,
             annotations: definition.annotations,
             execute: async (input: unknown) => {
+              // AbortController is advisory in some hosts. Re-check the
+              // aperture so a stale closure cannot mutate after a transition.
+              const idsChanged = this.context.getActiveWorkspaceId() !== registrationWorkspaceId || this.context.getActiveMissionId() !== registrationMissionId;
+              if (idsChanged || !this.activeNamesFor(this.currentState ?? 'empty', this.currentSurface).includes(definition.name)) {
+                const refused = toolError('conflict', 'This tool is no longer active for the current Cherry state or surface.', { tool: definition.name });
+                this.logCall(definition.name, refused, 'host');
+                return refused;
+              }
               const result = await definition.execute(input, signal);
               this.logCall(definition.name, result, 'host');
               return result;
@@ -181,14 +223,25 @@ export class WebMcpRegistrationManager {
           },
           { signal },
         );
+        if (registration && typeof (registration as PromiseLike<unknown>).then === 'function') {
+          void Promise.resolve(registration).catch(() => {
+            this.registered = this.registered.filter((entry) => entry.name !== definition.name);
+            this.diagnostics.push({ code: 'registration_failed', tool: definition.name, message: `Could not register ${definition.name}.` });
+            this.notify();
+          });
+        }
         this.registered.push({
           name: definition.name,
           description: definition.description,
           readOnly: definition.annotations.readOnlyHint,
           untrustedContent: definition.annotations.untrustedContentHint === true,
+          sideEffect: definition.annotations.sideEffect ?? (definition.annotations.readOnlyHint ? 'none' : 'write'),
+          requiresApproval: definition.annotations.requiresApproval === true,
         });
       } catch {
-        // Registration failure on one tool must not break the app or other tools.
+        // Registration failure on one tool must not break the app or other tools;
+        // expose only a bounded, non-payload diagnostic to the UI.
+        this.diagnostics.push({ code: 'registration_failed', tool: definition.name, message: `Could not register ${definition.name}.` });
       }
     }
     this.notify();
@@ -198,6 +251,11 @@ export class WebMcpRegistrationManager {
   async executeLocal(name: string, input: unknown): Promise<unknown> {
     const definition = this.definitions.find((candidate) => candidate.name === name);
     if (!definition) throw new Error(`Unknown tool ${name}`);
+    if (this.currentState !== null && !this.activeNamesFor(this.currentState, this.currentSurface).includes(name)) {
+      const refused = toolError('conflict', 'This tool is not active for the current Cherry state or surface.', { tool: name });
+      this.logCall(name, refused, 'local');
+      return refused;
+    }
     const controller = new AbortController();
     const result = await definition.execute(input, controller.signal);
     this.logCall(name, result, 'local');
@@ -214,6 +272,7 @@ export class WebMcpRegistrationManager {
     this.registered = [];
     this.recentlyRemoved = [];
     this.callLog = [];
+    this.diagnostics = [];
     this.listeners.clear();
   }
 }

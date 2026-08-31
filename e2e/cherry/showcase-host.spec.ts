@@ -12,6 +12,7 @@ declare global {
   interface Window {
     __host: {
       tools: Map<string, { execute: (input: unknown) => Promise<unknown>; annotations?: Record<string, unknown> }>;
+      retired: Map<string, { execute: (input: unknown) => Promise<unknown> }>;
       registrations: number;
     };
   }
@@ -20,13 +21,15 @@ declare global {
 async function installMockHost(page: Page) {
   await page.addInitScript(() => {
     const tools = new Map();
-    const host = { tools, registrations: 0 };
+    const retired = new Map();
+    const host = { tools, retired, registrations: 0 };
     (window as unknown as { __host: typeof host }).__host = host;
     (document as unknown as { modelContext: unknown }).modelContext = {
       registerTool(tool: { name: string; execute: (input: unknown) => Promise<unknown>; annotations?: Record<string, unknown> }, options?: { signal?: AbortSignal }) {
         tools.set(tool.name, tool);
         host.registrations += 1;
         options?.signal?.addEventListener('abort', () => {
+          retired.set(tool.name, tool);
           if (tools.get(tool.name) === tool) tools.delete(tool.name);
         });
       },
@@ -75,6 +78,13 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
 
     // The aperture must advance to expose load_lesson WITHOUT any human click.
     await expect.poll(() => hostTools(page)).toContain('load_lesson');
+    const retiredResult = await page.evaluate(async () => {
+      const stale = window.__host.retired.get('start_apprenticeship');
+      if (!stale) return null;
+      const result = (await stale.execute({})) as { isError?: boolean; content: Array<{ text: string }> };
+      return { isError: result.isError === true, payload: JSON.parse(result.content[0]!.text) as Record<string, unknown> };
+    });
+    expect(retiredResult?.isError).toBe(true);
     await expect(page.getByTestId('showcase-steps')).toContainText('Mission "Learn a lesson and prove it" (DRAFT)');
 
     const lesson = await callTool(page, 'load_lesson', { title: 'Semantic hero sections', kind: 'manual' });

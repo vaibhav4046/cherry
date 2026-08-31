@@ -4,6 +4,7 @@ import { WebMcpRegistrationManager } from '../../src/cherry/webmcp/registration-
 import { GLOBAL_TOOLS, TOOL_STATE_TABLE, buildToolDefinitions, type ToolContext } from '../../src/cherry/webmcp/tool-definitions.ts';
 import { TOOL_SURFACE_TABLE } from '../../src/cherry/webmcp/workforce-tools.ts';
 import type { ProductState } from '../../src/cherry/mission/mission-state.ts';
+import { HARD_CAP_BYTES, toolError, toolText, validateOrigin, validatePostMessageEnvelope } from '../../src/cherry/webmcp/tool-contract.ts';
 
 function makeContext(): ToolContext & { workspaceId: string | null; missionId: string | null } {
   const context = {
@@ -294,6 +295,65 @@ describe('MCP inspector data (call log + retired tools)', () => {
     manager.subscribe((status) => snapshots.push(status.recentCalls.length));
     await manager.executeLocal('read_cherry_context', {});
     expect(snapshots[snapshots.length - 1]).toBe(1);
+  });
+
+  it('refuses a registered closure after its state aperture is retired', async () => {
+    let stale: ((input: unknown) => Promise<unknown>) | undefined;
+    (document as unknown as { modelContext: unknown }).modelContext = {
+      registerTool: (tool: { name: string; execute: (input: unknown) => Promise<unknown> }) => {
+        if (tool.name === 'load_lesson') stale = tool.execute;
+      },
+    };
+    try {
+      const context = makeContext();
+      const manager = new WebMcpRegistrationManager(context);
+      manager.syncState('learning');
+      expect(stale).toBeDefined();
+      manager.syncState('passed');
+      const result = parseResult(await stale!({ title: 'stale', kind: 'manual' }));
+      expect(result.error).toBe('conflict');
+    } finally {
+      delete (document as unknown as { modelContext?: unknown }).modelContext;
+    }
+  });
+
+  it('re-registers when active ids change and refuses local retired tools', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    manager.syncState('learning');
+    context.workspaceId = 'ws_other';
+    const refused = parseResult(await manager.executeLocal('create_workspace', { name: 'stale' }));
+    expect(refused.error).toBe('conflict');
+    const definitions = manager.listDefinitions();
+    expect(definitions.find((entry) => entry.name === 'run_cherry_verification')?.annotations.sideEffect).toBe('execute');
+    expect(definitions.find((entry) => entry.name === 'export_workspace')?.annotations.sideEffect).toBe('export');
+    expect(definitions.find((entry) => entry.name === 'compile_skill_bundle')?.annotations.requiresApproval).toBe(true);
+  });
+
+  it('returns safe registration diagnostics and structured bounded contract errors', () => {
+    (document as unknown as { modelContext: unknown }).modelContext = {
+      registerTool: () => {
+        throw new Error('token sk_live_super-secret should never be rendered');
+      },
+    };
+    try {
+      const manager = new WebMcpRegistrationManager(makeContext());
+      manager.syncState('empty');
+      expect(manager.status().diagnostics[0]).toMatchObject({ code: 'registration_failed' });
+      expect(JSON.stringify(manager.status().diagnostics)).not.toContain('sk_live');
+    } finally {
+      delete (document as unknown as { modelContext?: unknown }).modelContext;
+    }
+    const text = toolText({ message: '😀'.repeat(5000) }).content[0]!.text;
+    expect(new TextEncoder().encode(text).length).toBeLessThanOrEqual(HARD_CAP_BYTES);
+    const error = parseResult(toolError('validation', 'bad sk_live_secret', { raw: 'xoxb-123', safe: true }));
+    expect(error.error).toBe('validation');
+    expect(String(error.message)).not.toContain('sk_live');
+    expect(String(error.details)).not.toContain('xoxb-123');
+    expect(validateOrigin('https://cherry-wine.vercel.app', ['https://cherry-wine.vercel.app'])).toBe(true);
+    expect(validateOrigin('https://evil.example', ['https://cherry-wine.vercel.app'])).toBe(false);
+    expect(validatePostMessageEnvelope({ type: 'cherry-webmcp', version: 1, requestId: 'r1', payload: {} })).not.toBeNull();
+    expect(validatePostMessageEnvelope({ type: 'cherry-webmcp', version: 2, requestId: 'r1', payload: {} })).toBeNull();
   });
 });
 

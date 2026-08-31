@@ -53,10 +53,11 @@ export interface ToolContext {
   setActiveIds?(ids: { workspaceId?: string; missionId?: string }): void;
   /** Wired by the app shell: re-read persisted state (UI + aperture) after any tool mutation. */
   onMutation?(): void | Promise<void>;
+  getActiveToolNames?(): string[];
 }
 
 function fromResult<T>(result: Result<T>, map: (value: T) => unknown): CherryToolResult {
-  if (!result.ok) return toolError(result.error.code, result.error.message);
+  if (!result.ok) return toolError(result.error.code, result.error.message, result.error.details);
   return toolText(map(result.value));
 }
 
@@ -123,8 +124,9 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const byState = TOOL_STATE_TABLE;
       return toolText({
         productState: state,
-        activeTools: [...GLOBAL_TOOLS, ...(byState[state] ?? [])],
+        activeTools: context.getActiveToolNames?.() ?? [...GLOBAL_TOOLS, ...(byState[state] ?? [])],
         allStates: byState,
+        safeSequenceAliases: SAFE_TOOL_NAME_ALIASES,
         note: 'Tools register and unregister as the product state changes. Manual UI can always do everything these tools can.',
       });
     }),
@@ -171,7 +173,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         activeMissionId: missionId,
         missionState: mission?.state ?? null,
         workspaceCount: workspaces.length,
-        activeTools: [...GLOBAL_TOOLS, ...(TOOL_STATE_TABLE[state] ?? [])],
+        activeTools: context.getActiveToolNames?.() ?? [...GLOBAL_TOOLS, ...(TOOL_STATE_TABLE[state] ?? [])],
         storage: 'local IndexedDB — nothing leaves this browser without an explicit export',
       });
     }),
@@ -921,6 +923,29 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
+  const exportWorkspaceSchema = z.object({});
+  define({
+    name: 'export_workspace',
+    description: 'Export the active local workspace as a bounded, hash-verified archive. This is an explicit side effect and never uploads data.',
+    inputSchema: objectSchema({}, []),
+    annotations: { readOnlyHint: false, sideEffect: 'export' },
+    states: ['passed', 'verification'],
+    zodSchema: exportWorkspaceSchema,
+    execute: guarded(exportWorkspaceSchema, async () => {
+      const workspaceId = requireWorkspace(context);
+      if (typeof workspaceId !== 'string') return workspaceId;
+      const result = await exportWorkspace(workspaceId);
+      return fromResult(result, (archive) => ({
+        exportId: archive.exportId,
+        schemaVersion: archive.schemaVersion,
+        missions: archive.missions.length,
+        events: archive.proofEvents.length,
+        payloadSha256: archive.integrity.payloadSha256,
+        note: 'Archive prepared locally; download it from the Studio export control.',
+      }));
+    }),
+  });
+
   const runnerJobSchema = z.object({
     adapter: z.enum(['cherry-verify', 'cherry-export']),
     note: z.string().max(500).optional(),
@@ -961,10 +986,22 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   // tool aperture) so an agent-driven journey advances without a human click.
   // Read-only tools skip it; contexts without onMutation (bridge, tests) no-op.
   return definitions.map((definition) => {
-    if (definition.annotations.readOnlyHint) return definition;
+    const sideEffect = definition.annotations.sideEffect
+      ?? (definition.annotations.readOnlyHint
+        ? 'none'
+        : /export|compile_skill_bundle|export_proof_receipt/.test(definition.name)
+          ? 'export'
+          : /run_cherry_verification|run_verification|run_routine_now|prepare_runner_job/.test(definition.name)
+            ? 'execute'
+            : 'write');
+    const requiresApproval = definition.annotations.requiresApproval
+      ?? new Set(['run_routine_now', 'compile_skill_bundle', 'export_proof_receipt', 'prepare_runner_job']).has(definition.name);
+    const annotations = { ...definition.annotations, sideEffect, requiresApproval };
+    if (definition.annotations.readOnlyHint) return { ...definition, annotations };
     const inner = definition.execute;
     return {
       ...definition,
+      annotations,
       execute: async (input: unknown, signal: AbortSignal) => {
         const result = await inner(input, signal);
         if (result.isError !== true) await context.onMutation?.();
@@ -976,6 +1013,16 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
 
 export const GLOBAL_TOOLS = ['read_cherry_context', 'list_cherry_capabilities', 'get_cherry_status', 'introduce_agent'] as const;
 
+/** Canonical names used in the public brief, retained as mappings for the
+ * legacy names shipped by earlier Cherry hosts. */
+export const SAFE_TOOL_NAME_ALIASES = {
+  record_observation: 'record_lesson_observation',
+  derive_skill: 'generate_quick_skill',
+  request_skill_approval: 'request_checkpoint_approval',
+  propose_memory: 'propose_memory_rule',
+  run_verification: 'run_cherry_verification',
+} as const;
+
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
   empty: ['start_apprenticeship', 'create_workspace', 'create_mission'],
   onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson'],
@@ -983,7 +1030,7 @@ export const TOOL_STATE_TABLE: Record<string, string[]> = {
   planning: ['define_skillgraph', 'propose_memory_rule', 'request_checkpoint_approval', 'revise_checkpoint'],
   execution: ['write_artifact_file', 'record_task_result', 'request_consequential_action', 'run_cherry_verification'],
   verification: ['run_cherry_verification', 'apply_verified_repair', 'read_failed_assertions', 'propose_memory_rule', 'write_artifact_file'],
-  passed: ['compile_skill_bundle', 'export_proof_receipt', 'prepare_runner_job', 'request_consequential_action'],
+  passed: ['compile_skill_bundle', 'export_proof_receipt', 'export_workspace', 'prepare_runner_job', 'request_consequential_action'],
 };
 
 // Referenced to keep the export/import surface complete for evals.
