@@ -21,3 +21,6 @@ docs/release/e2e-results.json
 
 .vercel
 .claude/
+
+scraper/__pycache__/
+scraper/tests/__pycache__/
