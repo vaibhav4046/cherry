@@ -83,7 +83,8 @@ export type RunStatus =
   | 'running'
   | 'succeeded'
   | 'failed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'reported';
 
 export interface RunRecord {
   id: string;

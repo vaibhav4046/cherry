@@ -743,7 +743,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
           workspaceId,
           missionId,
           adapter: 'manual',
-          status: input.outcome,
+          status: input.outcome === 'succeeded' ? 'reported' : 'failed',
           mode: 'webmcp',
           summary: input.summary,
           ...(input.detail ? { detail: input.detail } : {}),
