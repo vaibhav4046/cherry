@@ -64,10 +64,13 @@ type StatusListener = (status: WebMcpStatus) => void;
  * return a safe conflict when no workspace/approval exists. Keeping the
  * allowlist explicit makes the route × state intersection auditable. */
 const SURFACE_STATES: Record<Exclude<ToolSurface, 'default'>, ProductState[]> = {
-  inbox: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
-  crew: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
-  routines: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
-  run: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  // A route surface is only open after a workspace exists. Routines require a
+  // planned/approved workflow; run controls become available once learning is
+  // underway. The global reads remain available in every state.
+  inbox: ['onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  crew: ['onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  routines: ['planning', 'execution', 'verification', 'passed'],
+  run: ['learning', 'planning', 'execution', 'verification', 'passed'],
 };
 
 /**
