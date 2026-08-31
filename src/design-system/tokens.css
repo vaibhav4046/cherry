@@ -154,7 +154,7 @@ a { color: var(--color-carbon); }
 .btn:disabled { background: var(--color-soft-mist); color: #cfa6b7; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .btn-primary {
-  background: linear-gradient(180deg, #ff7d9d 0%, #e02350 100%);
+  background: #d52f58;
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.35);
   box-shadow: 0 4px 20px rgba(255, 60, 105, 0.38);
