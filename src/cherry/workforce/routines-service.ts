@@ -81,6 +81,7 @@ export async function draftRoutine(input: DraftRoutineInput): Promise<Result<Rou
       workspaceId: input.workspaceId,
       name,
       skillGraphId: graph.id,
+      missionId: graph.missionId ?? null,
       skillGraphRevision: graph.approvedRevision ?? graph.revision,
       executionHostId: DEFAULT_EXECUTION_HOST_ID,
       schedule: { kind: 'manual' },
@@ -282,7 +283,7 @@ export async function resumeRoutine(workspaceId: string, routineId: string): Pro
       return err('approval_required', 'Routine approval hash no longer matches its current action envelope. Re-approve it.');
     }
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
-    if (!graph?.missionId) return err('validation', 'Routine must be bound to a mission before it can run.');
+    if (!graph?.missionId || routine.missionId !== graph.missionId) return err('validation', 'Routine must be bound to its skill graph mission before it can run.');
     const mission = await ctx.db.missions.get(graph.missionId);
     if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== currentGraphHash) {
@@ -332,7 +333,7 @@ export async function requestRunNow(
     if (actionHash !== routine.approvedActionHash || approval.contentHash !== actionHash) return err('approval_required', 'Routine action hash is stale; re-approve before running.');
     const graph = await ctx.db.skillGraphs.get(routine.skillGraphId);
     if (!graph || graph.workspaceId !== workspaceId || graph.status !== 'approved' || graph.revision !== routine.skillGraphRevision || graph.approvedRevision !== graph.revision || graph.versionHash !== preflightGraphHash) return err('approval_required', 'Skill graph approval is stale; re-approve before running.');
-    if (!graph.missionId) return err('validation', 'Routine must be bound to a mission before it can run.');
+    if (!graph.missionId || routine.missionId !== graph.missionId) return err('validation', 'Routine must be bound to its skill graph mission before it can run.');
     const mission = await ctx.db.missions.get(graph.missionId);
     if (!mission || mission.workspaceId !== workspaceId) return err('not_found', 'Routine mission binding is invalid.');
     if (routine.executionHostId !== DEFAULT_EXECUTION_HOST_ID) return err('unsupported', 'Routine execution host is not available.');

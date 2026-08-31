@@ -337,6 +337,7 @@ export interface Routine {
   workspaceId: string;
   name: string;
   skillGraphId: string;
+  missionId?: string | null;
   skillGraphRevision: number;
   executionHostId: string;
   schedule: ScheduleSpec;
