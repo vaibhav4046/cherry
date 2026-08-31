@@ -412,7 +412,7 @@ export async function settleRun(
     if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
   }
   const now = isoNow();
-  const terminalProviderStatus = status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider?.status;
+  const terminalProviderStatus = status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : status === 'setup-required' && details.provider?.status === 'completed' ? 'completed' : run.provider?.status;
   const nextProvider = run.provider
     ? { ...run.provider, ...(terminalProviderStatus ? { status: terminalProviderStatus } : {}), ...(details.provider?.exitCode !== undefined ? { exitCode: details.provider.exitCode } : {}) }
     : run.provider;
