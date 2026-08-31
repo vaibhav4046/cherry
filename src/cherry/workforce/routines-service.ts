@@ -397,14 +397,14 @@ export async function settleRun(
     if (!details.receiptId) return err('approval_required', 'A verified receipt is required before marking a run successful.');
     const receipt = await db.receipts.get(details.receiptId);
     if (!receipt || receipt.runId !== run.id || receipt.workspaceId !== run.workspaceId || receipt.missionId !== run.missionId) return err('approval_required', 'Receipt is not bound to this run.');
-    if (receipt.status !== 'verified' || receipt.provider?.status !== 'completed') return err('approval_required', 'Receipt status/provider is not consistent with success.');
+    if (receipt.status !== 'verified') return err('approval_required', 'Receipt is not verified.');
     const verification = await verifyReceipt(receipt);
     if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
   }
   const now = isoNow();
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command, adapter: run.adapter,
-    provider: details.provider ?? run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
+    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
   const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');

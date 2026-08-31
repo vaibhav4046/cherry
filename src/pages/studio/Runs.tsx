@@ -43,8 +43,17 @@ export default function Runs() {
     }
     await attachRunnerJob(run.id, result.value.jobId, run.runnerCapabilityToken ?? '');
     await settleRun(run.id, 'running', { runnerCapabilityToken: run.runnerCapabilityToken });
-    const polled = await pollRunnerJob(result.value.jobId);
-    if (polled.ok && polled.value.status === 'failed') await settleRun(run.id, 'failed', { error: polled.value.result?.stderr, outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const polled = await pollRunnerJob(result.value.jobId);
+      if (!polled.ok || polled.value.status === 'queued' || polled.value.status === 'running') {
+        if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 500));
+        continue;
+      }
+      if (polled.value.status === 'failed') await settleRun(run.id, 'failed', { error: polled.value.result?.stderr, outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
+      if (polled.value.status === 'cancelled') await settleRun(run.id, 'cancelled', { outputSummary: polled.value.result?.stdout, runnerCapabilityToken: run.runnerCapabilityToken });
+      if (polled.value.status === 'succeeded') setError('Runner completed; attach a verified receipt before this run can be marked successful.');
+      break;
+    }
     await load();
   }
 
