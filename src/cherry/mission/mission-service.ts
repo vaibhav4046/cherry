@@ -172,12 +172,14 @@ export async function transitionMission(
     return invalid('Only a person may transition a mission to EXECUTING');
   }
   if (mission.state === to) return ok(mission);
+  let executionGraphVersionHash: string | null = null;
   if (to === 'EXECUTING') {
     if (!mission.skillGraphId) return invalid('Mission must reference an approved skill graph before execution');
     const graph = await db.skillGraphs.get(mission.skillGraphId);
     if (!graph || graph.workspaceId !== mission.workspaceId || graph.missionId !== mission.id || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.versionHash !== await sha256Canonical({ ...graph, versionHash: undefined })) {
       return invalid('Mission execution requires approval of the current skill graph revision');
     }
+    executionGraphVersionHash = graph.versionHash;
   }
   if (!canTransition(mission.state, to)) {
     return conflict(`Mission cannot move from ${mission.state} to ${to}`, { from: mission.state, to });
@@ -195,7 +197,13 @@ export async function transitionMission(
     updatedAt: now,
   };
 
-  await withWorkspaceTx(mission.workspaceId, ['missions'], async (ctx) => {
+  const transitioned = await withWorkspaceTx(mission.workspaceId, ['missions', 'skillGraphs'], async (ctx) => {
+    const current = await ctx.db.missions.get(missionId);
+    if (!current || current.revision !== mission.revision || current.state !== mission.state) return conflict('Mission changed concurrently; reload before transitioning.');
+    if (to === 'EXECUTING') {
+      const graph = current.skillGraphId ? await ctx.db.skillGraphs.get(current.skillGraphId) : null;
+      if (!graph || graph.workspaceId !== current.workspaceId || graph.missionId !== current.id || graph.status !== 'approved' || graph.approvedRevision !== graph.revision || graph.versionHash !== executionGraphVersionHash) return conflict('Skill graph changed concurrently; reload before executing.');
+    }
     await ctx.db.missions.put(next);
     ctx.emit({
       type: 'mission.state_changed',
@@ -206,6 +214,7 @@ export async function transitionMission(
       payload: { from: mission.state, to, reason: reason ?? null },
     });
   });
+  if (transitioned && !transitioned.ok) return transitioned as Result<Mission>;
   return ok(next);
 }
 
