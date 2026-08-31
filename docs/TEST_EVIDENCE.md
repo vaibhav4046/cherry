@@ -1,6 +1,6 @@
 # Cherry test evidence index
 
-**Date:** 2026-08-31 · **Commit:** release evidence commit pending. Counts below come from the
+**Date:** 2026-08-31 · **Commit:** `98d7fff`. Counts below come from the
 fresh final gate run on the current tree unless a historical source is explicitly named.
 
 ## Commands and what they cover

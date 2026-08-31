@@ -1,6 +1,6 @@
 # Cherry build status
 
-**Date:** 2026-08-31 · **Commit:** release evidence commit pending · **Branch/tree:** main working tree at `D:\project\cherry`
+**Date:** 2026-08-31 · **Commit:** `98d7fff` · **Branch/tree:** main at `D:\project\cherry`
 
 ## Gates (full suite re-run 2026-08-31 on the current tree)
 
