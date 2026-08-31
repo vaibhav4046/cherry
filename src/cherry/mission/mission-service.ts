@@ -254,7 +254,7 @@ export async function recordRun(
   run: Omit<RunRecord, 'id' | 'revision' | 'createdAt' | 'updatedAt'>,
   actorType: ActorType = 'human',
 ): Promise<Result<RunRecord>> {
-  if (run.status === 'succeeded' && actorType !== 'runner') return { ok: false, error: { code: 'approval_required', message: 'Successful runs require runner settlement with a verified receipt.' } };
+  if (run.status === 'succeeded' && !(actorType === 'runner' || (actorType === 'human' && run.mode === 'manual'))) return { ok: false, error: { code: 'approval_required', message: 'Successful runs require runner settlement with a verified receipt.' } };
   const now = isoNow();
   const record: RunRecord = { ...run, id: newId('run'), revision: 1, createdAt: now, updatedAt: now };
   await withWorkspaceTx(record.workspaceId, ['runs'], async (ctx) => {
