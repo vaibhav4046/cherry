@@ -3,7 +3,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { listRuns } from '../../cherry/mission/mission-service.ts';
 import { settleRun, attachRunnerJob } from '../../cherry/workforce/routines-service.ts';
 import type { RunRecord } from '../../cherry/mission/mission-model.ts';
-import { runnerStatus, submitRunnerJob, pollRunnerJob, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
+import { runnerStatus, submitRunnerJob, pollRunnerJob, cancelRunnerJob, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 
 export default function Runs() {
   const { activeWorkspace } = useAppState();
@@ -61,6 +61,7 @@ export default function Runs() {
   }
 
   async function handleCancel(run: RunRecord) {
+    if (run.runnerJobId) await cancelRunnerJob(run.runnerJobId);
     await settleRun(run.id, 'cancelled', { runnerCapabilityToken: run.runnerCapabilityToken });
     await load();
   }
