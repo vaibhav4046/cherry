@@ -192,7 +192,10 @@ export function Landing() {
       <footer className="band band-cream">
         <div className="band-inner row" style={{ justifyContent: 'space-between' }}>
           <span className="label">Cherry — the apprenticeship layer for AI agents</span>
-          <span className="label">MIT licensed · local-first · WebMCP Challenge 2026</span>
+          <span className="label">
+            MIT licensed · local-first · WebMCP Challenge 2026 ·{' '}
+            <a href="/lab/cherry-3d/" className="link-quiet">Brand lab (3D)</a>
+          </span>
         </div>
       </footer>
     </div>
