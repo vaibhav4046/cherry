@@ -65,7 +65,8 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const missionVerificationIds = new Set(verificationRows.filter((v) => v.missionId === mission.id).map((v) => v.id));
   const linkedMemoryIds = memoryRows.filter((m) => m.missionId === mission.id || (m.runId && missionRunIds.has(m.runId))).map((m) => m.id);
   const deletedLinkedMemoryIds = memoryVersions.filter((v) => v.snapshot.status === 'deleted' && (v.snapshot.missionId === mission.id || (v.snapshot.runId && missionRunIds.has(v.snapshot.runId)))).map((v) => v.memoryId);
-  const causalIds = new Set([mission.id, graph.id, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
+  const lessonLinkedIds = mission.lessonId ? [...(await db.transcriptSegments.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id), ...(await db.observations.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id)] : [];
+  const causalIds = new Set([mission.id, graph.id, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...(graph.knowledge ?? []).map((k) => k.evidenceId), ...mission.requiredMemoryIds, ...lessonLinkedIds, ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
   const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.transcript_imported', 'lesson.playback', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
   const missionEvents = events.filter((event) => causalTypes.has(event.type) && (causalIds.has(event.objectId) || (event.objectType === 'run' && missionRunIds.has(event.objectId))));
 
@@ -165,7 +166,7 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
       hashAlgorithm: 'SHA-256',
       exclusions: [...RECEIPT_HASH_EXCLUSIONS],
     },
-    events: missionEvents.slice(-eventLimit).map(toReceiptEvent),
+    events: missionEvents.slice(-eventLimit).map((event) => { const mapped = toReceiptEvent(event); return deletedLinkedMemoryIds.includes(event.objectId) && event.type.startsWith('memory.') ? { ...mapped, summary: `Memory ${event.objectId} event (content redacted)` } : mapped; }),
     approvals,
     artifacts,
     assertions,
