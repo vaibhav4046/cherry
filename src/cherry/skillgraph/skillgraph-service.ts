@@ -274,6 +274,8 @@ export async function requestSkillGraphApproval(
     if (pending.some((a) => a.objectType === 'skillgraph' && a.objectRevision === graph.revision && a.decision === 'pending')) {
       return conflict('An approval decision is already pending for this skill graph revision');
     }
+    const currentGraph = await ctx.db.skillGraphs.get(graph.id);
+    if (!currentGraph || currentGraph.revision !== graph.revision || currentGraph.versionHash !== graph.versionHash) return conflict('Skill graph changed concurrently; reload before requesting approval.');
     await ctx.db.skillGraphs.put(next);
     await ctx.db.approvals.add(approval);
     ctx.emit({
@@ -343,7 +345,10 @@ export async function decideSkillGraphApproval(
   };
   next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
-  await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals', 'skillVersions'], async (ctx) => {
+  const decided = await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals', 'skillVersions'], async (ctx) => {
+    const currentApproval = await ctx.db.approvals.get(approvalId);
+    const currentGraph = await ctx.db.skillGraphs.get(approval.objectId);
+    if (!currentApproval || currentApproval.decision !== 'pending' || !currentGraph || currentGraph.revision !== approval.objectRevision) return conflict('Approval changed concurrently; reload before deciding.');
     await ctx.db.skillGraphs.put(next);
     await ctx.db.approvals.put(decidedApproval);
     await ctx.db.skillVersions.add(makeVersion(next, `Revision ${decision} by ${decidedBy}`, 'human'));
@@ -356,6 +361,7 @@ export async function decideSkillGraphApproval(
       payload: { revision: graph.revision, approvalId: approval.id, decision },
     });
   });
+  if (decided && !decided.ok) return decided as Result<{ graph: SkillGraph; approval: ApprovalRecord }>;
   return ok({ graph: next, approval: decidedApproval });
 }
 
