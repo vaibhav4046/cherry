@@ -1,6 +1,6 @@
 # Cherry build status
 
-**Date:** 2026-08-31 · **Evidence snapshot:** `5b7d731` · **Branch/tree:** main at `D:\project\cherry`
+**Date:** 2026-08-31 · **Evidence snapshot:** `c2ad305` · **Branch/tree:** main at `D:\project\cherry`
 
 ## Gates (full suite re-run 2026-08-31 on the current tree)
 
@@ -8,10 +8,10 @@
 |---|---|---|
 | Typecheck | `npm run typecheck` | PASS (tsc --noEmit, strict) |
 | Lint | `npm run lint` | PASS (eslint 9 flat config) |
-| Unit/integration | `npm run test` | PASS — 154 passed, 2 skipped (19 files passed, 2 skipped; vitest) — 2026-08-31 |
+| Unit/integration | `npm run test` | PASS — 160 passed, 2 skipped (20 files passed, 2 skipped; vitest) — 2026-08-31 |
 | Runner + bridge + v2 | `npm run test:runner` | PASS — 42 passed (node:test) |
 | Production build | `npm run build` | PASS (vite; largest chunk `transformers.web` ~549 KB) |
-| E2E | `npm run test:e2e` | PASS — 41 passed, 0 unexpected/flaky/skipped (desktop + mobile; registered-closure host path included); see docs/release/e2e-results.json |
+| E2E | `npm run test:e2e` | PASS — 43 passed, 0 unexpected/flaky/skipped (desktop + mobile; Source Inbox, registered-closure host path, and artifact isolation included); see docs/release/e2e-results.json |
 | Pack verify | `npm run verify:pack` | PASS — 6/6 checks (zip hash matches meta, standalone verifier passes, one-byte tamper FAILS, missing evidence FAILS) |
 | Submission audit | `npm run audit:submission` | PASS — 13 checks, 0 FAIL, 0 WARN |
 
@@ -21,11 +21,11 @@ release-critical.
 ## Production deployment (2026-08-31)
 
 - **Status:** READY
-- **Commit:** `5b7d731`
-- **Deployment:** `dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC`
+- **Commit:** `c2ad305`
+- **Deployment:** `dpl_Ho1QmXCkpGw1D1qdtwKLHy4BAoLV`
+- **Production URL:** [https://cherry-wine.vercel.app](https://cherry-wine.vercel.app)
 - **Public alias:** [https://getcherry.vercel.app](https://getcherry.vercel.app) (resolves to the public Cherry domain)
-- **Post-deploy smoke:** HTTP 200; browser render on the public alias showed the landing content,
-  no Vercel/Vite error overlay, and no captured console errors.
+- **Post-deploy smoke:** HTTP 200 for `/` and `/studio/sources` on both public domains.
 - **Preview note:** the preview URL is Vercel-auth protected; production is the public inspection link.
 
 **Note on verify:pack:** the wired script was missing from the tree when this snapshot was first
@@ -35,6 +35,11 @@ path-traversal guard, runs the bundle's own standalone verifier, then proves tam
 flipping one byte of `SKILL.md` (must FAIL) and deleting `references/evidence.md` (must FAIL).
 
 ## Landed 2026-08-31 (god-mode master prompt)
+
+- **Source Inbox + compliant Scrapling fetch** — `/studio/sources` stores YouTube/article/note/file
+  sources with content hashes, provenance, duplicate detection, exact-lesson links, human-selected
+  fetches through the paired local runner, explicit LinkedIn/YouTube/private-network blocks, and
+  five narrow WebMCP source tools. Optional setup: `docs/SCRAPLING_SETUP.md`.
 
 - **/showcase judge route** — one linear 12-step apprenticeship story rendered from real persisted
   state; fresh-start, opt-in labelled sample, inline human-only approval card, live host panel,
