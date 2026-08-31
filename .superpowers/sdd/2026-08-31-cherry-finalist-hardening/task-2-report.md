@@ -4,7 +4,7 @@ Status: complete
 
 ## Commit
 
-Pending commit recorded after verification.
+Implementation commit: `a8a37a214b9e551e4759acc4ea195ac6bde044f4`.
 
 ## Files changed
 
