@@ -383,7 +383,7 @@ function redactOutput(value: string | undefined): string | undefined {
 export async function settleRun(
   runId: string,
   status: Exclude<RunStatus, 'queued'>,
-  details: { outputSummary?: string; error?: string; receiptId?: string; command?: string | string[]; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string; startedAt?: string; endedAt?: string } = {},
+  details: { outputSummary?: string; error?: string | null; receiptId?: string | null; command?: string | string[]; adapter?: RunRecord['adapter']; provider?: RunRecord['provider']; runnerCapabilityToken?: string; startedAt?: string; endedAt?: string } = {},
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
   if (actorType !== 'runner') return err('approval_required', 'Only a paired runner may settle a run.');
@@ -391,6 +391,8 @@ export async function settleRun(
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
   if (!details.runnerCapabilityToken || details.runnerCapabilityToken !== run.runnerCapabilityToken) return err('approval_required', 'Runner capability token is invalid.');
+  if (details.adapter && details.adapter !== run.adapter) return err('conflict', 'Runner adapter does not match the approved run envelope.');
+  if (details.command && run.command && JSON.stringify(details.command) !== JSON.stringify(run.command)) return err('conflict', 'Runner command does not match the approved run envelope.');
   const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
   if (run.status === 'queued' && status !== 'running' && status !== 'cancelled') return err('conflict', 'Queued runs may only transition to running or cancelled.');
   if (run.status === 'waiting_for_runner' && status !== 'running' && status !== 'setup-required' && status !== 'cancelled') return err('conflict', 'A waiting run must transition to running, setup-required, or cancelled.');
@@ -443,15 +445,26 @@ export async function attachRunnerJob(runId: string, runnerJobId: string, capabi
 
 export async function settleRoutineRun(
   runId: string,
-  settlement: { status: Exclude<RunStatus, 'queued'>; startedAt?: string; endedAt?: string; output?: string; error?: string; receiptId?: string; command?: string[]; runnerCapabilityToken: string },
+  settlement: {
+    status: Exclude<RunStatus, 'queued'>;
+    startedAt?: string;
+    endedAt: string;
+    adapter?: RunRecord['adapter'];
+    command?: string[];
+    outputSummary?: string;
+    receiptId?: string | null;
+    error?: string | null;
+    runnerCapabilityToken: string;
+  },
 ): Promise<Result<RunRecord>> {
   return settleRun(runId, settlement.status, {
-    outputSummary: settlement.output,
+    outputSummary: settlement.outputSummary,
     error: settlement.error,
     receiptId: settlement.receiptId,
     runnerCapabilityToken: settlement.runnerCapabilityToken,
     startedAt: settlement.startedAt,
     endedAt: settlement.endedAt,
     command: settlement.command,
+    adapter: settlement.adapter,
   });
 }
