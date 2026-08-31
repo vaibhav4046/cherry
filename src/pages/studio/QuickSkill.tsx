@@ -12,6 +12,7 @@ import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
 import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
 import { createArtifactSet, writeArtifactFile } from '../../cherry/artifacts/artifact-service.ts';
 import { getMission } from '../../cherry/mission/mission-service.ts';
+import { Icons } from '../../components/Icons.tsx';
 import {
   buildBriefingDoc,
   buildFaq,
@@ -290,7 +291,7 @@ export default function QuickSkill() {
         <div className="row" data-testid="quick-stages">
           {['Source', 'Transcript', 'Review & approve', 'Install'].map((label, index) => (
             <span key={label} className={index === stageIndex ? 'sticker sticker-cherry' : index < stageIndex ? 'sticker sticker-pass' : 'sticker'}>
-              {index < stageIndex ? '✓ ' : ''}{index + 1} · {label}
+              {index < stageIndex ? <>{Icons.check(14)} </> : null}{index + 1} · {label}
             </span>
           ))}
         </div>
