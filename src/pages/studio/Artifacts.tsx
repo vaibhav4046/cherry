@@ -9,6 +9,7 @@ import {
 import type { ArtifactFile, ArtifactSet } from '../../cherry/artifacts/artifact-model.ts';
 import { buildPreviewDocument, parsePreviewMessage, PREVIEW_SANDBOX, type PreviewMessage } from '../../cherry/artifacts/preview-protocol.ts';
 import { appendProofEvents } from '../../cherry/persistence/transactions.ts';
+import { Icons } from '../../components/Icons.tsx';
 
 export default function Artifacts() {
   const { artifactSetId } = useParams<{ artifactSetId: string }>();
@@ -152,7 +153,7 @@ export default function Artifacts() {
                 >
                   {file.path}
                 </button>
-                <button type="button" className="btn btn-sm" aria-label={`Delete ${file.path}`} onClick={() => void handleDelete(file.path)}>✕</button>
+            <button type="button" className="btn btn-sm" aria-label={`Delete ${file.path}`} onClick={() => void handleDelete(file.path)}>{Icons.close(16)}</button>
               </li>
             ))}
             {files.length === 0 ? <li>No files yet.</li> : null}

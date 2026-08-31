@@ -13,6 +13,7 @@ import { createArtifactSet } from '../../cherry/artifacts/artifact-service.ts';
 import { runVerification, listVerifications } from '../../cherry/verify/verification-service.ts';
 import type { VerificationReport } from '../../cherry/verify/assertion-model.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
+import { Icons } from '../../components/Icons.tsx';
 
 /** Plain-word status labels; the raw state stays available as a quiet label / title. */
 const STATE_LABELS: Record<MissionState, string> = {
@@ -255,7 +256,7 @@ export default function MissionDetail() {
                 className={status === 'current' ? 'sticker sticker-cherry' : status === 'done' ? 'sticker sticker-pass' : 'sticker'}
                 style={{ padding: '2px 10px', fontSize: 12, opacity: status === 'ahead' ? 0.55 : 1 }}
               >
-                {status === 'done' ? '✓ ' : ''}{MOVE_LABELS[phase]}
+                {status === 'done' ? <>{Icons.check(14)} </> : null}{MOVE_LABELS[phase]}
               </span>
             );
           })}
@@ -313,7 +314,7 @@ export default function MissionDetail() {
 
         {latestVerification && latestVerification.status === 'passed' ? (
           <div className="pass-calm">
-            <span className="run-ico run-ico-pass" aria-hidden="true">✓</span>
+            <span className="run-ico run-ico-pass" aria-hidden="true">{Icons.check(16)}</span>
             <p style={{ margin: 0 }}>
               <strong>Verified.</strong>{' '}
               <span className="contract-empty">All {latestVerification.totalAssertions} checks passed against the real files at {timeOf(latestVerification.finishedAt)}.</span>
@@ -327,7 +328,7 @@ export default function MissionDetail() {
             <ul className="assert-list">
               {failedAssertions.map((assertion) => (
                 <li key={assertion.id} className="assert-row">
-                  <span className="run-ico run-ico-fail" aria-hidden="true">✕</span>
+                  <span className="run-ico run-ico-fail" aria-hidden="true">{Icons.close(16)}</span>
                   <div style={{ minWidth: 0 }}>
                     <span>{assertion.name}</span>
                     {assertion.evidence.slice(0, 3).map((line, index) => (
@@ -355,7 +356,7 @@ export default function MissionDetail() {
               {latestVerification.results.map((assertion) => (
                 <div key={assertion.id} className="run-row">
                   <span className={assertion.status === 'passed' ? 'run-ico run-ico-pass' : 'run-ico run-ico-fail'} aria-hidden="true">
-                    {assertion.status === 'passed' ? '✓' : '✕'}
+                    {assertion.status === 'passed' ? Icons.check(14) : Icons.close(14)}
                   </span>
                   <span className="run-time">{timeOf(assertion.finishedAt)}</span>
                   <span>{assertion.name}</span>

@@ -14,6 +14,8 @@ import { listRuns } from '../../cherry/mission/mission-service.ts';
 import type { RunRecord } from '../../cherry/mission/mission-model.ts';
 import { validateSchedule, type Routine, type ScheduleSpec } from '../../cherry/workforce/workforce-model.ts';
 import type { Result } from '../../cherry/core/result.ts';
+import { getSkillGraph } from '../../cherry/skillgraph/skillgraph-service.ts';
+import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -88,12 +90,14 @@ export default function RoutineDetail() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [runs, setRuns] = useState<RunRecord[]>([]);
+  const [skillGraph, setSkillGraph] = useState<SkillGraph | null>(null);
 
   const load = useCallback(async (resetEditor: boolean) => {
     if (!activeWorkspace || !routineId) return;
     const loaded = await getRoutine(activeWorkspace.id, routineId);
     setRoutine(loaded);
     setRuns((await listRuns(activeWorkspace.id)).filter((run) => run.routineId === routineId));
+    setSkillGraph(loaded ? ((await getSkillGraph(loaded.skillGraphId)) ?? null) : null);
     if (loaded && resetEditor) setEditor(editorFromRoutine(loaded));
   }, [activeWorkspace, routineId]);
 
@@ -160,6 +164,10 @@ export default function RoutineDetail() {
   async function handleRunNow() {
     const result = await run(() => requestRunNow(activeWorkspace!.id, routine!.id));
     if (result.ok) setNotice(result.value.note);
+  }
+
+  async function handleRerun() {
+    await handleRunNow();
   }
 
   return (
@@ -338,11 +346,23 @@ export default function RoutineDetail() {
           <span className="sticker">policy: {routine.missedRunPolicy.replace(/_/g, ' ')}</span>
         </div>
         <p className="label" style={{ margin: 0 }}>Next run: {fmt(routine.nextRunAt)} · Last run: {fmt(routine.lastRunAt)}</p>
+        <div className="routine-graph-binding" aria-label="Approved skill graph binding">
+          <strong>Approved skill graph</strong>
+          {skillGraph ? (
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <span>{skillGraph.name}</span>
+              <span className="sticker mono">v{skillGraph.version} · r{skillGraph.revision}</span>
+              {skillGraph.versionHash ? <span className="sticker mono" title={skillGraph.versionHash}>hash {skillGraph.versionHash.slice(0, 16)}…</span> : null}
+              <Link className="btn btn-sm" to={`/studio/skills/${skillGraph.id}`}>Inspect graph</Link>
+            </div>
+          ) : <p className="label" style={{ margin: 0 }}>The bound graph is unavailable; approval cannot be verified.</p>}
+        </div>
       </section>
       <section className="card stack" aria-labelledby="history-heading">
         <h2 id="history-heading" className="subhead" style={{ fontSize: 20 }}>Persisted run history ({runs.length})</h2>
         <p className="label" style={{ margin: 0 }}>Runs are stored locally with their runner evidence. No cloud execution is implied.</p>
-        {runs.length === 0 ? <p className="label">No runs yet. Pair a local runner, then use Run now.</p> : <div className="stack">{runs.map((runRecord) => <article key={runRecord.id} className="routine-run-row" data-testid="routine-run-history"><div className="row" style={{ justifyContent: 'space-between' }}><strong>{runRecord.status}</strong><span className="mono">{fmt(runRecord.createdAt)}</span></div><div className="label">{runRecord.summary}</div>{runRecord.provider ? <div className="mono">provider: {runRecord.provider.kind} · {runRecord.provider.status}</div> : null}{runRecord.outputSummary ? <pre className="routine-output">{runRecord.outputSummary}</pre> : null}{runRecord.error ? <p className="field-error">{runRecord.error}</p> : null}{runRecord.receiptId ? <div className="mono">receipt: {runRecord.receiptId}</div> : null}</article>)}</div>}
+        <Link className="btn btn-sm" to="/studio/settings/connections" style={{ alignSelf: 'flex-start' }}>Pair or check local runner</Link>
+        {runs.length === 0 ? <p className="label">No runs yet. Pair a local runner, then use Run now.</p> : <div className="stack">{runs.map((runRecord) => <article key={runRecord.id} className="routine-run-row" data-testid="routine-run-history"><div className="row" style={{ justifyContent: 'space-between' }}><strong>{runRecord.status}</strong><span className="mono">{fmt(runRecord.createdAt)}</span></div><div className="label">{runRecord.summary}</div>{runRecord.provider ? <div className="mono">provider: {runRecord.provider.kind} · {runRecord.provider.status}</div> : null}{runRecord.outputSummary ? <pre className="routine-output">{runRecord.outputSummary}</pre> : null}{runRecord.error ? <p className="field-error">{runRecord.error}</p> : null}{runRecord.receiptId ? <div className="mono">receipt: {runRecord.receiptId}</div> : null}<button type="button" className="btn btn-sm" disabled={busy} onClick={() => void handleRerun()}>Request rerun</button></article>)}</div>}
       </section>
     </div>
   );

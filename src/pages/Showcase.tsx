@@ -130,33 +130,42 @@ export function Showcase() {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const workspace = await createWorkspace({ name: 'Showcase run' }, 'human');
-    if (!workspace.ok) {
-      setError(workspace.error.message);
+    try {
+      const workspace = await createWorkspace({ name: 'Showcase run' }, 'human');
+      if (!workspace.ok) {
+        setError(workspace.error.message);
+        return;
+      }
+      setActiveWorkspace(workspace.value.id);
+      setNotice('Fresh workspace created. An attached agent can now call start_apprenticeship — or use the buttons above.');
+    } catch (startError) {
+      setError(startError instanceof Error ? startError.message : 'Unable to create a workspace.');
+    } finally {
       setBusy(false);
-      return;
     }
-    setActiveWorkspace(workspace.value.id);
-    setNotice('Fresh workspace created. An attached agent can now call start_apprenticeship — or use the buttons above.');
-    setBusy(false);
   }
 
   async function createShowcaseMission() {
     if (!activeWorkspace) return;
     setBusy(true);
     setError(null);
-    const mission = await createMission(
-      {
-        workspaceId: activeWorkspace.id,
-        title: 'Learn a lesson and prove it',
-        objective: 'Turn a permitted lesson into an approved, verified, portable skill.',
-        definitionOfDone: ['Evidence linked', 'Exact revision approved by a human', 'Verification passed'],
-      },
-      'human',
-    );
-    if (!mission.ok) setError(mission.error.message);
-    await refresh();
-    setBusy(false);
+    try {
+      const mission = await createMission(
+        {
+          workspaceId: activeWorkspace.id,
+          title: 'Learn a lesson and prove it',
+          objective: 'Turn a permitted lesson into an approved, verified, portable skill.',
+          definitionOfDone: ['Evidence linked', 'Exact revision approved by a human', 'Verification passed'],
+        },
+        'human',
+      );
+      if (!mission.ok) setError(mission.error.message);
+      await refresh();
+    } catch (missionError) {
+      setError(missionError instanceof Error ? missionError.message : 'Unable to create a mission.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function loadSample() {
@@ -175,42 +184,53 @@ export function Showcase() {
       }
     } catch (importError) {
       setError((importError as Error).message);
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function resetDemo() {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const all = await listWorkspaces();
-    const demoWorkspaces = all.filter(
-      (workspace) => workspace.isExample === true || workspace.name === 'Showcase run' || workspace.name.startsWith('EXAMPLE'),
-    );
-    for (const workspace of demoWorkspaces) {
-      const result = await deleteWorkspace(workspace.id);
-      if (!result.ok) setError(result.error.message);
+    try {
+      const all = await listWorkspaces();
+      const demoWorkspaces = all.filter(
+        (workspace) => workspace.isExample === true || workspace.name === 'Showcase run' || workspace.name.startsWith('EXAMPLE'),
+      );
+      for (const workspace of demoWorkspaces) {
+        const result = await deleteWorkspace(workspace.id);
+        if (!result.ok) setError(result.error.message);
+      }
+      setActiveWorkspace(null);
+      await refresh();
+      await loadAll();
+      setNotice(
+        demoWorkspaces.length > 0
+          ? `Reset: removed ${demoWorkspaces.length} demo workspace(s). Your own workspaces were not touched.`
+          : 'Nothing to reset — no demo workspaces exist.',
+      );
+    } catch (resetError) {
+      setError(resetError instanceof Error ? resetError.message : 'Unable to reset the showcase.');
+    } finally {
+      setBusy(false);
     }
-    setActiveWorkspace(null);
-    await refresh();
-    await loadAll();
-    setNotice(
-      demoWorkspaces.length > 0
-        ? `Reset: removed ${demoWorkspaces.length} demo workspace(s). Your own workspaces were not touched.`
-        : 'Nothing to reset — no demo workspaces exist.',
-    );
-    setBusy(false);
   }
 
   async function decideApproval(decision: 'approved' | 'rejected') {
     if (!data.pendingApproval) return;
     setBusy(true);
     setError(null);
-    const result = await decideSkillGraphApproval(data.pendingApproval.id, decision, 'user');
-    if (!result.ok) setError(result.error.message);
-    await refresh();
-    await loadAll();
-    setBusy(false);
+    try {
+      const result = await decideSkillGraphApproval(data.pendingApproval.id, decision, 'user');
+      if (!result.ok) setError(result.error.message);
+      await refresh();
+      await loadAll();
+    } catch (approvalError) {
+      setError(approvalError instanceof Error ? approvalError.message : 'Unable to record approval decision.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   const failedVerifications = data.verifications.filter((report) => report.status === 'failed');

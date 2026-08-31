@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../app/AppState.tsx';
+import { Icons } from './Icons.tsx';
 
 const TOUR_KEY = 'cherry.tour.step';
 
@@ -155,7 +156,7 @@ export function GuidedTour() {
     <aside className="tour-card" role="dialog" aria-label="Guided walkthrough" data-testid="guided-tour">
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <span className="sticker sticker-cherry">Walkthrough · {boundedIndex + 1}/{steps.length}</span>
-        <button type="button" className="btn btn-sm" onClick={stop} aria-label="Exit walkthrough">✕</button>
+        <button type="button" className="btn btn-sm" onClick={stop} aria-label="Exit walkthrough">{Icons.close(16)}</button>
       </div>
       <h2 className="subhead" style={{ fontSize: 20 }}>{step.title}</h2>
       <p style={{ margin: 0, fontSize: 14 }}>{step.body}</p>

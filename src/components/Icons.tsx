@@ -58,6 +58,9 @@ export const Icons = {
   check: (size?: number) => (
     <Icon size={size}><path d="M4 13l5 5L20 7" /></Icon>
   ),
+  close: (size?: number) => (
+    <Icon size={size}><path d="M6 6l12 12M18 6L6 18" /></Icon>
+  ),
   approve: (size?: number) => (
     <Icon size={size}><circle cx="12" cy="12" r="9" /><path d="M8 12.5l3 3 5-6" /></Icon>
   ),

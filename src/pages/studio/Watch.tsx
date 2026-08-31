@@ -14,6 +14,7 @@ import {
 } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import type { CoverageReport, Lesson, Observation, TranscriptSegment } from '../../cherry/watch/watch-model.ts';
+import { Icons } from '../../components/Icons.tsx';
 
 // The embed always loads from the privacy-enhanced host (youtube-url.ts), so
 // outbound player commands target that exact origin — never a wildcard.
@@ -355,7 +356,7 @@ export default function Watch() {
                     aria-label={`Delete observation at ${formatTime(observation.timestampSeconds)}`}
                     onClick={async () => { await deleteObservation(observation.id); await load(); }}
                   >
-                    ✕
+                    {Icons.close(16)}
                   </button>
                 </div>
               ))}
