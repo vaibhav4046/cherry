@@ -147,6 +147,18 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     await expect(page.getByText('Fresh session — no workspace exists in this browser yet.')).toBeVisible();
     await page.getByTestId('showcase-load-sample').click();
     await expect(page.getByText(/SAMPLE workspace imported \(hash verified\)/)).toBeVisible();
-    await expect(page.getByText('SAMPLE DATA')).toBeVisible();
+    await expect(page.getByText('SAMPLE DATA', { exact: true })).toBeVisible();
+  });
+
+  test('reset demo removes only demo workspaces and returns to a fresh session', async ({ page }) => {
+    await page.goto('/showcase');
+    await page.getByTestId('showcase-load-sample').click();
+    await expect(page.getByText('SAMPLE DATA', { exact: true })).toBeVisible();
+    await page.getByTestId('showcase-start-fresh').click();
+    await expect(page.getByText(/Fresh workspace created/)).toBeVisible();
+    await page.getByTestId('showcase-reset-demo').click();
+    await expect(page.getByText(/Reset: removed 2 demo workspace\(s\)/)).toBeVisible();
+    await expect(page.getByText('Fresh session — no workspace exists in this browser yet.')).toBeVisible();
+    await expect(page.getByTestId('showcase-judge-script')).toContainText('Judge script');
   });
 });

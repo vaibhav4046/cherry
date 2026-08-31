@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../app/AppState.tsx';
-import { createMission, createWorkspace } from '../cherry/mission/mission-service.ts';
+import { createMission, createWorkspace, deleteWorkspace, listWorkspaces } from '../cherry/mission/mission-service.ts';
 import { importWorkspace } from '../cherry/persistence/workspace-archive.ts';
 import { listProofEvents } from '../cherry/persistence/transactions.ts';
 import { getLesson, listTranscript, listObservations } from '../cherry/watch/lesson-service.ts';
@@ -159,6 +159,29 @@ export function Showcase() {
     setBusy(false);
   }
 
+  async function resetDemo() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const all = await listWorkspaces();
+    const demoWorkspaces = all.filter(
+      (workspace) => workspace.isExample === true || workspace.name === 'Showcase run' || workspace.name.startsWith('EXAMPLE'),
+    );
+    for (const workspace of demoWorkspaces) {
+      const result = await deleteWorkspace(workspace.id);
+      if (!result.ok) setError(result.error.message);
+    }
+    setActiveWorkspace(null);
+    await refresh();
+    await loadAll();
+    setNotice(
+      demoWorkspaces.length > 0
+        ? `Reset: removed ${demoWorkspaces.length} demo workspace(s). Your own workspaces were not touched.`
+        : 'Nothing to reset — no demo workspaces exist.',
+    );
+    setBusy(false);
+  }
+
   async function decideApproval(decision: 'approved' | 'rejected') {
     if (!data.pendingApproval) return;
     setBusy(true);
@@ -304,6 +327,18 @@ export function Showcase() {
             Every card below reads real persisted state. Nothing is scripted, nothing is pre-completed,
             and the approval in the middle can only be clicked by you.
           </p>
+          <details className="card" data-testid="showcase-judge-script">
+            <summary className="subhead" style={{ cursor: 'pointer' }}>Judge script — the whole path in two minutes</summary>
+            <ol className="stack" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', paddingLeft: '1.2em' }}>
+              <li><strong>Start fresh</strong> — a blank workspace; the story rail below is all “to do”.</li>
+              <li><strong>Load labelled sample</strong> — imports the hash-verified example (clearly badged as such) if you want the finished journey instead of driving it yourself.</li>
+              <li>Driving it yourself: create the mission, open the lesson, paste a transcript, and watch <strong>timestamped evidence</strong> land — everything external starts untrusted.</li>
+              <li>Generate the skill draft, then <strong>approve the exact revision</strong> — the one button no agent can press.</li>
+              <li>Run verification: the demo artifact <strong>fails honestly</strong> (heading hierarchy), gets repaired, and passes.</li>
+              <li><strong>Export</strong> the bundle + receipt — recompute the hash yourself; a one-byte edit breaks it.</li>
+              <li>The host panel above shows live WebMCP registrations when a compatible host is attached — and says so honestly when one is not.</li>
+            </ol>
+          </details>
         </header>
 
         <section className="card stack" aria-labelledby="host-heading" data-testid="showcase-host">
@@ -324,7 +359,8 @@ export function Showcase() {
           {webmcp.recentCalls.length > 0 ? (
             <p className="label" style={{ margin: 0 }} data-testid="showcase-last-call">
               Last call: <span className="mono">{webmcp.recentCalls[webmcp.recentCalls.length - 1]!.name}</span>{' '}
-              ({webmcp.recentCalls[webmcp.recentCalls.length - 1]!.ok ? 'ok' : 'error'}) ·{' '}
+              ({webmcp.recentCalls[webmcp.recentCalls.length - 1]!.ok ? 'tool ok' : 'tool returned an error'}) ·{' '}
+              {new Date(webmcp.recentCalls[webmcp.recentCalls.length - 1]!.at).toLocaleTimeString()} ·{' '}
               {webmcp.recentCalls[webmcp.recentCalls.length - 1]!.resultPreview.slice(0, 80)}
             </p>
           ) : (
@@ -359,7 +395,13 @@ export function Showcase() {
             <button type="button" className="btn" onClick={() => void loadAll()} disabled={busy}>
               Refresh
             </button>
+            <button type="button" className="btn" onClick={() => void resetDemo()} disabled={busy} data-testid="showcase-reset-demo">
+              Reset demo
+            </button>
           </div>
+          <p className="label" style={{ margin: 0 }}>
+            Reset demo removes only workspaces this page created (fresh runs and the labelled sample) — never your own work.
+          </p>
           {notice ? <p className="label" role="status">{notice}</p> : null}
           {error ? <p className="field-error" role="alert">{error}</p> : null}
         </section>
