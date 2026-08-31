@@ -13,7 +13,7 @@ describe('causal proof receipts', () => {
     const m1 = unwrap(await createMission({ workspaceId: ws.id, title: 'One', objective: 'one', definitionOfDone: ['done'] }));
     const m2 = unwrap(await createMission({ workspaceId: ws.id, title: 'Two', objective: 'two', definitionOfDone: ['done'] }));
     const g1 = unwrap(await draftSkillGraph({ workspaceId: ws.id, missionId: m1.id, name: 'G', purpose: 'p', nodes: [{ kind: 'build', title: 'n', goal: 'g' }] }));
-    unwrap(await recordRun({ workspaceId: ws.id, missionId: m1.id, adapter: 'manual', mode: 'manual', status: 'succeeded', summary: 'run', provider: { kind: 'runner', status: 'completed', verifiedSeparately: true } }));
+    unwrap(await recordRun({ workspaceId: ws.id, missionId: m1.id, adapter: 'manual', mode: 'manual', status: 'failed', summary: 'run', provider: { kind: 'runner', status: 'failed', verifiedSeparately: true } }));
     await getDb().missions.update(m1.id, { skillGraphId: g1.id });
     const receipt = unwrap(await createProofReceipt(m1.id));
     expect(receipt.runId).toBeTruthy();

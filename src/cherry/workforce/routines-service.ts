@@ -404,13 +404,13 @@ export async function settleRun(
   const now = isoNow();
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command, adapter: run.adapter,
-    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' ? undefined : now, revision: run.revision + 1, updatedAt: now };
+    provider: run.provider ? { ...run.provider, status: status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : run.provider.status } : run.provider, startedAt: run.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : now, revision: run.revision + 1, updatedAt: now };
   const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');
     const atomicNext = { ...next, revision: latest.revision + 1, updatedAt: isoNow() };
     await ctx.db.runs.put(atomicNext);
-    if (atomicNext.routineId && status !== 'running') {
+    if (atomicNext.routineId && status !== 'running' && status !== 'setup-required') {
       const routine = await ctx.db.routines.get(atomicNext.routineId);
       if (routine) await ctx.db.routines.put({ ...routine, lastRunAt: atomicNext.finishedAt ?? isoNow(), updatedAt: isoNow() });
     }

@@ -364,6 +364,7 @@
             "artifact-set",
             "memory",
             "runner-job",
+            "routine",
             "export"
           ]
         },

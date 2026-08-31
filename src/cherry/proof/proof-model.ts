@@ -23,7 +23,7 @@ export interface ProofReceiptEvent {
 
 export interface ProofApproval {
   id: string;
-  objectType: 'mission' | 'skillgraph' | 'artifact-set' | 'memory' | 'runner-job' | 'export';
+  objectType: 'mission' | 'skillgraph' | 'artifact-set' | 'memory' | 'runner-job' | 'routine' | 'export';
   objectId: string;
   objectRevision: number;
   decision: 'approved' | 'rejected';
