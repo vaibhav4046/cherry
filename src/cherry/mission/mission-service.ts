@@ -275,7 +275,7 @@ export async function updateRun(
   patch: Partial<RunRecord>,
   actorType: ActorType = 'system',
 ): Promise<Result<RunRecord>> {
-  const lifecycle = ['status','outputSummary','receiptId','finishedAt','startedAt','error','command','adapter','provider','detail'];
+  const lifecycle = ['status','outputSummary','receiptId','finishedAt','startedAt','error','command','adapter','provider','detail','workspaceId','missionId','idempotencyKey','runnerCapabilityToken'];
   if (lifecycle.some((key) => key in patch)) return { ok: false, error: { code: 'approval_required', message: 'Use settleRun with runner authorization for lifecycle updates.' } };
   const db = getDb();
   const run = await db.runs.get(runId);

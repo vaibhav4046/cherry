@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppState } from '../../app/AppState.tsx';
-import { listRuns, updateRun } from '../../cherry/mission/mission-service.ts';
+import { listRuns } from '../../cherry/mission/mission-service.ts';
+import { settleRun } from '../../cherry/workforce/routines-service.ts';
 import type { RunRecord } from '../../cherry/mission/mission-model.ts';
 import { runnerStatus, submitRunnerJob, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 
@@ -40,12 +41,12 @@ export default function Runs() {
       setError(result.error.message);
       return;
     }
-    await updateRun(run.id, { status: 'running', startedAt: new Date().toISOString(), detail: `Runner job ${result.value.jobId}` });
+    await settleRun(run.id, 'running', { command: `Runner job ${result.value.jobId}`, runnerCapabilityToken: run.runnerCapabilityToken });
     await load();
   }
 
   async function handleCancel(run: RunRecord) {
-    await updateRun(run.id, { status: 'cancelled', finishedAt: new Date().toISOString() }, 'human');
+    await settleRun(run.id, 'cancelled', { runnerCapabilityToken: run.runnerCapabilityToken });
     await load();
   }
 

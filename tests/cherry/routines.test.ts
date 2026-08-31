@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { freshDb } from '../setup.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
-import { createWorkspace } from '../../src/cherry/mission/mission-service.ts';
+import { createWorkspace, createMission } from '../../src/cherry/mission/mission-service.ts';
 import {
   decideSkillGraphApproval,
   draftSkillGraph,
@@ -23,9 +23,11 @@ import type { ScheduleSpec } from '../../src/cherry/workforce/workforce-model.ts
 
 async function seedApprovedGraph() {
   const workspace = unwrap(await createWorkspace({ name: 'Routines workspace' }));
+  const mission = unwrap(await createMission({ workspaceId: workspace.id, title: 'Routine mission', objective: 'Run routine', definitionOfDone: ['done'] }));
   const graph = unwrap(
     await draftSkillGraph({
       workspaceId: workspace.id,
+      missionId: mission.id,
       name: 'Nightly digest',
       purpose: 'Summarise the day into one page',
       nodes: [{ kind: 'build', title: 'Summarise', goal: 'Produce the digest' }],

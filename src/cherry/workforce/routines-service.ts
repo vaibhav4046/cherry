@@ -372,7 +372,7 @@ export async function requestRunNow(
 
 function redactOutput(value: string | undefined): string | undefined {
   if (!value) return value;
-  return value.replace(/(token|secret|password|api[_-]?key|bearer)\s*[:=]?\s*(sk-|pk-|ghp-)?[^\s,;]+/gi, '$1=[REDACTED]').replace(/\b(sk|pk|ghp)-[A-Za-z0-9_-]+\b/gi, '[REDACTED]').slice(0, 4000);
+  return value.replace(/(token|secret|password|api[_-]?key|bearer)\s*[:=]?\s*(sk-|pk-|ghp-|rk-|gho-|xoxb-|xoxp-)?[^\s,;]+/gi, '$1=[REDACTED]').replace(/\b(sk|pk|ghp|rk|gho|xoxb|xoxp)-[A-Za-z0-9_-]+\b/gi, '[REDACTED]').slice(0, 4000);
 }
 
 export async function settleRun(

@@ -140,6 +140,7 @@ async function adapterShellSafe(job) {
 /** Optional provider adapters: only run when the CLI exists on PATH. Exit code
  *  is recorded but NEVER treated as verification. */
 async function adapterCli(binary, job) {
+  if (!allowedExecutables.has(binary)) throw new Error(`${binary} is not allowlisted (start runner with --allow-exec ${binary})`);
   const prompt = String(job.input?.prompt ?? '').slice(0, 8000);
   if (!prompt) throw new Error('prompt is required');
   const cwd = job.workingDirectory ? resolve(job.workingDirectory) : allowedRoots[0];

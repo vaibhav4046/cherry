@@ -444,7 +444,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
     execute: guarded(routineIdSchema, async (input) => {
       const workspaceId = requireWorkspace(context);
       if (!workspaceId) return noWorkspace();
-      const requested = await requestRunNow(workspaceId, input.routineId);
+      const requested = await requestRunNow(workspaceId, input.routineId, 'agent');
       if (!requested.ok) return toolError(requested.error.code, requested.error.message);
       return toolText(requested.value);
     }),
