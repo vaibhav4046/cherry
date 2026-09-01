@@ -172,7 +172,8 @@ describe('quick skill pipeline', () => {
     const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id, name: 'Mixed provenance' }));
     const evidence = await listEvidence(workspace.id);
     expect(generated.evidenceCount).toBe(2);
-    expect(evidence.map((record) => record.provenanceMethod)).toEqual(['user_typed', 'user_upload']);
+    expect(evidence.find((record) => record.claim.includes('pasted frame'))?.provenanceMethod).toBe('user_typed');
+    expect(evidence.find((record) => record.claim.includes('uploaded alignment'))?.provenanceMethod).toBe('user_upload');
   });
 
   it('records approval requests as a human action while retaining the named requester', async () => {
