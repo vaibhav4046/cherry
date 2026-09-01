@@ -14,6 +14,7 @@ import type { JsonSchemaObject, SkillGraph, SkillGraphVersion, SkillNode } from 
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { exportSkillFile, type SkillExportFormat } from '../../cherry/library/library-service.ts';
+import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
 import { listEvidence } from '../../cherry/evidence/evidence-service.ts';
 import type { EvidenceRecord } from '../../cherry/evidence/evidence-model.ts';
 import { useAppState } from '../../app/AppState.tsx';
@@ -107,6 +108,7 @@ export default function SkillDetail() {
   const inputFields = schemaFields(graph.inputSchema);
   const outputFields = schemaFields(graph.outputSchema);
   const knowledgeRefs = graph.knowledge ?? [];
+  const installReady = graph.status === 'approved' && graph.approvedRevision === graph.revision;
 
   async function run<T>(work: () => Promise<{ ok: true; value: T } | { ok: false; error: { message: string } }>, successNote?: string) {
     setError(null);
@@ -188,6 +190,12 @@ export default function SkillDetail() {
       ) : null}
 
       <div className="row">
+        {installReady ? (
+          <>
+            <Link className="btn btn-primary" to={buildRoutineDraftUrl(graph.workspaceId, graph.id)}>Use in a routine</Link>
+            <a className="btn" href={buildConnectUrl(graph.targets)}>Send to an agent</a>
+          </>
+        ) : null}
         {!pendingApproval && graph.status !== 'approved' ? (
           <button type="button" className="btn btn-primary" onClick={() => void run(() => requestSkillGraphApproval(graph.id, 'Review requested from the skill page', 'user'), 'Approval requested')}>
             Request approval of r{graph.revision}

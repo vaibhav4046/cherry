@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
 import { getLesson, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
@@ -786,7 +787,10 @@ export default function QuickSkill() {
           </div>
           <div className="stack" style={{ alignItems: 'flex-start' }}>
             <Link to={`/studio/skills/${graph.id}`} className="btn btn-primary">See it in your Library</Link>
-            <Link to="/connect" className="link-quiet">Send to an agent</Link>
+            <div className="row" style={{ gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+              <Link to={buildRoutineDraftUrl(graph.workspaceId, graph.id)} className="btn">Use in a routine</Link>
+              <a href={buildConnectUrl(graph.targets)} className="btn">Send to an agent</a>
+            </div>
             <button type="button" className="btn" onClick={teachAnother}>Teach another</button>
             <div className="row">
               <button type="button" className="btn btn-sm" onClick={() => void handleDownload()} disabled={busy} data-testid="quick-download">

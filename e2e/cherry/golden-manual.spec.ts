@@ -166,7 +166,7 @@ test.describe('golden manual journey', () => {
     await expect(libraryCard).toContainText('install-ready');
     await page.getByTestId('library-filter-approved').click();
     await expect(page.getByTestId('library-card')).toHaveCount(1);
-    await libraryCard.click();
+    await libraryCard.getByTestId('library-card-open').click();
     await expect(page.getByTestId('export-skill-md')).toBeEnabled();
     await expect(page.getByTestId('copy-agents-md')).toBeEnabled();
     const skillMdDownload = page.waitForEvent('download');

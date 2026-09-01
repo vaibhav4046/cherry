@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { filterLibraryEntries, listLibraryEntries, type LibraryEntry } from '../../cherry/library/library-service.ts';
+import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
 import { StickerCluster } from '../../components/Ribbon.tsx';
 
 export default function Skills() {
@@ -88,12 +89,10 @@ export default function Skills() {
 
       <div className="grid-cards" data-testid="library-grid">
         {visible.map((entry) => (
-          <Link
+          <article
             key={entry.skillId}
-            to={`/studio/skills/${entry.skillId}`}
             className="card stack"
             data-testid="library-card"
-            style={{ textDecoration: 'none' }}
           >
             <div className="row">
               <span className={entry.installReady ? 'sticker sticker-pass' : entry.status === 'rejected' ? 'sticker sticker-fail' : 'sticker sticker-wait'}>
@@ -106,7 +105,9 @@ export default function Skills() {
                 </span>
               ) : null}
             </div>
-            <h2 className="subhead">{entry.name}</h2>
+            <h2 className="subhead">
+              <Link to={`/studio/skills/${entry.skillId}`} className="link-quiet" data-testid="library-card-open">{entry.name}</Link>
+            </h2>
             <p style={{ margin: 0 }}>{entry.purpose.slice(0, 160)}</p>
             <div className="row" style={{ flexWrap: 'wrap' }}>
               <span className="sticker sticker-blue">{entry.nodeCount} steps</span>
@@ -116,7 +117,13 @@ export default function Skills() {
                 <span key={target} className="sticker">{target}</span>
               ))}
             </div>
-          </Link>
+            {entry.installReady ? (
+              <div className="row" style={{ gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+                <Link className="btn btn-sm" to={buildRoutineDraftUrl(entry.workspaceId, entry.skillId)}>Use in a routine</Link>
+                <a className="btn btn-sm" href={buildConnectUrl(entry.targets)}>Send to an agent</a>
+              </div>
+            ) : null}
+          </article>
         ))}
       </div>
     </div>

@@ -44,7 +44,9 @@ export function describeSchedule(spec: ScheduleSpec): string {
 
 export async function listApprovedSkillGraphs(workspaceId: string): Promise<SkillGraph[]> {
   const graphs = await getDb().skillGraphs.where('workspaceId').equals(workspaceId).toArray();
-  return graphs.filter((graph) => graph.status === 'approved').sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return graphs
+    .filter((graph) => graph.status === 'approved' && graph.approvedRevision === graph.revision)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function listRoutines(workspaceId: string): Promise<Routine[]> {
@@ -68,8 +70,8 @@ export async function draftRoutine(input: DraftRoutineInput): Promise<Result<Rou
   return withWorkspaceTx(input.workspaceId, ['routines', 'skillGraphs'], async (ctx) => {
     const graph = await ctx.db.skillGraphs.get(input.skillGraphId);
     if (!graph || graph.workspaceId !== input.workspaceId) return err('not_found', 'Skill graph not found in this workspace.');
-    if (graph.status !== 'approved') {
-      return err('approval_required', 'Only an approved skill graph can back a routine. Approve it in Skills first.');
+    if (graph.status !== 'approved' || graph.approvedRevision !== graph.revision) {
+      return err('approval_required', 'Only a skill approved at its current revision can back a routine. Approve it in Skills first.');
     }
 
     const name = (input.name ?? `${graph.name} routine`).trim();
@@ -82,7 +84,7 @@ export async function draftRoutine(input: DraftRoutineInput): Promise<Result<Rou
       name,
       skillGraphId: graph.id,
       missionId: graph.missionId ?? null,
-      skillGraphRevision: graph.approvedRevision ?? graph.revision,
+      skillGraphRevision: graph.revision,
       executionHostId: DEFAULT_EXECUTION_HOST_ID,
       schedule: { kind: 'manual' },
       missedRunPolicy: 'skip',

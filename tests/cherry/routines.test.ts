@@ -8,6 +8,7 @@ import {
   requestSkillGraphApproval,
 } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
+import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
 import {
   approveRoutine,
   computeRoutineActionHash,
@@ -38,6 +39,21 @@ async function seedApprovedGraph() {
   return { workspace, graph };
 }
 
+async function seedStaleApprovedGraph() {
+  const seeded = await seedApprovedGraph();
+  const approved = await getDb().skillGraphs.get(seeded.graph.id);
+  if (!approved) throw new Error('approved graph was not persisted');
+  const stale = {
+    ...approved,
+    status: 'approved' as const,
+    revision: approved.revision + 1,
+    approvedRevision: approved.revision,
+    updatedAt: new Date(Date.parse(approved.updatedAt) + 1_000).toISOString(),
+  };
+  await getDb().skillGraphs.put(stale);
+  return { workspace: seeded.workspace, graph: stale };
+}
+
 const intervalSpec = (): ScheduleSpec => ({ kind: 'interval', everyMinutes: 30, startAt: new Date().toISOString() });
 
 describe('routines service', () => {
@@ -65,6 +81,24 @@ describe('routines service', () => {
     if (!refused.ok) expect(refused.error.code).toBe('approval_required');
   });
 
+  it('does not list a stale approved graph whose approval trails its current revision', async () => {
+    const { workspace, graph } = await seedStaleApprovedGraph();
+
+    const eligible = await listApprovedSkillGraphs(workspace.id);
+
+    expect(eligible.map((candidate) => candidate.id)).not.toContain(graph.id);
+  });
+
+  it('refuses to draft a routine against a stale approved graph', async () => {
+    const { workspace, graph } = await seedStaleApprovedGraph();
+
+    const result = await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('approval_required');
+    expect(await getDb().routines.where('workspaceId').equals(workspace.id).count()).toBe(0);
+  });
+
   it('draft -> set schedule -> approve enables the routine with nextRunAt set', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     expect((await listApprovedSkillGraphs(workspace.id)).map((g) => g.id)).toContain(graph.id);
@@ -76,6 +110,7 @@ describe('routines service', () => {
     expect(routine.approvalId).toBeNull();
     expect(routine.nextRunAt).toBeNull();
     expect(routine.executionHostId).toBe('local-runner');
+    expect(routine.skillGraphRevision).toBe(graph.revision);
     expect(routine.revision).toBe(1);
 
     const scheduled = unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
