@@ -49,4 +49,55 @@ test.describe('first skill', () => {
     await page.getByRole('button', { name: 'Approve this exact version' }).click();
     await expect(page.getByTestId('quick-ready')).toBeVisible();
   });
+
+  test('keeps every file from an initial multi-file transcript upload', async ({ page }) => {
+    await page.goto('/studio/quick');
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await page.getByRole('button', { name: 'Create a skill' }).click();
+    await page.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await page.getByTestId('quick-files').setInputFiles([
+      { name: 'foundation.txt', mimeType: 'text/plain', buffer: Buffer.from('0:05 Create the upload foundation for the release.') },
+      { name: 'verification.txt', mimeType: 'text/plain', buffer: Buffer.from('0:40 Check the upload foundation against evidence.') },
+    ]);
+
+    const notebook = page.getByTestId('notebook');
+    await expect(notebook).toBeVisible();
+    await expect(page.getByTestId('source-card')).toHaveCount(2);
+    await expect(page.getByTestId('quick-steps')).toContainText('Create the upload foundation');
+    await expect(page.getByTestId('quick-steps')).toContainText('Check the upload foundation');
+    await expect(notebook.locator('button.btn-primary')).toHaveCount(1);
+
+    const addSource = page.getByTestId('quick-add-source');
+    await expect(addSource).not.toHaveClass(/btn-primary/);
+    await addSource.click();
+    await expect(page.getByTestId('quick-transcript-next')).not.toHaveClass(/btn-primary/);
+    await expect(notebook.locator('button.btn-primary')).toHaveCount(1);
+  });
+
+  test('keeps local capture secondary to the transcript review action', async ({ page }) => {
+    await page.goto('/studio/quick');
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await page.getByRole('button', { name: 'Create a skill' }).click();
+    await page.getByRole('button', { name: 'Transcribe while I play it' }).click();
+
+    await expect(page.getByTestId('capture-tab-audio')).not.toHaveClass(/btn-primary/);
+    await expect(page.locator('main button.btn-primary')).toHaveCount(1);
+  });
+
+  test('uses replace for the first successful file when an earlier batch file is malformed', async ({ page }) => {
+    await page.goto('/studio/quick');
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await page.getByRole('button', { name: 'Create a skill' }).click();
+    await page.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await page.getByTestId('quick-files').setInputFiles([
+      { name: 'broken.vtt', mimeType: 'text/vtt', buffer: Buffer.from('WEBVTT\n\nnot a cue') },
+      { name: 'valid.txt', mimeType: 'text/plain', buffer: Buffer.from('0:05 Create the first successful source method.') },
+    ]);
+
+    await expect(page.getByTestId('quick-steps')).toContainText('Create the first successful source method');
+    await page.goto('/studio/sources');
+    const source = page.getByTestId('source-card').filter({ hasText: 'YouTube lesson' });
+    await expect(source).toContainText('Ready for skill');
+    await expect(source).toContainText('Content hashed');
+  });
 });

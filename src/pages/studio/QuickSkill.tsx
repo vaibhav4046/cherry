@@ -22,12 +22,13 @@ import {
   type SourceDigest,
   type SourceInfo,
 } from '../../cherry/notebook/digest.ts';
-import type { Lesson, TranscriptSource } from '../../cherry/watch/watch-model.ts';
+import type { Lesson } from '../../cherry/watch/watch-model.ts';
 import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { DerivedSkillDraft } from '../../cherry/skillgraph/auto-draft.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { Icons } from '../../components/Icons.tsx';
-import { completeSourceFetch, createSource, failSourceFetch, getSource, importSourceTranscript, requestSourceFetch } from '../../cherry/source/source-service.ts';
+import { completeSourceFetch, createSource, failSourceFetch, getSource, importSourceTranscript, interpretSourceFetchOutcome, requestSourceFetch } from '../../cherry/source/source-service.ts';
+import type { HumanTranscriptSource, SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
 
@@ -41,6 +42,10 @@ export function classifyQuickSkillMaterial(material: string): 'raw' | 'youtube' 
   } catch {
     return 'raw';
   }
+}
+
+export function transcriptImportMode(hasPersistedTranscript: boolean, batchIndex: number): 'replace' | 'append' {
+  return hasPersistedTranscript || batchIndex > 0 ? 'append' : 'replace';
 }
 
 /**
@@ -77,7 +82,7 @@ export default function QuickSkill() {
   const [activeSource, setActiveSource] = useState<SourceRecord | null>(null);
   const [sourceChoice, setSourceChoice] = useState<'paste' | 'transcribe' | null>(null);
   const [runnerReady, setRunnerReady] = useState(false);
-  const [transcriptSource, setTranscriptSource] = useState<TranscriptSource>('user_text');
+  const [transcriptSource, setTranscriptSource] = useState<HumanTranscriptSource>('user_text');
 
   useEffect(() => {
     void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
@@ -190,10 +195,10 @@ export default function QuickSkill() {
     });
   }
 
-  async function importText(text: string, source: TranscriptSource, fileName?: string) {
+  async function importText(text: string, source: HumanTranscriptSource, fileName?: string, requestedMode?: 'replace' | 'append') {
     await withBusy(async () => {
-      const mode = sourceCount === 0 ? 'replace' : 'append';
-      if (!activeSource) throw new Error('Choose a source before importing a transcript.');
+      if (!activeSource || !lesson) throw new Error('Choose a source before importing a transcript.');
+      const mode = requestedMode ?? transcriptImportMode((await listTranscript(lesson.id)).length > 0, 0);
       const imported = await importSourceTranscript(activeSource.id, text, source, fileName, 'human', mode);
       if (!imported.ok) throw new Error(imported.error.message);
       setSourceCount((count) => count + 1);
@@ -218,10 +223,13 @@ export default function QuickSkill() {
   }
 
   async function importFiles(files: FileList) {
-    // NotebookLM-style: drop several sources at once; each one appends.
+    if (!lesson) { setError('Choose a source before importing transcript files.'); return; }
+    // Re-read persisted state after each attempt. A malformed first file must
+    // not force the next valid file into append mode against an empty lesson.
     for (const file of Array.from(files)) {
       const text = await file.text();
-      await importText(text, 'user_upload', file.name);
+      const hasPersistedTranscript = (await listTranscript(lesson.id)).length > 0;
+      await importText(text, 'user_upload', file.name, transcriptImportMode(hasPersistedTranscript, 0));
     }
   }
 
@@ -232,6 +240,8 @@ export default function QuickSkill() {
       const queued = await requestSourceFetch(activeSource.id);
       if (!queued.ok) throw new Error(queued.error.message);
       setActiveSource(queued.value);
+      let terminalFailure: SourceFetchFailure | null = null;
+      let fetchCompleted = false;
       try {
         if (!lesson?.missionId) throw new Error('This article is not linked to a project. Start again.');
         const domain = new URL(queued.value.url!).hostname;
@@ -247,12 +257,15 @@ export default function QuickSkill() {
         await new Promise((resolve) => window.setTimeout(resolve, 500));
         const status = await pollRunnerJob(job.value.jobId);
         if (!status.ok) throw new Error(status.error.message);
-        if (status.value.status === 'failed' || status.value.status === 'cancelled') throw new Error(status.value.result?.stderr || `The local fetch was ${status.value.status}.`);
-        if (status.value.status !== 'succeeded') continue;
-        const payload = JSON.parse(status.value.result?.stdout ?? '{}') as { status?: string; markdown?: string; contentHash?: string; reason?: string };
-        if (payload.status !== 'fetched' || !payload.markdown || !payload.contentHash) throw new Error(payload.reason ?? 'The local fetch returned no readable page.');
-        const completed = await completeSourceFetch(queued.value.id, { markdown: payload.markdown, contentHash: payload.contentHash });
+        const outcome = await interpretSourceFetchOutcome(status.value);
+        if (outcome.kind === 'pending') continue;
+        if (outcome.kind === 'failure') {
+          terminalFailure = { status: outcome.status, reason: outcome.reason };
+          throw new Error(outcome.reason);
+        }
+        const completed = await completeSourceFetch(queued.value.id, { markdown: outcome.markdown, contentHash: outcome.contentHash });
         if (!completed.ok) throw new Error(completed.error.message);
+        fetchCompleted = true;
         const loaded = await getLesson(completed.value.lessonId);
         if (!loaded) throw new Error('The saved material is unavailable.');
         setActiveSource(completed.value);
@@ -266,16 +279,19 @@ export default function QuickSkill() {
         setStage('review');
         return;
         }
-        throw new Error('The local fetch timed out after 30 seconds.');
+        const timeout = await interpretSourceFetchOutcome({ status: 'timed_out' });
+        if (timeout.kind !== 'failure') throw new Error('The local fetch timed out after 30 seconds.');
+        terminalFailure = { status: timeout.status, reason: timeout.reason };
+        throw new Error(timeout.reason);
       } catch (thrown) {
         const message = (thrown as Error).message || 'The local fetch failed.';
-        await failSourceFetch(queued.value.id, message);
+        if (!fetchCompleted) await failSourceFetch(queued.value.id, terminalFailure ?? { status: 'failed', reason: message });
         throw thrown;
       }
     });
   }
 
-  function fillTranscript(text: string, source: TranscriptSource = 'user_text') {
+  function fillTranscript(text: string, source: HumanTranscriptSource = 'user_text') {
     setTranscriptSource(source);
     if (transcriptRef.current) {
       transcriptRef.current.value = text;
@@ -508,7 +524,7 @@ export default function QuickSkill() {
               the text below before deriving. Pasting the official transcript stays the exact path.
             </p>
             <div className="row">
-              <button type="button" className={capturing ? 'btn btn-danger' : 'btn btn-primary'} onClick={() => void handleCaptureToggle()} data-testid="capture-tab-audio">
+              <button type="button" className={capturing ? 'btn btn-danger' : 'btn'} onClick={() => void handleCaptureToggle()} data-testid="capture-tab-audio">
                 {capturing ? 'Stop capture & transcribe' : 'Capture this tab\u2019s audio'}
               </button>
               <label className="btn">
@@ -603,7 +619,7 @@ export default function QuickSkill() {
                   data-testid="quick-transcript"
                 />
                 <div className="row">
-                  <button type="submit" className="btn btn-sm btn-primary" disabled={busy} data-testid="quick-transcript-next">
+                  <button type="submit" className="btn btn-sm" disabled={busy} data-testid="quick-transcript-next">
                     {busy ? 'Adding…' : 'Add to notebook'}
                   </button>
                   <label className="btn btn-sm">
@@ -625,7 +641,7 @@ export default function QuickSkill() {
             ) : (
               <button
                 type="button"
-                className="btn btn-sm btn-primary"
+                className="btn btn-sm"
                 onClick={() => setAddingSource(true)}
                 data-testid="quick-add-source"
                 style={{ justifyContent: 'center' }}

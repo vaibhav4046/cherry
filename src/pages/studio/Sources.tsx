@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createWorkspace } from '../../cherry/mission/mission-service.ts';
-import { archiveSource, completeSourceFetch, createSource, failSourceFetch, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
+import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
+import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import { Icons } from '../../components/Icons.tsx';
@@ -111,29 +112,35 @@ export default function Sources() {
     const result = await requestSourceFetch(source.id);
     if (!result.ok) setError(result.error.message);
     else {
+      const persistTerminalFailure = async (failure: SourceFetchFailure) => {
+        const failed = await failSourceFetch(source.id, failure);
+        setNotice(null);
+        setError(failed.ok || failed.error.code === 'conflict' ? failure.reason : failed.error.message);
+        await reload();
+      };
       const job = await submitRunnerJob({ workspaceId: source.workspaceId, missionId: source.lessonId, adapter: 'scrapling-fetch', input: { url: source.url, allowedDomains: domain ? [domain] : [], maxBytes: 262144, respectRobots: true }, idempotencyKey: `source-fetch:${source.id}:${Date.now()}` });
-      if (!job.ok) { await failSourceFetch(source.id, job.error.message); setError(job.error.message); }
+      if (!job.ok) await persistTerminalFailure({ status: 'failed', reason: job.error.message });
       else {
         setNotice('Fetch queued on your paired local runner. The page remains untrusted until you review it.');
         void (async () => {
           for (let attempt = 0; attempt < 60; attempt += 1) {
             await new Promise((resolve) => window.setTimeout(resolve, 500));
             const polled = await pollRunnerJob(job.value.jobId);
-            if (!polled.ok) { await failSourceFetch(source.id, polled.error.message); return; }
-            if (polled.value.status === 'succeeded' || polled.value.status === 'failed') {
-              if (polled.value.status === 'failed') { await failSourceFetch(source.id, polled.value.result?.stderr || 'Scrapling fetch failed'); return; }
-              try {
-                const payload = JSON.parse(polled.value.result?.stdout ?? '{}') as { status?: string; markdown?: string; contentHash?: string; reason?: string };
-                if (payload.status !== 'fetched' || !payload.markdown || !payload.contentHash) { await failSourceFetch(source.id, payload.reason ?? 'Worker returned no readable page'); return; }
-                const completed = await completeSourceFetch(source.id, { markdown: payload.markdown, contentHash: payload.contentHash });
-                if (!completed.ok) { setError(completed.error.message); await reload(); return; }
-                await reload();
-                setNotice('Fetched page is ready for review. Cherry has not promoted it to trusted instructions.');
-              } catch (thrown) { await failSourceFetch(source.id, (thrown as Error).message); }
-              return;
+            if (!polled.ok) { await persistTerminalFailure({ status: 'failed', reason: polled.error.message }); return; }
+            const outcome = await interpretSourceFetchOutcome(polled.value);
+            if (outcome.kind === 'pending') continue;
+            if (outcome.kind === 'failure') { await persistTerminalFailure({ status: outcome.status, reason: outcome.reason }); return; }
+            const completed = await completeSourceFetch(source.id, { markdown: outcome.markdown, contentHash: outcome.contentHash });
+            if (!completed.ok) {
+              await persistTerminalFailure({ status: 'failed', reason: completed.error.message }); return;
             }
+            await reload();
+            setError(null);
+            setNotice('Fetched page is ready for review. Cherry has not promoted it to trusted instructions.');
+            return;
           }
-          await failSourceFetch(source.id, 'Scrapling fetch timed out after 30 seconds');
+          const timeout = await interpretSourceFetchOutcome({ status: 'timed_out' });
+          if (timeout.kind === 'failure') await persistTerminalFailure({ status: timeout.status, reason: timeout.reason });
         })();
       }
     }
