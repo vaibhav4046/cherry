@@ -4,6 +4,7 @@ import { createWorkspace } from '../../src/cherry/mission/mission-service.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import {
+  archiveSource,
   completeSourceFetch,
   failSourceFetch,
   interpretSourceFetchOutcome,
@@ -177,6 +178,54 @@ describe('source inbox domain', () => {
     const late = await failSourceFetch(source.id, { status: 'failed', reason: 'late poll error' });
     expect(late.ok).toBe(false);
     expect(await getDb().sourceRecords.get(source.id)).toEqual(fetched);
+  });
+
+  it('does not complete a queued fetch after its source is archived', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Archived fetch completion' }));
+    const source = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Archived queued page', url: 'https://example.com/archived-queued', permissionAcknowledged: true,
+    }));
+    const queued = unwrap(await requestSourceFetch(source.id));
+    const archived = unwrap(await archiveSource(source.id));
+    const lessonBefore = await getDb().lessons.get(source.lessonId);
+    const proofBefore = await listProofEvents(workspace.id);
+    const markdown = '# Too late\n\nDo not resurrect this archived source.';
+    const staleRead = vi.spyOn(getDb().sourceRecords, 'get').mockResolvedValueOnce(queued);
+
+    let completed: Awaited<ReturnType<typeof completeSourceFetch>>;
+    try {
+      completed = await completeSourceFetch(source.id, { markdown, contentHash: await sha256Text(markdown) });
+    } finally {
+      staleRead.mockRestore();
+    }
+
+    expect(completed).toMatchObject({ ok: false, error: { code: 'conflict' } });
+    expect(await getDb().sourceRecords.get(source.id)).toEqual(archived);
+    expect(await getDb().lessons.get(source.lessonId)).toEqual(lessonBefore);
+    expect(await listTranscript(source.lessonId)).toEqual([]);
+    expect(await listProofEvents(workspace.id)).toEqual(proofBefore);
+  });
+
+  it('does not queue a new fetch for an archived source', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Archived fetch request' }));
+    const source = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Archived page', url: 'https://example.com/archived', permissionAcknowledged: true,
+    }));
+    const archived = unwrap(await archiveSource(source.id));
+    const proofBefore = await listProofEvents(workspace.id);
+    const staleRead = vi.spyOn(getDb().sourceRecords, 'get').mockResolvedValueOnce(source);
+
+    let queued: Awaited<ReturnType<typeof requestSourceFetch>>;
+    try {
+      queued = await requestSourceFetch(source.id);
+    } finally {
+      staleRead.mockRestore();
+    }
+
+    expect(queued).toMatchObject({ ok: false, error: { code: 'conflict' } });
+    expect(await getDb().sourceRecords.get(source.id)).toEqual(archived);
+    expect(await listTranscript(source.lessonId)).toEqual([]);
+    expect(await listProofEvents(workspace.id)).toEqual(proofBefore);
   });
 
   it('interprets blocked, failed, cancelled, malformed, hash-mismatched, and timed-out runner results', async () => {

@@ -236,14 +236,17 @@ export async function archiveSource(sourceId: string, actorType: ActorType = 'hu
 
 export async function requestSourceFetch(sourceId: string, actorType: ActorType = 'human'): Promise<Result<SourceRecord>> {
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
-  const blocked = isBlockedFetchDomain(current.url);
-  if (blocked) return unsupported(blocked, { sourceId });
-  const next: SourceRecord = { ...current, fetchStatus: 'queued', fetchError: null, updatedAt: isoNow() };
-  await withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
+  return withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
+    const anchor = await ctx.db.sourceRecords.get(sourceId);
+    if (!anchor) return notFound('Source', sourceId);
+    if (anchor.status === 'archived') return conflict('Archived sources cannot be fetched');
+    const blocked = isBlockedFetchDomain(anchor.url);
+    if (blocked) return unsupported(blocked, { sourceId });
+    const next: SourceRecord = { ...anchor, fetchStatus: 'queued', fetchError: null, updatedAt: isoNow() };
     await ctx.db.sourceRecords.put(next);
-    ctx.emit({ type: 'source.fetch_requested', actorType, objectType: 'source', objectId: sourceId, summary: `Fetch requested for ${urlDomain(current.url) ?? 'source'}`, payload: sourceEventPayload(next) });
+    ctx.emit({ type: 'source.fetch_requested', actorType, objectType: 'source', objectId: sourceId, summary: `Fetch requested for ${urlDomain(anchor.url) ?? 'source'}`, payload: sourceEventPayload(next) });
+    return ok(next);
   });
-  return ok(next);
 }
 
 export async function interpretSourceFetchOutcome(input: SourceFetchOutcomeInput): Promise<SourceFetchOutcome> {
@@ -284,6 +287,7 @@ export async function completeSourceFetch(sourceId: string, input: { markdown: s
   if (!input.markdown.trim() || input.markdown.length > MAX_CONTENT) return invalid('Fetched content is empty or exceeds the 2 MiB limit');
   if (!/^[a-f0-9]{64}$/i.test(input.contentHash) || await sha256Text(input.markdown) !== input.contentHash.toLowerCase()) return invalid('Fetched content hash does not match the returned Markdown');
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
+  if (current.status === 'archived') return conflict('Archived sources cannot be fetched');
   if (current.fetchStatus !== 'queued') return conflict('Source fetch is not queued');
   const parsed = parseTranscript(input.markdown);
   if (!parsed.ok) return parsed as Result<SourceRecord>;
@@ -292,6 +296,7 @@ export async function completeSourceFetch(sourceId: string, input: { markdown: s
   return withWorkspaceTx(current.workspaceId, ['sourceRecords', 'lessons', 'transcriptSegments'], async (ctx) => {
     const anchor = await ctx.db.sourceRecords.get(sourceId);
     if (!anchor) return notFound('Source', sourceId);
+    if (anchor.status === 'archived') return conflict('Archived sources cannot be fetched');
     if (anchor.fetchStatus !== 'queued') return conflict('Source fetch is not queued');
     const lesson = await ctx.db.lessons.get(anchor.lessonId);
     if (!lesson) return notFound('Lesson', anchor.lessonId);
