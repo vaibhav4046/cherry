@@ -12,6 +12,7 @@ import { resolve, join, sep, dirname } from 'node:path';
 import { redact } from './redact.mjs';
 import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
 import { sourceWatchRoutineId } from './source-watch.mjs';
+import { buildChildEnv, isPythonExecutable } from './process-policy.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
 const MAX_TIMEOUT_MS = 600_000;
@@ -26,6 +27,7 @@ export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal,
     let finished = false;
     const child = spawn(executable, argv, {
       cwd,
+      env: buildChildEnv(),
       shell: false,
       stdio: [stdinText === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true,
@@ -175,6 +177,9 @@ export function createAdapters(config) {
     const argv = Array.isArray(payload.argv) ? payload.argv.map(String) : [];
     if (argv.length === 0) throw new Error('safe-command requires an exact argv array');
     const [executable, ...rest] = argv;
+    if (isPythonExecutable(executable)) {
+      throw new Error('Python is reserved for the fixed Scrapling worker and cannot run through safe-command');
+    }
     if (!allowedExecutables.has(executable)) {
       throw new Error(`executable "${executable}" is not in the runner config allowlist`);
     }

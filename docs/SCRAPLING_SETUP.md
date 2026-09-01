@@ -12,6 +12,10 @@ python -m pip install -r scraper/requirements.txt
 node runner/server.mjs --root . --allow-exec python
 ```
 
+The Python allowlist entry is reserved for Cherry's fixed
+`scraper/worker.py` capability. It does not permit `python -c`, arbitrary
+scripts, or Python through the generic command adapters.
+
 Pair the token printed by the runner in Studio → Connect. The worker accepts a
 single JSON request, uses Scrapling's ordinary `Fetcher.get` only, checks
 robots.txt fail-closed, blocks YouTube/LinkedIn/private addresses and embedded
@@ -22,4 +26,3 @@ cookies, and remote browsers are intentionally not supported.
 If Python or the worker is not configured, Sources remains fully usable for
 user-pasted/exported text and the fetch action reports setup required. A URL is
 metadata, not permission to redistribute a page.
-

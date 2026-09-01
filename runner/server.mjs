@@ -25,6 +25,7 @@ import { EventsLog } from './lib/events.mjs';
 import { DurableQueue, validateEnvelope } from './lib/queue.mjs';
 import { Scheduler, validateRoutine } from './lib/scheduler.mjs';
 import { createAdapters } from './lib/adapters.mjs';
+import { buildChildEnv, isPythonExecutable } from './lib/process-policy.mjs';
 import {
   SOURCE_WATCH_NAMESPACE,
   SourceWatchTombstoneStore,
@@ -144,6 +145,9 @@ async function adapterExport(job) {
 async function adapterShellSafe(job) {
   const executable = job.input?.executable;
   const executableArguments = Array.isArray(job.input?.args) ? job.input.args.map(String) : [];
+  if (isPythonExecutable(executable)) {
+    throw new Error('Python is reserved for the fixed Scrapling worker and cannot run through shell-safe');
+  }
   if (!executable || !allowedExecutables.has(executable)) {
     throw new Error(`executable is not allowlisted (start the runner with --allow-exec <name>)`);
   }
@@ -174,7 +178,7 @@ async function adapterScrapling(job) {
   const worker = join(allowedRoots[0], 'scraper', 'worker.py');
   if (!existsSync(worker)) throw new Error('scraper/worker.py is not installed under the approved root');
   const payload = job.input && typeof job.input === 'object' ? JSON.stringify(job.input) : '{}';
-  return runProcess(executable, [worker], allowedRoots[0], job.timeoutMs, payload);
+  return runProcess(executable, [worker], allowedRoots[0], Math.min(Number(job.timeoutMs) || 30_000, 30_000), payload);
 }
 
 function runProcess(executable, processArguments, cwd, timeoutMs, stdinText) {
@@ -184,6 +188,7 @@ function runProcess(executable, processArguments, cwd, timeoutMs, stdinText) {
     let finished = false;
     const child = spawn(executable, processArguments, {
       cwd,
+      env: buildChildEnv(),
       shell: false,
       stdio: [stdinText === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true,
@@ -287,8 +292,11 @@ function validateRunnerRoutine(routine) {
   const problems = validateRoutine(routine);
   if (routine?.namespace === SOURCE_WATCH_NAMESPACE) {
     problems.push(...validateSourceWatchRoutine(routine));
-  } else if (routine?.envelope?.adapter === 'youtube-rss-watch') {
-    problems.push('youtube-rss-watch is reserved for channel-watch routes');
+  } else {
+    problems.push('generic timed routines require an approval-bound registration and are disabled');
+    if (routine?.envelope?.adapter === 'youtube-rss-watch') {
+      problems.push('youtube-rss-watch is reserved for channel-watch routes');
+    }
   }
   return problems;
 }
@@ -316,6 +324,9 @@ function materialiseRoutine(routine, dueIso) {
 }
 
 v2Scheduler = new Scheduler({ dataDir, materialise: materialiseRoutine, validate: validateRunnerRoutine });
+// Pre-bound generic schedules never existed in the app. Purge any legacy
+// definitions so a persisted bypass cannot revive after upgrading the runner.
+v2Scheduler.setRoutines([], 'default');
 const sourceWatchTombstones = new SourceWatchTombstoneStore({ dataDir });
 for (const routine of v2Scheduler.listRoutines(SOURCE_WATCH_NAMESPACE)) {
   if (sourceWatchTombstones.hides(routine)) v2Scheduler.removeRoutine(SOURCE_WATCH_NAMESPACE, routine.id);
@@ -510,8 +521,12 @@ const server = createServer((request, response) => {
     readJsonBody(request, response, origin, (body) => {
       const routines = Array.isArray(body?.routines) ? body.routines : null;
       if (!routines) return send(response, 400, { error: 'routines must be an array' }, origin);
+      if (routines.length === 0) {
+        v2Scheduler.setRoutines([], 'default');
+        return send(response, 200, { routines: 0, materialised: [] }, origin);
+      }
       for (const routine of routines) {
-        const problems = validateRoutine(routine);
+        const problems = validateRunnerRoutine(routine);
         if (routine?.namespace && routine.namespace !== 'default') {
           problems.push('the generic routine endpoint accepts only the default namespace');
         }

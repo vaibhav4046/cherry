@@ -33,8 +33,8 @@ async function waitForJob(jobId, timeoutMs = 30_000) {
 before(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'cherry-runner-test-'));
   token = 'test-pair-token-0123456789';
-  child = spawn(process.execPath, [join(here, 'server.mjs'), '--root', workDir, '--state', join(workDir, '.state')], {
-    env: { ...process.env, CHERRY_RUNNER_TOKEN: token },
+  child = spawn(process.execPath, [join(here, 'server.mjs'), '--root', workDir, '--state', join(workDir, '.state'), '--allow-exec', process.execPath], {
+    env: { ...process.env, CHERRY_RUNNER_TOKEN: token, CHERRY_TEST_SECRET: 'ambient-secret-sentinel' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   // Wait for the listener.
@@ -101,6 +101,23 @@ test('shell-safe refuses executables that are not allowlisted', async () => {
   const job = await waitForJob(jobId);
   assert.equal(job.status, 'failed');
   assert.match(job.result.stderr, /not allowlisted/);
+});
+
+test('legacy shell-safe child does not inherit runner or ambient secrets', async () => {
+  const response = await api('/jobs', {
+    method: 'POST',
+    body: JSON.stringify({
+      adapter: 'shell-safe',
+      input: {
+        executable: process.execPath,
+        args: ['-e', "console.log(JSON.stringify({token:process.env.CHERRY_RUNNER_TOKEN,secret:process.env.CHERRY_TEST_SECRET,path:Boolean(process.env.PATH||process.env.Path)}))"],
+      },
+    }),
+  });
+  assert.equal(response.status, 201);
+  const job = await waitForJob((await response.json()).jobId);
+  assert.equal(job.status, 'succeeded');
+  assert.deepEqual(JSON.parse(job.result.stdout), { path: true });
 });
 
 test('cherry-export produces a hash manifest for an approved directory', async () => {

@@ -18,6 +18,7 @@ import { Scheduler } from './lib/scheduler.mjs';
 import { nextRunAt } from './lib/schedule.mjs';
 import { createAdapters } from './lib/adapters.mjs';
 import { saveJsonAtomic } from './lib/store.mjs';
+import { buildChildEnv, isPythonExecutable } from './lib/process-policy.mjs';
 import {
   fetchYouTubeChannelFeed,
   isPublicNetworkAddress,
@@ -632,6 +633,30 @@ test('youtube-rss-watch adapter binds normalized stdout to the approved watch', 
 
 // ---------------- 10. adapters ----------------
 
+test('child process policy keeps runtime plumbing but removes secrets and injection hooks', () => {
+  const childEnv = buildChildEnv({
+    Path: 'C:\\runtime',
+    SystemRoot: 'C:\\Windows',
+    TEMP: 'C:\\Temp',
+    LANG: 'en_GB.UTF-8',
+    CHERRY_RUNNER_TOKEN: 'runner-secret',
+    OPENAI_API_KEY: 'api-secret',
+    AMBIENT_SECRET: 'ambient-secret',
+    NODE_OPTIONS: '--require attacker.js',
+    PYTHONPATH: 'C:\\attacker',
+  });
+  assert.equal(childEnv.Path, 'C:\\runtime');
+  assert.equal(childEnv.SystemRoot, 'C:\\Windows');
+  assert.equal(childEnv.LANG, 'en_GB.UTF-8');
+  for (const key of ['CHERRY_RUNNER_TOKEN', 'OPENAI_API_KEY', 'AMBIENT_SECRET', 'NODE_OPTIONS', 'PYTHONPATH']) {
+    assert.equal(childEnv[key], undefined);
+  }
+  for (const executable of ['python', 'python3', 'python3.11', 'python.exe', 'C:\\Python311\\python.exe', '/usr/bin/python3']) {
+    assert.equal(isPythonExecutable(executable), true, executable);
+  }
+  assert.equal(isPythonExecutable(process.execPath), false);
+});
+
 test('safe-command runs exact argv for a config-allowlisted executable and redacts output', async () => {
   const root = tempDir('ad-safe-');
   const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set([process.execPath]) });
@@ -651,6 +676,38 @@ test('safe-command refuses executables missing from the config allowlist', async
   const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set() });
   const envelope = makeEnvelope({ workingDirectory: root, boundedPrompt: JSON.stringify({ argv: ['powershell', '-c', 'whoami'] }) });
   await assert.rejects(() => adapters.run(envelope), /not in the runner config allowlist/);
+});
+
+test('safe-command reserves Python for the fixed Scrapling worker', async () => {
+  const root = tempDir('ad-python-reserved-');
+  const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set(['python']) });
+  const envelope = makeEnvelope({
+    workingDirectory: root,
+    boundedPrompt: JSON.stringify({ argv: ['python', '-c', 'print(1)'] }),
+  });
+  await assert.rejects(() => adapters.run(envelope), /Python.*reserved.*Scrapling/i);
+});
+
+test('safe-command child cannot read runner or ambient secrets', async () => {
+  const root = tempDir('ad-env-');
+  const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set([process.execPath]) });
+  const previousToken = process.env.CHERRY_RUNNER_TOKEN;
+  const previousSecret = process.env.CHERRY_TEST_SECRET;
+  process.env.CHERRY_RUNNER_TOKEN = 'runner-token-sentinel';
+  process.env.CHERRY_TEST_SECRET = 'ambient-secret-sentinel';
+  try {
+    const envelope = makeEnvelope({
+      workingDirectory: root,
+      boundedPrompt: JSON.stringify({ argv: [process.execPath, '-e', "console.log(JSON.stringify({token:process.env.CHERRY_RUNNER_TOKEN,secret:process.env.CHERRY_TEST_SECRET,path:Boolean(process.env.PATH||process.env.Path)}))"] }),
+    });
+    const result = await adapters.run(envelope);
+    assert.deepEqual(JSON.parse(result.stdout), { path: true });
+  } finally {
+    if (previousToken === undefined) delete process.env.CHERRY_RUNNER_TOKEN;
+    else process.env.CHERRY_RUNNER_TOKEN = previousToken;
+    if (previousSecret === undefined) delete process.env.CHERRY_TEST_SECRET;
+    else process.env.CHERRY_TEST_SECRET = previousSecret;
+  }
 });
 
 test('provider CLIs require BOTH the envelope allowlist and the config allowlist', async () => {
@@ -865,7 +922,7 @@ describe('runner v2 HTTP wiring', () => {
     assert.match((await routineResponse.json()).error, /reserved.*channel-watch/i);
   });
 
-  test('routine registration validates schedules and ticks the scheduler', async () => {
+  test('generic timed routines are disabled until an approval-bound registration exists', async () => {
     const routine = {
       id: 'rt-1',
       schedule: { kind: 'interval', everyMinutes: 5, startAt: '2026-01-01T00:00:00.000Z' },
@@ -883,18 +940,63 @@ describe('runner v2 HTTP wiring', () => {
       },
     };
     const response = await v2api('/v2/routines', { method: 'POST', body: JSON.stringify({ routines: [routine] }) });
-    assert.equal(response.status, 200);
-    const body = await response.json();
-    assert.equal(body.routines, 1);
-    assert.deepEqual(body.materialised, [], 'a brand-new routine anchors at now — no backlog');
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /approval-bound.*disabled/i);
 
-    const bad = await v2api('/v2/routines', {
-      method: 'POST',
-      body: JSON.stringify({
-        routines: [{ id: 'rt-2', schedule: { kind: 'interval', everyMinutes: 1, startAt: 'nope' }, missedRunPolicy: 'skip', envelope: routine.envelope }],
-      }),
+    const cleared = await v2api('/v2/routines', { method: 'POST', body: JSON.stringify({ routines: [] }) });
+    assert.equal(cleared.status, 200);
+    assert.deepEqual(await cleared.json(), { routines: 0, materialised: [] });
+  });
+
+  test('runner restart purges persisted generic routines but preserves approved channel watches', async () => {
+    const port = 47833;
+    const base = `http://127.0.0.1:${port}`;
+    const token = 'v2-routine-migration-token-0123456789';
+    const root = tempDir('cherry-v2-routine-migration-');
+    const state = join(root, '.state');
+    const dataDir = join(state, 'v2');
+    mkdirSync(dataDir, { recursive: true });
+    const watchDefinition = {
+      channelId: CHANNEL_ID,
+      revision: 1,
+      schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+      sourceId: 'source-migration-1',
+      workspaceId: 'workspace-migration-1',
+    };
+    const sourceWatch = createSourceWatchRoutine({
+      ...watchDefinition,
+      actionHash: computeSourceWatchActionHash(watchDefinition),
     });
-    assert.equal(bad.status, 400);
+    const generic = {
+      id: 'legacy-generic-routine',
+      namespace: 'default',
+      schedule: { kind: 'interval', everyMinutes: 5, startAt: '2026-01-01T00:00:00.000Z' },
+      missedRunPolicy: 'skip',
+      envelope: makeEnvelope({ idempotencyKey: undefined, actionHash: undefined }),
+    };
+    writeFileSync(join(dataDir, 'scheduler-routines.json'), JSON.stringify([generic, sourceWatch]));
+
+    const processHandle = spawn(process.execPath, [
+      join(here, 'server.mjs'), '--root', root, '--state', state, '--port', String(port),
+    ], { env: { ...process.env, CHERRY_RUNNER_TOKEN: token }, stdio: ['ignore', 'pipe', 'pipe'] });
+    try {
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        try {
+          if ((await fetch(`${base}/status`)).ok) break;
+        } catch {
+          // Keep waiting for the local runner.
+        }
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
+      }
+      const persisted = JSON.parse(readFileSync(join(dataDir, 'scheduler-routines.json'), 'utf8'));
+      assert.deepEqual(persisted.map((routine) => routine.id), [sourceWatch.id]);
+    } finally {
+      if (processHandle.exitCode === null) {
+        const exited = new Promise((resolvePromise) => processHandle.once('exit', resolvePromise));
+        processHandle.kill('SIGKILL');
+        await exited;
+      }
+    }
   });
 
   test('channel-watch routes require the current workspace, revision, and approval hash', async () => {
