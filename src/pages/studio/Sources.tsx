@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createWorkspace } from '../../cherry/mission/mission-service.ts';
@@ -63,7 +63,11 @@ export default function Sources() {
   const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const permissionRef = useRef<HTMLInputElement | null>(null);
-  const bookmarkletRef = useRef<HTMLAnchorElement | null>(null);
+  const installBookmarklet = useCallback((node: HTMLAnchorElement | null) => {
+    // React sanitizes javascript: values in JSX. Install the deterministic,
+    // local-only value whenever the conditional link enters the DOM.
+    if (node) node.setAttribute('href', bookmarklet);
+  }, [bookmarklet]);
 
   async function reload(workspaceId = activeWorkspace?.id) {
     if (!workspaceId) { setSources([]); return; }
@@ -85,12 +89,6 @@ export default function Sources() {
     const frame = window.requestAnimationFrame(() => permissionRef.current?.focus());
     return () => window.cancelAnimationFrame(frame);
   }, [ingestDraft, open]);
-  useEffect(() => {
-    // React blocks javascript: values passed through JSX. This exact local-only
-    // helper is deliberately installed as a DOM attribute for drag-to-bookmarks.
-    bookmarkletRef.current?.setAttribute('href', bookmarklet);
-  }, [bookmarklet]);
-
   const visible = useMemo(() => sources.filter((source) => {
     if (filter === 'archived') return source.status === 'archived';
     if (source.status === 'archived') return false;
@@ -204,7 +202,7 @@ export default function Sources() {
               <p style={{ margin: 0 }}>Works on any page you're viewing. Cherry only receives the address and title you send it.</p>
               <p className="label" style={{ margin: 0 }}>A browser extension is not part of this sprint.</p>
             </div>
-            <a ref={bookmarkletRef} className="btn" draggable>Save to Cherry</a>
+            <a ref={installBookmarklet} className="btn" draggable>Save to Cherry</a>
           </div>
         </section>
       ) : null}

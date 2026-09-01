@@ -53,4 +53,16 @@ test.describe('Save to Cherry ingest', () => {
     await expect(page.getByText("Works on any page you're viewing. Cherry only receives the address and title you send it.")).toBeVisible();
     await expect(page.getByText('A browser extension is not part of this sprint.')).toBeVisible();
   });
+
+  test('keeps the bookmarklet href after navigating from ingest to Sources', async ({ page }) => {
+    await page.goto('/ingest?title=Captured&text=Review');
+    await page.getByRole('button', { name: 'Close save source dialog' }).click();
+    await page.getByRole('link', { name: 'Sources', exact: true }).click();
+
+    await expect(page).toHaveURL('/studio/sources');
+    await expect(page.getByRole('link', { name: 'Save to Cherry' })).toHaveAttribute(
+      'href',
+      "javascript:(()=>{window.open('http://127.0.0.1:4173/ingest?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title),'_blank','noopener');})();",
+    );
+  });
 });
