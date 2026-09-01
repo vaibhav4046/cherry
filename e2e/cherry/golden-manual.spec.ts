@@ -21,26 +21,30 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Create space' }).click();
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
 
-    // Create mission
+    // Create project
     await page.getByRole('link', { name: 'Create project' }).first().click();
     await page.getByLabel('Title').fill('Learn the landing snippet');
     await page.getByLabel('Objective').fill('Build a small landing page snippet following the lesson principles');
     await page.getByLabel('Definition of done (one item per line)').fill('index.html exists with an h1\nVerification passes');
-    await page.getByRole('button', { name: 'Create mission' }).click();
+    await page.getByRole('button', { name: 'Create project' }).click();
     await expect(page.getByTestId('mission-state')).toHaveText('DRAFT');
 
     // Load a manual lesson (offline-safe path; YouTube compliance is unit-tested)
-    await page.getByLabel('Lesson title').fill('Semantic layout lesson');
-    await page.getByRole('button', { name: 'Load lesson' }).click();
+    await page.getByLabel('Source title').fill('Semantic layout lesson');
+    await page.getByRole('button', { name: 'Load source' }).click();
     await expect(page.getByTestId('mission-state')).toHaveText('LEARNING');
+    await expect(page.locator('.run-result').filter({ hasText: /^you$/ }).first()).toBeVisible();
 
     // Open Cherry Watch
-    await page.getByRole('link', { name: 'Open Cherry Watch' }).click();
+    await page.getByRole('link', { name: 'Open source' }).click();
     await expect(page.getByRole('heading', { name: 'Semantic layout lesson' })).toBeVisible();
+    await expect(page.getByText('Manual source', { exact: true })).toBeVisible();
+    await expect(page.getByText('Manual lesson', { exact: true })).toHaveCount(0);
+    await expect(page.locator('main .card-wash-lavender')).toHaveCount(0);
 
     // Import a transcript by paste
     await page
-      .locator('textarea[name="transcript"]')
+      .getByLabel('Transcript text')
       .fill('[0:05] The presenter creates index.html\n\n[0:40] A main landmark wraps the content\n\n[1:20] The heading uses a real h1');
     await page.getByRole('button', { name: 'Import pasted text' }).click();
     await expect(page.getByRole('heading', { name: /Transcript \(3 segments\)/ })).toBeVisible();
@@ -55,29 +59,33 @@ test.describe('golden manual journey', () => {
     await expect(page.getByText('Incomplete')).toBeVisible();
 
     // Declare a criterion satisfied by the observation timestamp (0s)
-    await page.locator('input[name="label"]').fill('Setup steps');
-    await page.locator('input[name="start"]').fill('0');
-    await page.locator('input[name="end"]').fill('120');
+    await page.getByLabel('Criterion').fill('Setup steps');
+    await page.getByLabel('Start time (seconds)').fill('0');
+    await page.getByLabel('End time (seconds)').fill('120');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText('Criteria complete')).toBeVisible();
 
-    // Back to mission → add evidence and draft the SkillGraph
-    await page.getByRole('link', { name: 'Back to mission' }).click();
-    await page.getByPlaceholder('Record a claim or learned principle').fill('Semantic landmarks are transferable to any page');
-    await page.getByRole('button', { name: 'Add evidence' }).click();
+    // Back to project → save source notes and draft the skill
+    await page.getByRole('link', { name: 'Back to project' }).click();
+    await page.getByLabel('Source note').fill('Semantic landmarks are transferable to any page');
+    await page.getByRole('button', { name: 'Save note' }).click();
     await expect(page.getByText('Semantic landmarks are transferable to any page')).toBeVisible();
-    await expect(page.locator('.data-table').getByText('untrusted').first()).toBeVisible();
+    await expect(page.locator('.data-table').getByText('Your note', { exact: true })).toBeVisible();
+    await expect(page.locator('.data-table').getByText('user_statement', { exact: true })).toHaveCount(0);
+    await expect(page.locator('.data-table').getByText('Needs review').first()).toBeVisible();
 
-    // Raise trust as a human
-    await page.getByRole('button', { name: 'Raise trust' }).first().click();
-    await expect(page.locator('.data-table').getByText('reviewed').first()).toBeVisible();
+    // Review and approve the source as a person
+    await page.getByRole('button', { name: 'Mark as reviewed' }).first().click();
+    await expect(page.locator('.data-table').getByText('Reviewed').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Approve source' }).first().click();
+    await expect(page.locator('.data-table').getByText('Approved').first()).toBeVisible();
 
     await page.getByRole('button', { name: 'Draft the skill' }).click();
     await expect(page.getByTestId('mission-state')).toHaveText('PLANNING');
 
     // Open the skill and edit one node (creates a new revision)
     const missionUrl = page.url();
-    await page.getByRole('link', { name: 'Open graph' }).click();
+    await page.getByRole('link', { name: 'Open skill' }).click();
     await expect(page.getByTestId('skill-status')).toContainText('draft');
     await page.getByRole('button', { name: /Produce the artifact/ }).click();
     await page.locator('form input[name="title"]').fill('Produce the landing artifact');
@@ -102,35 +110,36 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Move to Running' }).click();
     await expect(stateChip).toHaveText('EXECUTING');
 
-    await page.getByRole('button', { name: 'Create file workspace' }).click();
-    await page.getByRole('link', { name: 'Open file workspace' }).click();
+    await page.getByRole('button', { name: 'Create files' }).click();
+    await page.getByRole('link', { name: 'Open files' }).click();
 
     // Create a deliberately failing artifact (no h1)
-    await page.locator('input[name="path"]').fill('index.html');
+    await page.getByLabel('File path').fill('index.html');
     await page.getByRole('button', { name: 'Create file' }).click();
     await page.getByTestId('artifact-editor').fill('<html lang="en"><head><title>Snippet</title></head><body><p>plain text only</p></body></html>');
     await page.getByTestId('save-artifact').click();
     await expect(page.getByText(/sha256/)).toBeVisible();
 
     // Back to the mission → run verification → expect an honest failure
-    await page.getByRole('link', { name: 'Back to mission' }).click();
+    await page.getByRole('link', { name: 'Back to project' }).click();
     await page.getByTestId('run-verification').click();
     await expect(page.getByTestId('verification-status')).toContainText('failed');
     await expect(page.getByText('Failed assertions')).toBeVisible();
+    await expect(page.locator('main .btn-primary:visible')).toHaveCount(1);
 
     // Repair: fix the artifact, re-run, pass
-    await page.getByRole('link', { name: 'Open file workspace' }).click();
+    await page.getByRole('link', { name: 'Open files' }).click();
     await page.getByRole('button', { name: 'index.html', exact: true }).click();
     await page
       .getByTestId('artifact-editor')
       .fill('<html lang="en"><head><title>Snippet</title></head><body><main><h1>Landing snippet</h1></main></body></html>');
     await page.getByTestId('save-artifact').click();
-    await page.getByRole('link', { name: 'Back to mission' }).click();
+    await page.getByRole('link', { name: 'Back to project' }).click();
     await page.getByTestId('run-verification').click();
     await expect(page.getByTestId('verification-status')).toContainText('passed');
 
     // Generate the proof receipt and recompute its hashes
-    await page.getByRole('button', { name: 'Generate proof receipt' }).click();
+    await page.getByRole('button', { name: 'Generate proof' }).click();
     await page.getByRole('link', { name: 'Proof', exact: true }).first().click();
     await expect(page.getByTestId('receipt-status')).toBeVisible();
     await page.getByTestId('recompute-receipt').click();

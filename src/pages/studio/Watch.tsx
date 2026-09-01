@@ -164,17 +164,20 @@ export default function Watch() {
         <div className="stack" style={{ gap: 'var(--sp-1)' }}>
           <h1 className="display-sm">{lesson.title}</h1>
           <div className="row">
-            <span className="sticker">{lesson.kind === 'youtube' ? 'YouTube lesson' : 'Manual lesson'}</span>
+            <span className="sticker">{lesson.kind === 'youtube' ? 'YouTube source' : 'Manual source'}</span>
             {lesson.permissionAcknowledgedAt ? <span className="sticker sticker-pass">Permission acknowledged</span> : null}
-            {sourceLabel(lesson.transcriptSource) ? <span className="sticker sticker-blue">Source: {sourceLabel(lesson.transcriptSource)}</span> : null}
-            <span className="sticker sticker-sunburst">Position {formatTime(positionSeconds)}</span>
+            {sourceLabel(lesson.transcriptSource) ? <span className="sticker">Source: {sourceLabel(lesson.transcriptSource)}</span> : null}
+            <span className="sticker">Position {formatTime(positionSeconds)}</span>
           </div>
         </div>
-        {lesson.missionId ? <Link to={`/studio/missions/${lesson.missionId}`} className="btn">Back to mission</Link> : null}
+        {lesson.missionId ? <Link to={`/studio/missions/${lesson.missionId}`} className="btn">Back to project</Link> : null}
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
-      <p className="label" role="note">Frame-level vision is not implemented; observations are transcript or user-entered evidence. Official YouTube content is shown through an embed only.</p>
+      <p role="note" style={{ margin: 0, maxWidth: 760, fontSize: 14 }}>
+        Cherry does not see or understand video frames. It uses transcripts and observations you enter.
+        YouTube content plays only in the embedded player.
+      </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 1fr)', gap: 'var(--sp-4)' }} className="watch-grid">
         <div className="stack">
@@ -208,9 +211,9 @@ export default function Watch() {
               </div>
             </div>
           ) : (
-            <div className="card card-wash-lavender">
+            <div className="card">
               <p>
-                Manual lesson — no video. Paste a transcript or record observations directly. If a video is
+                Manual source — no video. Paste a transcript or record observations directly. If a video is
                 unavailable or blocked, this mode is the honest fallback.
               </p>
             </div>
@@ -224,7 +227,10 @@ export default function Watch() {
                   Paste your transcript, or upload .txt / .srt / .vtt. Cherry never scrapes captions — the
                   transcript must come from you or a permitted source.
                 </p>
-                <textarea className="textarea" name="transcript" placeholder={'[0:12] The presenter opens the layout panel…'} />
+                <label className="field">
+                  <span>Transcript text</span>
+                  <textarea className="textarea" name="transcript" placeholder={'[0:12] The presenter opens the layout panel…'} />
+                </label>
                 <div className="row">
                   <button type="submit" className="btn">Import pasted text</button>
                   <label className="btn">
@@ -308,8 +314,8 @@ export default function Watch() {
                     {coverage.complete ? 'Criteria complete' : 'Incomplete'}
                   </span>
                   <span className="sticker">{coverage.criteriaSatisfied}/{coverage.criteriaTotal} criteria</span>
-                  <span className="sticker sticker-blue">{formatTime(coverage.transcriptCoveredSeconds)} transcript</span>
-                  <span className="sticker sticker-lavender">{coverage.observationCount} observations</span>
+                  <span className="sticker">{formatTime(coverage.transcriptCoveredSeconds)} transcript</span>
+                  <span className="sticker">{coverage.observationCount} observations</span>
                 </div>
                 <p style={{ fontSize: 14 }}>{coverage.completenessNote}</p>
                 {coverage.gaps.length > 0 ? (
@@ -328,10 +334,19 @@ export default function Watch() {
                 <form onSubmit={handleCriterion} className="stack">
                   <span className="label">Declare a coverage criterion</span>
                   <div className="row">
-                    <input className="input" name="label" placeholder="e.g. Setup steps" required style={{ flex: 1, minWidth: 120 }} />
-                    <input className="input" name="start" type="number" min="0" placeholder="start s" required style={{ width: 90 }} />
-                    <input className="input" name="end" type="number" min="0" placeholder="end s" required style={{ width: 90 }} />
-                    <button type="submit" className="btn btn-sm">Add</button>
+                    <label className="field" style={{ flex: '1 1 180px', minWidth: 120 }}>
+                      <span>Criterion</span>
+                      <input className="input" name="label" placeholder="Setup steps" required />
+                    </label>
+                    <label className="field" style={{ flex: '0 1 150px', minWidth: 120 }}>
+                      <span>Start time (seconds)</span>
+                      <input className="input" name="start" type="number" min="0" placeholder="0" required />
+                    </label>
+                    <label className="field" style={{ flex: '0 1 150px', minWidth: 120 }}>
+                      <span>End time (seconds)</span>
+                      <input className="input" name="end" type="number" min="0" placeholder="120" required />
+                    </label>
+                    <button type="submit" className="btn btn-sm" style={{ alignSelf: 'flex-end' }}>Add</button>
                   </div>
                 </form>
               </>
@@ -346,7 +361,7 @@ export default function Watch() {
               {observations.map((observation) => (
                 <div key={observation.id} className="event-row" style={{ alignItems: 'flex-start' }}>
                   <span className="mono">{formatTime(observation.timestampSeconds)}</span>
-                  <span className={observation.kind === 'visual' ? 'sticker sticker-violet' : observation.kind === 'spoken' ? 'sticker sticker-blue' : 'sticker'} style={{ padding: '2px 8px' }}>
+                  <span className="sticker" style={{ padding: '2px 8px' }}>
                     {observation.kind}
                   </span>
                   <span style={{ flex: 1 }}>{observation.text}</span>

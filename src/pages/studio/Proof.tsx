@@ -1,10 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { getReceipt, listReceipts } from '../../cherry/proof/proof-service.ts';
 import { verifyReceipt, type ReceiptVerification } from '../../cherry/proof/proof-verifier.ts';
 import type { ProofReceipt } from '../../cherry/proof/proof-model.ts';
 import { listArtifactFiles, listArtifactSets } from '../../cherry/artifacts/artifact-service.ts';
+
+function assertionLabel(name: string) {
+  return name.replace(/^Skill graph\b/i, 'Skill');
+}
+
+function actorLabel(actorType: string) {
+  if (actorType === 'human') return 'you';
+  if (actorType === 'agent') return 'your agent';
+  return actorType;
+}
+
+function eventLabel(summary: string) {
+  return summary
+    .replace(/\bSkillGraph\b/g, 'Skill')
+    .replace(/\bMission\b/g, 'Project')
+    .replace(/\bmission\b/g, 'project')
+    .replace(/\bWorkspace\b/g, 'Space')
+    .replace(/\bworkspace\b/g, 'space')
+    .replace(/ by human\b/gi, ' by you');
+}
 
 export default function Proof() {
   const { receiptId } = useParams<{ receiptId?: string }>();
@@ -30,7 +50,12 @@ export default function Proof() {
   }, [load]);
 
   if (!activeWorkspace) {
-    return <div className="empty-state"><p className="subhead">Create a workspace first.</p></div>;
+    return (
+      <div className="empty-state stack">
+        <p className="subhead">Create a space first, then Cherry can record proof for its work.</p>
+        <Link className="btn btn-primary" to="/studio" style={{ alignSelf: 'flex-start' }}>Create a space</Link>
+      </div>
+    );
   }
 
   async function handleRecompute() {
@@ -66,13 +91,17 @@ export default function Proof() {
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <h1 className="display-sm">Proof</h1>
       <p className="subhead">
-        Receipts are generated from the append-only event ledger and are tamper-evident through SHA-256 over
-        RFC 8785 canonical JSON. They are not cryptographic signatures, and Cherry never claims they are.
+        {selected
+          ? 'This tamper-evident receipt uses SHA-256 over RFC 8785 canonical JSON. It is not a cryptographic signature.'
+          : 'Proof records what ran, what passed, and where each result came from.'}
       </p>
       {error ? <p className="field-error" role="alert">{error}</p> : null}
 
       {receipts.length === 0 ? (
-        <p className="card">No receipts yet. Generate one from a mission after verification.</p>
+        <div className="card stack">
+          <p>No proof yet. Add a source, build a skill, and run its checks first.</p>
+          <Link className="btn btn-primary" to="/studio/quick" style={{ alignSelf: 'flex-start' }}>Add a source</Link>
+        </div>
       ) : (
         <div className="row" role="tablist" aria-label="Receipts">
           {receipts.map((receipt) => (
@@ -96,7 +125,7 @@ export default function Proof() {
         <div className="stack" style={{ gap: 'var(--sp-4)' }}>
           <div key={selected.receiptId} className="card card-wash-cherry stack receipt-in">
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h2 className="subhead">{selected.receiptId}</h2>
+              <h2 className="subhead" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{selected.receiptId}</h2>
               <span className={selected.status === 'verified' ? 'sticker sticker-pass' : 'sticker sticker-fail'} data-testid="receipt-status">
                 {selected.status}
               </span>
@@ -106,7 +135,7 @@ export default function Proof() {
               <span className="sticker">skill v{selected.skillGraphVersion} r{selected.skillGraphRevision}</span>
               <span className="sticker">{selected.events.length} events</span>
               <span className="sticker">{selected.approvals.length} approvals</span>
-              <span className="sticker">{selected.artifacts.length} artifacts</span>
+              <span className="sticker">{selected.artifacts.length} files</span>
               <span className="sticker">{selected.assertions.length} assertions</span>
               <span className="sticker">{selected.failuresAndRepairs.length} repairs</span>
             </div>
@@ -114,11 +143,11 @@ export default function Proof() {
               <button type="button" className="btn btn-primary" onClick={() => void handleRecompute()} data-testid="recompute-receipt">
                 Recompute hashes
               </button>
-              <button type="button" className="btn" onClick={handleDownload}>Download receipt JSON</button>
+              <button type="button" className="btn" onClick={handleDownload}>Download JSON</button>
             </div>
             {verification ? (
               <div className={verification.verdict === 'valid' ? 'card card-wash-mint stack' : 'field-error stack'} role="status" data-testid="recompute-result">
-                <strong>{verification.verdict === 'valid' ? 'Receipt verifies' : 'Receipt DOES NOT verify'}</strong>
+                <strong>{verification.verdict === 'valid' ? 'Receipt verifies' : 'Receipt does not verify'}</strong>
                 <ul>
                   {verification.notes.map((note, index) => <li key={index}>{note}</li>)}
                 </ul>
@@ -127,7 +156,7 @@ export default function Proof() {
                   <ul>
                     {verification.artifactChecks.map((check) => (
                       <li key={check.path} className="mono">
-                        {check.path}: {check.matches ? 'hash ok' : 'HASH MISMATCH'}
+                        {check.path}: {check.matches ? 'hash ok' : 'hash mismatch'}
                       </li>
                     ))}
                   </ul>
@@ -138,6 +167,7 @@ export default function Proof() {
 
           <details className="card" open>
             <summary className="subhead" style={{ cursor: 'pointer' }}>Assertions</summary>
+            <p className="label" style={{ margin: 'var(--sp-3) 0 0' }}>Swipe or scroll sideways to see source details.</p>
             <div className="table-scroll" style={{ marginTop: 'var(--sp-3)' }}>
               <table className="data-table">
                 <thead>
@@ -146,7 +176,7 @@ export default function Proof() {
                 <tbody>
                   {selected.assertions.map((assertion) => (
                     <tr key={assertion.id}>
-                      <td>{assertion.name}</td>
+                      <td>{assertionLabel(assertion.name)}</td>
                       <td>{assertion.type} · {assertion.severity}</td>
                       <td><span className={assertion.status === 'passed' ? 'sticker sticker-pass' : assertion.status === 'failed' ? 'sticker sticker-fail' : 'sticker sticker-wait'}>{assertion.status}</span></td>
                       <td style={{ fontSize: 13 }}>{assertion.evidence.slice(0, 2).join(' · ')}</td>
@@ -164,8 +194,8 @@ export default function Proof() {
                 <div key={event.id} className="event-row">
                   <span className="mono">#{event.sequence}</span>
                   <span className="mono">{event.occurredAt.slice(0, 19)}</span>
-                  <span className="sticker" style={{ padding: '2px 8px' }}>{event.actorType}</span>
-                  <span>{event.summary}</span>
+                  <span className="sticker" style={{ padding: '2px 8px' }} data-testid="proof-actor">{actorLabel(event.actorType)}</span>
+                  <span>{eventLabel(event.summary)}</span>
                 </div>
               ))}
             </div>

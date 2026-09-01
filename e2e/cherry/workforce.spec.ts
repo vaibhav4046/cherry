@@ -31,6 +31,7 @@ test.describe('workforce: crew, inbox, work thread', () => {
     await page.getByTestId('work-item-row').click();
     await expect(page.getByTestId('work-status')).toHaveText('DRAFT');
     await expect(page.getByTestId('work-actions').getByRole('button', { name: 'Mark ready' })).toBeVisible();
+    await expect(page.locator('main .btn-primary:visible')).toHaveCount(1);
     await expect(page.getByRole('button', { name: /succeed/i })).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Mark ready' }).click();
@@ -39,14 +40,18 @@ test.describe('workforce: crew, inbox, work thread', () => {
     await expect(page.getByTestId('work-status')).toHaveText('QUEUED');
 
     // Thread messages are real records.
-    await page.getByPlaceholder('Add a note, question, or decision…').fill('Kick-off — crew assigned.');
+    await page.getByLabel('Message').fill('Kick-off — crew assigned.');
     await page.getByRole('button', { name: 'Post' }).click();
     await expect(page.getByTestId('work-messages').getByText('Kick-off — crew assigned.')).toBeVisible();
+    await expect(page.getByTestId('work-messages').getByText('you · message', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('work-messages').getByText('human · message', { exact: true })).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.getByTestId('work-status')).toHaveText('CANCELLED');
-    // Terminal: no further human moves.
+    // Terminal: the person sees the outcome and no further controls.
     await expect(page.getByTestId('work-actions')).toHaveCount(0);
+    await expect(page.getByText('This task was cancelled. No further actions are available.')).toBeVisible();
+    await expect(page.locator('main')).not.toContainText(/human moves/i);
   });
 
   test('routines page renders honestly with no routines yet', async ({ page }) => {

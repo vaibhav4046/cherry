@@ -69,3 +69,89 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 2026-09-01 14:21 codex T10 IN_PROGRESS — validating the shipped read-only MCP bridge through a fresh ChatGPT-authenticated Codex CLI session, capturing exact transport and integrity evidence, and removing the temporary registration afterward
 2026-09-01 14:36 codex T10 DONE 2ab9a1a — independent evidence review clean; live ChatGPT-authenticated Codex CLI 0.151.0-alpha.7.2 session called all 5 Cherry MCP tools in order; workspace and receipt recomputations matched; 22 bundle manifest hashes plus embedded receipt passed; direct JSON-RPC replay captured; bridge 6, audit:submission green; temporary global registration removed and absence confirmed; labelled synthetic sample only, native Codex MCP only, no live-human or browser-host claim; Claude: compatibility evidence is validated — native Codex MCP session, 1 Sep 2026; no deploy
 2026-09-01 14:36 codex T11 IN_PROGRESS — inspecting every route at 375, 768, and 1440 widths; logging the full visual sweep, fixing only Codex-lane defects with existing tokens, and handing owner-lane findings to Claude
+2026-09-01 15:42 codex UIQA: all routes 375/768/1440 — OWNER: shared focus treatment still uses signal blue and the Studio rail uses copper; replace both with the existing Cherry Wine focus/accent tokens. Route results below exclude this shared defect.
+2026-09-01 15:42 codex UIQA: all Studio routes 375 — OWNER: fixed mobile navigation is 538px wide inside a 360px viewport, clips Crew/Routines/Agent/Memory, and can overlap page actions; active project titles can also collapse vertically in the header.
+2026-09-01 15:42 codex UIQA: / 375 — OWNER: landing content loses its horizontal gutter.
+2026-09-01 15:42 codex UIQA: / 768 — OWNER: landing content loses its horizontal gutter.
+2026-09-01 15:42 codex UIQA: / 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /showcase 375 — PASS.
+2026-09-01 15:42 codex UIQA: /showcase 768 — PASS.
+2026-09-01 15:42 codex UIQA: /showcase 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /connect 375 — OWNER: first-run copy exposes “bounded aperture” and “provenance”.
+2026-09-01 15:42 codex UIQA: /connect 768 — OWNER: first-run copy exposes “bounded aperture” and “provenance”.
+2026-09-01 15:42 codex UIQA: /connect 1440 — OWNER: first-run copy exposes jargon; the four-column card row stretches and leaves Hermes isolated on a second row.
+2026-09-01 15:42 codex UIQA: /compatibility 375 — PASS.
+2026-09-01 15:42 codex UIQA: /compatibility 768 — PASS.
+2026-09-01 15:42 codex UIQA: /compatibility 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /ingest 375 — OWNER: shared mobile Studio navigation clips four destinations.
+2026-09-01 15:42 codex UIQA: /ingest 768 — OWNER: lower action overlaps the fixed navigation by approximately 6px.
+2026-09-01 15:42 codex UIQA: /ingest 1440 — PASS.
+2026-09-01 15:42 codex UIQA: 404 375 — PASS after replacing “local workspace” with “saved work”.
+2026-09-01 15:42 codex UIQA: 404 768 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: 404 1440 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: /studio 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/onboarding 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/onboarding 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/onboarding 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/quick 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/quick 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/quick 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/sources 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/sources 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/sources 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/inbox 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/inbox 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/inbox 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/work/:workItemId 375 — OWNER: shared mobile navigation defect; competing page primaries fixed.
+2026-09-01 15:42 codex UIQA: /studio/work/:workItemId 768 — PASS after keeping Post as the sole page primary.
+2026-09-01 15:42 codex UIQA: /studio/work/:workItemId 1440 — PASS after primary-action fix.
+2026-09-01 15:42 codex UIQA: /studio/crew 375 — OWNER: shared mobile navigation defect; page jargon fixed.
+2026-09-01 15:42 codex UIQA: /studio/crew 768 — PASS after plain-language copy fix.
+2026-09-01 15:42 codex UIQA: /studio/crew 1440 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: /studio/routines 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/routines 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/routines 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/routines/:routineId 375 — OWNER: shared mobile header/navigation defects; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/routines/:routineId 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/routines/:routineId 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/missions/new 375 — OWNER: shared mobile navigation defect; first-run jargon fixed.
+2026-09-01 15:42 codex UIQA: /studio/missions/new 768 — PASS after project-language fix.
+2026-09-01 15:42 codex UIQA: /studio/missions/new 1440 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: /studio/missions/:missionId 375 — OWNER: shared mobile header/navigation defects; page-local action hierarchy and copy fixed.
+2026-09-01 15:42 codex UIQA: /studio/missions/:missionId 768 — PASS after one-primary and project-language fixes.
+2026-09-01 15:42 codex UIQA: /studio/missions/:missionId 1440 — PASS after local fixes.
+2026-09-01 15:42 codex UIQA: /studio/watch/:lessonId 375 — OWNER: shared mobile navigation defect; source-limit copy fixed.
+2026-09-01 15:42 codex UIQA: /studio/watch/:lessonId 768 — PASS after honest source-limit and project-language fixes.
+2026-09-01 15:42 codex UIQA: /studio/watch/:lessonId 1440 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: /studio/memory 375 — OWNER: shared mobile navigation defect; duplicate/inert scopes and page accents fixed.
+2026-09-01 15:42 codex UIQA: /studio/memory 768 — PASS after showing only bindable memory scopes.
+2026-09-01 15:42 codex UIQA: /studio/memory 1440 — PASS after scope and copy fixes.
+2026-09-01 15:42 codex UIQA: /studio/skills 375 — OWNER: shared mobile navigation defect; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/skills 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/skills 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/skills/:skillId 375 — OWNER: shared mobile header/navigation defects; page-local layout passes.
+2026-09-01 15:42 codex UIQA: /studio/skills/:skillId 768 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/skills/:skillId 1440 — PASS.
+2026-09-01 15:42 codex UIQA: /studio/artifacts/:artifactSetId 375 — OWNER: shared mobile navigation defect; file-space copy fixed.
+2026-09-01 15:42 codex UIQA: /studio/artifacts/:artifactSetId 768 — PASS after project-language and human-actor copy fixes.
+2026-09-01 15:42 codex UIQA: /studio/artifacts/:artifactSetId 1440 — PASS after copy fix.
+2026-09-01 15:42 codex UIQA: /studio/runs 375 — OWNER: shared mobile navigation defect; empty state fixed.
+2026-09-01 15:42 codex UIQA: /studio/runs 768 — PASS after single-step empty-state fix.
+2026-09-01 15:42 codex UIQA: /studio/runs 1440 — PASS after empty-state fix.
+2026-09-01 15:42 codex UIQA: /studio/proof 375 — OWNER: shared mobile navigation defect; empty-state language fixed.
+2026-09-01 15:42 codex UIQA: /studio/proof 768 — PASS after single-step empty-state fix.
+2026-09-01 15:42 codex UIQA: /studio/proof 1440 — PASS after empty-state fix.
+2026-09-01 15:42 codex UIQA: /studio/proof/:receiptId 375 — OWNER: shared mobile navigation defect; receipt identifier, table containment, and labels fixed.
+2026-09-01 15:42 codex UIQA: /studio/proof/:receiptId 768 — PASS after receipt copy and containment fixes.
+2026-09-01 15:42 codex UIQA: /studio/proof/:receiptId 1440 — PASS after receipt copy fix.
+2026-09-01 15:42 codex UIQA: /studio/agent 375 — OWNER: shared mobile navigation defect; false frame-watching claim removed.
+2026-09-01 15:42 codex UIQA: /studio/agent 768 — PASS after transcript-grounded agent-brief fix.
+2026-09-01 15:42 codex UIQA: /studio/agent 1440 — PASS after claim and action-hierarchy fixes.
+2026-09-01 15:42 codex UIQA: /studio/settings/connections 375 — OWNER: shared mobile navigation defect; Studio connection jargon fixed.
+2026-09-01 15:42 codex UIQA: /studio/settings/connections 768 — PASS after plain-language connection and privacy copy fixes.
+2026-09-01 15:42 codex UIQA: /studio/settings/connections 1440 — PASS after copy and accent fixes.
+2026-09-01 15:42 codex UIQA: owner component — `src/components/Diagrams.tsx` still says an agent “watches the lesson with you” in visible SVG text and aria-label; remove or replace before release because Cherry is transcript-grounded.
+2026-09-01 15:42 codex T11 CODEX-LANE FIXES — 404, agent brief, files, Studio connections, crew, memory, project detail/new, proof, runs, source watch, and work thread now use honest plain language, one primary action, existing neutral/wine tokens, responsive containment, and actionable empty states; no colors, fonts, components, fetches, or deploy configuration added.
+2026-09-01 15:55 codex UIQA: /studio/proof/:receiptId 375 — OWNER INTERACTION PROOF: the fixed bottom navigation intercepts pointer events over the Event ledger disclosure after it scrolls into view; keyboard focus + Enter still works. This is the shared mobile-shell defect, not a Proof-page overflow.

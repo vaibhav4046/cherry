@@ -6,7 +6,7 @@ import type { AgentProfile, Crew } from '../../cherry/workforce/workforce-model.
 
 const STATUS_STICKER: Record<AgentProfile['status'], string> = {
   idle: 'sticker',
-  working: 'sticker sticker-blue',
+  working: 'sticker',
   waiting: 'sticker sticker-wait',
   offline: 'sticker',
   error: 'sticker sticker-fail',
@@ -60,7 +60,7 @@ export default function CrewPage() {
     return (
       <div className="stack">
         <h1 className="display-sm title-3d">Crew</h1>
-        <p className="subhead">Create a workspace first — your crew lives inside it.</p>
+        <p className="subhead">Create a space first — your crew lives inside it.</p>
         <Link to="/studio" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Open Command Center</Link>
       </div>
     );
@@ -71,15 +71,15 @@ export default function CrewPage() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm title-3d">Crew</h1>
         <p className="subhead" style={{ maxWidth: 680 }}>
-          Profiles are configurations, not running models: an agent shows as working only when a real
-          execution host holds a lease. Whoever attaches over WebMCP is auto-assigned.
+          Profiles describe each agent. An agent shows as working only while it is connected and carrying
+          out a task.
         </p>
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
 
       {profiles.length === 0 ? (
-        <section className="card card-wash-lavender stack">
+        <section className="card stack">
           <h2 className="subhead" style={{ fontSize: 20 }}>Start with the five-agent crew</h2>
           <p style={{ margin: 0 }}>Lead · Researcher · Designer · Builder · Verifier — all editable, all deletable.</p>
           <button type="button" className="btn btn-primary" onClick={() => void handleStarterCrew()} disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="create-starter-crew">
@@ -89,7 +89,7 @@ export default function CrewPage() {
       ) : (
         <>
           {crews.map((crew) => (
-            <p key={crew.id} className="sticker sticker-lavender" style={{ alignSelf: 'flex-start' }}>
+            <p key={crew.id} className="sticker" style={{ alignSelf: 'flex-start' }}>
               {crew.name} · {crew.memberAgentIds.length} members · max {crew.maxConcurrentWorkItems} concurrent
             </p>
           ))}

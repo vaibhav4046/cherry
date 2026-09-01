@@ -6,7 +6,7 @@ import type { Mission, MissionState } from '../../cherry/mission/mission-model.t
 import { nextStates } from '../../cherry/mission/mission-state.ts';
 import { loadLesson } from '../../cherry/watch/lesson-service.ts';
 import { addEvidence, listEvidence, setEvidenceTrust, deleteEvidence } from '../../cherry/evidence/evidence-service.ts';
-import type { EvidenceRecord, TrustLevel } from '../../cherry/evidence/evidence-model.ts';
+import type { EvidenceRecord, EvidenceSourceType, TrustLevel } from '../../cherry/evidence/evidence-model.ts';
 import { draftSkillGraph, getSkillGraph, requestSkillGraphApproval, reviseSkillGraph } from '../../cherry/skillgraph/skillgraph-service.ts';
 import type { Evaluation, SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import { createArtifactSet } from '../../cherry/artifacts/artifact-service.ts';
@@ -52,6 +52,34 @@ function since(iso: string): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
+function actorLabel(actorType: Mission['stateHistory'][number]['actorType']): string {
+  if (actorType === 'human') return 'you';
+  if (actorType === 'agent') return 'your agent';
+  if (actorType === 'runner') return 'local runner';
+  return 'Cherry';
+}
+
+function reviewLabel(trust: TrustLevel): string {
+  if (trust === 'untrusted') return 'Needs review';
+  if (trust === 'reviewed') return 'Reviewed';
+  return 'Approved';
+}
+
+function evidenceSourceLabel(sourceType: EvidenceSourceType): string {
+  const labels: Record<EvidenceSourceType, string> = {
+    video: 'Video',
+    transcript: 'Transcript',
+    document: 'Document',
+    repository: 'Repository',
+    webpage: 'Web page',
+    observation: 'Observation',
+    tool_output: 'Tool result',
+    user_statement: 'Your note',
+    run_result: 'Check result',
+  };
+  return labels[sourceType];
+}
+
 export default function MissionDetail() {
   const { missionId } = useParams<{ missionId: string }>();
   const { refresh, setActiveMission } = useAppState();
@@ -82,7 +110,7 @@ export default function MissionDetail() {
   if (!mission) {
     return (
       <div className="empty-state">
-        <p className="subhead">Mission not found. It may have been deleted or belongs to another workspace.</p>
+        <p className="subhead">Project not found. It may have been deleted or belongs to another space.</p>
         <Link to="/studio" className="btn">Back to Command Center</Link>
       </div>
     );
@@ -102,7 +130,7 @@ export default function MissionDetail() {
   }
 
   async function handleTransition(to: MissionState) {
-    await act(() => transitionMission(mission!.id, to, 'human'), `Mission moved to ${MOVE_LABELS[to]}`);
+    await act(() => transitionMission(mission!.id, to, 'human'), `Project moved to ${MOVE_LABELS[to]}`);
   }
 
   async function handleStartLearning(event: FormEvent<HTMLFormElement>) {
@@ -115,7 +143,7 @@ export default function MissionDetail() {
       const lesson = await loadLesson({
         workspaceId: mission!.workspaceId,
         missionId: mission!.id,
-        title: String(form.get('title') ?? 'Lesson'),
+        title: String(form.get('title') ?? 'Source'),
         kind,
         ...(url ? { url } : {}),
         permissionAcknowledged,
@@ -124,7 +152,7 @@ export default function MissionDetail() {
       await updateMission(mission!.id, { lessonId: lesson.value.id });
       if (mission!.state === 'DRAFT') await transitionMission(mission!.id, 'LEARNING');
       return lesson;
-    }, 'Lesson loaded');
+    }, 'Source loaded');
   }
 
   async function handleAddEvidence(event: FormEvent<HTMLFormElement>) {
@@ -142,7 +170,7 @@ export default function MissionDetail() {
           provenanceMethod: 'user_typed',
           transferability: 'transferable',
         }),
-      'Evidence recorded (untrusted until you review it)',
+      'Source note saved. Outside content stays unreviewed until you review it.',
     );
     form.reset();
   }
@@ -159,7 +187,7 @@ export default function MissionDetail() {
         name: `${mission!.title} skill`,
         purpose: mission!.objective,
         nodes: [
-          { kind: 'build', title: 'Produce the artifact', goal: mission!.definitionOfDone[0] ?? 'Produce the mission output' },
+          { kind: 'build', title: 'Produce the artifact', goal: mission!.definitionOfDone[0] ?? 'Produce the project output' },
           { kind: 'verification', title: 'Verify against the definition of done', goal: 'All acceptance assertions pass' },
         ],
       });
@@ -215,7 +243,7 @@ export default function MissionDetail() {
       if (!set.ok) return set;
       await updateMission(mission!.id, { artifactSetId: set.value.id });
       return set;
-    }, 'File workspace created');
+    }, 'Files created');
   }
 
   async function handleVerify() {
@@ -226,7 +254,7 @@ export default function MissionDetail() {
   }
 
   async function handleReceipt() {
-    await act(() => createProofReceipt(mission!.id), 'Proof receipt generated — see the Proof page');
+    await act(() => createProofReceipt(mission!.id), 'Proof generated — see the Proof page');
   }
 
   const latestVerification = verifications[0] ?? null;
@@ -245,7 +273,7 @@ export default function MissionDetail() {
           </div>
         </div>
         <p className="subhead">{mission.objective}</p>
-        <div className="row" aria-label="Mission phases" data-testid="mission-stepper" style={{ gap: 'var(--sp-1)' }}>
+        <div className="row" aria-label="Project phases" data-testid="mission-stepper" style={{ gap: 'var(--sp-1)' }}>
           {MISSION_PHASES.map((phase, index, phases) => {
             const currentIndex = phases.indexOf(mission.state as (typeof phases)[number]);
             const status = mission.state === phase ? 'current' : currentIndex > index ? 'done' : 'ahead';
@@ -289,7 +317,7 @@ export default function MissionDetail() {
               Move to {MOVE_LABELS[state]}
             </button>
           ))}
-          {availableStates.length === 0 ? <span>This mission has reached its final state.</span> : null}
+          {availableStates.length === 0 ? <span>This project has reached its final state.</span> : null}
         </div>
 
         <div className="row">
@@ -297,7 +325,7 @@ export default function MissionDetail() {
             Run verification
           </button>
           <button type="button" className="btn" onClick={() => void handleReceipt()} disabled={!graph}>
-            Generate proof receipt
+            Generate proof
           </button>
           {latestVerification ? (
             <span
@@ -342,7 +370,7 @@ export default function MissionDetail() {
               Cause: the produced files do not yet meet the definition of done. Next action: fix the files, then run verification again.
             </p>
             {mission.artifactSetId ? (
-              <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-sm btn-primary" style={{ alignSelf: 'flex-start' }}>
+              <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>
                 Apply repair and rerun
               </Link>
             ) : null}
@@ -374,8 +402,8 @@ export default function MissionDetail() {
               <div key={index} className="run-row" title={`${change.from ?? '∅'} → ${change.to}`}>
                 <span className="run-ico run-ico-step" aria-hidden="true">→</span>
                 <span className="run-time">{timeOf(change.at)}</span>
-                <span>{change.from === null ? 'Mission created' : `Moved to ${MOVE_LABELS[change.to]}`}{change.reason ? ` — ${change.reason}` : ''}</span>
-                <span className="run-result">{change.actorType}</span>
+                <span>{change.from === null ? 'Project created' : `Moved to ${MOVE_LABELS[change.to]}`}{change.reason ? ` — ${change.reason}` : ''}</span>
+                <span className="run-result">{actorLabel(change.actorType)}</span>
               </div>
             ))}
           </div>
@@ -383,25 +411,25 @@ export default function MissionDetail() {
       </section>
 
       <div className="grid-cards">
-        <section className="card card-wash-sky stack" aria-labelledby="lesson-heading">
-          <h2 id="lesson-heading" className="subhead">Lesson</h2>
+        <section className="card stack" aria-labelledby="lesson-heading">
+          <h2 id="lesson-heading" className="subhead">Source</h2>
           {mission.lessonId ? (
-            <Link to={`/studio/watch/${mission.lessonId}`} className="btn btn-primary">Open Cherry Watch</Link>
+            <Link to={`/studio/watch/${mission.lessonId}`} className="btn">Open source</Link>
           ) : (
             <form onSubmit={handleStartLearning} className="stack">
               <label className="field">
-                <span>Lesson title</span>
+                <span>Source title</span>
                 <input className="input" name="title" required maxLength={300} placeholder="How the tutorial builds it" />
               </label>
               <label className="field">
-                <span>YouTube URL or video id (blank = manual lesson)</span>
+                <span>YouTube URL or video id (blank = manual source)</span>
                 <input className="input" name="url" placeholder="https://youtu.be/…" />
               </label>
               <label className="row" style={{ fontSize: 14 }}>
                 <input type="checkbox" name="permission" style={{ width: 20, height: 20 }} />
                 I am permitted to learn from this source, and I will not copy its branding or assets.
               </label>
-              <button type="submit" className="btn" style={{ alignSelf: 'flex-start' }}>Load lesson</button>
+              <button type="submit" className="btn" style={{ alignSelf: 'flex-start' }}>Load source</button>
             </form>
           )}
         </section>
@@ -415,9 +443,9 @@ export default function MissionDetail() {
                 <span className="sticker">{graph.status}</span>
               </p>
               <div className="row">
-                <Link to={`/studio/skills/${graph.id}`} className="btn btn-sm">Open graph</Link>
+                <Link to={`/studio/skills/${graph.id}`} className="btn btn-sm">Open skill</Link>
                 {graph.status !== 'approved' && graph.status !== 'ready_for_review' ? (
-                  <button type="button" className="btn btn-sm btn-primary" onClick={() => void handleRequestApproval()}>
+                  <button type="button" className="btn btn-sm" onClick={() => void handleRequestApproval()}>
                     Request approval of r{graph.revision}
                   </button>
                 ) : null}
@@ -425,33 +453,36 @@ export default function MissionDetail() {
             </>
           ) : (
             <>
-              <p>No skill yet. Compile the lesson from Cherry Watch, or draft one from the mission.</p>
+              <p>No skill yet. Compile the source, or draft one from this project.</p>
               <button type="button" className="btn" onClick={() => void handleDraftGraph()}>Draft the skill</button>
             </>
           )}
         </section>
 
-        <section className="card card-wash-mint stack" aria-labelledby="artifact-heading">
+        <section className="card stack" aria-labelledby="artifact-heading">
           <h2 id="artifact-heading" className="subhead">Files & preview</h2>
           {mission.artifactSetId ? (
-            <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn btn-primary">Open file workspace</Link>
+            <Link to={`/studio/artifacts/${mission.artifactSetId}`} className="btn">Open files</Link>
           ) : (
             <>
-              <p>The actual output of this mission: HTML, CSS, JS, Markdown, JSON. Every save is versioned and hashed; the preview runs sealed off from your data.</p>
-              <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create file workspace</button>
+              <p>The actual output of this project: HTML, CSS, JS, Markdown, JSON. Every save is versioned and hashed; the preview runs sealed off from your data.</p>
+              <button type="button" className="btn" onClick={() => void handleCreateArtifacts()}>Create files</button>
             </>
           )}
         </section>
       </div>
 
       <section className="card stack" aria-labelledby="evidence-heading">
-        <h2 id="evidence-heading" className="subhead">Evidence ledger ({evidence.length})</h2>
+        <h2 id="evidence-heading" className="subhead">What the source said ({evidence.length})</h2>
         <form onSubmit={handleAddEvidence} className="row">
-          <input className="input" name="claim" required maxLength={2000} placeholder="Record a claim or learned principle" style={{ flex: 1, minWidth: 220 }} />
-          <button type="submit" className="btn">Add evidence</button>
+          <label className="field" style={{ flex: 1, minWidth: 220 }}>
+            <span>Source note</span>
+            <input className="input" name="claim" required maxLength={2000} placeholder="Record a claim or learned principle" />
+          </label>
+          <button type="submit" className="btn" style={{ alignSelf: 'flex-end' }}>Save note</button>
         </form>
         {evidence.length === 0 ? (
-          <p>Empty. Everything Cherry learns is written here with provenance and a trust label.</p>
+          <p>Nothing saved yet. Add what the source said and where it came from.</p>
         ) : (
           <div className="table-scroll">
             <table className="data-table">
@@ -459,7 +490,7 @@ export default function MissionDetail() {
                 <tr>
                   <th scope="col">Claim</th>
                   <th scope="col">Source</th>
-                  <th scope="col">Trust</th>
+                  <th scope="col">Review</th>
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
@@ -467,17 +498,17 @@ export default function MissionDetail() {
                 {evidence.map((record) => (
                   <tr key={record.id}>
                     <td>{record.claim}</td>
-                    <td>{record.sourceType}{typeof record.timestampSeconds === 'number' ? ` @ ${record.timestampSeconds}s` : ''}</td>
+                    <td>{evidenceSourceLabel(record.sourceType)}{typeof record.timestampSeconds === 'number' ? ` @ ${record.timestampSeconds}s` : ''}</td>
                     <td>
                       <span className={record.trust === 'approved' ? 'sticker sticker-pass' : record.trust === 'reviewed' ? 'sticker sticker-wait' : 'sticker sticker-fail'}>
-                        {record.trust}
+                        {reviewLabel(record.trust)}
                       </span>
                     </td>
                     <td>
                       <div className="row">
                         {record.trust !== 'approved' ? (
                           <button type="button" className="btn btn-sm" onClick={() => void handleTrust(record, record.trust === 'untrusted' ? 'reviewed' : 'approved')}>
-                            Raise trust
+                            {record.trust === 'untrusted' ? 'Mark as reviewed' : 'Approve source'}
                           </button>
                         ) : null}
                         <button type="button" className="btn btn-sm btn-danger" onClick={() => void act(() => deleteEvidence(record.id))}>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { listRuns } from '../../cherry/mission/mission-service.ts';
 import { settleRun, attachRunnerJob } from '../../cherry/workforce/routines-service.ts';
@@ -22,13 +23,18 @@ export default function Runs() {
   }, [load]);
 
   if (!activeWorkspace) {
-    return <div className="empty-state"><p className="subhead">Create a workspace first.</p></div>;
+    return (
+      <div className="empty-state">
+        <p className="subhead">No space is active. Open Studio to choose or create one.</p>
+        <Link className="btn btn-primary" to="/studio">Open Studio</Link>
+      </div>
+    );
   }
 
   async function handleDispatch(run: RunRecord) {
     setError(null);
     if (run.adapter !== 'cherry-verify' && run.adapter !== 'cherry-export') {
-      setError('Only deterministic adapters can be dispatched from here.');
+      setError("Only Cherry's built-in check and export actions can run here.");
       return;
     }
     const result = await submitRunnerJob({
@@ -87,10 +93,10 @@ export default function Runs() {
       {error ? <p className="field-error" role="alert">{error}</p> : null}
 
       {runs.length === 0 ? (
-        <p className="card">
-          No runs yet. Runs record execution attempts — manual, agent-driven, or runner jobs. Provider
-          activity and deterministic verification always appear as separate statuses.
-        </p>
+        <div className="card stack">
+          <p>No runs yet. Start with a source, then Cherry records each attempt and its real checks separately.</p>
+          <Link className="btn btn-primary" to="/studio/quick" style={{ alignSelf: 'flex-start' }}>Add a source</Link>
+        </div>
       ) : (
         <div className="table-scroll">
           <table className="data-table">
@@ -130,7 +136,7 @@ export default function Runs() {
                   <td>
                     <div className="row">
                       {run.status === 'waiting_for_runner' && runner?.paired ? (
-                        <button type="button" className="btn btn-sm btn-primary" onClick={() => void handleDispatch(run)}>Dispatch</button>
+                        <button type="button" className="btn btn-sm" onClick={() => void handleDispatch(run)}>Dispatch</button>
                       ) : null}
                       {run.status === 'queued' || run.status === 'waiting_for_runner' || run.status === 'running' ? (
                         <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleCancel(run)}>Cancel</button>

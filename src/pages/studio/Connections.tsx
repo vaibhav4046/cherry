@@ -25,7 +25,7 @@ export default function Connections() {
     if (!result.ok) {
       setError(result.error.message);
     } else {
-      setNotice('Runner paired for this session.');
+      setNotice('Runner connected for this session.');
     }
     setRunner(await runnerStatus());
   }
@@ -33,7 +33,7 @@ export default function Connections() {
   async function handleDeleteWorkspace() {
     if (!activeWorkspace) return;
     const confirmed = window.confirm(
-      `Delete workspace "${activeWorkspace.name}" and ALL of its missions, lessons, evidence, skills, memories, artifacts, and proof? This cannot be undone. Export it first if you want a copy.`,
+      `Delete space "${activeWorkspace.name}" and all of its projects, sources, evidence, skills, memories, files, and proof? This cannot be undone. Export it first if you want a copy.`,
     );
     if (!confirmed) return;
     const result = await deleteWorkspace(activeWorkspace.id);
@@ -49,12 +49,12 @@ export default function Connections() {
 
       <div className="grid-cards">
         <section className="card stack" aria-labelledby="webmcp-heading">
-          <h2 id="webmcp-heading" className="subhead">WebMCP host</h2>
+          <h2 id="webmcp-heading" className="subhead">Agent connection</h2>
           {webmcp.supported ? (
             <>
-              <p className="sticker sticker-pass">Supported · {webmcp.registered.length} tools registered for state "{webmcp.productState}"</p>
+              <p className="sticker sticker-pass">Connected · {webmcp.registered.length} tools available in this space</p>
               <details>
-                <summary className="label">Registered tools (diagnostic)</summary>
+                <summary className="label">Connection details</summary>
                 <ul className="stack" style={{ marginTop: 'var(--sp-2)' }}>
                   {webmcp.registered.map((tool) => (
                     <li key={tool.name} className="mono">
@@ -64,17 +64,16 @@ export default function Connections() {
                 </ul>
               </details>
               <p style={{ fontSize: 14 }}>
-                Tools exist only while this page is open in a compatible client. They mutate the same state
-                you see here — there is no separate agent world.
+                The connected agent can use these tools only while this page is open. Changes appear in this
+                space, so you can review them here.
               </p>
             </>
           ) : (
             <>
-              <p className="sticker sticker-wait">Not available in this browser</p>
+              <p className="sticker sticker-wait">No agent connected</p>
               <p style={{ fontSize: 14 }}>
-                Open Cherry inside a WebMCP-compatible ChatGPT/Codex client and its agent can operate this
-                page through state-aware tools. Until then, every feature works manually — same product, no
-                hidden extras.
+                Open Cherry in a compatible agent browser to connect an agent. You can still use every
+                feature yourself.
               </p>
             </>
           )}
@@ -86,23 +85,30 @@ export default function Connections() {
             <p>Checking…</p>
           ) : runner.reachable ? (
             <p className={runner.paired ? 'sticker sticker-pass' : 'sticker sticker-wait'}>
-              {runner.paired ? `Paired · adapters: ${(runner.adapters ?? []).join(', ')}` : 'Reachable on 127.0.0.1:47821 — enter the pairing token shown in the runner console'}
+              {runner.paired ? `Connected · providers: ${(runner.adapters ?? []).join(', ')}` : 'Runner found — enter the pairing code shown in its window'}
             </p>
           ) : (
             <div className="stack">
               <p className="sticker sticker-wait">Not running</p>
               <p style={{ fontSize: 14 }}>
-                Optional. From the repository: <code className="mono">node runner/server.mjs</code> — it
-                binds to 127.0.0.1 only and prints a one-time pairing token.
+                Optional. Run Cherry's local helper on this computer, then enter the one-time pairing code
+                it shows.
               </p>
+              <details>
+                <summary className="label">Start command</summary>
+                <code className="mono">node runner/server.mjs</code>
+              </details>
             </div>
           )}
           <form onSubmit={handlePair} className="row">
-            <input className="input" name="token" placeholder="Pairing token" style={{ flex: 1, minWidth: 160 }} autoComplete="off" />
-            <button type="submit" className="btn">Pair</button>
+            <label className="field" style={{ flex: 1, minWidth: 160 }}>
+              <span>Pairing code</span>
+              <input className="input" name="token" placeholder="Enter the code from the runner" autoComplete="off" />
+            </label>
+            <button type="submit" className="btn" style={{ alignSelf: 'flex-end' }}>Connect</button>
             {getStoredPairToken() ? (
-              <button type="button" className="btn btn-sm" onClick={() => { clearPairToken(); setNotice('Pairing cleared.'); void runnerStatus().then(setRunner); }}>
-                Unpair
+              <button type="button" className="btn btn-sm" style={{ alignSelf: 'flex-end' }} onClick={() => { clearPairToken(); setNotice('Runner disconnected.'); void runnerStatus().then(setRunner); }}>
+                Disconnect
               </button>
             ) : null}
           </form>
@@ -110,22 +116,22 @@ export default function Connections() {
 
         <AccountPanel />
 
-        <section className="card card-wash-sky stack" aria-labelledby="privacy-heading">
+        <section className="card stack" aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="subhead">Privacy</h2>
           <ul style={{ margin: 0, paddingLeft: 'var(--sp-5)' }}>
-            <li>All workspace data lives in this browser's IndexedDB. No account, no telemetry, no cloud.</li>
-            <li>Core Cherry needs no API key. Optional provider adapters read credentials only from your own local environment — never from this page.</li>
+            <li>All data for this space stays in this browser's storage. No account, telemetry, or cloud service is required.</li>
+            <li>Core Cherry needs no API key. Optional provider connections read credentials only from your own computer — never from this page.</li>
             <li>Exports are plain JSON you control. The proof hash lets anyone detect modification.</li>
             <li>Never paste passwords, API keys, or tokens into chat with any agent.</li>
           </ul>
           <Link to="/studio/onboarding" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>Run capability check</Link>
         </section>
 
-        <section className="card card-wash-lavender stack" aria-labelledby="cli-heading">
-          <h2 id="cli-heading" className="subhead">Connect Claude Code / Codex CLI</h2>
+        <section className="card stack" aria-labelledby="cli-heading">
+          <h2 id="cli-heading" className="subhead">Connect Claude Code or Codex CLI</h2>
           <p style={{ fontSize: 14, margin: 0 }}>
-            Export your workspace (Command Center → Export), then give any MCP-capable CLI read/verify
-            access to it through the bundled stdio bridge:
+            Export your space from the Command Center, then give a compatible command-line agent read and
+            verification access through Cherry's included local bridge.
           </p>
           <div className="row">
             <code className="mono" style={{ background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: '6px 10px', overflowX: 'auto', flex: 1, minWidth: 200 }}>
@@ -150,14 +156,14 @@ export default function Connections() {
           {activeWorkspace ? (
             <>
               <p style={{ fontSize: 14 }}>
-                Deleting a workspace removes every record it owns from this browser. Export first if in doubt.
+                Deleting a space removes every record it owns from this browser. Export first if in doubt.
               </p>
               <button type="button" className="btn btn-danger" onClick={() => void handleDeleteWorkspace()}>
-                Delete workspace "{activeWorkspace.name}"
+                Delete space "{activeWorkspace.name}"
               </button>
             </>
           ) : (
-            <p>No workspace selected.</p>
+            <p>No space selected.</p>
           )}
         </section>
       </div>

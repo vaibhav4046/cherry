@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import {
   compileCorrection,
@@ -11,6 +12,45 @@ import {
 import { CORRECTION_CLASS_TARGET, CORRECTION_CLASSES, type MemoryRecord } from '../../cherry/memory/memory-model.ts';
 import MemoryGraph from './MemoryGraph.tsx';
 import { Icons } from '../../components/Icons.tsx';
+
+const SCOPE_LABEL: Record<MemoryRecord['scope'], string> = {
+  global: 'This space',
+  workspace: 'This space',
+  project: 'This project',
+  mission: 'This project',
+  run: 'This run',
+};
+
+const CORRECTION_LABEL: Partial<Record<(typeof CORRECTION_CLASSES)[number], string>> = {
+  mission_rule: 'Project rule',
+  global_preference: 'Space-wide preference',
+};
+
+type CorrectionClass = (typeof CORRECTION_CLASSES)[number];
+
+const SPACE_CORRECTION_CLASSES: CorrectionClass[] = [
+  'global_preference',
+  'safety_policy',
+  'procedure_update',
+];
+
+const PROJECT_CORRECTION_CLASSES: CorrectionClass[] = [
+  'mission_rule',
+  ...SPACE_CORRECTION_CLASSES,
+  'evaluation_assertion',
+];
+
+function memoryTitle(title: string): string {
+  return title
+    .replace(/\bGlobal preference\b/g, 'Space-wide preference')
+    .replace(/\bMission rule\b/g, 'Project rule');
+}
+
+function memoryDescription(description: string): string {
+  return description
+    .replace(/\bGlobal preference\b/g, 'Space-wide preference')
+    .replace(/\bMission rule\b/g, 'Project rule');
+}
 
 export default function MemoryVault() {
   const { activeWorkspace, activeMission } = useAppState();
@@ -28,23 +68,36 @@ export default function MemoryVault() {
   }, [load]);
 
   if (!activeWorkspace) {
-    return <div className="empty-state"><p className="subhead">Create a workspace first.</p></div>;
+    return (
+      <div className="empty-state">
+        <p className="subhead">No space is active. Open Studio to choose or create one.</p>
+        <Link className="btn btn-primary" to="/studio">Open Studio</Link>
+      </div>
+    );
   }
 
   const inbox = memories.filter((memory) => memory.status === 'proposed');
   const visible = memories.filter((memory) => (filterStatus === 'all' ? memory.status !== 'proposed' : memory.status === filterStatus));
+  const availableScopes: MemoryRecord['scope'][] = activeMission
+    ? ['workspace', 'mission']
+    : ['workspace'];
+  const availableCorrectionClasses = activeMission
+    ? PROJECT_CORRECTION_CLASSES
+    : SPACE_CORRECTION_CLASSES;
 
   async function handlePropose(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     const form = event.currentTarget;
     const data = new FormData(form);
+    const scope = (data.get('scope') as MemoryRecord['scope']) ?? 'workspace';
     const result = await proposeMemory({
       workspaceId: activeWorkspace!.id,
+      missionId: scope === 'mission' ? activeMission?.id ?? null : null,
       type: (data.get('type') as MemoryRecord['type']) ?? 'preference',
       title: String(data.get('title') ?? ''),
       content: String(data.get('content') ?? ''),
-      scope: (data.get('scope') as MemoryRecord['scope']) ?? 'workspace',
+      scope,
       sensitivity: (data.get('sensitivity') as MemoryRecord['sensitivity']) ?? 'private',
       provenance: [{ sourceType: 'human', trust: 'reviewed', description: 'Entered directly in the Memory Vault' }],
     });
@@ -58,10 +111,12 @@ export default function MemoryVault() {
     setError(null);
     const form = event.currentTarget;
     const data = new FormData(form);
+    const correctionClass = (data.get('correctionClass') as CorrectionClass)
+      ?? (activeMission ? 'mission_rule' : 'global_preference');
     const result = await compileCorrection({
       workspaceId: activeWorkspace!.id,
       missionId: activeMission?.id ?? null,
-      correctionClass: (data.get('correctionClass') as (typeof CORRECTION_CLASSES)[number]) ?? 'mission_rule',
+      correctionClass,
       whatFailed: String(data.get('whatFailed') ?? ''),
       approvedFix: String(data.get('approvedFix') ?? ''),
     });
@@ -86,7 +141,7 @@ export default function MemoryVault() {
       {error ? <p className="field-error" role="alert">{error}</p> : null}
       <MemoryGraph workspaceId={activeWorkspace.id} missionId={activeMission?.id} />
 
-      <section className="card card-wash-lavender stack" aria-labelledby="inbox-heading">
+      <section className="card stack" aria-labelledby="inbox-heading">
         <h2 id="inbox-heading" className="subhead">Memory Inbox ({inbox.length})</h2>
         {inbox.length === 0 ? (
           <p>No proposals waiting. When an agent (or the correction compiler) proposes memory, it stops here first.</p>
@@ -94,25 +149,25 @@ export default function MemoryVault() {
           inbox.map((memory) => (
             <div key={memory.id} className="card stack" data-testid="memory-proposal">
               <div className="row">
-                <span className="sticker sticker-violet">{memory.type}</span>
-                <span className="sticker">{memory.scope}</span>
+                <span className="sticker">{memory.type}</span>
+                <span className="sticker">{SCOPE_LABEL[memory.scope]}</span>
                 <span className="sticker">{memory.sensitivity}</span>
-                <span className="sticker sticker-wait">confidence {memory.confidence}</span>
+                <span className="sticker">confidence {memory.confidence}</span>
               </div>
-              <strong>{memory.title}</strong>
+              <strong>{memoryTitle(memory.title)}</strong>
               <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{memory.content}</p>
               <details>
                 <summary className="label">Why this was proposed</summary>
                 <ul>
                   {memory.provenance.map((entry) => (
                     <li key={entry.id} className="mono">
-                      {entry.sourceType} ({entry.trust}) — {entry.description}
+                      {entry.sourceType === 'human' ? 'you' : entry.sourceType} ({entry.trust}) — {memoryDescription(entry.description)}
                     </li>
                   ))}
                 </ul>
               </details>
               <div className="row">
-                <button type="button" className="btn btn-sm btn-primary" onClick={() => void decide(memory, 'approved')}>Approve</button>
+                <button type="button" className="btn btn-sm" onClick={() => void decide(memory, 'approved')}>Approve</button>
                 <button type="button" className="btn btn-sm btn-danger" onClick={() => void decide(memory, 'rejected')}>Reject</button>
               </div>
             </div>
@@ -136,8 +191,8 @@ export default function MemoryVault() {
               </label>
               <label className="field"><span>Scope</span>
                 <select className="select" name="scope" defaultValue="workspace">
-                  {(['global', 'workspace', 'project', 'mission', 'run'] as const).map((scope) => (
-                    <option key={scope} value={scope}>{scope}</option>
+                  {availableScopes.map((scope) => (
+                    <option key={scope} value={scope}>{SCOPE_LABEL[scope]}</option>
                   ))}
                 </select>
               </label>
@@ -149,7 +204,7 @@ export default function MemoryVault() {
                 </select>
               </label>
             </div>
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Propose (goes to inbox)</button>
+            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Propose memory</button>
           </form>
         </section>
 
@@ -163,9 +218,9 @@ export default function MemoryVault() {
             <label className="field"><span>What failed</span><textarea className="textarea" name="whatFailed" required style={{ minHeight: 60 }} /></label>
             <label className="field"><span>Approved fix</span><textarea className="textarea" name="approvedFix" required style={{ minHeight: 60 }} /></label>
             <label className="field"><span>Classify as</span>
-              <select className="select" name="correctionClass" defaultValue="mission_rule">
-                {CORRECTION_CLASSES.map((correctionClass) => (
-                  <option key={correctionClass} value={correctionClass}>{CORRECTION_CLASS_TARGET[correctionClass].label}</option>
+              <select className="select" name="correctionClass" defaultValue={activeMission ? 'mission_rule' : 'global_preference'}>
+                {availableCorrectionClasses.map((correctionClass) => (
+                  <option key={correctionClass} value={correctionClass}>{CORRECTION_LABEL[correctionClass] ?? CORRECTION_CLASS_TARGET[correctionClass].label}</option>
                 ))}
               </select>
             </label>
@@ -205,10 +260,10 @@ export default function MemoryVault() {
                 {visible.map((memory) => (
                   <tr key={memory.id}>
                     <td>
-                      <strong>{memory.pinned ? <span aria-label="Pinned" title="Pinned">{Icons.pin(14)} </span> : null}{memory.title}</strong>
+                      <strong>{memory.pinned ? <span aria-label="Pinned" title="Pinned">{Icons.pin(14)} </span> : null}{memoryTitle(memory.title)}</strong>
                       <div style={{ fontSize: 13, color: 'var(--color-ink-soft)' }}>{memory.content.slice(0, 160)}</div>
                     </td>
-                    <td>{memory.type} / {memory.scope}</td>
+                    <td>{memory.type} / {SCOPE_LABEL[memory.scope]}</td>
                     <td>
                       <span className={memory.status === 'approved' ? 'sticker sticker-pass' : 'sticker sticker-fail'}>{memory.status}</span>
                     </td>

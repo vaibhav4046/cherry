@@ -46,17 +46,17 @@ test('records the complete golden loop without cuts', async ({ page }) => {
     .getByLabel('Definition of done (one item per line)')
     .fill('index.html exists with an h1\nVerification passes');
   await beat(page);
-  await page.getByRole('button', { name: 'Create mission' }).click();
+  await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByTestId('mission-state')).toHaveText('DRAFT');
   await beat(page);
 
-  await page.getByLabel('Lesson title').fill('Semantic layout lesson');
+  await page.getByLabel('Source title').fill('Semantic layout lesson');
   await beat(page);
-  await page.getByRole('button', { name: 'Load lesson' }).click();
+  await page.getByRole('button', { name: 'Load source' }).click();
   await expect(page.getByTestId('mission-state')).toHaveText('LEARNING');
   await beat(page);
 
-  await page.getByRole('link', { name: 'Open Cherry Watch' }).click();
+  await page.getByRole('link', { name: 'Open source' }).click();
   await expect(page.getByRole('heading', { name: 'Semantic layout lesson' })).toBeVisible();
   await beat(page);
 
@@ -86,18 +86,21 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   await expect(page.getByText('Criteria complete')).toBeVisible();
   await beat(page);
 
-  await page.getByRole('link', { name: 'Back to mission' }).click();
+  await page.getByRole('link', { name: 'Back to project' }).click();
   await page
     .getByPlaceholder('Record a claim or learned principle')
     .fill('Semantic landmarks are transferable to any page');
   await beat(page);
-  await page.getByRole('button', { name: 'Add evidence' }).click();
+  await page.getByRole('button', { name: 'Save note' }).click();
   await expect(page.getByText('Semantic landmarks are transferable to any page')).toBeVisible();
-  await expect(page.locator('.data-table').getByText('untrusted').first()).toBeVisible();
+  await expect(page.locator('.data-table').getByText('Needs review').first()).toBeVisible();
   await beat(page);
 
-  await page.getByRole('button', { name: 'Raise trust' }).first().click();
-  await expect(page.locator('.data-table').getByText('reviewed').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Mark as reviewed' }).first().click();
+  await expect(page.locator('.data-table').getByText('Reviewed').first()).toBeVisible();
+  await beat(page);
+  await page.getByRole('button', { name: 'Approve source' }).first().click();
+  await expect(page.locator('.data-table').getByText('Approved').first()).toBeVisible();
   await beat(page);
 
   await page.getByRole('button', { name: 'Draft the skill' }).click();
@@ -105,7 +108,7 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   await beat(page);
 
   const missionUrl = page.url();
-  await page.getByRole('link', { name: 'Open graph' }).click();
+  await page.getByRole('link', { name: 'Open skill' }).click();
   await expect(page.getByTestId('skill-status')).toContainText('draft');
   await beat(page);
 
@@ -134,8 +137,8 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   await expect(stateChip).toHaveText('EXECUTING');
   await beat(page);
 
-  await page.getByRole('button', { name: 'Create file workspace' }).click();
-  await page.getByRole('link', { name: 'Open file workspace' }).click();
+  await page.getByRole('button', { name: 'Create files' }).click();
+  await page.getByRole('link', { name: 'Open files' }).click();
   await beat(page);
 
   await page.locator('input[name="path"]').fill('index.html');
@@ -150,13 +153,13 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   await expect(page.getByText(/sha256/)).toBeVisible();
   await beat(page);
 
-  await page.getByRole('link', { name: 'Back to mission' }).click();
+  await page.getByRole('link', { name: 'Back to project' }).click();
   await page.getByTestId('run-verification').click();
   await expect(page.getByTestId('verification-status')).toContainText('failed');
   await expect(page.getByText('Failed assertions')).toBeVisible();
   await beat(page, 2);
 
-  await page.getByRole('link', { name: 'Open file workspace' }).click();
+  await page.getByRole('link', { name: 'Open files' }).click();
   await page.getByRole('button', { name: 'index.html', exact: true }).click();
   await page
     .getByTestId('artifact-editor')
@@ -165,12 +168,12 @@ test('records the complete golden loop without cuts', async ({ page }) => {
     );
   await beat(page);
   await page.getByTestId('save-artifact').click();
-  await page.getByRole('link', { name: 'Back to mission' }).click();
+  await page.getByRole('link', { name: 'Back to project' }).click();
   await page.getByTestId('run-verification').click();
   await expect(page.getByTestId('verification-status')).toContainText('passed');
   await beat(page, 2);
 
-  await page.getByRole('button', { name: 'Generate proof receipt' }).click();
+  await page.getByRole('button', { name: 'Generate proof' }).click();
   await page.getByRole('link', { name: 'Proof', exact: true }).first().click();
   await expect(page.getByTestId('receipt-status')).toBeVisible();
   await beat(page);

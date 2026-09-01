@@ -105,6 +105,13 @@ test.describe('agent view (MCP inspector)', () => {
 
     await expect(page.getByTestId('agent-mode')).toContainText('Manual mode');
     await expect(page.getByTestId('agent-phase')).toContainText('Verified — export ready');
+    await expect(page.getByRole('heading', { name: 'Agent brief — guided by you' })).toBeVisible();
+    await expect(page.getByTestId('autopilot-card')).toContainText('Do not claim to watch or understand video frames.');
+    await expect(page.getByTestId('autopilot-card')).not.toContainText(/browser vision|WATCH the embedded/i);
+    await expect(page.getByTestId('autopilot-card')).toContainText(
+      'Recent tool calls appear in Agent View for this browser session. Exported proof records verified product events and hashes.',
+    );
+    await expect(page.getByTestId('autopilot-card')).not.toContainText(/Every call.*proof ledger/i);
     // Aperture table lists the passed-phase tools highlighted.
     const table = page.getByTestId('aperture-table');
     await expect(table.getByText('compile_skill_bundle')).toBeVisible();

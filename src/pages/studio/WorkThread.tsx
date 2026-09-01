@@ -11,6 +11,13 @@ const HUMAN_ACTIONS: Array<{ to: WorkItemStatus; label: string; danger?: boolean
   { to: 'CANCELLED', label: 'Cancel', danger: true },
 ];
 
+function actorLabel(actorType: WorkMessage['actorType']): string {
+  if (actorType === 'human') return 'you';
+  if (actorType === 'agent') return 'your agent';
+  if (actorType === 'runner') return 'local runner';
+  return 'Cherry';
+}
+
 export default function WorkThread() {
   const { workItemId } = useParams<{ workItemId: string }>();
   const { activeWorkspace } = useAppState();
@@ -55,7 +62,7 @@ export default function WorkThread() {
     return (
       <div className="stack">
         <h1 className="display-sm title-3d">Work Thread</h1>
-        <p className="subhead">{activeWorkspace ? 'Work item not found in this workspace.' : 'Create a workspace first.'}</p>
+        <p className="subhead">{activeWorkspace ? 'Task not found in this space.' : 'Create a space first.'}</p>
         <Link to="/studio/inbox" className="btn" style={{ alignSelf: 'flex-start' }}>Back to the inbox</Link>
       </div>
     );
@@ -106,7 +113,11 @@ export default function WorkThread() {
           </span>
         </div>
       ) : (
-        <p className="label">This item is {item.status === 'SUCCEEDED' ? 'done' : 'terminal'} — no further human moves.</p>
+        <p className="label">
+          {item.status === 'SUCCEEDED'
+            ? 'This task is done. No further actions are available.'
+            : 'This task was cancelled. No further actions are available.'}
+        </p>
       )}
 
       <section className="stack" aria-labelledby="thread-heading">
@@ -116,15 +127,18 @@ export default function WorkThread() {
             {messages.map((message) => (
               <div key={message.id} className="event-row">
                 <span className="mono">{message.createdAt.slice(11, 19)}</span>
-                <span className="sticker" style={{ padding: '2px 8px' }}>{message.actorType} · {message.kind}</span>
+                <span className="sticker" style={{ padding: '2px 8px' }}>{actorLabel(message.actorType)} · {message.kind}</span>
                 <span>{message.body}</span>
               </div>
             ))}
           </div>
         )}
         <form onSubmit={handleMessage} className="row">
-          <input className="input" name="body" required placeholder="Add a note, question, or decision…" style={{ flex: 1 }} />
-          <button type="submit" className="btn btn-primary">Post</button>
+          <label className="field" style={{ flex: 1, minWidth: 220 }}>
+            <span>Message</span>
+            <input className="input" name="body" required placeholder="Add a note, question, or decision…" />
+          </label>
+          <button type="submit" className="btn" style={{ alignSelf: 'flex-end' }}>Post</button>
         </form>
       </section>
     </div>

@@ -30,6 +30,27 @@ test.describe('plain-language Studio', () => {
     await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Proof history' })).toBeVisible();
 
+    await page.goto('/studio/missions/new');
+    await expect(page.getByRole('heading', { name: 'New project' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create project' })).toBeVisible();
+    await expectPlainLanguage(page.locator('main'));
+
+    await page.goto('/studio/runs');
+    await expect(page.getByText('No runs yet. Start with a source, then Cherry records each attempt and its real checks separately.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Add a source' })).toBeVisible();
+    await expectPlainLanguage(page.locator('main'));
+
+    await page.goto('/studio/proof');
+    await expect(page.getByText('No proof yet. Add a source, build a skill, and run its checks first.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Add a source' })).toBeVisible();
+    await expectPlainLanguage(page.locator('main'));
+
+    await page.goto('/studio/memory');
+    await expect(page.getByRole('button', { name: 'Propose memory' })).toBeVisible();
+    await expectPlainLanguage(page.locator('main'));
+
+    await page.goto('/studio');
+
     await page.getByRole('button', { name: 'Add a source' }).click();
     const sourceDialog = page.getByRole('dialog', { name: 'Add a source' });
     await expect(sourceDialog).toContainText('where each came from');

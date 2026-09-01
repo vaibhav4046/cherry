@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission } from '../../cherry/mission/mission-service.ts';
 
@@ -10,8 +10,9 @@ export default function MissionNew() {
 
   if (!activeWorkspace) {
     return (
-      <div className="empty-state">
-        <p className="subhead">Create a workspace first from the Command Center.</p>
+      <div className="empty-state stack">
+        <p className="subhead">Create a space first, then return here to define a project.</p>
+        <Link className="btn btn-primary" to="/studio" style={{ alignSelf: 'flex-start' }}>Create a space</Link>
       </div>
     );
   }
@@ -42,23 +43,23 @@ export default function MissionNew() {
 
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)', maxWidth: 720 }}>
-      <h1 className="display-sm">New mission</h1>
+      <h1 className="display-sm">New project</h1>
       <p className="subhead">
-        A mission is the durable plan an agent executes: objective, constraints, and a definition of done
-        that verification can actually test.
+        A project gives your agent a clear objective, constraints, and a definition of done that real
+        checks can test.
       </p>
       <form onSubmit={handleSubmit} className="card stack" style={{ gap: 'var(--sp-4)' }}>
         <label className="field">
           <span>Title</span>
-          <input className="input" name="title" required maxLength={160} placeholder="Build a landing snippet the lesson way" />
+          <input className="input" name="title" required maxLength={160} placeholder="Build an accessible landing snippet" />
         </label>
         <label className="field">
           <span>Objective</span>
-          <textarea className="textarea" name="objective" required maxLength={4000} placeholder="What should exist when this mission is done?" />
+          <textarea className="textarea" name="objective" required maxLength={4000} placeholder="What should exist when this project is done?" />
         </label>
         <label className="field">
           <span>Definition of done (one item per line)</span>
-          <textarea className="textarea" name="definitionOfDone" required placeholder={'index.html exists with an h1\nVerification passes with zero blocking failures'} />
+          <textarea className="textarea" name="definitionOfDone" required placeholder={'index.html exists with an h1\nAll checks pass with zero blocking failures'} />
         </label>
         <label className="field">
           <span>Risk level</span>
@@ -70,7 +71,7 @@ export default function MissionNew() {
         </label>
         {error ? <p className="field-error" role="alert">{error}</p> : null}
         <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
-          Create mission
+          Create project
         </button>
       </form>
     </div>

@@ -79,7 +79,7 @@ export default function Artifacts() {
   if (!artifactSet) {
     return (
       <div className="empty-state">
-        <p className="subhead">Artifact set not found.</p>
+        <p className="subhead">Files not found.</p>
         <Link to="/studio" className="btn">Back to Command Center</Link>
       </div>
     );
@@ -88,7 +88,7 @@ export default function Artifacts() {
   async function handleSave() {
     if (!selectedPath) return;
     setError(null);
-    const result = await writeArtifactFile(artifactSet!.id, selectedPath, draft, 'human', 'Edited in the file workspace');
+    const result = await writeArtifactFile(artifactSet!.id, selectedPath, draft, 'human', 'Edited in the file space');
     if (!result.ok) setError(result.error.message);
     setPreviewNonce((nonce) => nonce + 1);
     setPreviewMessages([]);
@@ -127,8 +127,8 @@ export default function Artifacts() {
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)' }}>
       <header className="row" style={{ justifyContent: 'space-between' }}>
-        <div className="stack" style={{ gap: 4 }}><h1 className="display-sm">{artifactSet.name}</h1><p className="label" style={{ margin: 0 }}>Real files your mission produces — versioned, hashed, previewed in a sealed sandbox</p></div>
-        <Link to={`/studio/missions/${artifactSet.missionId}`} className="btn">Back to mission</Link>
+        <div className="stack" style={{ gap: 4 }}><h1 className="display-sm">{artifactSet.name}</h1><p style={{ margin: 0, fontSize: 14 }}>Real files your project produces — versioned, hashed, and previewed in a sealed sandbox.</p></div>
+        <Link to={`/studio/missions/${artifactSet.missionId}`} className="btn">Back to project</Link>
       </header>
       {error ? <p className="field-error" role="alert">{error}</p> : null}
 
@@ -136,7 +136,10 @@ export default function Artifacts() {
         <section className="card stack" aria-labelledby="tree-heading">
           <h2 id="tree-heading" className="subhead">Files</h2>
           <form onSubmit={handleCreate} className="stack">
-            <input className="input" name="path" placeholder="new/file.html" required />
+            <label className="field">
+              <span>File path</span>
+              <input className="input" name="path" placeholder="new/file.html" required />
+            </label>
             <button type="submit" className="btn btn-sm">Create file</button>
           </form>
           <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
@@ -180,7 +183,7 @@ export default function Artifacts() {
                 <button type="button" className="btn btn-primary" onClick={() => void handleSave()} data-testid="save-artifact">
                   Save (r{selectedFile.revision + 1})
                 </button>
-                <span className="mono">sha256 {selectedFile.sha256.slice(0, 16)}… · {selectedFile.sizeBytes} bytes · by {selectedFile.updatedBy}</span>
+                <span className="mono">sha256 {selectedFile.sha256.slice(0, 16)}… · {selectedFile.sizeBytes} bytes · by {selectedFile.updatedBy === 'human' ? 'you' : selectedFile.updatedBy === 'agent' ? 'your agent' : selectedFile.updatedBy}</span>
               </div>
             </>
           ) : (
@@ -201,7 +204,7 @@ export default function Artifacts() {
                 className="preview-frame"
                 data-testid="artifact-preview"
               />
-              <p className="label">Sandboxed · no network · no access to Cherry data</p>
+              <p style={{ margin: 0, fontSize: 14 }}>Sandboxed · no network · no access to Cherry data</p>
               {previewMessages.length > 0 ? (
                 <div className="stack" style={{ maxHeight: 140, overflowY: 'auto' }} aria-live="polite">
                   {previewMessages.map((message, index) => (
