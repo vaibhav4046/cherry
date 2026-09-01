@@ -165,6 +165,16 @@ describe('quick skill pipeline', () => {
     expect(evidence.every((record) => record.provenanceMethod === 'local_transcription')).toBe(true);
   });
 
+  it('maps each mixed transcript step to its own provenance rather than the latest import', async () => {
+    const { workspace, lesson } = await seededLesson();
+    unwrap(await importTranscript(lesson.id, '0:05 Create the pasted frame.', 'user_text'));
+    unwrap(await importTranscript(lesson.id, '0:40 Check the uploaded alignment.', 'user_upload', 'notes.txt', 'human', 'append'));
+    const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id, name: 'Mixed provenance' }));
+    const evidence = await listEvidence(workspace.id);
+    expect(generated.evidenceCount).toBe(2);
+    expect(evidence.map((record) => record.provenanceMethod)).toEqual(['user_typed', 'user_upload']);
+  });
+
   it('records approval requests as a human action while retaining the named requester', async () => {
     const { workspace, lesson } = await seededLesson();
     unwrap(await importTranscript(lesson.id, '0:05 Create the frame.\n\n0:40 Check alignment.', 'user_text'));

@@ -17,6 +17,12 @@ export function isYouTubeHost(host: string): boolean {
   return ALLOWED_HOSTS.has(host.toLowerCase().replace(/\.$/, ''));
 }
 
+/** Broader safety boundary used for fetch policy; parsing remains allowlisted. */
+export function isYouTubeFamilyHost(host: string): boolean {
+  const value = host.toLowerCase().replace(/\.$/, '');
+  return value === 'youtu.be' || value.endsWith('.youtu.be') || value === 'youtube.com' || value.endsWith('.youtube.com') || value === 'youtube-nocookie.com' || value.endsWith('.youtube-nocookie.com');
+}
+
 export interface ParsedYouTubeUrl {
   videoId: string;
   canonicalUrl: string;

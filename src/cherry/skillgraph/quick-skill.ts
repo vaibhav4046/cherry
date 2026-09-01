@@ -99,7 +99,7 @@ export async function generateSkillFromLesson(input: QuickSkillInput): Promise<R
         lessonId: lesson.id,
         sourceType: 'transcript',
         claim: step.sourceText.slice(0, 2000),
-        provenanceMethod: provenanceForTranscriptSource[lesson.transcriptSource ?? 'unknown'],
+        provenanceMethod: provenanceForTranscriptSource[step.transcriptSource],
         timestampSeconds: step.timestampSeconds,
         transferability: 'unknown',
         ...(lesson.canonicalUrl ? { sourceUri: lesson.canonicalUrl } : {}),

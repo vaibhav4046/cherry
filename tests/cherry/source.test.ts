@@ -5,7 +5,6 @@ import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import {
   completeSourceFetch,
-  attachSourceTranscript,
   importSourceTranscript,
   createSource,
   findDuplicateSource,
@@ -111,13 +110,13 @@ describe('source inbox domain', () => {
     expect((await listTranscript(fetched.lessonId))[0]?.source).toBe('runner_fetch');
   });
 
-  it('attaches a human-supplied URL transcript hash and format to its source record', async () => {
+  it('attaches a human-supplied URL transcript hash and format atomically with import', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Transcript metadata' }));
     const source = unwrap(await createSource({
       workspaceId: workspace.id, kind: 'article', title: 'Article', url: 'https://example.com/article', permissionAcknowledged: true,
     }));
     const content = '0:05 Create a concise, readable method.';
-    const updated = unwrap(await attachSourceTranscript(source.id, content));
+    const updated = unwrap(await importSourceTranscript(source.id, content, 'user_text')).source;
     expect(updated.status).toBe('ready');
     expect(updated.contentFormat).toBe('plain');
     expect(updated.fetchMethod).toBe('user_paste');

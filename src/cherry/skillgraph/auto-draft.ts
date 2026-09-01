@@ -7,6 +7,8 @@ export interface DerivedStep {
   kind: NodeKind;
   timestampSeconds: number;
   sourceText: string;
+  /** Provenance belongs to the segment, not the lesson's last import. */
+  transcriptSource: TranscriptSegment['source'];
 }
 
 export interface DerivedSkillDraft {
@@ -62,6 +64,7 @@ export function deriveSkillFromTranscript(segments: TranscriptSegment[]): Derive
           kind: VERIFY_VERBS.test(sentence) ? 'verification' : 'build',
           timestampSeconds: segment.startSeconds,
           sourceText: sentence,
+          transcriptSource: segment.source,
         });
       }
     }
@@ -91,6 +94,7 @@ export function deriveSkillFromTranscript(segments: TranscriptSegment[]): Derive
           kind: 'research',
           timestampSeconds: first.startSeconds,
           sourceText: first.text.trim(),
+          transcriptSource: first.source,
         },
       ];
     }

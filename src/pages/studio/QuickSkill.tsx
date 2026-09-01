@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
 import { getLesson, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
-import { embedUrl, isYouTubeHost } from '../../cherry/watch/youtube-url.ts';
+import { embedUrl, isYouTubeFamilyHost } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
 import { runVerification } from '../../cherry/verify/verification-service.ts';
@@ -37,7 +37,7 @@ export function classifyQuickSkillMaterial(material: string): 'raw' | 'youtube' 
   try {
     const url = new URL(material.trim());
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'raw';
-    return isYouTubeHost(url.hostname) ? 'youtube' : 'article';
+    return isYouTubeFamilyHost(url.hostname) ? 'youtube' : 'article';
   } catch {
     return 'raw';
   }

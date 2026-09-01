@@ -8,8 +8,9 @@ import { conflict, invalid, notFound, unsupported } from '../core/errors.ts';
 import type { ActorType } from '../core/domain-event.ts';
 import { sha256Text } from '../core/hash.ts';
 import { importTranscript, loadLesson } from '../watch/lesson-service.ts';
-import { isYouTubeHost } from '../watch/youtube-url.ts';
-import type { TranscriptSource } from '../watch/watch-model.ts';
+import { isYouTubeFamilyHost, isYouTubeHost } from '../watch/youtube-url.ts';
+import { parseTranscript } from '../watch/transcript-parser.ts';
+import type { Lesson, TranscriptSegment, TranscriptSource } from '../watch/watch-model.ts';
 import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceRecord } from './source-model.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
@@ -70,7 +71,7 @@ function isBlockedFetchDomain(url: string | null): string | null {
   if (!url) return 'A public URL is required for a page fetch';
   const domain = urlDomain(url) ?? '';
   if (isPrivateHost(domain)) return 'Private or loopback addresses cannot be fetched';
-  if (isYouTubeHost(domain)) return 'YouTube stays official-player/transcript-only; Scrapling never fetches it';
+  if (isYouTubeFamilyHost(domain)) return 'YouTube stays official-player/transcript-only; Scrapling never fetches it';
   if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com')) return 'LinkedIn fetching is disabled; paste or upload the text instead';
   return null;
 }
@@ -205,39 +206,7 @@ export async function completeSourceFetch(sourceId: string, input: { markdown: s
   return ok(next);
 }
 
-/** Records the content metadata for text the human supplied against a URL source. */
-export async function attachSourceTranscript(
-  sourceId: string,
-  content: string,
-  contentFormat: SourceContentFormat = 'plain',
-  actorType: ActorType = 'human',
-  transcriptSource: TranscriptSource = 'user_text',
-): Promise<Result<SourceRecord>> {
-  const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
-  const trimmed = content.trim();
-  if (!trimmed || trimmed.length > MAX_CONTENT) return invalid('Transcript is empty or exceeds the 2 MiB limit');
-  const next: SourceRecord = {
-    ...current,
-    status: 'ready',
-    contentFormat,
-    contentHash: await sha256Text(trimmed),
-    fetchMethod: transcriptSource === 'user_upload' ? 'upload' : transcriptSource === 'local_transcription' ? 'local_transcription' : 'user_paste',
-    fetchStatus: 'not_requested',
-    fetchError: null,
-    updatedAt: isoNow(),
-  };
-  await withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
-    await ctx.db.sourceRecords.put(next);
-    ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Transcript saved for "${next.title}"`, payload: sourceEventPayload(next) });
-  });
-  return ok(next);
-}
-
-/**
- * The Source Inbox boundary for user-supplied URL text. Keeping import and
- * source metadata here prevents Quick Skill (or another caller) from
- * accidentally creating transcript evidence without its SourceRecord hash.
- */
+/** Atomically imports the first URL transcript and its SourceRecord metadata. */
 export async function importSourceTranscript(
   sourceId: string,
   content: string,
@@ -247,12 +216,31 @@ export async function importSourceTranscript(
   mode: 'replace' | 'append' = 'replace',
 ): Promise<Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>> {
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
-  const imported = await importTranscript(current.lessonId, content, transcriptSource, fileName, actorType, mode);
-  if (!imported.ok) return imported as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
-  const format: SourceContentFormat = fileName?.toLowerCase().endsWith('.srt') ? 'srt' : fileName?.toLowerCase().endsWith('.vtt') ? 'vtt' : 'plain';
-  const attached = await attachSourceTranscript(sourceId, content, format, actorType, transcriptSource);
-  if (!attached.ok) return attached as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
-  return ok({ source: attached.value, segmentCount: imported.value.segmentCount, totalSegments: imported.value.totalSegments });
+  const parsed = parseTranscript(content, fileName);
+  if (!parsed.ok) return parsed as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
+  const db = getDb(); const lesson = await db.lessons.get(current.lessonId);
+  if (!lesson) return notFound('Lesson', current.lessonId);
+  const existing = mode === 'append' ? await db.transcriptSegments.where('lessonId').equals(lesson.id).toArray() : [];
+  const existingEnd = existing.reduce((max, segment) => Math.max(max, segment.endSeconds), 0);
+  const firstStart = parsed.value.segments[0]?.startSeconds ?? 0;
+  const offset = mode === 'append' && firstStart < existingEnd ? existingEnd + 2 : 0;
+  const now = isoNow();
+  const segments: TranscriptSegment[] = parsed.value.segments.map((segment) => ({ id: newId('seg'), workspaceId: lesson.workspaceId, lessonId: lesson.id, index: existing.length + segment.index, startSeconds: segment.startSeconds + offset, endSeconds: segment.endSeconds + offset, text: segment.text, source: transcriptSource }));
+  const nextLesson: Lesson = { ...lesson, transcriptSource, transcriptImportedAt: now, revision: lesson.revision + 1, updatedAt: now };
+  // A SourceRecord represents one selected source. On append, retain its prior
+  // hash/method rather than falsely relabelling it as the newest chunk.
+  const nextSource: SourceRecord = mode === 'append' && current.contentHash
+    ? { ...current, updatedAt: now }
+    : { ...current, status: 'ready', contentFormat: parsed.value.format, contentHash: await sha256Text(content.trim()), fetchMethod: transcriptSource === 'user_upload' ? 'upload' : transcriptSource === 'local_transcription' ? 'local_transcription' : 'user_paste', fetchStatus: 'not_requested', fetchError: null, updatedAt: now };
+  await withWorkspaceTx(current.workspaceId, ['sourceRecords', 'lessons', 'transcriptSegments'], async (ctx) => {
+    if (mode === 'replace') await ctx.db.transcriptSegments.where('lessonId').equals(lesson.id).delete();
+    await ctx.db.transcriptSegments.bulkAdd(segments);
+    await ctx.db.lessons.put(nextLesson);
+    await ctx.db.sourceRecords.put(nextSource);
+    ctx.emit({ type: 'lesson.transcript_imported', actorType, objectType: 'lesson', objectId: lesson.id, summary: `Transcript ${mode === 'append' ? 'source added' : 'imported'} (${segments.length} segments, source: ${transcriptSource})`, payload: { segmentCount: segments.length, source: transcriptSource, format: parsed.value.format, mode } });
+    ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Transcript saved for "${nextSource.title}"`, payload: sourceEventPayload(nextSource) });
+  });
+  return ok({ source: nextSource, segmentCount: segments.length, totalSegments: existing.length + segments.length });
 }
 
 export async function failSourceFetch(sourceId: string, reason: string, actorType: ActorType = 'runner'): Promise<Result<SourceRecord>> {
