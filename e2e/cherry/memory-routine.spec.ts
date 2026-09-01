@@ -98,6 +98,7 @@ test.describe('memory and routine surfaces', () => {
     await page.goto('/studio');
     await page.getByLabel('Space name').fill('Runner action hierarchy');
     await page.getByRole('button', { name: 'Create space' }).click();
+    await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
     await page.goto('/studio/missions/new');
     await page.getByLabel('Title').fill('Check two exports');
     await page.getByLabel('Objective').fill('Show more than one honest runner action');
