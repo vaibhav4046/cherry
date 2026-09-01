@@ -203,6 +203,7 @@ export function Landing() {
             <div className="row">
               <Link to="/connect" className="btn btn-primary">Connect your agent</Link>
               <Link to="/studio/skills" className="link-quiet">Browse the Skill Library</Link>
+              <Link to="/showcase#real-run" className="link-quiet">Watch the real run</Link>
             </div>
           </div>
         </section>

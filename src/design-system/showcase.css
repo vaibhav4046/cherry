@@ -164,3 +164,21 @@
 }
 .showcase-last-call { overflow-wrap: anywhere; }
 .showcase-approval { border-color: var(--color-cherry-pop); }
+
+/* ---------- Recorded proof ---------- */
+.showcase-recording {
+  scroll-margin-top: var(--sp-6);
+  gap: var(--sp-5);
+  padding-block: var(--sp-6);
+  border-block: var(--border);
+  min-width: 0;
+}
+.showcase-recording-copy { max-width: 720px; }
+.showcase-recording-video {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  border: var(--border);
+  border-radius: var(--radius-card);
+}

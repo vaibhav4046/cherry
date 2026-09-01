@@ -622,6 +622,32 @@ export function Showcase() {
           </div>
         </div>
 
+        <section
+          id="real-run"
+          className="showcase-recording stack"
+          aria-labelledby="real-run-heading"
+        >
+          <div className="stack showcase-recording-copy" style={{ gap: 'var(--sp-2)' }}>
+            <p className="kicker" style={{ margin: 0 }}>Recorded proof</p>
+            <h2 id="real-run-heading" className="display-sm" style={{ margin: 0 }}>
+              Watch the real run
+            </h2>
+            <p className="subhead" style={{ margin: 0 }}>
+              Uncut recording of the automated end-to-end test driving the real product. Nothing staged.
+            </p>
+          </div>
+          <video
+            className="showcase-recording-video"
+            src="/media/demo/golden-loop.webm"
+            controls
+            preload="metadata"
+            playsInline
+            aria-label="Watch the real run"
+          >
+            <a href="/media/demo/golden-loop.webm">Download the real run recording</a>
+          </video>
+        </section>
+
         <footer className="row" style={{ justifyContent: 'space-between' }}>
           <span className="label">Local-first · everything above lives in this browser's IndexedDB</span>
           <Link to="/studio" className="link-quiet">Continue in the Studio →</Link>
