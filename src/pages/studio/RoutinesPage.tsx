@@ -154,8 +154,7 @@ export default function RoutinesPage() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm title-3d">Routines</h1>
         <p className="subhead" style={{ maxWidth: 680 }}>
-          Schedule an approved skill to run on repeat. Every schedule change needs your re-approval.
-          Runs on schedule when a paired local runner is available. Cherry does not execute routines in the cloud.
+          Bind an approved skill to a manual runner request. Timed schedules can be saved as drafts, but runner registration is not connected yet.
         </p>
       </header>
 
@@ -184,7 +183,7 @@ export default function RoutinesPage() {
           <h2 id="draft-heading" ref={prefillHeadingRef} tabIndex={prefillKey ? -1 : undefined} className="subhead" style={{ fontSize: 20 }}>Draft a routine</h2>
           {createdGraphIds.has(selectedGraphId) ? (
             <p className="quiet" role="status" style={{ margin: 0 }}>
-              Routine draft created. It is disabled until you schedule and approve it.
+              Routine draft created. Approve its manual version to use Run now.
             </p>
           ) : prefillKey && selectedGraph ? (
             <p className="quiet" role="status" style={{ margin: 0 }}>
@@ -220,11 +219,11 @@ export default function RoutinesPage() {
             {routines.map((routine) => (
               <Link key={routine.id} to={`/studio/routines/${routine.id}`} className="event-row" style={{ textDecoration: 'none' }} data-testid="routine-row">
                 <span className={routine.enabled ? 'sticker sticker-pass' : 'sticker sticker-wait'} style={{ padding: '2px 10px' }}>
-                  {routine.enabled ? 'enabled' : 'disabled'}
+                  {routine.enabled ? 'manual ready' : routine.schedule.kind === 'manual' ? 'disabled' : 'timed draft'}
                 </span>
                 <span style={{ fontWeight: 700 }}>{routine.name}</span>
                 <span style={{ fontSize: 14 }}>{describeSchedule(routine.schedule)}</span>
-                <span className="mono" style={{ fontSize: 13 }}>next {fmt(routine.nextRunAt)}</span>
+                <span className="mono" style={{ fontSize: 13 }}>{routine.schedule.kind === 'manual' ? 'next' : 'preview'} {fmt(routine.nextRunAt)}</span>
                 <span className="mono" style={{ fontSize: 13 }}>last {fmt(routine.lastRunAt)}</span>
                 <span className="sticker" style={{ padding: '1px 8px', fontSize: 11 }}>
                   {routine.executionHostId === 'local-runner' ? 'local runner' : 'paired runner'}
@@ -236,7 +235,7 @@ export default function RoutinesPage() {
       </section>
       <section className="card stack" aria-label="Run on your computer">
         <h2 className="subhead" style={{ fontSize: 20 }}>Run on your computer</h2>
-        <p style={{ margin: 0 }}>A routine runs only while your paired local runner is online. Nothing runs in Cherry's cloud.</p>
+        <p style={{ margin: 0 }}>Manual Run now requests wait for your paired local runner. Timed execution is not registered, and nothing runs in Cherry's cloud.</p>
         <Link className="btn btn-sm" to="/studio/settings/connections" style={{ alignSelf: 'flex-start' }}>Check runner status</Link>
       </section>
     </div>

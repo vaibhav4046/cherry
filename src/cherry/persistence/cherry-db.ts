@@ -99,4 +99,11 @@ export const ALL_STORES = [
   'settings',
   'sourceRecords',
   'channelWatches',
+  'agentProfiles',
+  'crews',
+  'workItems',
+  'workMessages',
+  'handoffs',
+  'executionHosts',
+  'routines',
 ] as const;

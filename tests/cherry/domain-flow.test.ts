@@ -20,7 +20,15 @@ import {
   listSkillGraphVersions,
 } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { compileCorrection, decideMemory, deleteMemory, listMemories, proposeMemory } from '../../src/cherry/memory/memory-service.ts';
-import { createArtifactSet, writeArtifactFile, listArtifactFiles, deleteArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
+import {
+  createArtifactSet,
+  writeArtifactFile,
+  listArtifactFiles,
+  listArtifactVersions,
+  deleteArtifactFile,
+  getArtifactHistoryStorage,
+  purgeArtifactVersionContents,
+} from '../../src/cherry/artifacts/artifact-service.ts';
 import { runVerification, recordRepair } from '../../src/cherry/verify/verification-service.ts';
 import { createProofReceipt } from '../../src/cherry/proof/proof-service.ts';
 import { verifyReceipt } from '../../src/cherry/proof/proof-verifier.ts';
@@ -404,6 +412,11 @@ describe('artifacts, verification, repair, proof', () => {
     expect(receipt.skillGraphId).toBe(graph.id);
     expect(receipt.artifacts).toHaveLength(1);
     expect(receipt.failuresAndRepairs.length).toBeGreaterThan(0);
+    const ledgerEvents = await listProofEvents(workspace.id);
+    const missionCreated = ledgerEvents.find((event) => event.type === 'mission.created');
+    const receiptMissionCreated = receipt.events.find((event) => event.id === missionCreated?.id);
+    expect(missionCreated?.payload).toBeDefined();
+    expect(receiptMissionCreated?.payloadHash).toBe(await sha256Canonical(missionCreated!.payload));
 
     const verification = unwrap(await verifyReceipt(receipt, new Map([['index.html', '<html lang="en"><head><title>Demo</title></head><body><main><h1>Demo</h1></main></body></html>']])));
     expect(verification.verdict).toBe('valid');
@@ -411,6 +424,16 @@ describe('artifacts, verification, repair, proof', () => {
     expect(verification.eventsMonotonic).toBe(true);
 
     const exported = unwrap(await exportWorkspace(workspace.id));
+    const exportedMissionCreated = (exported.proofEvents as Array<{ id: string; payloadHash?: string }>)
+      .find((event) => event.id === missionCreated?.id);
+    for (const event of exported.proofEvents as Array<{ payload?: Record<string, unknown>; payloadHash?: string }>) {
+      if (event.payload) expect(event.payloadHash).toBe(await sha256Canonical(event.payload));
+    }
+    const exportedReceipt = (exported.proofReceipts as typeof exported.proofReceipts)
+      .find((candidate) => (candidate as { receiptId?: string }).receiptId === receipt.receiptId) as typeof receipt | undefined;
+    expect(exportedMissionCreated?.payloadHash).toBe(receiptMissionCreated?.payloadHash);
+    expect(exportedReceipt?.events.find((event) => event.id === missionCreated?.id)?.payloadHash)
+      .toBe(receiptMissionCreated?.payloadHash);
     const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
     const importedReceipt = await getDb().receipts.where('workspaceId').equals(imported.workspaceId).first();
     expect(importedReceipt).toBeUndefined();
@@ -426,6 +449,32 @@ describe('artifacts, verification, repair, proof', () => {
     expect(tamperCheck.verdict).toBe('tampered');
   });
 
+  it('refuses to launder a tampered stored receipt during export', async () => {
+    const { workspace, mission } = await fullMission();
+    unwrap(await runVerification({ missionId: mission.id }));
+    const receipt = unwrap(await createProofReceipt(mission.id));
+    const tampered = structuredClone(receipt);
+    tampered.events[0]!.summary += ' changed after receipt creation';
+    await getDb().receipts.put(tampered);
+
+    await expect(exportWorkspace(workspace.id)).resolves.toMatchObject({
+      ok: false,
+      error: { message: expect.stringMatching(/invalid proof hash/i) },
+    });
+  });
+
+  it('refuses to launder a mismatched proof-event payload hash during export', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    const event = (await listProofEvents(workspace.id)).find((entry) => entry.payload);
+    expect(event).toBeDefined();
+    await getDb().proofEvents.update(event!.id, { payloadHash: '0'.repeat(64) });
+
+    await expect(exportWorkspace(workspace.id)).resolves.toMatchObject({
+      ok: false,
+      error: { message: expect.stringMatching(/payload hash/i) },
+    });
+  });
+
   it('artifact limits and deletion behave', async () => {
     const { artifactSet } = await fullMission();
     const oversized = await writeArtifactFile(artifactSet.id, 'big.js', 'x'.repeat(513 * 1024), 'human');
@@ -435,6 +484,40 @@ describe('artifacts, verification, repair, proof', () => {
     expect((await listArtifactFiles(artifactSet.id)).some((file) => file.path === 'app.js')).toBe(true);
     unwrap(await deleteArtifactFile(artifactSet.id, 'app.js'));
     expect((await listArtifactFiles(artifactSet.id)).some((file) => file.path === 'app.js')).toBe(false);
+  });
+
+  it('purges only old artifact bodies while preserving current files and version evidence', async () => {
+    const { workspace, artifactSet } = await fullMission();
+    const first = unwrap(await writeArtifactFile(artifactSet.id, 'app.js', 'console.log(1)', 'human'));
+    const second = unwrap(await writeArtifactFile(artifactSet.id, 'app.js', 'console.log(2)', 'human'));
+    const deleted = unwrap(await writeArtifactFile(artifactSet.id, 'deleted.js', 'remove me', 'human'));
+    unwrap(await deleteArtifactFile(artifactSet.id, deleted.path));
+
+    const beforeFile = await getDb().artifactFiles.get(second.id);
+    const beforeVersions = await listArtifactVersions(first.id);
+    const deletedVersions = await listArtifactVersions(deleted.id);
+    const expectedBytes = [...beforeVersions, ...deletedVersions].reduce((sum, version) => sum + version.sizeBytes, 0);
+    await expect(getArtifactHistoryStorage(workspace.id)).resolves.toEqual({
+      versionCount: 3,
+      versionsWithContent: 3,
+      contentBytes: expectedBytes,
+    });
+
+    const purged = unwrap(await purgeArtifactVersionContents(workspace.id, 'human'));
+    expect(purged).toEqual({ purgedVersions: 3, purgedBytes: expectedBytes });
+    expect(await getDb().artifactFiles.get(second.id)).toEqual(beforeFile);
+    const afterVersions = await getDb().artifactVersions.where('workspaceId').equals(workspace.id).toArray();
+    expect(afterVersions).toHaveLength(3);
+    expect(afterVersions.every((version) => version.content === null && typeof version.contentPurgedAt === 'string')).toBe(true);
+    expect(afterVersions.map(({ id, path, revision, sha256, sizeBytes, changeSummary }) => ({ id, path, revision, sha256, sizeBytes, changeSummary })))
+      .toEqual([...beforeVersions, ...deletedVersions].map(({ id, path, revision, sha256, sizeBytes, changeSummary }) => ({ id, path, revision, sha256, sizeBytes, changeSummary })));
+    expect((await listProofEvents(workspace.id)).filter((event) => event.type === 'artifact.history_purged')).toHaveLength(1);
+
+    await expect(purgeArtifactVersionContents(workspace.id, 'human')).resolves.toEqual({
+      ok: true,
+      value: { purgedVersions: 0, purgedBytes: 0 },
+    });
+    expect((await listProofEvents(workspace.id)).filter((event) => event.type === 'artifact.history_purged')).toHaveLength(1);
   });
 });
 
@@ -488,6 +571,18 @@ describe('workspace export/import round trip', () => {
     expect(imports[0]?.status).toBe('imported');
     expect(imports.slice(1).every((result) => result.status === 'already-imported')).toBe(true);
     expect(await getDb().workspaces.get(imports[0]!.workspaceId)).toBeDefined();
+  });
+
+  it('coalesces concurrent imports of the same archive into one local space', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    const raw = JSON.stringify(unwrap(await exportWorkspace(workspace.id)));
+    const results = await Promise.all(Array.from({ length: 5 }, () => importWorkspace(raw)));
+
+    expect(results.every((result) => result.ok)).toBe(true);
+    const imported = results.map((result) => unwrap(result));
+    expect(new Set(imported.map((result) => result.workspaceId)).size).toBe(1);
+    expect(imported.filter((result) => result.status === 'imported')).toHaveLength(1);
+    expect(imported.filter((result) => result.status === 'already-imported')).toHaveLength(4);
   });
 
   it('does not preserve an archive-supplied example flag during an ordinary import', async () => {
@@ -563,6 +658,13 @@ describe('workspace export/import round trip', () => {
       'proofReceipts',
       'sourceRecords',
       'channelWatches',
+      'agentProfiles',
+      'crews',
+      'workItems',
+      'workMessages',
+      'handoffs',
+      'executionHosts',
+      'routines',
     ] as const;
 
     for (const key of arrayKeys) {
@@ -715,7 +817,43 @@ describe('workspace export/import round trip', () => {
         path: index === 0 ? original['path'] : `overflow-${index}.txt`,
       }));
     });
+    await rejectMutation((archive) => {
+      (archive['artifactVersions'] as Array<Record<string, unknown>>)[0]!['content'] = null;
+    });
+    await rejectMutation((archive) => {
+      (archive['artifactVersions'] as Array<Record<string, unknown>>)[0]!['contentPurgedAt'] = new Date().toISOString();
+    });
   });
+
+  it('recovers a legally accumulated workspace that exceeded the portable export limit', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Large history'));
+    const content = 'x'.repeat(512 * 1024);
+    const file = unwrap(await writeArtifactFile(artifactSet.id, 'history.txt', content, 'human'));
+    const firstVersion = (await getDb().artifactVersions.where('artifactFileId').equals(file.id).first())!;
+    await getDb().artifactVersions.bulkAdd(Array.from({ length: 128 }, (_, index) => ({
+      ...firstVersion,
+      id: `af-history-${index + 2}`,
+      revision: index + 2,
+    })));
+
+    const tooLarge = await exportWorkspace(workspace.id);
+    expect(tooLarge).toMatchObject({
+      ok: false,
+      error: { message: expect.stringContaining('64 MiB portable export limit') },
+    });
+
+    unwrap(await purgeArtifactVersionContents(workspace.id, 'human'));
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    expect(exported.artifactVersions).toHaveLength(129);
+    expect((exported.artifactVersions as Array<Record<string, unknown>>).every((version) => (
+      version['content'] === null && typeof version['contentPurgedAt'] === 'string'
+    ))).toBe(true);
+    const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
+    const importedVersions = await getDb().artifactVersions.where('workspaceId').equals(imported.workspaceId).toArray();
+    expect(importedVersions).toHaveLength(129);
+    expect(importedVersions.every((version) => version.content === null && typeof version.contentPurgedAt === 'string')).toBe(true);
+  }, 20_000);
 
   it('rejects malformed nested skill fields even when the archive hash matches', async () => {
     const { workspace, mission } = await seedWorkspaceAndMission();
@@ -735,6 +873,28 @@ describe('workspace export/import round trip', () => {
 
     await expect(importWorkspace(JSON.stringify(malformed))).resolves.toMatchObject({ ok: false });
     expect(await snapshotDatabase()).toEqual(before);
+  });
+
+  it('round-trips draft skill text states that the revision service can legally persist', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const graph = unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Editable draft',
+      purpose: 'Exercise draft edits',
+      nodes: [{ kind: 'build', title: 'Editable node', goal: 'Stay portable' }],
+    }));
+    unwrap(await reviseSkillGraph(graph.id, {
+      name: '',
+      purpose: '',
+      nodes: graph.nodes.map((node) => ({ ...node, title: '', goal: '' })),
+    }, 'Keep an unfinished draft'));
+
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
+    const importedGraph = await getDb().skillGraphs.where('workspaceId').equals(imported.workspaceId).first();
+    expect(importedGraph).toMatchObject({ name: '', purpose: '' });
+    expect(importedGraph?.nodes[0]).toMatchObject({ title: '', goal: '' });
   });
 
   it('rejects route-crashing schema and foreign memory snapshot fields', async () => {

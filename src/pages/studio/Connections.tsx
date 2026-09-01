@@ -5,16 +5,40 @@ import { clearPairToken, getStoredPairToken, pairRunner, runnerStatus, type Runn
 import { deleteWorkspace } from '../../cherry/mission/mission-service.ts';
 import { CopyButton } from '../../components/Icons.tsx';
 import { AccountPanel } from '../../components/AccountPanel.tsx';
+import {
+  getArtifactHistoryStorage,
+  purgeArtifactVersionContents,
+  type ArtifactHistoryStorage,
+} from '../../cherry/artifacts/artifact-service.ts';
+
+function formatStorageBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024).toLocaleString('en-US')} KiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+}
 
 export default function Connections() {
   const { activeWorkspace, webmcp, refresh } = useAppState();
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [artifactHistory, setArtifactHistory] = useState<ArtifactHistoryStorage | null>(null);
 
   useEffect(() => {
     void runnerStatus().then(setRunner);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!activeWorkspace) {
+      setArtifactHistory(null);
+      return;
+    }
+    void getArtifactHistoryStorage(activeWorkspace.id).then((storage) => {
+      if (!cancelled) setArtifactHistory(storage);
+    });
+    return () => { cancelled = true; };
+  }, [activeWorkspace]);
 
   async function handlePair(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,6 +63,23 @@ export default function Connections() {
     const result = await deleteWorkspace(activeWorkspace.id);
     if (!result.ok) setError(result.error.message);
     await refresh();
+  }
+
+  async function handlePurgeArtifactHistory() {
+    if (!activeWorkspace || !artifactHistory?.versionsWithContent) return;
+    const confirmed = window.confirm(
+      `Remove the stored contents of ${artifactHistory.versionsWithContent} file versions? Current files stay unchanged, and version hashes and proof remain. Old and deleted file contents cannot be restored. Export first if you need those bodies.`,
+    );
+    if (!confirmed) return;
+    setError(null);
+    setNotice(null);
+    const result = await purgeArtifactVersionContents(activeWorkspace.id, 'human');
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
+    setNotice(`Removed ${result.value.purgedVersions} stored file-version bodies. Current files and proof remain.`);
+    setArtifactHistory(await getArtifactHistoryStorage(activeWorkspace.id));
   }
 
   return (
@@ -125,6 +166,34 @@ export default function Connections() {
             <li>Never paste passwords, API keys, or tokens into chat with any agent.</li>
           </ul>
           <Link to="/studio/onboarding" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>Run capability check</Link>
+        </section>
+
+        <section className="card stack" aria-labelledby="storage-heading">
+          <h2 id="storage-heading" className="subhead">Storage & portability</h2>
+          {!activeWorkspace ? (
+            <p>Select a space to review its file history.</p>
+          ) : artifactHistory === null ? (
+            <p>Checking stored file history.</p>
+          ) : (
+            <>
+              <p style={{ fontSize: 14, margin: 0 }}>
+                {artifactHistory.versionCount} file versions keep {formatStorageBytes(artifactHistory.contentBytes)} of old contents. Current files are counted separately.
+              </p>
+              <p className="label" style={{ margin: 0 }}>
+                If a portable export reaches its 64 MiB limit, remove old version contents here. Paths, revisions, hashes, and proof stay.
+              </p>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={artifactHistory.versionsWithContent === 0}
+                onClick={() => void handlePurgeArtifactHistory()}
+                style={{ alignSelf: 'flex-start' }}
+              >
+                Remove old contents
+              </button>
+              {artifactHistory.versionsWithContent === 0 ? <p className="label" style={{ margin: 0 }}>No stored version bodies remain.</p> : null}
+            </>
+          )}
         </section>
 
         <section className="card stack" aria-labelledby="cli-heading">

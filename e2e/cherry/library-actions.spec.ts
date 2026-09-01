@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 const rawLesson = [
   '0:05 Draft a release checklist from the approved evidence.',
@@ -57,7 +58,7 @@ test.describe('Library workflow actions', () => {
     const routine = page.getByTestId('routine-row').first();
     await expect(routine).toContainText(skillName!);
     await expect(routine).toContainText('disabled');
-    await expect(form.getByRole('status')).toContainText('Routine draft created. It is disabled until you schedule and approve it.');
+    await expect(form.getByRole('status')).toContainText('Routine draft created. Approve its manual version to use Run now.');
     await expect(form.getByRole('status')).not.toContainText('Nothing has been created yet.');
 
     const requestedSkillGraphId = new URL(routineHref!, 'http://cherry.local').searchParams.get('skillGraphId');
@@ -69,7 +70,7 @@ test.describe('Library workflow actions', () => {
     expect(otherSkillGraphId).toBeTruthy();
     await form.locator('select[name="skillGraphId"]').selectOption(otherSkillGraphId!);
     await form.locator('select[name="skillGraphId"]').selectOption(requestedSkillGraphId!);
-    await expect(form.getByRole('status')).toContainText('Routine draft created. It is disabled until you schedule and approve it.');
+    await expect(form.getByRole('status')).toContainText('Routine draft created. Approve its manual version to use Run now.');
     await expect(form.getByRole('status')).not.toContainText('Nothing has been created yet.');
 
     await page.goto('/studio/skills');
@@ -95,11 +96,17 @@ test.describe('Library workflow actions', () => {
     await page.goto('/studio');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export space' }).click();
-    const exportPath = await (await downloadPromise).path();
+    const download = await downloadPromise;
+    const exportPath = await download.path();
     expect(exportPath).toBeTruthy();
+    const exportBuffer = await readFile(exportPath!);
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByText('Import', { exact: true }).click();
-    await (await fileChooserPromise).setFiles(exportPath!);
+    await (await fileChooserPromise).setFiles({
+      name: download.suggestedFilename(),
+      mimeType: 'application/json',
+      buffer: exportBuffer,
+    });
     await expect(page.getByText(/Imported "/)).toBeVisible();
 
     const workspace = page.getByLabel('Space');

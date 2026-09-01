@@ -14,6 +14,7 @@ import { listApprovals } from '../skillgraph/skillgraph-service.ts';
 import { listMemories } from '../memory/memory-service.ts';
 import {
   STARTER_CREW_TEMPLATE,
+  RUNTIME_CAPABILITIES,
   canTransition,
   sortAttention,
   type AgentProfile,
@@ -23,6 +24,7 @@ import {
   type WorkItemStatus,
   type WorkMessage,
   type HandoffRecord,
+  type RuntimeCapability,
 } from './workforce-model.ts';
 
 function slugify(name: string): string {
@@ -43,6 +45,11 @@ export interface NewAgentProfile {
 export async function createAgentProfile(input: NewAgentProfile): Promise<Result<AgentProfile>> {
   const name = input.name.trim();
   if (name.length === 0 || name.length > 60) return err('validation', 'Agent name must be 1–60 characters.');
+  const requestedCapabilities: readonly RuntimeCapability[] = input.capabilities ?? ['page_tools'];
+  const capabilities = [...new Set<RuntimeCapability>(requestedCapabilities)];
+  if (capabilities.some((capability) => !RUNTIME_CAPABILITIES.includes(capability))) {
+    return err('validation', 'Agent capabilities contain an unsupported value.');
+  }
   const now = isoNow();
   const profile: AgentProfile = {
     id: newId('ag'),
@@ -53,7 +60,7 @@ export async function createAgentProfile(input: NewAgentProfile): Promise<Result
     objective: input.objective?.trim() ?? '',
     instructions: input.instructions?.trim() ?? '',
     executionHostId: null,
-    allowedCapabilities: input.capabilities ?? ['page_tools'],
+    allowedCapabilities: capabilities,
     skillGraphIds: [],
     memoryScopes: [],
     maxParallelTasks: 1,

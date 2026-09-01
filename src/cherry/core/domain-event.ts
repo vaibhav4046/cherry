@@ -43,6 +43,7 @@ export const PROOF_EVENT_TYPES = [
   'memory.pinned',
   'artifact.file_written',
   'artifact.file_deleted',
+  'artifact.history_purged',
   'artifact.preview_error',
   'verification.started',
   'verification.completed',

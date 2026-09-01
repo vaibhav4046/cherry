@@ -110,6 +110,13 @@ export async function deleteWorkspace(id: string): Promise<Result<{ deleted: str
     db.receipts,
     db.sourceRecords,
     db.channelWatches,
+    db.agentProfiles,
+    db.crews,
+    db.workItems,
+    db.workMessages,
+    db.handoffs,
+    db.executionHosts,
+    db.routines,
   ];
   return db.transaction('rw', tables, async () => {
     const workspace = await db.workspaces.get(id);
@@ -120,6 +127,12 @@ export async function deleteWorkspace(id: string): Promise<Result<{ deleted: str
       .filter((watch) => watch.enabled)
       .first();
     if (enabledWatch) return conflict('Stop every channel watch before deleting this workspace');
+    const enabledRoutine = await db.routines
+      .where('workspaceId')
+      .equals(id)
+      .filter((routine) => routine.enabled)
+      .first();
+    if (enabledRoutine) return conflict('Pause every routine before deleting this workspace');
     await db.workspaces.delete(id);
     for (const table of tables.slice(1)) {
       await table.where('workspaceId').equals(id).delete();

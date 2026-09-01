@@ -10,29 +10,35 @@
     "exportedAt",
     "workspace",
     "missions",
+    "missionTasks",
     "lessons",
+    "transcriptSegments",
+    "observations",
     "evidence",
     "skillGraphs",
+    "skillVersions",
     "memories",
+    "memoryVersions",
+    "approvals",
     "artifactSets",
+    "artifactFiles",
+    "artifactVersions",
+    "verifications",
     "runs",
+    "proofEvents",
     "proofReceipts",
     "settings",
     "integrity"
   ],
   "properties": {
     "schemaVersion": {
-      "const": "1.0.0"
+      "enum": ["1.0.0", "1.1.0"]
     },
     "exportId": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 160,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+      "$ref": "#/$defs/id"
     },
     "exportedAt": {
-      "type": "string",
-      "format": "date-time"
+      "$ref": "#/$defs/timestamp"
     },
     "workspace": {
       "$ref": "#/$defs/workspace"
@@ -41,38 +47,38 @@
       "type": "array",
       "maxItems": 1000,
       "items": {
-        "$ref": "#/$defs/domainRecord"
+        "$ref": "#/$defs/mission"
       }
+    },
+    "missionTasks": {
+      "$ref": "#/$defs/records10000"
     },
     "lessons": {
-      "type": "array",
-      "maxItems": 1000,
-      "items": {
-        "$ref": "#/$defs/domainRecord"
-      }
+      "$ref": "#/$defs/records1000"
+    },
+    "transcriptSegments": {
+      "$ref": "#/$defs/records200000"
+    },
+    "observations": {
+      "$ref": "#/$defs/records100000"
     },
     "evidence": {
-      "type": "array",
-      "maxItems": 100000,
-      "items": {
-        "$ref": "#/$defs/domainRecord"
-      }
+      "$ref": "#/$defs/records100000"
     },
     "skillGraphs": {
-      "type": "array",
-      "maxItems": 1000,
-      "items": {
-        "type": "object",
-        "additionalProperties": true
-      }
+      "$ref": "#/$defs/records1000"
+    },
+    "skillVersions": {
+      "$ref": "#/$defs/records10000"
     },
     "memories": {
-      "type": "array",
-      "maxItems": 100000,
-      "items": {
-        "type": "object",
-        "additionalProperties": true
-      }
+      "$ref": "#/$defs/records100000"
+    },
+    "memoryVersions": {
+      "$ref": "#/$defs/records100000"
+    },
+    "approvals": {
+      "$ref": "#/$defs/records100000"
     },
     "artifactSets": {
       "type": "array",
@@ -81,64 +87,137 @@
         "$ref": "#/$defs/artifactSet"
       }
     },
-    "runs": {
+    "artifactFiles": {
       "type": "array",
-      "maxItems": 10000,
+      "maxItems": 20000,
       "items": {
-        "$ref": "#/$defs/domainRecord"
+        "$ref": "#/$defs/artifactFile"
       }
+    },
+    "artifactVersions": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/artifactVersion"
+      }
+    },
+    "verifications": {
+      "$ref": "#/$defs/records10000"
+    },
+    "runs": {
+      "$ref": "#/$defs/records10000"
+    },
+    "proofEvents": {
+      "$ref": "#/$defs/records200000"
     },
     "proofReceipts": {
       "type": "array",
       "maxItems": 10000,
       "items": {
-        "type": "object",
-        "additionalProperties": true
+        "$ref": "#/$defs/proofReceipt"
+      }
+    },
+    "sourceRecords": {
+      "$ref": "#/$defs/records10000"
+    },
+    "channelWatches": {
+      "$ref": "#/$defs/records10000"
+    },
+    "agentProfiles": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/agentProfile" }
+    },
+    "crews": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/crew" }
+    },
+    "workItems": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/workItem" }
+    },
+    "workMessages": {
+      "type": "array",
+      "maxItems": 200000,
+      "items": { "$ref": "#/$defs/workMessage" }
+    },
+    "handoffs": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/handoff" }
+    },
+    "executionHosts": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/executionHost" }
+    },
+    "routines": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/routine"
       }
     },
     "settings": {
       "type": "object",
-      "additionalProperties": true
+      "maxProperties": 0
     },
     "integrity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "canonicalization",
-        "hashAlgorithm",
-        "payloadSha256"
-      ],
-      "properties": {
-        "canonicalization": {
-          "const": "JCS-RFC8785"
-        },
-        "hashAlgorithm": {
-          "const": "SHA-256"
-        },
-        "payloadSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        }
-      }
+      "$ref": "#/$defs/integrity"
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.1.0"
+          }
+        },
+        "required": ["schemaVersion"]
+      },
+      "then": {
+        "required": [
+          "sourceRecords",
+          "channelWatches",
+          "agentProfiles",
+          "crews",
+          "workItems",
+          "workMessages",
+          "handoffs",
+          "executionHosts",
+          "routines"
+        ]
+      }
+    }
+  ],
   "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "artifactPath": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 512,
+      "pattern": "^(?![A-Za-z]:)(?:[A-Za-z0-9][A-Za-z0-9._-]{0,120}/){0,11}[A-Za-z0-9][A-Za-z0-9._-]{0,120}\\.(?:html|htm|css|js|mjs|ts|tsx|jsx|json|md|txt|svg)$"
+    },
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "name",
-        "revision",
-        "createdAt",
-        "updatedAt"
-      ],
+      "required": ["id", "name", "revision", "createdAt", "updatedAt"],
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          "$ref": "#/$defs/id"
         },
         "name": {
           "type": "string",
@@ -149,126 +228,520 @@
           "type": "string",
           "maxLength": 2000
         },
+        "isExample": {
+          "type": "boolean"
+        },
         "revision": {
           "type": "integer",
           "minimum": 1
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "$ref": "#/$defs/timestamp"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
-    "domainRecord": {
+    "record": {
       "type": "object",
-      "additionalProperties": true,
-      "required": [
-        "id",
-        "revision",
-        "createdAt",
-        "updatedAt"
-      ],
+      "required": ["id", "workspaceId"],
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          "$ref": "#/$defs/id"
         },
-        "revision": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "workspaceId": {
+          "$ref": "#/$defs/id"
         }
+      },
+      "additionalProperties": true
+    },
+    "nullableId": {
+      "oneOf": [
+        { "$ref": "#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "type": "string" }
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        { "$ref": "#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "runtimeCapability": {
+      "enum": ["page_tools", "repository_read", "repository_write", "command_execution", "browser_vision", "browser_control", "background", "schedule", "network", "human_approval", "artifact_write", "verification"]
+    },
+    "runtimeCapabilities": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/runtimeCapability" }
+    },
+    "missionState": {
+      "enum": ["DRAFT", "LEARNING", "PLANNING", "AWAITING_APPROVAL", "EXECUTING", "VERIFYING", "COMPLETE", "BLOCKED", "CANCELLED"]
+    },
+    "missionStateChange": {
+      "type": "object",
+      "required": ["from", "to", "at", "actorType"],
+      "properties": {
+        "from": {
+          "oneOf": [
+            { "$ref": "#/$defs/missionState" },
+            { "type": "null" }
+          ]
+        },
+        "to": { "$ref": "#/$defs/missionState" },
+        "at": { "$ref": "#/$defs/timestamp" },
+        "actorType": { "enum": ["human", "agent", "system", "runner"] },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "mission": {
+      "type": "object",
+      "required": ["id", "workspaceId", "title", "objective", "definitionOfDone", "constraints", "nonGoals", "agentRole", "allowedToolIds", "requiredMemoryIds", "riskLevel", "state", "stateHistory", "lessonId", "skillGraphId", "artifactSetId", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "minLength": 1 },
+        "definitionOfDone": { "$ref": "#/$defs/stringArray" },
+        "constraints": { "$ref": "#/$defs/stringArray" },
+        "nonGoals": { "$ref": "#/$defs/stringArray" },
+        "agentRole": { "type": "string" },
+        "allowedToolIds": { "$ref": "#/$defs/stringArray" },
+        "requiredMemoryIds": { "$ref": "#/$defs/stringArray" },
+        "riskLevel": { "enum": ["low", "medium", "high"] },
+        "state": { "$ref": "#/$defs/missionState" },
+        "stateHistory": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "$ref": "#/$defs/missionStateChange" }
+        },
+        "lessonId": { "$ref": "#/$defs/nullableId" },
+        "skillGraphId": { "$ref": "#/$defs/nullableId" },
+        "artifactSetId": { "$ref": "#/$defs/nullableId" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "schedule": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "const": "manual" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "runAt"],
+          "properties": {
+            "kind": { "const": "once" },
+            "runAt": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "everyMinutes", "startAt"],
+          "properties": {
+            "kind": { "const": "interval" },
+            "everyMinutes": { "type": "integer", "minimum": 5, "maximum": 43200 },
+            "startAt": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "localTime", "timeZone"],
+          "properties": {
+            "kind": { "const": "daily" },
+            "localTime": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+            "timeZone": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "weekdays", "localTime", "timeZone"],
+          "properties": {
+            "kind": { "const": "weekly" },
+            "weekdays": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 7,
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 0, "maximum": 6 }
+            },
+            "localTime": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+            "timeZone": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "routine": {
+      "type": "object",
+      "required": ["id", "workspaceId", "name", "skillGraphId", "missionId", "skillGraphRevision", "executionHostId", "schedule", "missedRunPolicy", "enabled", "approvalId", "approvedActionHash", "nextRunAt", "lastRunAt", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "skillGraphId": { "$ref": "#/$defs/id" },
+        "missionId": { "$ref": "#/$defs/nullableId" },
+        "skillGraphRevision": { "type": "integer", "minimum": 1 },
+        "executionHostId": { "$ref": "#/$defs/id" },
+        "schedule": { "$ref": "#/$defs/schedule" },
+        "missedRunPolicy": { "enum": ["skip", "run_once_on_reconnect"] },
+        "enabled": { "type": "boolean" },
+        "approvalId": { "$ref": "#/$defs/nullableId" },
+        "approvedActionHash": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "nextRunAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "lastRunAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": { "properties": { "approvalId": { "type": "null" } }, "required": ["approvalId"] },
+          "then": {
+            "properties": {
+              "approvedActionHash": { "type": "null" },
+              "enabled": { "const": false }
+            }
+          },
+          "else": { "properties": { "approvedActionHash": { "$ref": "#/$defs/sha256" } } }
+        }
+      ]
+    },
+    "agentProfile": {
+      "type": "object",
+      "required": ["id", "workspaceId", "name", "slug", "role", "objective", "instructions", "executionHostId", "allowedCapabilities", "skillGraphIds", "memoryScopes", "maxParallelTasks", "approvalMode", "status", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string" },
+        "instructions": { "type": "string" },
+        "executionHostId": { "$ref": "#/$defs/nullableId" },
+        "allowedCapabilities": { "$ref": "#/$defs/runtimeCapabilities" },
+        "skillGraphIds": { "$ref": "#/$defs/stringArray" },
+        "memoryScopes": { "$ref": "#/$defs/stringArray" },
+        "maxParallelTasks": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "approvalMode": { "enum": ["always", "risk_based", "routine_policy"] },
+        "status": { "enum": ["idle", "working", "waiting", "offline", "error", "archived"] },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "crew": {
+      "type": "object",
+      "required": ["id", "workspaceId", "name", "coordinatorAgentId", "memberAgentIds", "maxConcurrentWorkItems", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "coordinatorAgentId": { "$ref": "#/$defs/id" },
+        "memberAgentIds": { "$ref": "#/$defs/stringArray" },
+        "maxConcurrentWorkItems": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "workItem": {
+      "type": "object",
+      "required": ["id", "workspaceId", "missionId", "parentWorkItemId", "title", "objective", "definitionOfDone", "priority", "riskLevel", "status", "assignedAgentIds", "crewId", "dependencyIds", "requiredCapabilities", "executionHostId", "routineId", "currentRunId", "contextRefs", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "missionId": { "$ref": "#/$defs/nullableId" },
+        "parentWorkItemId": { "$ref": "#/$defs/nullableId" },
+        "title": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "minLength": 1 },
+        "definitionOfDone": { "$ref": "#/$defs/stringArray" },
+        "priority": { "enum": ["low", "normal", "high", "urgent"] },
+        "riskLevel": { "enum": ["low", "medium", "high"] },
+        "status": { "enum": ["DRAFT", "READY", "QUEUED", "LEASED", "RUNNING", "WAITING_FOR_HUMAN", "WAITING_FOR_DEPENDENCY", "RETRYING", "VERIFYING", "SUCCEEDED", "FAILED", "CANCELLED"] },
+        "assignedAgentIds": { "$ref": "#/$defs/stringArray" },
+        "crewId": { "$ref": "#/$defs/nullableId" },
+        "dependencyIds": { "$ref": "#/$defs/stringArray" },
+        "requiredCapabilities": { "$ref": "#/$defs/runtimeCapabilities" },
+        "executionHostId": { "$ref": "#/$defs/nullableId" },
+        "routineId": { "$ref": "#/$defs/nullableId" },
+        "currentRunId": { "$ref": "#/$defs/nullableId" },
+        "contextRefs": { "$ref": "#/$defs/stringArray" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "workMessage": {
+      "type": "object",
+      "required": ["id", "workspaceId", "workItemId", "actorType", "actorId", "kind", "body", "referenceIds", "createdAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "workItemId": { "$ref": "#/$defs/id" },
+        "actorType": { "enum": ["human", "agent", "system", "runner"] },
+        "actorId": { "$ref": "#/$defs/nullableId" },
+        "kind": { "enum": ["message", "checkpoint", "question", "decision", "artifact", "result"] },
+        "body": { "type": "string", "minLength": 1 },
+        "referenceIds": { "$ref": "#/$defs/stringArray" },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "handoff": {
+      "type": "object",
+      "required": ["id", "workspaceId", "workItemId", "fromAgentId", "toAgentId", "reason", "contextRefs", "status", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "workItemId": { "$ref": "#/$defs/id" },
+        "fromAgentId": { "$ref": "#/$defs/nullableId" },
+        "toAgentId": { "$ref": "#/$defs/id" },
+        "reason": { "type": "string", "minLength": 1 },
+        "contextRefs": { "$ref": "#/$defs/stringArray" },
+        "status": { "enum": ["proposed", "accepted", "rejected", "completed"] },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "executionHost": {
+      "type": "object",
+      "required": ["id", "workspaceId", "kind", "name", "status", "capabilities", "lastSeenAt", "publicConfig", "revision"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "workspaceId": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["attached-webmcp", "local-runner", "codex-cli", "claude-cli", "codex-automation-export", "manual"] },
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["available", "offline", "unpaired", "degraded", "unknown"] },
+        "capabilities": { "$ref": "#/$defs/runtimeCapabilities" },
+        "lastSeenAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "publicConfig": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        },
+        "revision": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "records1000": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "records10000": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "records100000": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "records200000": {
+      "type": "array",
+      "maxItems": 200000,
+      "items": {
+        "$ref": "#/$defs/record"
       }
     },
     "artifactSet": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "revision",
-        "files",
-        "createdAt",
-        "updatedAt"
-      ],
+      "required": ["id", "workspaceId", "missionId", "name", "entryPath", "revision", "createdAt", "updatedAt"],
       "properties": {
         "id": {
+          "$ref": "#/$defs/id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/id"
+        },
+        "missionId": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
           "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          "minLength": 1
+        },
+        "entryPath": {
+          "$ref": "#/$defs/artifactPath"
         },
         "revision": {
           "type": "integer",
           "minimum": 1
         },
-        "files": {
-          "type": "array",
-          "maxItems": 5000,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "path",
-              "mediaType",
-              "encoding",
-              "content",
-              "sizeBytes",
-              "sha256"
-            ],
-            "properties": {
-              "path": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 512,
-                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
-              },
-              "mediaType": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 200
-              },
-              "encoding": {
-                "enum": [
-                  "utf-8",
-                  "base64"
-                ]
-              },
-              "content": {
-                "type": "string",
-                "maxLength": 10485760
-              },
-              "sizeBytes": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 5242880
-              },
-              "sha256": {
-                "type": "string",
-                "pattern": "^[a-f0-9]{64}$"
-              }
-            }
-          }
-        },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "$ref": "#/$defs/timestamp"
         },
         "updatedAt": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "artifactFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "workspaceId", "artifactSetId", "path", "mediaType", "content", "sizeBytes", "sha256", "revision", "createdAt", "updatedAt", "updatedBy"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactSetId": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "$ref": "#/$defs/artifactPath"
+        },
+        "mediaType": {
           "type": "string",
-          "format": "date-time"
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "content": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 524288
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updatedBy": {
+          "enum": ["human", "agent", "runner", "system"]
+        }
+      }
+    },
+    "artifactVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "workspaceId", "artifactFileId", "artifactSetId", "path", "revision", "content", "sha256", "sizeBytes", "createdAt", "changeSummary"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactFileId": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactSetId": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "$ref": "#/$defs/artifactPath"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content": {
+          "type": ["string", "null"]
+        },
+        "contentPurgedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 524288
+        },
+        "createdAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "changeSummary": {
+          "type": "string"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": { "content": { "type": "string" } },
+          "not": { "required": ["contentPurgedAt"] }
+        },
+        {
+          "properties": { "content": { "type": "null" } },
+          "required": ["contentPurgedAt"]
+        }
+      ]
+    },
+    "proofReceipt": {
+      "type": "object",
+      "required": ["receiptId", "workspaceId"],
+      "properties": {
+        "receiptId": {
+          "$ref": "#/$defs/id"
+        },
+        "workspaceId": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "additionalProperties": true
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "hashAlgorithm", "payloadSha256"],
+      "properties": {
+        "canonicalization": {
+          "const": "JCS-RFC8785"
+        },
+        "hashAlgorithm": {
+          "const": "SHA-256"
+        },
+        "payloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
         }
       }
     }

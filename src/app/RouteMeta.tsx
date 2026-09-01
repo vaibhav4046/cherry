@@ -87,7 +87,7 @@ const META_ROUTES: RouteObject[] = [
       },
       {
         path: 'routines',
-        handle: meta(`Routines · ${SITE}`, 'Run approved skills on a schedule through your paired local runner.'),
+        handle: meta(`Routines · ${SITE}`, 'Approve manual skill runs for your paired local runner, with timed schedules kept as drafts.'),
       },
       {
         path: 'routines/:routineId',

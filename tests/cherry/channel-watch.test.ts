@@ -471,6 +471,28 @@ describe('channel watch domain', () => {
     expect(imported).toMatchObject({ ok: false, error: { code: 'validation' } });
   });
 
+  it('rejects a stale channel-watch action binding on export and import', async () => {
+    const { workspace, source } = await sourceFixture();
+    const watch = unwrap(await createChannelWatch({ sourceId: source.id }));
+    await getDb().channelWatches.update(watch.id, { actionHash: '0'.repeat(64) });
+    await expect(exportWorkspace(workspace.id)).resolves.toMatchObject({
+      ok: false,
+      error: { message: expect.stringContaining('invalid action hash') },
+    });
+
+    await getDb().channelWatches.update(watch.id, { actionHash: watch.actionHash });
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    (exported.channelWatches![0] as Record<string, unknown>)['actionHash'] = '0'.repeat(64);
+    exported.integrity.payloadSha256 = await sha256CanonicalExcluding(
+      exported as unknown as Record<string, unknown>,
+      ['integrity'],
+    );
+    await expect(importWorkspace(JSON.stringify(exported))).resolves.toMatchObject({
+      ok: false,
+      error: { message: expect.stringContaining('invalid action hash') },
+    });
+  });
+
   it('rejects imported watch replay windows over their persisted caps', async () => {
     const { workspace, source } = await sourceFixture();
     unwrap(await createChannelWatch({ sourceId: source.id }));

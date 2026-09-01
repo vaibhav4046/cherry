@@ -25,11 +25,15 @@ import {
   CHANNEL_WATCH_PROCESSED_JOB_ID_LIMIT,
   CHANNEL_WATCH_SEEN_VIDEO_ID_LIMIT,
 } from '../source/channel-watch-model.ts';
+import { computeChannelWatchActionHash } from '../source/channel-watch-service.ts';
+import { RUNTIME_CAPABILITIES, validateSchedule, type ScheduleSpec } from '../workforce/workforce-model.ts';
 
-export const WORKSPACE_EXPORT_VERSION = '1.0.0';
+export const LEGACY_WORKSPACE_EXPORT_VERSION = '1.0.0';
+export const WORKSPACE_EXPORT_VERSION = '1.1.0';
+type WorkspaceExportVersion = typeof LEGACY_WORKSPACE_EXPORT_VERSION | typeof WORKSPACE_EXPORT_VERSION;
 
 export interface WorkspaceExport {
-  schemaVersion: typeof WORKSPACE_EXPORT_VERSION;
+  schemaVersion: WorkspaceExportVersion;
   exportId: string;
   exportedAt: string;
   workspace: Record<string, unknown>;
@@ -54,6 +58,13 @@ export interface WorkspaceExport {
   settings: Record<string, unknown>;
   sourceRecords?: unknown[];
   channelWatches?: unknown[];
+  agentProfiles?: unknown[];
+  crews?: unknown[];
+  workItems?: unknown[];
+  workMessages?: unknown[];
+  handoffs?: unknown[];
+  executionHosts?: unknown[];
+  routines?: unknown[];
   integrity: {
     canonicalization: 'JCS-RFC8785';
     hashAlgorithm: 'SHA-256';
@@ -66,45 +77,60 @@ const INTEGRITY_EXCLUSIONS = ['integrity'];
 /** Serialize one workspace, with a recomputable payload hash. */
 export async function exportWorkspace(workspaceId: string): Promise<Result<WorkspaceExport>> {
   const db = getDb();
-  const workspace = await db.workspaces.get(workspaceId);
-  if (!workspace) return notFound('Workspace', workspaceId);
+  const data = await db.transaction('r', [
+    db.workspaces, db.missions, db.missionTasks, db.lessons, db.transcriptSegments,
+    db.observations, db.evidence, db.skillGraphs, db.skillVersions, db.memories,
+    db.memoryVersions, db.approvals, db.artifactSets, db.artifactFiles, db.artifactVersions,
+    db.verifications, db.runs, db.proofEvents, db.receipts, db.sourceRecords,
+    db.channelWatches, db.agentProfiles, db.crews, db.workItems, db.workMessages,
+    db.handoffs, db.executionHosts, db.routines,
+  ], async (): Promise<WorkspaceExport | null> => {
+    const workspace = await db.workspaces.get(workspaceId);
+    if (!workspace) return null;
+    const load = async (table: { where: (index: string) => { equals: (value: string) => { toArray: () => Promise<unknown[]> } } }) =>
+      table.where('workspaceId').equals(workspaceId).toArray();
+    return {
+      schemaVersion: WORKSPACE_EXPORT_VERSION,
+      exportId: newId('ws'),
+      exportedAt: isoNow(),
+      workspace: workspace as unknown as Record<string, unknown>,
+      missions: await load(db.missions),
+      missionTasks: await load(db.missionTasks),
+      lessons: await load(db.lessons),
+      transcriptSegments: await load(db.transcriptSegments),
+      observations: await load(db.observations),
+      evidence: await load(db.evidence),
+      skillGraphs: await load(db.skillGraphs),
+      skillVersions: await load(db.skillVersions),
+      memories: await load(db.memories),
+      memoryVersions: await load(db.memoryVersions),
+      approvals: await load(db.approvals),
+      artifactSets: await load(db.artifactSets),
+      artifactFiles: await load(db.artifactFiles),
+      artifactVersions: await load(db.artifactVersions),
+      verifications: await load(db.verifications),
+      runs: await load(db.runs),
+      proofEvents: await load(db.proofEvents),
+      proofReceipts: await load(db.receipts),
+      settings: {},
+      sourceRecords: await load(db.sourceRecords),
+      channelWatches: await load(db.channelWatches),
+      agentProfiles: await load(db.agentProfiles),
+      crews: await load(db.crews),
+      workItems: await load(db.workItems),
+      workMessages: await load(db.workMessages),
+      handoffs: await load(db.handoffs),
+      executionHosts: await load(db.executionHosts),
+      routines: await load(db.routines),
+      integrity: { canonicalization: 'JCS-RFC8785', hashAlgorithm: 'SHA-256', payloadSha256: '' },
+    };
+  });
+  if (!data) return notFound('Workspace', workspaceId);
 
-  const byWorkspace = <T>(rows: T[]): T[] => rows;
-  const load = async (table: { where: (index: string) => { equals: (value: string) => { toArray: () => Promise<unknown[]> } } }) =>
-    byWorkspace(await table.where('workspaceId').equals(workspaceId).toArray());
-
-  const data: WorkspaceExport = {
-    schemaVersion: WORKSPACE_EXPORT_VERSION,
-    exportId: newId('ws'),
-    exportedAt: isoNow(),
-    workspace: workspace as unknown as Record<string, unknown>,
-    missions: await load(db.missions),
-    missionTasks: await load(db.missionTasks),
-    lessons: await load(db.lessons),
-    transcriptSegments: await load(db.transcriptSegments),
-    observations: await load(db.observations),
-    evidence: await load(db.evidence),
-    skillGraphs: await load(db.skillGraphs),
-    skillVersions: await load(db.skillVersions),
-    memories: await load(db.memories),
-    memoryVersions: await load(db.memoryVersions),
-    approvals: await load(db.approvals),
-    artifactSets: await load(db.artifactSets),
-    artifactFiles: await load(db.artifactFiles),
-    artifactVersions: await load(db.artifactVersions),
-    verifications: await load(db.verifications),
-    runs: await load(db.runs),
-    proofEvents: await load(db.proofEvents),
-    proofReceipts: await load(db.receipts),
-    settings: {},
-    sourceRecords: await load(db.sourceRecords),
-    channelWatches: await load(db.channelWatches),
-    integrity: {
-      canonicalization: 'JCS-RFC8785',
-      hashAlgorithm: 'SHA-256',
-      payloadSha256: '',
-    },
-  };
+  const proofBinding = await bindArchiveProofPayloadHashes(data, true);
+  if (!proofBinding.ok) {
+    return invalid(`This space cannot be exported yet: ${proofBinding.error.message}`);
+  }
 
   data.integrity.payloadSha256 = await sha256CanonicalExcluding(
     data as unknown as Record<string, unknown>,
@@ -124,7 +150,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
     return invalid(`This space cannot be exported yet: ${portableIntegrity.error.message}`);
   }
   if (new TextEncoder().encode(JSON.stringify(data)).byteLength > MAX_WORKSPACE_IMPORT_FILE_BYTES) {
-    return invalid('This space is larger than the 64 MiB portable export limit. Remove large files or export them separately.');
+    return invalid('This space is larger than the 64 MiB portable export limit. Open Connections & privacy, remove old file-version contents, then try again.');
   }
 
   await appendProofEvents(workspaceId, [
@@ -189,9 +215,67 @@ const ARRAY_LIMITS: Array<[keyof WorkspaceExport, number]> = [
   ['proofReceipts', 10000],
   ['sourceRecords', 10000],
   ['channelWatches', 10000],
+  ['agentProfiles', 1000],
+  ['crews', 1000],
+  ['workItems', 100000],
+  ['workMessages', 200000],
+  ['handoffs', 100000],
+  ['executionHosts', 1000],
+  ['routines', 10000],
 ];
 
 type ArchiveRow = Record<string, unknown>;
+
+async function bindArchiveProofPayloadHashes(
+  archive: WorkspaceExport,
+  verifyStoredReceipts: boolean,
+): Promise<Result<void>> {
+  const payloadHashes = new Map<string, string | null>();
+  for (const value of archive.proofEvents as ArchiveRow[]) {
+    const payloadHash = isRecord(value['payload'])
+      ? await sha256Canonical(value['payload'])
+      : typeof value['payloadHash'] === 'string'
+        ? value['payloadHash']
+        : null;
+    if (verifyStoredReceipts && typeof value['payloadHash'] === 'string' && value['payloadHash'] !== payloadHash) {
+      return invalid('A proof event payload hash does not match its stored payload');
+    }
+    payloadHashes.set(String(value['id']), payloadHash);
+  }
+
+  if (verifyStoredReceipts) {
+    for (const receipt of archive.proofReceipts as ProofReceipt[]) {
+      const storedReceiptHash = await sha256CanonicalExcluding(
+        receipt as unknown as Record<string, unknown>,
+        RECEIPT_HASH_EXCLUSIONS,
+      );
+      if (storedReceiptHash !== receipt.receiptHash) return invalid('Export contains an invalid proof hash');
+      for (const event of receipt.events) {
+        const payloadHash = payloadHashes.get(event.id);
+        if (event.payloadHash !== null && event.payloadHash !== undefined && payloadHash !== undefined && event.payloadHash !== payloadHash) {
+          return invalid('A proof receipt payload hash does not match the event ledger');
+        }
+      }
+    }
+  }
+
+  for (const value of archive.proofEvents as ArchiveRow[]) {
+    const payloadHash = payloadHashes.get(String(value['id'])) ?? null;
+    if (payloadHash === null) delete value['payloadHash'];
+    else value['payloadHash'] = payloadHash;
+  }
+
+  for (const receipt of archive.proofReceipts as ProofReceipt[]) {
+    for (const event of receipt.events) {
+      if (payloadHashes.has(event.id)) event.payloadHash = payloadHashes.get(event.id) ?? null;
+    }
+    receipt.receiptHash = await sha256CanonicalExcluding(
+      receipt as unknown as Record<string, unknown>,
+      RECEIPT_HASH_EXCLUSIONS,
+    );
+  }
+  return ok(undefined);
+}
 
 function isRecord(value: unknown): value is ArchiveRow {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -301,9 +385,9 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
     value['schemaVersion'] !== '1.0.0'
     || !isValidId(value['id'])
     || !isValidId(value['workspaceId'])
-    || !hasString(value, 'name')
-    || !hasString(value, 'purpose')
-    || !hasString(value, 'version')
+    || typeof value['name'] !== 'string'
+    || typeof value['purpose'] !== 'string'
+    || typeof value['version'] !== 'string'
     || !hasPositiveRevision(value)
     || !isOneOf(value['status'], ['draft', 'proposed', 'ready_for_review', 'approved', 'rejected', 'deprecated'])
     || !validJsonSchemaObject(value['inputSchema'])
@@ -347,8 +431,8 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
       !isRecord(node)
       || !isValidId(node['id'])
       || !isOneOf(node['kind'], ['research', 'decision', 'design', 'build', 'action', 'approval', 'verification', 'export'])
-      || !hasString(node, 'title')
-      || !hasString(node, 'goal')
+      || typeof node['title'] !== 'string'
+      || typeof node['goal'] !== 'string'
       || (node['instructions'] !== undefined && !isStringArray(node['instructions'], 1000))
       || !isStringArray(node['requires'], 1000)
       || !isStringArray(node['produces'], 1000)
@@ -388,8 +472,8 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
     if (
       !isRecord(tool)
       || !isValidId(tool['id'])
-      || !hasString(tool, 'name')
-      || !hasString(tool, 'description')
+      || typeof tool['name'] !== 'string'
+      || typeof tool['description'] !== 'string'
       || !isOneOf(tool['access'], ['read', 'write', 'consequential'])
       || !validJsonSchemaObject(tool['inputSchema'])
       || (tool['outputSchema'] !== undefined && !validJsonSchemaObject(tool['outputSchema']))
@@ -400,7 +484,7 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
     if (
       !isRecord(guardrail)
       || !isValidId(guardrail['id'])
-      || !hasString(guardrail, 'title')
+      || typeof guardrail['title'] !== 'string'
       || !isOneOf(guardrail['effect'], ['allow', 'deny', 'require-approval', 'require-verification'])
       || typeof guardrail['condition'] !== 'string'
       || !isOneOf(guardrail['scope'], ['global', 'workspace', 'project', 'mission', 'run', 'node'])
@@ -411,8 +495,8 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
     if (
       !isRecord(gate)
       || !isValidId(gate['id'])
-      || !hasString(gate, 'title')
-      || !hasString(gate, 'reason')
+      || typeof gate['title'] !== 'string'
+      || typeof gate['reason'] !== 'string'
       || !isOneOf(gate['requiredRevisionType'], ['mission', 'skillgraph', 'artifact-set', 'memory', 'runner-job'])
       || !isOneOf(gate['action'], ['approve', 'publish', 'execute', 'export', 'delete', 'share'])
       || (gate['expiresAfterSeconds'] !== undefined && (!Number.isInteger(gate['expiresAfterSeconds']) || Number(gate['expiresAfterSeconds']) < 1))
@@ -422,7 +506,7 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
     if (
       !isRecord(evaluation)
       || !isValidId(evaluation['id'])
-      || !hasString(evaluation, 'name')
+      || typeof evaluation['name'] !== 'string'
       || !isOneOf(evaluation['type'], ['schema', 'graph', 'file', 'dom', 'runtime', 'accessibility', 'policy', 'hash', 'command', 'manual'])
       || !isOneOf(evaluation['severity'], ['blocking', 'error', 'warning', 'info'])
       || !isRecord(evaluation['config'])
@@ -433,7 +517,7 @@ function validSkillGraphShape(value: unknown): value is ArchiveRow {
   if (value['knowledge'] !== undefined && !(value['knowledge'] as unknown[]).every((entry) => (
     isRecord(entry)
     && isValidId(entry['evidenceId'])
-    && hasString(entry, 'use')
+    && typeof entry['use'] === 'string'
     && isOneOf(entry['trust'], ['untrusted', 'reviewed', 'approved'])
     && (entry['timestampSeconds'] === undefined || typeof entry['timestampSeconds'] === 'number' && Number.isFinite(entry['timestampSeconds']) && entry['timestampSeconds'] >= 0)
   ))) return false;
@@ -661,6 +745,43 @@ function validProofReceiptShape(row: ArchiveRow): boolean {
   return true;
 }
 
+function validRuntimeCapabilities(value: unknown): boolean {
+  return isStringArray(value, 64)
+    && (value as string[]).every((entry) => isOneOf(entry, RUNTIME_CAPABILITIES))
+    && new Set(value as string[]).size === (value as string[]).length;
+}
+
+function validScheduleShape(value: unknown): value is ScheduleSpec {
+  if (!isRecord(value) || !isOneOf(value['kind'], ['manual', 'once', 'interval', 'daily', 'weekly'])) return false;
+  switch (value['kind']) {
+    case 'manual': break;
+    case 'once':
+      if (!isIsoDate(value['runAt'])) return false;
+      break;
+    case 'interval':
+      if (!Number.isInteger(value['everyMinutes']) || Number(value['everyMinutes']) < 5 || Number(value['everyMinutes']) > 30 * 24 * 60 || !isIsoDate(value['startAt'])) return false;
+      break;
+    case 'daily':
+      if (typeof value['localTime'] !== 'string' || typeof value['timeZone'] !== 'string') return false;
+      break;
+    case 'weekly':
+      if (
+        typeof value['localTime'] !== 'string'
+        || typeof value['timeZone'] !== 'string'
+        || !Array.isArray(value['weekdays'])
+        || value['weekdays'].length === 0
+        || value['weekdays'].some((day) => !Number.isInteger(day) || Number(day) < 0 || Number(day) > 6)
+        || new Set(value['weekdays']).size !== value['weekdays'].length
+      ) return false;
+      break;
+  }
+  try {
+    return validateSchedule(value as unknown as ScheduleSpec).length === 0;
+  } catch {
+    return false;
+  }
+}
+
 function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
   switch (key) {
     case 'missions': return validMissionShape(row);
@@ -732,7 +853,10 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
     case 'artifactVersions': return isValidId(row['artifactFileId'])
       && isValidId(row['artifactSetId'])
       && hasString(row, 'path')
-      && typeof row['content'] === 'string'
+      && (
+        typeof row['content'] === 'string' && row['contentPurgedAt'] === undefined
+        || row['content'] === null && isIsoDate(row['contentPurgedAt'])
+      )
       && isNonNegativeInteger(row['sizeBytes'])
       && typeof row['sha256'] === 'string'
       && /^[a-f0-9]{64}$/.test(row['sha256'])
@@ -785,6 +909,74 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
       && (row['payload'] === undefined || validStringRecord(row['payload']))
       && (row['payloadHash'] === undefined || typeof row['payloadHash'] === 'string' && /^[a-f0-9]{64}$/.test(row['payloadHash']));
     case 'proofReceipts': return validProofReceiptShape(row);
+    case 'agentProfiles': return hasString(row, 'name')
+      && hasString(row, 'slug')
+      && hasString(row, 'role')
+      && typeof row['objective'] === 'string'
+      && typeof row['instructions'] === 'string'
+      && isOptionalNullableId(row['executionHostId'])
+      && validRuntimeCapabilities(row['allowedCapabilities'])
+      && isStringArray(row['skillGraphIds'], 1000)
+      && isStringArray(row['memoryScopes'], 1000)
+      && Number.isInteger(row['maxParallelTasks'])
+      && Number(row['maxParallelTasks']) >= 1
+      && Number(row['maxParallelTasks']) <= 100
+      && isOneOf(row['approvalMode'], ['always', 'risk_based', 'routine_policy'])
+      && isOneOf(row['status'], ['idle', 'working', 'waiting', 'offline', 'error', 'archived']);
+    case 'crews': return hasString(row, 'name')
+      && isValidId(row['coordinatorAgentId'])
+      && isStringArray(row['memberAgentIds'], 1000)
+      && Number.isInteger(row['maxConcurrentWorkItems'])
+      && Number(row['maxConcurrentWorkItems']) >= 1
+      && Number(row['maxConcurrentWorkItems']) <= 1000;
+    case 'workItems': return isOptionalNullableId(row['missionId'])
+      && isOptionalNullableId(row['parentWorkItemId'])
+      && hasString(row, 'title')
+      && hasString(row, 'objective')
+      && isStringArray(row['definitionOfDone'], 1000)
+      && isOneOf(row['priority'], ['low', 'normal', 'high', 'urgent'])
+      && isOneOf(row['riskLevel'], ['low', 'medium', 'high'])
+      && isOneOf(row['status'], ['DRAFT', 'READY', 'QUEUED', 'LEASED', 'RUNNING', 'WAITING_FOR_HUMAN', 'WAITING_FOR_DEPENDENCY', 'RETRYING', 'VERIFYING', 'SUCCEEDED', 'FAILED', 'CANCELLED'])
+      && isStringArray(row['assignedAgentIds'], 1000)
+      && isOptionalNullableId(row['crewId'])
+      && isStringArray(row['dependencyIds'], 10000)
+      && validRuntimeCapabilities(row['requiredCapabilities'])
+      && isOptionalNullableId(row['executionHostId'])
+      && isOptionalNullableId(row['routineId'])
+      && isOptionalNullableId(row['currentRunId'])
+      && isStringArray(row['contextRefs'], 10000);
+    case 'workMessages': return isValidId(row['workItemId'])
+      && isOneOf(row['actorType'], ['human', 'agent', 'system', 'runner'])
+      && isOptionalNullableId(row['actorId'])
+      && isOneOf(row['kind'], ['message', 'checkpoint', 'question', 'decision', 'artifact', 'result'])
+      && hasString(row, 'body')
+      && isStringArray(row['referenceIds'], 10000);
+    case 'handoffs': return isValidId(row['workItemId'])
+      && isOptionalNullableId(row['fromAgentId'])
+      && isValidId(row['toAgentId'])
+      && hasString(row, 'reason')
+      && isStringArray(row['contextRefs'], 10000)
+      && isOneOf(row['status'], ['proposed', 'accepted', 'rejected', 'completed']);
+    case 'executionHosts': return isOneOf(row['kind'], ['attached-webmcp', 'local-runner', 'codex-cli', 'claude-cli', 'codex-automation-export', 'manual'])
+      && hasString(row, 'name')
+      && isOneOf(row['status'], ['available', 'offline', 'unpaired', 'degraded', 'unknown'])
+      && validRuntimeCapabilities(row['capabilities'])
+      && isOptionalNullableIso(row['lastSeenAt'])
+      && isRecord(row['publicConfig'])
+      && Object.values(row['publicConfig']).every((value) => typeof value === 'string' || typeof value === 'number' && Number.isFinite(value) || typeof value === 'boolean');
+    case 'routines': return hasString(row, 'name')
+      && isValidId(row['skillGraphId'])
+      && isOptionalNullableId(row['missionId'])
+      && Number.isInteger(row['skillGraphRevision'])
+      && Number(row['skillGraphRevision']) >= 1
+      && isValidId(row['executionHostId'])
+      && validScheduleShape(row['schedule'])
+      && isOneOf(row['missedRunPolicy'], ['skip', 'run_once_on_reconnect'])
+      && typeof row['enabled'] === 'boolean'
+      && isOptionalNullableId(row['approvalId'])
+      && (row['approvedActionHash'] === null || typeof row['approvedActionHash'] === 'string' && /^[a-f0-9]{64}$/.test(row['approvedActionHash']))
+      && isOptionalNullableIso(row['nextRunAt'])
+      && isOptionalNullableIso(row['lastRunAt']);
     case 'sourceRecords': return isValidId(row['lessonId'])
       && isOneOf(row['kind'], ['youtube', 'article', 'note', 'file'])
       && isOneOf(row['status'], ['saved', 'ready', 'archived'])
@@ -834,6 +1026,12 @@ const REQUIRED_ROW_ARRAYS: Partial<Record<keyof WorkspaceExport, readonly string
   memories: ['provenance'],
   verifications: ['results'],
   proofReceipts: ['events', 'approvals', 'artifacts', 'assertions', 'failuresAndRepairs', 'exports'],
+  agentProfiles: ['allowedCapabilities', 'skillGraphIds', 'memoryScopes'],
+  crews: ['memberAgentIds'],
+  workItems: ['definitionOfDone', 'assignedAgentIds', 'dependencyIds', 'requiredCapabilities', 'contextRefs'],
+  workMessages: ['referenceIds'],
+  handoffs: ['contextRefs'],
+  executionHosts: ['capabilities'],
 };
 
 const REQUIRED_REVISION_ROWS = new Set<keyof WorkspaceExport>([
@@ -850,6 +1048,11 @@ const REQUIRED_REVISION_ROWS = new Set<keyof WorkspaceExport>([
   'artifactVersions',
   'runs',
   'channelWatches',
+  'agentProfiles',
+  'crews',
+  'workItems',
+  'executionHosts',
+  'routines',
 ]);
 
 const REQUIRED_CREATED_AT_ROWS = new Set<keyof WorkspaceExport>([
@@ -869,6 +1072,12 @@ const REQUIRED_CREATED_AT_ROWS = new Set<keyof WorkspaceExport>([
   'proofReceipts',
   'sourceRecords',
   'channelWatches',
+  'agentProfiles',
+  'crews',
+  'workItems',
+  'workMessages',
+  'handoffs',
+  'routines',
 ]);
 
 const REQUIRED_UPDATED_AT_ROWS = new Set<keyof WorkspaceExport>([
@@ -884,26 +1093,45 @@ const REQUIRED_UPDATED_AT_ROWS = new Set<keyof WorkspaceExport>([
   'runs',
   'sourceRecords',
   'channelWatches',
+  'agentProfiles',
+  'crews',
+  'workItems',
+  'handoffs',
+  'routines',
 ]);
 
 function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
   if (!isRecord(value)) return invalid('Export root must be an object');
-  if (value['schemaVersion'] !== WORKSPACE_EXPORT_VERSION) {
+  const schemaVersion = value['schemaVersion'];
+  if (schemaVersion !== WORKSPACE_EXPORT_VERSION && schemaVersion !== LEGACY_WORKSPACE_EXPORT_VERSION) {
     return invalid(`Unsupported export version ${String(value['schemaVersion'])}`);
   }
+  const allowedRootFields = new Set<string>([
+    'schemaVersion', 'exportId', 'exportedAt', 'workspace', 'settings', 'integrity',
+    ...ARRAY_LIMITS.map(([key]) => String(key)),
+  ]);
+  const unknownRootField = Object.keys(value).find((key) => !allowedRootFields.has(key));
+  if (unknownRootField) return invalid(`Export contains an unknown root field ${unknownRootField}`);
   if (!isValidId(value['exportId']) || !isIsoDate(value['exportedAt'])) {
     return invalid('Export metadata is invalid');
   }
   if (!isRecord(value['workspace'])) return invalid('Export has no valid workspace record');
   const workspace = value['workspace'];
+  const allowedWorkspaceFields = new Set(['id', 'name', 'description', 'isExample', 'revision', 'createdAt', 'updatedAt']);
   if (
-    !isValidId(workspace['id'])
+    Object.keys(workspace).some((key) => !allowedWorkspaceFields.has(key))
+    || !isValidId(workspace['id'])
     || !hasString(workspace, 'name')
+    || String(workspace['name']).length > 120
+    || (workspace['description'] !== undefined && (typeof workspace['description'] !== 'string' || workspace['description'].length > 2000))
+    || (workspace['isExample'] !== undefined && typeof workspace['isExample'] !== 'boolean')
     || !hasPositiveRevision(workspace)
     || !isIsoDate(workspace['createdAt'])
     || !isIsoDate(workspace['updatedAt'])
   ) return invalid('Export has no valid workspace record');
-  if (!isRecord(value['settings'])) return invalid('Export field settings must be an object');
+  if (!isRecord(value['settings']) || Object.keys(value['settings']).length > 0) {
+    return invalid('Export field settings must be an empty object');
+  }
 
   const integrity = value['integrity'];
   if (
@@ -912,13 +1140,17 @@ function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
     || integrity['hashAlgorithm'] !== 'SHA-256'
     || typeof integrity['payloadSha256'] !== 'string'
     || !/^[a-f0-9]{64}$/.test(integrity['payloadSha256'])
-  ) return invalid('Export integrity metadata is required for version 1.0.0');
+  ) return invalid(`Export integrity metadata is required for version ${schemaVersion}`);
 
   const workspaceId = workspace['id'];
   const allRecordIds = new Set<string>();
+  const legacyOptionalArrays = new Set<keyof WorkspaceExport>([
+    'sourceRecords', 'channelWatches', 'agentProfiles', 'crews', 'workItems',
+    'workMessages', 'handoffs', 'executionHosts', 'routines',
+  ]);
   for (const [key, limit] of ARRAY_LIMITS) {
     const rows = value[key];
-    if ((key === 'sourceRecords' || key === 'channelWatches') && rows === undefined) continue;
+    if (schemaVersion === LEGACY_WORKSPACE_EXPORT_VERSION && legacyOptionalArrays.has(key) && rows === undefined) continue;
     if (!Array.isArray(rows)) return invalid(`Export field ${String(key)} must be an array`);
     if (rows.length > limit) return invalid(`Export field ${String(key)} exceeds the limit of ${limit}`);
     const primaryKey = key === 'proofReceipts' ? 'receiptId' : 'id';
@@ -1017,6 +1249,11 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
   const runs = rowIds(archive, 'runs');
   const receipts = rowIds(archive, 'proofReceipts', 'receiptId');
   const sources = rowIds(archive, 'sourceRecords');
+  const agents = rowIds(archive, 'agentProfiles');
+  const crews = rowIds(archive, 'crews');
+  const workItems = rowIds(archive, 'workItems');
+  const executionHosts = rowIds(archive, 'executionHosts');
+  const routines = rowIds(archive, 'routines');
 
   const optionalRef = (row: ArchiveRow, field: string, ids: Set<string>): boolean => {
     const value = row[field];
@@ -1025,6 +1262,14 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
   const requiredRef = (row: ArchiveRow, field: string, ids: Set<string>): boolean => {
     const value = row[field];
     return typeof value === 'string' && ids.has(value);
+  };
+  const optionalHostRef = (row: ArchiveRow, field: string): boolean => {
+    const value = row[field];
+    return value === undefined || value === null || value === 'local-runner' || typeof value === 'string' && executionHosts.has(value);
+  };
+  const requiredHostRef = (row: ArchiveRow, field: string): boolean => {
+    const value = row[field];
+    return value === 'local-runner' || typeof value === 'string' && executionHosts.has(value);
   };
 
   for (const mission of archiveRows(archive, 'missions')) {
@@ -1066,7 +1311,10 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
     }
   }
   for (const version of archiveRows(archive, 'skillVersions')) {
-    if (!requiredRef(version, 'skillGraphId', skillGraphs)) return invalid('Export contains a dangling skill version');
+    const snapshot = version['snapshot'] as ArchiveRow;
+    if (!requiredRef(version, 'skillGraphId', skillGraphs) || !optionalRef(snapshot, 'missionId', missions)) {
+      return invalid('Export contains a dangling skill version');
+    }
   }
   for (const memory of archiveRows(archive, 'memories')) {
     if (!optionalRef(memory, 'missionId', missions) || !optionalRef(memory, 'runId', runs)) return invalid('Export contains a dangling memory reference');
@@ -1085,6 +1333,7 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
   for (const approval of archiveRows(archive, 'approvals')) {
     if (approval['objectType'] === 'skillgraph' && !requiredRef(approval, 'objectId', skillGraphs)) return invalid('Export contains a dangling skill approval');
     if (approval['objectType'] === 'memory' && !requiredRef(approval, 'objectId', knownMemoryIds)) return invalid('Export contains a dangling memory approval');
+    if (approval['objectType'] === 'routine' && !requiredRef(approval, 'objectId', routines)) return invalid('Export contains a dangling routine approval');
   }
   for (const set of archiveRows(archive, 'artifactSets')) {
     if (!requiredRef(set, 'missionId', missions)) return invalid('Export contains a dangling file-space reference');
@@ -1110,7 +1359,7 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
     ) return invalid('Export contains a dangling check reference');
   }
   for (const run of archiveRows(archive, 'runs')) {
-    if (!requiredRef(run, 'missionId', missions) || !optionalRef(run, 'verificationId', verifications) || !optionalRef(run, 'receiptId', receipts)) {
+    if (!requiredRef(run, 'missionId', missions) || !optionalRef(run, 'verificationId', verifications) || !optionalRef(run, 'receiptId', receipts) || !optionalRef(run, 'routineId', routines)) {
       return invalid('Export contains a dangling run reference');
     }
   }
@@ -1134,6 +1383,66 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
   }
   for (const watch of archiveRows(archive, 'channelWatches')) {
     if (!requiredRef(watch, 'sourceId', sources)) return invalid('Export contains a dangling channel-watch reference');
+  }
+  for (const profile of archiveRows(archive, 'agentProfiles')) {
+    if (
+      !optionalHostRef(profile, 'executionHostId')
+      || !(profile['skillGraphIds'] as unknown[]).every((id) => typeof id === 'string' && skillGraphs.has(id))
+    ) return invalid('Export contains a dangling agent-profile reference');
+  }
+  for (const crew of archiveRows(archive, 'crews')) {
+    if (
+      !requiredRef(crew, 'coordinatorAgentId', agents)
+      || !(crew['memberAgentIds'] as unknown[]).every((id) => typeof id === 'string' && agents.has(id))
+      || !(crew['memberAgentIds'] as unknown[]).includes(crew['coordinatorAgentId'])
+    ) return invalid('Export contains a dangling crew reference');
+  }
+  for (const item of archiveRows(archive, 'workItems')) {
+    if (
+      !optionalRef(item, 'missionId', missions)
+      || !optionalRef(item, 'parentWorkItemId', workItems)
+      || !(item['dependencyIds'] as unknown[]).every((id) => typeof id === 'string' && workItems.has(id))
+      || !(item['assignedAgentIds'] as unknown[]).every((id) => typeof id === 'string' && agents.has(id))
+      || !optionalRef(item, 'crewId', crews)
+      || !optionalHostRef(item, 'executionHostId')
+      || !optionalRef(item, 'routineId', routines)
+      || !optionalRef(item, 'currentRunId', runs)
+    ) return invalid('Export contains a dangling work-item reference');
+  }
+  for (const message of archiveRows(archive, 'workMessages')) {
+    if (
+      !requiredRef(message, 'workItemId', workItems)
+      || message['actorType'] === 'agent' && !requiredRef(message, 'actorId', agents)
+    ) return invalid('Export contains a dangling work-message reference');
+  }
+  for (const handoff of archiveRows(archive, 'handoffs')) {
+    if (
+      !requiredRef(handoff, 'workItemId', workItems)
+      || !optionalRef(handoff, 'fromAgentId', agents)
+      || !requiredRef(handoff, 'toAgentId', agents)
+    ) return invalid('Export contains a dangling handoff reference');
+  }
+  const approvalsById = new Map(archiveRows(archive, 'approvals').map((approval) => [String(approval['id']), approval]));
+  for (const routine of archiveRows(archive, 'routines')) {
+    if (
+      !requiredRef(routine, 'skillGraphId', skillGraphs)
+      || !optionalRef(routine, 'missionId', missions)
+      || !requiredHostRef(routine, 'executionHostId')
+      || !optionalRef(routine, 'approvalId', rowIds(archive, 'approvals'))
+    ) return invalid('Export contains a dangling routine reference');
+    if (routine['approvalId'] !== null) {
+      const approval = approvalsById.get(String(routine['approvalId']));
+      if (
+        !approval
+        || approval['objectType'] !== 'routine'
+        || approval['objectId'] !== routine['id']
+        || approval['objectRevision'] !== routine['revision']
+        || approval['decision'] !== 'approved'
+        || approval['contentHash'] !== routine['approvedActionHash']
+      ) return invalid('Export contains a stale routine approval');
+    } else if (routine['approvedActionHash'] !== null || routine['enabled'] === true) {
+      return invalid('Export contains routine authority without an approval');
+    }
   }
 
   return ok(undefined);
@@ -1162,16 +1471,18 @@ async function validateArchiveDerivedIntegrity(archive: WorkspaceExport): Promis
   const artifactSetUsage = new Map<string, { count: number; bytes: number; paths: Set<string> }>();
   for (const key of ['artifactFiles', 'artifactVersions'] as const) {
     for (const file of archiveRows(archive, key)) {
-      const content = String(file['content']);
-      const sizeBytes = new TextEncoder().encode(content).byteLength;
       const path = validateArtifactPath(String(file['path']));
       if (
         !path.ok
         || path.value.path !== file['path']
-        || sizeBytes > MAX_ARTIFACT_FILE_BYTES
-        || file['sizeBytes'] !== sizeBytes
-        || file['sha256'] !== await sha256Text(content)
+        || Number(file['sizeBytes']) > MAX_ARTIFACT_FILE_BYTES
       ) return invalid(`Export field ${key} contains invalid file integrity`);
+      if (file['content'] === null) continue;
+      const content = String(file['content']);
+      const sizeBytes = new TextEncoder().encode(content).byteLength;
+      if (file['sizeBytes'] !== sizeBytes || file['sha256'] !== await sha256Text(content)) {
+        return invalid(`Export field ${key} contains invalid file integrity`);
+      }
       if (key === 'artifactFiles') {
         if (file['mediaType'] !== path.value.mediaType) {
           return invalid('Export contains a file with an invalid media type');
@@ -1188,6 +1499,23 @@ async function validateArchiveDerivedIntegrity(archive: WorkspaceExport): Promis
         artifactSetUsage.set(artifactSetId, usage);
       }
     }
+  }
+  for (const routine of archiveRows(archive, 'routines')) {
+    if (routine['approvedActionHash'] === null) continue;
+    const computed = await sha256Canonical({
+      routineId: routine['id'],
+      revision: routine['revision'],
+      skillGraphId: routine['skillGraphId'],
+      skillGraphRevision: routine['skillGraphRevision'],
+      schedule: routine['schedule'],
+      missedRunPolicy: routine['missedRunPolicy'],
+      executionHostId: routine['executionHostId'],
+    });
+    if (routine['approvedActionHash'] !== computed) return invalid('Export contains a routine with an invalid action hash');
+  }
+  for (const watch of archiveRows(archive, 'channelWatches')) {
+    const computed = await computeChannelWatchActionHash(watch as never);
+    if (watch['actionHash'] !== computed) return invalid('Export contains a channel watch with an invalid action hash');
   }
   for (const receipt of archive.proofReceipts as ProofReceipt[]) {
     const computed = await sha256CanonicalExcluding(
@@ -1248,7 +1576,14 @@ type ArchiveIdDomain =
   | 'run'
   | 'proofEvent'
   | 'receipt'
-  | 'source';
+  | 'source'
+  | 'agentProfile'
+  | 'crew'
+  | 'workItem'
+  | 'workMessage'
+  | 'handoff'
+  | 'executionHost'
+  | 'routine';
 
 const ARCHIVE_ID_PREFIX: Record<ArchiveIdDomain, IdPrefix> = {
   workspace: 'ws',
@@ -1271,6 +1606,13 @@ const ARCHIVE_ID_PREFIX: Record<ArchiveIdDomain, IdPrefix> = {
   proofEvent: 'pe',
   receipt: 'rc',
   source: 'src',
+  agentProfile: 'ag',
+  crew: 'cw',
+  workItem: 'wk',
+  workMessage: 'wm',
+  handoff: 'hf',
+  executionHost: 'ho',
+  routine: 'rt',
 };
 
 function scopedArchiveId(domain: ArchiveIdDomain, id: string): string {
@@ -1295,6 +1637,13 @@ function proofObjectDomain(objectType: unknown): ArchiveIdDomain | null {
     verification: 'verification',
     run: 'run',
     receipt: 'receipt',
+    agentProfile: 'agentProfile',
+    crew: 'crew',
+    workItem: 'workItem',
+    workMessage: 'workMessage',
+    handoff: 'handoff',
+    executionHost: 'executionHost',
+    routine: 'routine',
   };
   return typeof objectType === 'string' ? domains[objectType] ?? null : null;
 }
@@ -1337,6 +1686,41 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
     const domain = proofObjectDomain(record['objectType']);
     if (domain) mapField(record, 'objectId', domain);
   };
+  const mapProofPayload = (record: ArchiveRow): boolean => {
+    if (!record['payload'] || typeof record['payload'] !== 'object' || Array.isArray(record['payload'])) return false;
+    const payload = record['payload'] as ArchiveRow;
+    let changed = false;
+    const mapPayloadField = (field: string, domain: ArchiveIdDomain): void => {
+      const current = payload[field];
+      const next = mapValue(domain, current);
+      if (next !== current) {
+        payload[field] = next;
+        changed = true;
+      }
+    };
+    const mapPayloadArray = (field: string, domain: ArchiveIdDomain): void => {
+      if (!Array.isArray(payload[field])) return;
+      const current = payload[field] as unknown[];
+      const next = current.map((value) => mapValue(domain, value));
+      if (next.some((value, index) => value !== current[index])) {
+        payload[field] = next;
+        changed = true;
+      }
+    };
+
+    mapPayloadField('approvalId', 'approval');
+    mapPayloadField('previousApprovalId', 'approval');
+    mapPayloadField('skillGraphId', 'skillGraph');
+    mapPayloadField('supersededById', 'memory');
+    mapPayloadField('runId', 'run');
+    mapPayloadField('receiptId', 'receipt');
+    mapPayloadField('sourceId', 'source');
+    mapPayloadField('lessonId', 'lesson');
+    mapPayloadField('executionHostId', 'executionHost');
+    mapPayloadArray('createdSourceIds', 'source');
+    return changed;
+  };
+  const proofEventsWithChangedPayloads = new Set<string>();
 
   mapField(mapped.workspace, 'id', 'workspace');
   for (const row of mapped.missions as ArchiveRow[]) {
@@ -1368,14 +1752,25 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
     mapBase(row, 'verification'); mapField(row, 'missionId', 'mission'); mapField(row, 'skillGraphId', 'skillGraph'); mapField(row, 'artifactSetId', 'artifactSet'); mapField(row, 'repairedFromVerificationId', 'verification');
   }
   for (const row of mapped.runs as ArchiveRow[]) {
-    mapBase(row, 'run'); mapField(row, 'missionId', 'mission'); mapField(row, 'receiptId', 'receipt'); mapField(row, 'verificationId', 'verification');
+    mapBase(row, 'run'); mapField(row, 'missionId', 'mission'); mapField(row, 'receiptId', 'receipt'); mapField(row, 'verificationId', 'verification'); mapField(row, 'routineId', 'routine');
   }
   for (const row of mapped.proofEvents as ArchiveRow[]) {
-    mapBase(row, 'proofEvent'); mapObjectId(row);
+    mapBase(row, 'proofEvent');
+    mapObjectId(row);
+    if (row['actorType'] === 'agent') mapField(row, 'actorId', 'agentProfile');
+    if (mapProofPayload(row)) {
+      delete row['payloadHash'];
+      proofEventsWithChangedPayloads.add(String(row['id']));
+    }
   }
   for (const row of mapped.proofReceipts as ArchiveRow[]) {
     mapBase(row, 'receipt', 'receiptId'); mapField(row, 'missionId', 'mission'); mapField(row, 'runId', 'run'); mapField(row, 'skillGraphId', 'skillGraph');
-    for (const event of row['events'] as ArchiveRow[]) { mapField(event, 'id', 'proofEvent'); mapObjectId(event); }
+    for (const event of row['events'] as ArchiveRow[]) {
+      mapField(event, 'id', 'proofEvent');
+      mapObjectId(event);
+      if (event['actorType'] === 'agent') mapField(event, 'actorId', 'agentProfile');
+      if (proofEventsWithChangedPayloads.has(String(event['id']))) event['payloadHash'] = null;
+    }
     for (const approval of row['approvals'] as ArchiveRow[]) { mapField(approval, 'id', 'approval'); mapObjectId(approval); }
     for (const source of (row['sources'] as ArchiveRow[] | undefined) ?? []) {
       if (source['type'] === 'memory') mapField(source, 'id', 'memory');
@@ -1386,6 +1781,25 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
   }
   for (const row of mapped.sourceRecords ?? [] as ArchiveRow[]) { mapBase(row as ArchiveRow, 'source'); mapField(row as ArchiveRow, 'lessonId', 'lesson'); }
   for (const row of mapped.channelWatches ?? [] as ArchiveRow[]) { mapBase(row as ArchiveRow, 'source'); mapField(row as ArchiveRow, 'sourceId', 'source'); }
+  for (const row of mapped.agentProfiles ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'agentProfile'); mapField(row as ArchiveRow, 'executionHostId', 'executionHost'); mapArray(row as ArchiveRow, 'skillGraphIds', 'skillGraph');
+  }
+  for (const row of mapped.crews ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'crew'); mapField(row as ArchiveRow, 'coordinatorAgentId', 'agentProfile'); mapArray(row as ArchiveRow, 'memberAgentIds', 'agentProfile');
+  }
+  for (const row of mapped.workItems ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'workItem'); mapField(row as ArchiveRow, 'missionId', 'mission'); mapField(row as ArchiveRow, 'parentWorkItemId', 'workItem'); mapArray(row as ArchiveRow, 'assignedAgentIds', 'agentProfile'); mapField(row as ArchiveRow, 'crewId', 'crew'); mapArray(row as ArchiveRow, 'dependencyIds', 'workItem'); mapField(row as ArchiveRow, 'executionHostId', 'executionHost'); mapField(row as ArchiveRow, 'routineId', 'routine'); mapField(row as ArchiveRow, 'currentRunId', 'run');
+  }
+  for (const row of mapped.workMessages ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'workMessage'); mapField(row as ArchiveRow, 'workItemId', 'workItem'); if ((row as ArchiveRow)['actorType'] === 'agent') mapField(row as ArchiveRow, 'actorId', 'agentProfile');
+  }
+  for (const row of mapped.handoffs ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'handoff'); mapField(row as ArchiveRow, 'workItemId', 'workItem'); mapField(row as ArchiveRow, 'fromAgentId', 'agentProfile'); mapField(row as ArchiveRow, 'toAgentId', 'agentProfile');
+  }
+  for (const row of mapped.executionHosts ?? [] as ArchiveRow[]) mapBase(row as ArchiveRow, 'executionHost');
+  for (const row of mapped.routines ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'routine'); mapField(row as ArchiveRow, 'skillGraphId', 'skillGraph'); mapField(row as ArchiveRow, 'missionId', 'mission'); mapField(row as ArchiveRow, 'executionHostId', 'executionHost'); mapField(row as ArchiveRow, 'approvalId', 'approval');
+  }
   return mapped;
 }
 
@@ -1435,6 +1849,48 @@ async function normalizeImportedAuthorityAndHashes(
     snapshot['versionHash'] = await sha256Canonical({ ...snapshot, versionHash: undefined });
     row['versionHash'] = snapshot['versionHash'];
   }
+  const remappedGraphs = new Map((archive.skillGraphs as ArchiveRow[]).map((graph) => [String(graph['id']), graph]));
+  for (const receipt of archive.proofReceipts as ArchiveRow[]) {
+    for (const approval of receipt['approvals'] as ArchiveRow[]) {
+      if (approval['objectType'] !== 'skillgraph') continue;
+      const graph = remappedGraphs.get(String(approval['objectId']));
+      if (graph) approval['contentHash'] = graph['versionHash'];
+    }
+  }
+
+  archive.executionHosts = (archive.executionHosts ?? []).map((value) => ({
+    ...(value as ArchiveRow),
+    status: 'unpaired',
+    capabilities: [],
+    lastSeenAt: null,
+    publicConfig: {},
+  }));
+  archive.agentProfiles = (archive.agentProfiles ?? []).map((value) => {
+    const profile = value as ArchiveRow;
+    return {
+      ...profile,
+      executionHostId: null,
+      status: profile['status'] === 'archived' ? 'archived' : 'idle',
+      approvalMode: 'always',
+      allowedCapabilities: [],
+    };
+  });
+  archive.workItems = (archive.workItems ?? []).map((value) => ({
+    ...(value as ArchiveRow),
+    status: 'DRAFT',
+    executionHostId: null,
+    routineId: null,
+    currentRunId: null,
+  }));
+  archive.routines = (archive.routines ?? []).map((value) => ({
+    ...(value as ArchiveRow),
+    enabled: false,
+    approvalId: null,
+    approvedActionHash: null,
+    nextRunAt: null,
+    lastRunAt: null,
+  }));
+  archive.approvals = (archive.approvals as ApprovalRecord[]).filter((approval) => approval.objectType !== 'routine');
 
   if (!preserveLabelledExampleState) {
     const lessonsWithTranscript = new Set((archive.transcriptSegments as ArchiveRow[]).map((segment) => String(segment['lessonId'])));
@@ -1518,12 +1974,7 @@ async function normalizeImportedAuthorityAndHashes(
     }));
   }
 
-  for (const receipt of archive.proofReceipts as ProofReceipt[]) {
-    receipt.receiptHash = await sha256CanonicalExcluding(
-      receipt as unknown as Record<string, unknown>,
-      RECEIPT_HASH_EXCLUSIONS,
-    );
-  }
+  await bindArchiveProofPayloadHashes(archive, false);
 }
 
 /**
@@ -1634,6 +2085,13 @@ async function importWorkspaceWithPolicy(
     ['sourceRecords', 'source'],
     // A channel watch intentionally shares its primary id with its source.
     ['channelWatches', 'source'],
+    ['agentProfiles', 'agentProfile'],
+    ['crews', 'crew'],
+    ['workItems', 'workItem'],
+    ['workMessages', 'workMessage'],
+    ['handoffs', 'handoff'],
+    ['executionHosts', 'executionHost'],
+    ['routines', 'routine'],
   ];
   for (const [key, domain, primaryKey = 'id'] of primaryIds) {
     for (const row of (parsed[key] as unknown[]) ?? []) {
@@ -1646,6 +2104,11 @@ async function importWorkspaceWithPolicy(
   for (const version of parsed.memoryVersions as ArchiveRow[]) claimId('memory', version['memoryId']);
   for (const version of parsed.artifactVersions as ArchiveRow[]) claimId('artifactFile', version['artifactFileId']);
   for (const observation of parsed.observations as ArchiveRow[]) claimId('evidence', observation['evidenceId']);
+  for (const lesson of parsed.lessons as ArchiveRow[]) {
+    for (const criterion of lesson['coverageCriteria'] as ArchiveRow[]) {
+      for (const observationId of criterion['satisfiedByObservationIds'] as unknown[]) claimId('observation', observationId);
+    }
+  }
   const claimGraphEvidence = (graph: ArchiveRow): void => {
     for (const node of graph['nodes'] as ArchiveRow[]) {
       for (const evidenceId of node['evidenceIds'] as unknown[]) claimId('evidence', evidenceId);
@@ -1806,6 +2269,13 @@ async function importWorkspaceWithPolicy(
       'receipts',
       'sourceRecords',
       'channelWatches',
+      'agentProfiles',
+      'crews',
+      'workItems',
+      'workMessages',
+      'handoffs',
+      'executionHosts',
+      'routines',
     ],
     async (ctx) => {
       await ctx.db.workspaces.add(importedWorkspace as never);
@@ -1829,10 +2299,28 @@ async function importWorkspaceWithPolicy(
       await ctx.db.receipts.bulkAdd(remap(parsed.proofReceipts ?? []) as never[]);
       await ctx.db.sourceRecords.bulkAdd(remap(parsed.sourceRecords ?? []) as never[]);
       await ctx.db.channelWatches.bulkAdd(remap(parsed.channelWatches ?? []) as never[]);
+      await ctx.db.agentProfiles.bulkAdd(remap(parsed.agentProfiles ?? []) as never[]);
+      await ctx.db.crews.bulkAdd(remap(parsed.crews ?? []) as never[]);
+      await ctx.db.workItems.bulkAdd(remap(parsed.workItems ?? []) as never[]);
+      await ctx.db.workMessages.bulkAdd(remap(parsed.workMessages ?? []) as never[]);
+      await ctx.db.handoffs.bulkAdd(remap(parsed.handoffs ?? []) as never[]);
+      await ctx.db.executionHosts.bulkAdd(remap(parsed.executionHosts ?? []) as never[]);
+      await ctx.db.routines.bulkAdd(remap(parsed.routines ?? []) as never[]);
       for (const event of importEvents) ctx.emit(event);
     },
   );
   } catch (error) {
+    if (deterministicPortableWorkspaceId) {
+      const existingImport = await getDb().workspaces.get(deterministicPortableWorkspaceId);
+      if (existingImport) {
+        return ok({
+          workspaceId: existingImport.id,
+          name: existingImport.name,
+          hashVerified: true,
+          status: 'already-imported',
+        });
+      }
+    }
     return invalid(
       'Import failed and nothing was saved. Try again or choose a different Cherry export.',
       { cause: (error as Error).message },

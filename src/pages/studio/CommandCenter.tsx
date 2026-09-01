@@ -81,6 +81,7 @@ export default function CommandCenter() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [exportNeedsCleanup, setExportNeedsCleanup] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,9 +165,11 @@ export default function CommandCenter() {
     if (!activeWorkspace) return;
     setError(null);
     setNotice(null);
+    setExportNeedsCleanup(false);
     const result = await exportWorkspace(activeWorkspace.id);
     if (!result.ok) {
       setError(plainCommandError(result.error.message));
+      setExportNeedsCleanup(result.error.message.includes('64 MiB'));
       return;
     }
     const blob = new Blob([JSON.stringify(result.value, null, 2)], { type: 'application/json' });
@@ -319,7 +322,7 @@ export default function CommandCenter() {
         </div>
       </header>
 
-      {error ? <p className="field-error" role="alert">{error}</p> : null}
+      {error ? <p className="field-error" role="alert">{error}{exportNeedsCleanup ? <> <Link to="/studio/settings/connections">Review stored file history</Link>.</> : null}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
 
       <div className="grid-cards">

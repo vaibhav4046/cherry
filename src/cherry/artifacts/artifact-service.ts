@@ -205,3 +205,58 @@ export async function listArtifactVersions(artifactFileId: string): Promise<Arti
   const versions = await getDb().artifactVersions.where('artifactFileId').equals(artifactFileId).toArray();
   return versions.sort((a, b) => a.revision - b.revision);
 }
+
+export interface ArtifactHistoryStorage {
+  versionCount: number;
+  versionsWithContent: number;
+  contentBytes: number;
+}
+
+export async function getArtifactHistoryStorage(workspaceId: string): Promise<ArtifactHistoryStorage> {
+  const workspace = await getDb().workspaces.get(workspaceId);
+  if (!workspace) return { versionCount: 0, versionsWithContent: 0, contentBytes: 0 };
+  const versions = await getDb().artifactVersions.where('workspaceId').equals(workspaceId).toArray();
+  const bodies = versions.filter((version) => typeof version.content === 'string');
+  return {
+    versionCount: versions.length,
+    versionsWithContent: bodies.length,
+    contentBytes: bodies.reduce((sum, version) => sum + version.sizeBytes, 0),
+  };
+}
+
+/**
+ * Human-only recovery action for portable exports that have accumulated large
+ * file histories. Current files are untouched. Version identifiers, hashes,
+ * sizes, paths, summaries, and timestamps remain as tamper-evident evidence;
+ * only the historical bodies become unrecoverable.
+ */
+export async function purgeArtifactVersionContents(
+  workspaceId: string,
+  actor: 'human',
+): Promise<Result<{ purgedVersions: number; purgedBytes: number }>> {
+  const workspace = await getDb().workspaces.get(workspaceId);
+  if (!workspace) return notFound('Workspace', workspaceId);
+
+  return withWorkspaceTx(workspaceId, ['artifactVersions'], async (ctx) => {
+    const versions = await ctx.db.artifactVersions.where('workspaceId').equals(workspaceId).toArray();
+    const withBodies = versions.filter((version) => typeof version.content === 'string');
+    const purgedBytes = withBodies.reduce((sum, version) => sum + version.sizeBytes, 0);
+    if (withBodies.length === 0) return ok({ purgedVersions: 0, purgedBytes: 0 });
+
+    const contentPurgedAt = isoNow();
+    await ctx.db.artifactVersions.bulkPut(withBodies.map((version) => ({
+      ...version,
+      content: null,
+      contentPurgedAt,
+    })));
+    ctx.emit({
+      type: 'artifact.history_purged',
+      actorType: actor,
+      objectType: 'workspace',
+      objectId: workspaceId,
+      summary: `Removed stored contents from ${withBodies.length} file versions (${purgedBytes} bytes); hashes and metadata remain`,
+      payload: { purgedVersions: withBodies.length, purgedBytes },
+    });
+    return ok({ purgedVersions: withBodies.length, purgedBytes });
+  });
+}

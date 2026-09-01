@@ -18,9 +18,11 @@ import {
   pauseRoutine,
   requestRunNow,
   resumeRoutine,
+  settleRun,
   setRoutineSchedule,
 } from '../../src/cherry/workforce/routines-service.ts';
 import type { ScheduleSpec } from '../../src/cherry/workforce/workforce-model.ts';
+import { exportWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
 
 async function seedApprovedGraph() {
   const workspace = unwrap(await createWorkspace({ name: 'Routines workspace' }));
@@ -99,7 +101,7 @@ describe('routines service', () => {
     expect(await getDb().routines.where('workspaceId').equals(workspace.id).count()).toBe(0);
   });
 
-  it('draft -> set schedule -> approve enables the routine with nextRunAt set', async () => {
+  it('approves manual runs but keeps timed schedules disabled until exact runner registration exists', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     expect((await listApprovedSkillGraphs(workspace.id)).map((g) => g.id)).toContain(graph.id);
 
@@ -113,18 +115,21 @@ describe('routines service', () => {
     expect(routine.skillGraphRevision).toBe(graph.revision);
     expect(routine.revision).toBe(1);
 
-    const scheduled = unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
-    expect(scheduled.revision).toBe(2);
-    expect(scheduled.enabled).toBe(false);
-    // Preview only: nextRunAt is computed but the routine stays disabled.
-    expect(scheduled.nextRunAt).toBeTruthy();
-
-    const approved = unwrap(await approveRoutine(workspace.id, routine.id, scheduled.revision));
+    const approved = unwrap(await approveRoutine(workspace.id, routine.id, routine.revision));
     expect(approved.enabled).toBe(true);
     expect(approved.approvalId).toBeTruthy();
     expect(approved.approvedActionHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(approved.nextRunAt).toBeTruthy();
-    expect(Date.parse(approved.nextRunAt!)).toBeGreaterThan(Date.now() - 1000);
+    expect(approved.nextRunAt).toBeNull();
+
+    const scheduled = unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
+    expect(scheduled.revision).toBe(2);
+    expect(scheduled.enabled).toBe(false);
+    // Preview only: the timestamp is visible, but no schedule is registered.
+    expect(scheduled.nextRunAt).toBeTruthy();
+    const refused = await approveRoutine(workspace.id, routine.id, scheduled.revision);
+    expect(refused).toMatchObject({ ok: false, error: { code: 'unsupported' } });
+    await expect(resumeRoutine(workspace.id, routine.id)).resolves.toMatchObject({ ok: false, error: { code: 'unsupported' } });
+    expect((await getRoutine(workspace.id, routine.id))?.enabled).toBe(false);
 
     const types = (await listProofEvents(workspace.id)).map((event) => event.type);
     expect(types).toContain('routine.drafted');
@@ -136,8 +141,7 @@ describe('routines service', () => {
   it('editing the schedule after approval disables the routine and clears the approval', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
-    unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
-    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 2));
+    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 1));
     expect(approved.enabled).toBe(true);
 
     const edited = unwrap(
@@ -148,7 +152,7 @@ describe('routines service', () => {
         'run_once_on_reconnect',
       ),
     );
-    expect(edited.revision).toBe(3);
+    expect(edited.revision).toBe(2);
     expect(edited.enabled).toBe(false);
     expect(edited.approvalId).toBeNull();
     expect(edited.approvedActionHash).toBeNull();
@@ -169,7 +173,6 @@ describe('routines service', () => {
   it('refuses resume without a standing approval', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
-    unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
 
     const refused = await resumeRoutine(workspace.id, routine.id);
     expect(refused.ok).toBe(false);
@@ -179,8 +182,7 @@ describe('routines service', () => {
   it('pause keeps the approval and resume re-enables with a recomputed nextRunAt', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
-    unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
-    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 2));
+    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 1));
 
     const paused = unwrap(await pauseRoutine(workspace.id, routine.id));
     expect(paused.enabled).toBe(false);
@@ -189,7 +191,7 @@ describe('routines service', () => {
 
     const resumed = unwrap(await resumeRoutine(workspace.id, routine.id));
     expect(resumed.enabled).toBe(true);
-    expect(resumed.nextRunAt).toBeTruthy();
+    expect(resumed.nextRunAt).toBeNull();
     const types = (await listProofEvents(workspace.id)).map((event) => event.type);
     expect(types).toContain('routine.paused');
   });
@@ -242,8 +244,7 @@ describe('routines service', () => {
   it('requestRunNow records a proof event without pretending anything ran', async () => {
     const { workspace, graph } = await seedApprovedGraph();
     const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
-    unwrap(await setRoutineSchedule(workspace.id, routine.id, intervalSpec(), 'skip'));
-    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 2));
+    const approved = unwrap(await approveRoutine(workspace.id, routine.id, 1));
 
     const requested = unwrap(await requestRunNow(workspace.id, routine.id));
     expect(requested.note).toContain('execution host');
@@ -258,5 +259,26 @@ describe('routines service', () => {
     const runEvents = events.filter((event) => event.type === 'routine.run_requested');
     expect(runEvents).toHaveLength(1);
     expect(runEvents[0]!.objectId).toBe(routine.id);
+  });
+
+  it('canonicalizes runner timestamps so a settled routine stays portable', async () => {
+    const { workspace, graph } = await seedApprovedGraph();
+    const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
+    unwrap(await approveRoutine(workspace.id, routine.id, 1));
+    const requested = unwrap(await requestRunNow(workspace.id, routine.id));
+    const token = requested.runnerCapabilityToken!;
+    const running = unwrap(await settleRun(requested.id, 'running', {
+      runnerCapabilityToken: token,
+      startedAt: '2026-09-01T12:00:00Z',
+    }));
+    expect(running.startedAt).toBe('2026-09-01T12:00:00.000Z');
+    const failed = unwrap(await settleRun(requested.id, 'failed', {
+      runnerCapabilityToken: token,
+      endedAt: '2026-09-01T12:01:00Z',
+      error: 'Expected failure',
+    }));
+    expect(failed.finishedAt).toBe('2026-09-01T12:01:00.000Z');
+    expect((await getRoutine(workspace.id, routine.id))?.lastRunAt).toBe('2026-09-01T12:01:00.000Z');
+    await expect(exportWorkspace(workspace.id)).resolves.toMatchObject({ ok: true });
   });
 });

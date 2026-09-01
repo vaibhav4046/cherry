@@ -43,6 +43,25 @@ describe('labelled example workspace loader', () => {
     expect(second.value.hashVerified).toBeNull();
     expect(requests).toBe(1);
     expect(await listWorkspaces()).toHaveLength(1);
+    const graphs = await getDb().skillGraphs.where('workspaceId').equals(first.value.workspaceId).toArray();
+    const graphHashes = new Map(graphs.map((graph) => [graph.id, graph.versionHash]));
+    const receipts = await getDb().receipts.where('workspaceId').equals(first.value.workspaceId).toArray();
+    expect(receipts.flatMap((receipt) => receipt.approvals)
+      .filter((approval) => approval.objectType === 'skillgraph')
+      .every((approval) => approval.contentHash === graphHashes.get(approval.objectId))).toBe(true);
+
+    const importedApprovals = await getDb().approvals.where('workspaceId').equals(first.value.workspaceId).toArray();
+    const importedApprovalIds = new Set(importedApprovals.map((approval) => approval.id));
+    const originalApprovalIds = new Set((JSON.parse(goldenFixture) as {
+      approvals: Array<{ id: string }>;
+    }).approvals.map((approval) => approval.id));
+    const events = await getDb().proofEvents.where('workspaceId').equals(first.value.workspaceId).toArray();
+    const payloadApprovalIds = events
+      .map((event) => event.payload?.approvalId)
+      .filter((approvalId): approvalId is string => typeof approvalId === 'string');
+    expect(payloadApprovalIds).toHaveLength(2);
+    expect(payloadApprovalIds.every((approvalId) => importedApprovalIds.has(approvalId))).toBe(true);
+    expect(payloadApprovalIds.some((approvalId) => originalApprovalIds.has(approvalId))).toBe(false);
   });
 
   it('coalesces concurrent requests for the same example into one import', async () => {

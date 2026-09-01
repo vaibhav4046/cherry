@@ -157,7 +157,9 @@ export default function RoutineDetail() {
   async function handleSaveSchedule() {
     await run(
       () => setRoutineSchedule(activeWorkspace!.id, routine!.id, spec, editor!.missedRunPolicy),
-      'Schedule saved as a new version. Your prior approval was cleared. Approve below to enable it.',
+      spec.kind === 'manual'
+        ? 'Manual routine saved as a new version. Your prior approval was cleared. Approve below to use Run now.'
+        : 'Timed schedule saved as a draft. Timed runner registration is not connected yet, so it cannot be enabled.',
       true,
     );
   }
@@ -181,8 +183,10 @@ export default function RoutineDetail() {
           </span>
         </div>
         <p className="subhead" style={{ maxWidth: 680 }}>
-          {describeSchedule(routine.schedule)} · {routine.executionHostId === 'local-runner' ? 'local runner' : 'paired runner'}.
-          Runs on schedule while the paired runner is available.
+          {describeSchedule(routine.schedule)} · {routine.executionHostId === 'local-runner' ? 'local runner' : 'paired runner'}.{' '}
+          {routine.schedule.kind === 'manual'
+            ? 'Nothing starts until you choose Run now.'
+            : 'This is a saved preview. Timed runner registration is not connected yet.'}
         </p>
         <Link to="/studio/routines" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>Back to Routines</Link>
       </header>
@@ -299,37 +303,41 @@ export default function RoutineDetail() {
         ) : null}
 
         <p className="label" style={{ margin: 0 }}>
-          Saving clears the current approval. The routine stays disabled until you approve the new version.
+          {spec.kind === 'manual'
+            ? 'Saving clears the current approval. Approve the saved manual version before using Run now.'
+            : 'Timed schedules stay disabled until Cherry can register the exact approved version with your runner.'}
         </p>
         <div className="row">
           <button
             type="button"
-            className="btn"
+            className={spec.kind === 'manual' ? 'btn' : 'btn btn-primary'}
             disabled={busy || problems.length > 0}
             onClick={() => void handleSaveSchedule()}
             data-testid="routine-save-schedule"
           >
             Save schedule
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy}
-            onClick={() => void run(() => approveRoutine(activeWorkspace!.id, routine!.id, routine!.revision), 'Routine approved and enabled.')}
-            data-testid="routine-approve"
-          >
-            Approve &amp; enable r{routine.revision}
-          </button>
-          {routine.enabled ? (
+          {routine.schedule.kind === 'manual' && spec.kind === 'manual' ? (
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={busy}
+              onClick={() => void run(() => approveRoutine(activeWorkspace!.id, routine!.id, routine!.revision), 'Manual routine approved. Run now is available.')}
+              data-testid="routine-approve"
+            >
+              Approve manual r{routine.revision}
+            </button>
+          ) : null}
+          {routine.enabled && routine.schedule.kind === 'manual' ? (
             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void run(() => pauseRoutine(activeWorkspace!.id, routine!.id), 'Routine paused. Its approval is kept.')}>
               Pause
             </button>
-          ) : (
+          ) : routine.schedule.kind === 'manual' && routine.approvalId ? (
             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void run(() => resumeRoutine(activeWorkspace!.id, routine!.id), 'Routine resumed.')}>
               Resume
             </button>
-          )}
-          <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void handleRunNow()}>
+          ) : null}
+          <button type="button" className="btn btn-sm" disabled={busy || !routine.enabled || routine.schedule.kind !== 'manual'} onClick={() => void handleRunNow()}>
             Run now
           </button>
         </div>
@@ -346,7 +354,7 @@ export default function RoutineDetail() {
           ) : null}
           <span className="sticker">policy: {routine.missedRunPolicy.replace(/_/g, ' ')}</span>
         </div>
-        <p className="label" style={{ margin: 0 }}>Next run: {fmt(routine.nextRunAt)} · Last run: {fmt(routine.lastRunAt)}</p>
+        <p className="label" style={{ margin: 0 }}>{routine.schedule.kind === 'manual' ? 'Next run' : 'Schedule preview'}: {fmt(routine.nextRunAt)} · Last run: {fmt(routine.lastRunAt)}</p>
         <div className="routine-graph-binding" aria-label="Approved skill version">
           <strong>Approved skill</strong>
           {skillGraph ? (

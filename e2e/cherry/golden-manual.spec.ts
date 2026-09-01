@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 /**
  * Release-blocking golden journey, executed entirely manually — no AI provider,
@@ -154,9 +155,8 @@ test.describe('golden manual journey', () => {
     await page.getByRole('button', { name: 'Approve', exact: true }).click();
     await expect(page.getByTestId('memory-proposal')).toHaveCount(0);
 
-    // Routine reuse: schedule the approved skill on repeat. The draft form only
-    // offers approved skills, the routine binds to the exact approved revision,
-    // and it stays disabled until the human approves the schedule revision.
+    // Routine reuse: the draft form offers only approved skills, binds the
+    // exact revision, and stays disabled until a person approves manual use.
     await page.getByRole('link', { name: 'Routines', exact: true }).first().click();
     const routineForm = page.getByTestId('routine-draft-form');
     await expect(routineForm).toBeVisible();
@@ -190,12 +190,17 @@ test.describe('golden manual journey', () => {
     const download = await downloadPromise;
     const exportPath = await download.path();
     expect(exportPath).toBeTruthy();
+    const exportBuffer = await readFile(exportPath!);
 
     // Import it back (id-remapped copy appears)
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByText('Import', { exact: true }).click();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(exportPath!);
+    await fileChooser.setFiles({
+      name: download.suggestedFilename(),
+      mimeType: 'application/json',
+      buffer: exportBuffer,
+    });
     await expect(page.getByText(/Imported "Golden journey workspace/)).toBeVisible();
 
     // Reload: state survives

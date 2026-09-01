@@ -125,6 +125,20 @@ describe('workforce service', () => {
     freshDb();
   });
 
+  it('normalizes duplicate capabilities before persistence', async () => {
+    const workspaceId = await workspace();
+    const created = await createAgentProfile({
+      workspaceId,
+      name: 'Portable agent',
+      role: 'build',
+      capabilities: ['page_tools', 'page_tools', 'artifact_write'],
+    });
+    expect(created).toMatchObject({
+      ok: true,
+      value: { allowedCapabilities: ['page_tools', 'artifact_write'] },
+    });
+  });
+
   it('creates the five-agent starter crew once, editable and deletable', async () => {
     const workspaceId = await workspace();
     const crew = await createStarterCrew(workspaceId);

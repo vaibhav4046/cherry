@@ -2,7 +2,7 @@ import { getDb } from '../persistence/cherry-db.ts';
 import { listProofEvents, withWorkspaceTx } from '../persistence/transactions.ts';
 import { newId } from '../core/ids.ts';
 import { isoNow } from '../core/clock.ts';
-import { sha256CanonicalExcluding } from '../core/hash.ts';
+import { sha256Canonical, sha256CanonicalExcluding } from '../core/hash.ts';
 import { ok, type Result } from '../core/result.ts';
 import { invalid, notFound } from '../core/errors.ts';
 import type { ProofEvent } from '../core/domain-event.ts';
@@ -24,7 +24,7 @@ function receiptProvider(run: { provider?: { kind: string; status: string; exitC
   return { kind: run.provider.kind as 'manual' | 'webmcp-host' | 'codex-cli' | 'claude-cli' | 'local-model' | 'runner', status: run.provider.status as 'not-used' | 'completed' | 'failed' | 'cancelled' | 'blocked', verifiedSeparately: true, exitCode: run.provider.exitCode ?? null };
 }
 
-function toReceiptEvent(event: ProofEvent): ProofReceiptEvent {
+async function toReceiptEvent(event: ProofEvent): Promise<ProofReceiptEvent> {
   return {
     id: event.id,
     sequence: event.sequence,
@@ -35,7 +35,7 @@ function toReceiptEvent(event: ProofEvent): ProofReceiptEvent {
     objectType: event.objectType,
     objectId: event.objectId,
     summary: event.summary,
-    payloadHash: event.payloadHash ?? null,
+    payloadHash: event.payload ? await sha256Canonical(event.payload) : event.payloadHash ?? null,
   };
 }
 
@@ -75,8 +75,8 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const lessonLinkedIds = mission.lessonId ? [...(await db.transcriptSegments.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id), ...(await db.observations.where('lessonId').equals(mission.lessonId).toArray()).map((x) => x.id)] : [];
   const linkedSourceRows = sourceRows.filter((source) => source.lessonId === mission.lessonId);
   const linkedSourceIds = new Set(linkedSourceRows.map((source) => source.id));
-  const causalIds = new Set([mission.id, graph.id, ...routineIds, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...(graph.knowledge ?? []).map((k) => k.evidenceId), ...mission.requiredMemoryIds, ...lessonLinkedIds, ...linkedSourceRows.map((source) => source.id), ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
-  const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.updated', 'lesson.transcript_imported', 'lesson.playback', 'source.saved', 'source.updated', 'source.fetch_requested', 'source.fetch_completed', 'source.fetch_failed', 'channel_watch.created', 'channel_watch.checked', 'channel_watch.failed', 'channel_watch.disabled', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
+  const causalIds = new Set([mission.workspaceId, mission.id, graph.id, ...routineIds, ...(mission.lessonId ? [mission.lessonId] : []), ...(mission.artifactSetId ? [mission.artifactSetId] : []), ...missionRunIds, ...missionVerificationIds, ...artifactFiles.map((f) => f.id), ...graph.nodes.map((n) => n.id), ...(graph.knowledge ?? []).map((k) => k.evidenceId), ...mission.requiredMemoryIds, ...lessonLinkedIds, ...linkedSourceRows.map((source) => source.id), ...evidenceRows.filter((e) => e.missionId === mission.id || (mission.lessonId && e.lessonId === mission.lessonId)).map((e) => e.id), ...linkedMemoryIds, ...deletedLinkedMemoryIds]);
+  const causalTypes = new Set(['mission.created', 'mission.updated', 'mission.state_changed', 'lesson.loaded', 'lesson.updated', 'lesson.transcript_imported', 'lesson.playback', 'source.saved', 'source.updated', 'source.fetch_requested', 'source.fetch_completed', 'source.fetch_failed', 'channel_watch.created', 'channel_watch.checked', 'channel_watch.failed', 'channel_watch.disabled', 'observation.recorded', 'evidence.added', 'evidence.updated', 'evidence.trust_changed', 'evidence.deleted', 'skillgraph.drafted', 'skillgraph.revised', 'skillgraph.approval_requested', 'skillgraph.approved', 'skillgraph.rejected', 'skillgraph.rolled_back', 'memory.proposed', 'memory.approved', 'memory.rejected', 'memory.superseded', 'memory.deleted', 'memory.pinned', 'artifact.file_written', 'artifact.file_deleted', 'artifact.history_purged', 'artifact.preview_error', 'verification.started', 'verification.completed', 'repair.applied', 'run.queued', 'run.updated', 'receipt.created']);
   for (const type of ['routine.drafted','routine.schedule_set','routine.approved','routine.enabled','routine.paused','routine.run_requested']) causalTypes.add(type);
   const missionEvents = events.filter((event) => {
     if (!causalTypes.has(event.type)) return false;
@@ -167,6 +167,12 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
 
   const eventLimit = 2000;
   const omittedCount = Math.max(0, missionEvents.length - eventLimit);
+  const receiptEvents = await Promise.all(missionEvents.slice(-eventLimit).map(async (event) => {
+    const mapped = await toReceiptEvent(event);
+    return deletedLinkedMemoryIds.includes(event.objectId) && event.type.startsWith('memory.')
+      ? { ...mapped, summary: `Memory ${event.objectId} event (content redacted)` }
+      : mapped;
+  }));
   const receipt: ProofReceipt = {
     schemaVersion: '1.0.0',
     receiptId: newId('rc'),
@@ -182,7 +188,7 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
       hashAlgorithm: 'SHA-256',
       exclusions: [...RECEIPT_HASH_EXCLUSIONS],
     },
-    events: missionEvents.slice(-eventLimit).map((event) => { const mapped = toReceiptEvent(event); return deletedLinkedMemoryIds.includes(event.objectId) && event.type.startsWith('memory.') ? { ...mapped, summary: `Memory ${event.objectId} event (content redacted)` } : mapped; }),
+    events: receiptEvents,
     approvals,
     artifacts,
     assertions,

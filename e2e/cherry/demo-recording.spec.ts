@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 const BEAT_MS = 500;
 
@@ -231,12 +232,17 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   const download = await downloadPromise;
   const exportPath = await download.path();
   expect(exportPath).toBeTruthy();
+  const exportBuffer = await readFile(exportPath!);
   await beat(page);
 
   const fileChooserPromise = page.waitForEvent('filechooser');
   await page.getByText('Import', { exact: true }).click();
   const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(exportPath!);
+  await fileChooser.setFiles({
+    name: download.suggestedFilename(),
+    mimeType: 'application/json',
+    buffer: exportBuffer,
+  });
   await expect(page.getByText(/Imported "Golden journey workspace/)).toBeVisible();
   await beat(page, 2);
 

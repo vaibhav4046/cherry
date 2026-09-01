@@ -15,19 +15,22 @@ export type ExecutionHostKind =
   | 'codex-automation-export'
   | 'manual';
 
-export type RuntimeCapability =
-  | 'page_tools'
-  | 'repository_read'
-  | 'repository_write'
-  | 'command_execution'
-  | 'browser_vision'
-  | 'browser_control'
-  | 'background'
-  | 'schedule'
-  | 'network'
-  | 'human_approval'
-  | 'artifact_write'
-  | 'verification';
+export const RUNTIME_CAPABILITIES = [
+  'page_tools',
+  'repository_read',
+  'repository_write',
+  'command_execution',
+  'browser_vision',
+  'browser_control',
+  'background',
+  'schedule',
+  'network',
+  'human_approval',
+  'artifact_write',
+  'verification',
+] as const;
+
+export type RuntimeCapability = (typeof RUNTIME_CAPABILITIES)[number];
 
 export interface ExecutionHost {
   id: string;

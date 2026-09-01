@@ -1,5 +1,5 @@
 /**
- * Routine persistence: scheduled, human-approved skill runs. Every mutation runs
+ * Routine persistence: human-approved manual runs and saved schedule drafts. Every mutation runs
  * in withWorkspaceTx so its ProofEvent lands in the same IndexedDB transaction.
  * The core security property: any change to what a routine would do bumps its
  * revision and invalidates the standing approval, so nothing ever runs on a
@@ -25,6 +25,26 @@ const MISSED_RUN_POLICIES: readonly Routine['missedRunPolicy'][] = ['skip', 'run
 const DEFAULT_EXECUTION_HOST_ID = 'local-runner';
 
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function canonicalSchedule(spec: ScheduleSpec): ScheduleSpec {
+  switch (spec.kind) {
+    case 'manual':
+      return { kind: 'manual' };
+    case 'once':
+      return { kind: 'once', runAt: new Date(spec.runAt).toISOString() };
+    case 'interval':
+      return { kind: 'interval', everyMinutes: spec.everyMinutes, startAt: new Date(spec.startAt).toISOString() };
+    case 'daily':
+      return { kind: 'daily', localTime: spec.localTime, timeZone: spec.timeZone };
+    case 'weekly':
+      return {
+        kind: 'weekly',
+        weekdays: [...new Set(spec.weekdays)].sort((a, b) => a - b),
+        localTime: spec.localTime,
+        timeZone: spec.timeZone,
+      };
+  }
+}
 
 /** Human-readable one-line summary of a schedule, shared by the routine pages. */
 export function describeSchedule(spec: ScheduleSpec): string {
@@ -127,6 +147,7 @@ export async function setRoutineSchedule(
   if (!MISSED_RUN_POLICIES.includes(missedRunPolicy)) {
     return err('validation', 'missedRunPolicy must be "skip" or "run_once_on_reconnect".');
   }
+  const normalizedSchedule = canonicalSchedule(schedule);
 
   return withWorkspaceTx(workspaceId, ['routines'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
@@ -135,13 +156,13 @@ export async function setRoutineSchedule(
     const now = isoNow();
     const updated: Routine = {
       ...routine,
-      schedule,
+      schedule: normalizedSchedule,
       missedRunPolicy,
       revision: routine.revision + 1,
       approvalId: null,
       approvedActionHash: null,
       enabled: false,
-      nextRunAt: nextRunAt(schedule, now),
+      nextRunAt: nextRunAt(normalizedSchedule, now),
       updatedAt: now,
     };
     await ctx.db.routines.put(updated);
@@ -150,7 +171,7 @@ export async function setRoutineSchedule(
       actorType: 'human',
       objectType: 'routine',
       objectId: routineId,
-      summary: `Routine "${routine.name}" schedule set (${describeSchedule(schedule)}) — now r${updated.revision}, approval cleared`,
+      summary: `Routine "${routine.name}" schedule set (${describeSchedule(normalizedSchedule)}) — now r${updated.revision}, approval cleared`,
       payload: { revision: updated.revision, previousApprovalId: routine.approvalId },
     });
     return ok(updated);
@@ -173,7 +194,7 @@ export async function computeRoutineActionHash(routine: Routine): Promise<string
   });
 }
 
-/** Human approval of the exact current revision; enables the routine. */
+/** Human approval of the exact current revision; enables manual Run now. */
 export async function approveRoutine(
   workspaceId: string,
   routineId: string,
@@ -186,6 +207,9 @@ export async function approveRoutine(
   if (!current) return err('not_found', 'Routine not found.');
   if (current.revision !== expectedRevision) {
     return err('conflict', `Routine is at revision ${current.revision}, not ${expectedRevision}. Re-read before approving.`);
+  }
+  if (current.schedule.kind !== 'manual') {
+    return err('unsupported', 'Timed routines are saved as drafts until Cherry can register the exact approved version with a paired runner. Choose Manual to approve and use Run now.');
   }
   const actionHash = await computeRoutineActionHash(current);
   const graph = await getDb().skillGraphs.get(current.skillGraphId);
@@ -280,6 +304,9 @@ export async function resumeRoutine(workspaceId: string, routineId: string, acto
   return withWorkspaceTx(workspaceId, ['routines', 'approvals', 'skillGraphs', 'missions'], async (ctx) => {
     const routine = await ctx.db.routines.get(routineId);
     if (!routine || routine.workspaceId !== workspaceId) return err('not_found', 'Routine not found.');
+    if (routine.schedule.kind !== 'manual') {
+      return err('unsupported', 'Timed routines cannot resume until Cherry can restore their exact runner registration. Choose Manual to use Run now.');
+    }
     if (!routine.approvalId) {
       return err('approval_required', 'This routine has no standing approval. Approve the current revision to enable it.');
     }
@@ -391,6 +418,17 @@ export async function settleRun(
   actorType: ActorType = 'runner',
 ): Promise<Result<RunRecord>> {
   if (actorType !== 'runner') return err('approval_required', 'Only a paired runner may settle a run.');
+  const canonicalRunnerTime = (value: string | undefined, field: string): Result<string | undefined> => {
+    if (value === undefined) return ok(undefined);
+    const milliseconds = Date.parse(value);
+    return Number.isNaN(milliseconds)
+      ? err('validation', `Runner ${field} must be a valid timestamp.`)
+      : ok(new Date(milliseconds).toISOString());
+  };
+  const startedAt = canonicalRunnerTime(details.startedAt, 'startedAt');
+  if (!startedAt.ok) return startedAt;
+  const endedAt = canonicalRunnerTime(details.endedAt, 'endedAt');
+  if (!endedAt.ok) return endedAt;
   const db = getDb();
   const run = await db.runs.get(runId);
   if (!run) return err('not_found', 'Run not found.');
@@ -418,9 +456,11 @@ export async function settleRun(
   const nextProvider = run.provider
     ? { ...run.provider, ...(terminalProviderStatus ? { status: terminalProviderStatus } : {}), ...(details.provider?.exitCode !== undefined ? { exitCode: details.provider.exitCode } : {}) }
     : run.provider;
+  const persistedStartedAt = canonicalRunnerTime(run.startedAt, 'stored startedAt');
+  if (!persistedStartedAt.ok) return persistedStartedAt;
   const next: RunRecord = { ...run, status, outputSummary: details.outputSummary === undefined ? run.outputSummary : redactOutput(details.outputSummary), error: details.error === undefined ? run.error ?? null : details.error === null ? null : redactOutput(details.error),
     receiptId: details.receiptId ?? run.receiptId ?? null, command: run.command ?? details.command, adapter: run.adapter,
-    provider: nextProvider, startedAt: run.startedAt ?? details.startedAt ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : details.endedAt ?? now, revision: run.revision + 1, updatedAt: now };
+    provider: nextProvider, startedAt: persistedStartedAt.value ?? startedAt.value ?? now, finishedAt: status === 'running' || status === 'setup-required' ? undefined : endedAt.value ?? now, revision: run.revision + 1, updatedAt: now };
   const settled = await withWorkspaceTx(run.workspaceId, ['runs', 'routines', 'skillGraphs', 'missions'], async (ctx) => {
     const latest = await ctx.db.runs.get(runId);
     if (!latest || latest.revision !== run.revision || latest.status !== run.status) return err('conflict', 'Run changed concurrently; reload before settling.');

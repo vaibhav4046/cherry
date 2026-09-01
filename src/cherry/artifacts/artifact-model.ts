@@ -50,7 +50,9 @@ export interface ArtifactVersion {
   artifactSetId: string;
   path: string;
   revision: number;
-  content: string;
+  /** Historical bodies may be explicitly purged while their hash metadata remains. */
+  content: string | null;
+  contentPurgedAt?: string;
   sha256: string;
   sizeBytes: number;
   createdAt: string;
