@@ -188,6 +188,20 @@ export function Connect() {
             ))}
           </div>
 
+          <section className="card stack" aria-labelledby="save-anything-heading" style={{ gap: 'var(--sp-2)' }}>
+            <h2 id="save-anything-heading" className="subhead" style={{ margin: 0 }}>
+              Save a page without opening Cherry
+            </h2>
+            <p style={{ margin: 0 }}>
+              The Sources page gives you a Save to Cherry bookmark. Drag it to your bookmarks bar,
+              then click it on any page you are reading and that page arrives in your inbox, ready
+              for the transcript step. Cherry only receives the address and title you send it.
+            </p>
+            <div className="row">
+              <Link to="/studio/sources" className="btn">Get the bookmark</Link>
+            </div>
+          </section>
+
           <p className="label">
             Status labels follow the same honesty rule as the{' '}
             <Link to="/compatibility" className="tap-link">compatibility table</Link>: validated means automated tests or a
