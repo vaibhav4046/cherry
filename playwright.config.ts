@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const E2E_PRIVY_APP_ID = process.env.VITE_PRIVY_APP_ID?.trim() || 'clp_cherry_e2e_guest_mode';
+
 export default defineConfig({
   testDir: './e2e',
   testIgnore: /demo-recording\.spec\.ts/,
@@ -19,6 +21,11 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run preview',
     url: 'http://127.0.0.1:4173',
+    env: {
+      // Proves that a configured auth integration still stays out of the
+      // network until the user opens the explicit sign-in surface.
+      VITE_PRIVY_APP_ID: E2E_PRIVY_APP_ID,
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,
   },

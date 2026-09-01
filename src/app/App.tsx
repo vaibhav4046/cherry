@@ -3,12 +3,14 @@ import { Route, Routes } from 'react-router-dom';
 import { RouteMeta } from './RouteMeta.tsx';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
-import { Compatibility } from '../pages/Compatibility.tsx';
 import NotFound from '../pages/NotFound.tsx';
 
 const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
 const Connect = lazy(() => import('../pages/Connect.tsx'));
 const Showcase = lazy(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
+const Compatibility = lazy(() =>
+  import('../pages/Compatibility.tsx').then((module) => ({ default: module.Compatibility })),
+);
 const Onboarding = lazy(() => import('../pages/studio/Onboarding.tsx'));
 const MissionNew = lazy(() => import('../pages/studio/MissionNew.tsx'));
 const MissionDetail = lazy(() => import('../pages/studio/MissionDetail.tsx'));

@@ -1,114 +1,191 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { matchRoutes, useLocation, type RouteObject } from 'react-router-dom';
 
-interface RouteEntry {
-  matches: (path: string) => boolean;
+export interface RouteMetadata {
   title: string;
   description: string;
 }
 
 const SITE = 'Cherry Wine';
 
-/** Most specific first; the last entry catches unknown paths (the 404 view). */
-const ROUTE_META: RouteEntry[] = [
+function meta(title: string, description: string): RouteMetadata {
+  return { title, description };
+}
+
+const STUDIO_META = meta(
+  `Studio · ${SITE}`,
+  'Teach, approve, verify, and ship skills to every agent you use.',
+);
+
+const NOT_FOUND_META = meta(
+  `Page not found · ${SITE}`,
+  'That page does not exist. The rest of Cherry does.',
+);
+
+/** Metadata routes mirror App and inherit React Router's matching semantics. */
+const META_ROUTES: RouteObject[] = [
   {
-    matches: (path) => path === '/',
-    title: 'Cherry Wine · Turn lessons into skills every agent can run',
-    description:
+    path: '/',
+    handle: meta(
+      'Cherry Wine · Turn lessons into skills every agent can run',
       'Teach a workflow once. Cherry turns it into an approved, verified skill and serves it to ChatGPT, Codex, Claude, and any agent you connect. Free, open source, no API key.',
+    ),
   },
   {
-    matches: (path) => path.startsWith('/showcase'),
-    title: `Showcase · ${SITE}`,
-    description: 'Watch a lesson become a proven skill, end to end, in one guided journey.',
+    path: '/showcase',
+    handle: meta(`Showcase · ${SITE}`, 'See a source become a proven skill, end to end, in one guided journey.'),
   },
   {
-    matches: (path) => path.startsWith('/connect'),
-    title: `Connect your agent · ${SITE}`,
-    description: 'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+    path: '/connect',
+    handle: meta(
+      `Connect your agent · ${SITE}`,
+      'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+    ),
   },
   {
-    matches: (path) => path.startsWith('/compatibility'),
-    title: `What's proven · ${SITE}`,
-    description: 'Every capability labeled by the test that actually backs it.',
+    path: '/compatibility',
+    handle: meta(`What's proven · ${SITE}`, 'Every capability labeled by the test that actually backs it.'),
   },
   {
-    matches: (path) => path.startsWith('/ingest'),
-    title: `Save to Cherry · ${SITE}`,
-    description: 'Send a page or video straight into your source inbox.',
+    path: '/ingest',
+    handle: meta(`Save to Cherry · ${SITE}`, 'Send a page or video straight into your source inbox.'),
   },
   {
-    matches: (path) => path.startsWith('/studio/skills'),
-    title: `Skill Library · ${SITE}`,
-    description: 'Every skill Cherry has learned, ready to install into your agents.',
+    path: '/studio',
+    handle: STUDIO_META,
+    children: [
+      { index: true, handle: STUDIO_META },
+      {
+        path: 'onboarding',
+        handle: meta(`Start · ${SITE}`, 'Create your space and choose what Cherry should help your agents learn.'),
+      },
+      {
+        path: 'quick',
+        handle: meta(
+          `Your first skill · ${SITE}`,
+          'Paste a link or transcript and get an approved skill in about a minute.',
+        ),
+      },
+      {
+        path: 'sources',
+        handle: meta(
+          `Sources · ${SITE}`,
+          'Save the material you want Cherry to learn from. Outside content stays untrusted until you review it.',
+        ),
+      },
+      {
+        path: 'inbox',
+        handle: meta(`Work inbox · ${SITE}`, 'Work items, owners, and honest state transitions.'),
+      },
+      {
+        path: 'work/:workItemId',
+        handle: meta(`Work item · ${SITE}`, 'Review the work, its owner, and every recorded state change.'),
+      },
+      {
+        path: 'crew',
+        handle: meta(`Crew · ${SITE}`, 'Named agent seats and what each is allowed to do.'),
+      },
+      {
+        path: 'routines',
+        handle: meta(`Routines · ${SITE}`, 'Run approved skills on a schedule through your paired local runner.'),
+      },
+      {
+        path: 'routines/:routineId',
+        handle: meta(
+          `Routine · ${SITE}`,
+          'Review the approved skill version, schedule, and run history for this routine.',
+        ),
+      },
+      {
+        path: 'missions/new',
+        handle: meta(
+          `New project · ${SITE}`,
+          'Define what your agent should produce and the real checks it must pass.',
+        ),
+      },
+      {
+        path: 'missions/:missionId',
+        handle: meta(`Project · ${SITE}`, 'See the source, files, checks, and proof for this project.'),
+      },
+      {
+        path: 'watch/:lessonId',
+        handle: meta(
+          `Review source · ${SITE}`,
+          'Add or review a transcript, mark what you checked, and keep every claim tied to its source.',
+        ),
+      },
+      {
+        path: 'memory',
+        handle: meta(`Memory · ${SITE}`, 'What Cherry remembers, with where it came from.'),
+      },
+      {
+        path: 'skills',
+        handle: meta(
+          `Skill Library · ${SITE}`,
+          'Browse your skills, see which versions are approved, and install those that are ready.',
+        ),
+      },
+      {
+        path: 'skills/:skillId',
+        handle: meta(
+          `Skill · ${SITE}`,
+          'Inspect the exact version, evidence, approval, and install options for this skill.',
+        ),
+      },
+      {
+        path: 'artifacts/:artifactSetId',
+        handle: meta(`Files · ${SITE}`, 'Inspect and edit what your agent produced before you run its checks.'),
+      },
+      {
+        path: 'runs',
+        handle: meta(`Runs · ${SITE}`, 'See what ran, what passed, and what needs your attention.'),
+      },
+      {
+        path: 'proof',
+        handle: meta(`Proof · ${SITE}`, 'Receipts you can recompute. Change one byte and they fail.'),
+      },
+      {
+        path: 'proof/:receiptId',
+        handle: meta(`Proof · ${SITE}`, 'Receipts you can recompute. Change one byte and they fail.'),
+      },
+      {
+        path: 'agent',
+        handle: meta(`Agent view · ${SITE}`, 'Live WebMCP registrations and the real tool call log.'),
+      },
+      {
+        path: 'settings/connections',
+        handle: meta(
+          `Connections · ${SITE}`,
+          'Pair your local runner, connect agents, or keep working entirely in this browser.',
+        ),
+      },
+    ],
   },
-  {
-    matches: (path) => path.startsWith('/studio/sources'),
-    title: `Sources · ${SITE}`,
-    description: 'Save the material you want Cherry to learn from. Outside content stays untrusted until you review it.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/quick'),
-    title: `Your first skill · ${SITE}`,
-    description: 'Paste a link or transcript and get an approved skill in about a minute.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/routines'),
-    title: `Routines · ${SITE}`,
-    description: 'Run approved skills on a schedule through your paired local runner.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/memory'),
-    title: `Memory · ${SITE}`,
-    description: 'What Cherry remembers, with where it came from.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/inbox') || path.startsWith('/studio/work'),
-    title: `Work inbox · ${SITE}`,
-    description: 'Work items, owners, and honest state transitions.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/crew'),
-    title: `Crew · ${SITE}`,
-    description: 'Named agent seats and what each is allowed to do.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/agent'),
-    title: `Agent view · ${SITE}`,
-    description: 'Live WebMCP registrations and the real tool call log.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio/proof'),
-    title: `Proof · ${SITE}`,
-    description: 'Receipts you can recompute. Change one byte and they fail.',
-  },
-  {
-    matches: (path) => path.startsWith('/studio'),
-    title: `Studio · ${SITE}`,
-    description: 'Teach, approve, verify, and ship skills to every agent you use.',
-  },
-  {
-    matches: (path) => path.startsWith('/lab/'),
-    title: `Brand lab · ${SITE}`,
-    description: 'Cherry Wine 3D brand objects.',
-  },
-  {
-    matches: () => true,
-    title: `Page not found · ${SITE}`,
-    description: 'That page does not exist. The rest of Cherry does.',
-  },
+  { path: '*', handle: NOT_FOUND_META },
 ];
 
-/**
- * Per-route document titles and meta descriptions. One component at the router
- * root instead of scattered effects, so every route gets a unique, honest
- * title (and search engines and tab bars stop seeing one identical string).
- */
+function isRouteMetadata(value: unknown): value is RouteMetadata {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<RouteMetadata>;
+  return typeof candidate.title === 'string' && typeof candidate.description === 'string';
+}
+
+export function resolveRouteMeta(pathname: string): RouteMetadata {
+  try {
+    const matches = matchRoutes(META_ROUTES, pathname);
+    const handle: unknown = matches?.at(-1)?.route.handle;
+    return isRouteMetadata(handle) ? handle : NOT_FOUND_META;
+  } catch {
+    return NOT_FOUND_META;
+  }
+}
+
+/** Keeps the browser tab and standard description aligned with the rendered route. */
 export function RouteMeta() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const entry = ROUTE_META.find((candidate) => candidate.matches(pathname)) ?? ROUTE_META[ROUTE_META.length - 1]!;
+    const entry = resolveRouteMeta(pathname);
     document.title = entry.title;
     const description = document.querySelector('meta[name="description"]');
     if (description !== null) description.setAttribute('content', entry.description);
