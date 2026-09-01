@@ -4,7 +4,8 @@ What changed for the user, and which issue or ticket does it close?
 
 ## Evidence
 
-- [ ] A regression or contract test failed before the implementation.
+- [ ] A regression or contract test failed first when behavior or contracts changed; otherwise mark
+      this not applicable and explain.
 - [ ] `npm run gates` passes.
 - [ ] `npm run verify:all` passes when this touches UI, release, security, or multiple layers.
 - [ ] Scraper contracts pass when fetch boundaries changed.

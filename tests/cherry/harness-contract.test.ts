@@ -18,6 +18,24 @@ describe('repository harness contract', () => {
     );
   });
 
+  it('keeps the install graph synchronized with the lockfile', () => {
+    const packageJson = JSON.parse(readRepoFile('package.json')) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const packageLock = JSON.parse(readRepoFile('package-lock.json')) as {
+      packages?: Record<
+        string,
+        { dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
+      >;
+    };
+    const root = packageLock.packages?.[''];
+
+    expect(root).toBeDefined();
+    expect(root?.dependencies).toEqual(packageJson.dependencies);
+    expect(root?.devDependencies).toEqual(packageJson.devDependencies);
+  });
+
   it('pins the three enforceable rule layers in AGENTS.md', () => {
     const contract = readRepoFile('AGENTS.md');
 
@@ -28,6 +46,13 @@ describe('repository harness contract', () => {
     expect(contract).toContain('human-only');
     expect(contract).toContain('single deployer');
     expect(contract).toContain('STATUS.md');
+    expect(contract).toContain('direct store mutation');
+    expect(contract).toContain('exact revision');
+    expect(contract).toContain('pairing token');
+    expect(contract).toMatch(/labelled synthetic/i);
+    expect(contract).toContain('package-lock.json');
+    expect(contract).toContain('headless automation of ChatGPT, Codex, or Claude');
+    expect(contract).toContain('BLOCKED');
   });
 
   it('points every rule layer to repository-owned source material', () => {
@@ -38,6 +63,8 @@ describe('repository harness contract', () => {
       'docs/CHERRY_DECISIONS.md',
       'docs/codex-takeover/00_MASTER_PROMPT.md',
       'docs/codex-takeover/02_TICKETS.md',
+      'docs/codex-takeover/03_DESIGN_DIRECTIVE.md',
+      'docs/codex-takeover/04_COPY_GUIDE.md',
       'docs/codex-takeover/05_GUARDRAILS.md',
       'docs/codex-takeover/06_OPERATING_MODEL.md',
       'docs/codex-takeover/STATUS.md',

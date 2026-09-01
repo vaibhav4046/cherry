@@ -16,6 +16,10 @@ describe('contributor readiness contract', () => {
     expect(contributing).toContain('## Add a runner job type');
     expect(contributing).toContain('## Claims');
     expect(contributing).toContain('lane');
+    expect(contributing.match(/^Worked outline:/gm)).toHaveLength(4);
+    expect(contributing).toMatch(/at most five\s+contextual tools/);
+    expect(contributing).toContain('seven global tools');
+    expect(contributing).toContain('introduce_agent');
   });
 
   it('asks contributors for gates and honest claims in GitHub templates', () => {
@@ -27,5 +31,7 @@ describe('contributor readiness contract', () => {
       expect(template.toLowerCase()).toContain('gate');
       expect(template.toLowerCase()).toContain('claim');
     }
+    expect(feature).toContain('if any');
+    expect(pullRequest).toContain('when behavior or contracts changed');
   });
 });

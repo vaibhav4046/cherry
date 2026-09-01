@@ -48,9 +48,11 @@ human review as every other outside source.
 1. Put the input/output contract and schema in `src/cherry/webmcp/`. Reject unknown keys, wrong
    states, huge input, and out-of-range pagination.
 2. Call an existing domain service. A tool handler must not mutate Dexie directly or invent a result.
-3. Add it to the narrowest surface aperture. Read tools stay bounded; mutation tools must disappear
-   when the product state makes them invalid.
-4. Keep approval, trust, and memory decisions request-only for agents.
+3. Add it to the narrowest surface aperture: Cherry registers seven global tools plus at most five
+   contextual tools for the current state. The `introduce_agent` global records a session label; the
+   other global reads and every contextual tool remain bounded by their declared contracts.
+4. No global or contextual tool grants human-only approval, trust, or memory authority. Agents may
+   request those decisions; only a person may grant them.
 5. Test the registered closure, wrong-state refusal, JSON parseability, result cap, and retirement
    after the state changes.
 

@@ -14,20 +14,25 @@ This contract is executable policy for every human or agent changing Cherry.
    actions but no agent or background routine may grant them.
 5. Bind every approval to the exact revision and approval hash. Bind every routine to its approved
    revision and action hash. Any relevant edit must make the prior approval or routine stale.
-6. Derive verification badges from stored evidence and real checks. Seeded activity, hardcoded pass
-   results, dead controls, and hidden network work are forbidden.
+6. Derive verification badges from stored evidence and real checks. Labelled synthetic samples may
+   demonstrate navigation, but never count as a human approval, live run, receipt, or release
+   evidence. Hardcoded passes, fake proof, dead controls, and hidden network work are forbidden.
 7. Keep artifact previews sandboxed and network-blocked. Preserve postMessage origin checks and the
    runner's loopback binding, pairing token, allowlists, output caps, redaction, and private-network
    fetch protection.
-8. Never request, store, print, or commit secrets. Client configuration may contain only public
-   `VITE_` identifiers; `.env*`, tokens, and credentials stay out of Git.
+8. Never request account credentials or commit/log general secrets or tokens. The local runner may
+   display its one-time, purpose-bound pairing token and Cherry may keep it in session storage only
+   through the defined pairing flow. Client configuration may contain only public `VITE_`
+   identifiers; `.env*`, account tokens, and credentials stay out of Git.
 9. Preserve the public-source boundaries: no LinkedIn scraping, YouTube video/caption downloading,
-   account puppeteering, hidden cloud execution, or auto-approval.
+   headless automation of ChatGPT, Codex, or Claude accounts or credentials, hidden cloud execution,
+   or auto-approval.
 
 ## Layer 2 — Delivery process
 
 1. Read `docs/CHERRY_DECISIONS.md`, `docs/CHERRY_REPO_MAP.md`, and the active directive before a
-   change. Record any material deviation in the decisions log before claiming it shipped.
+   change. Request any material deviation in `docs/codex-takeover/STATUS.md`; do not claim it shipped
+   until the docs owner records the decision.
 2. Work only in the lane assigned by `docs/codex-takeover/06_OPERATING_MODEL.md`. Put cross-lane
    needs in `docs/codex-takeover/STATUS.md`; do not edit another owner's file.
 3. Preserve unrelated dirty-tree changes. Stage explicit paths and inspect `git diff --cached`
@@ -36,11 +41,13 @@ This contract is executable policy for every human or agent changing Cherry.
    that failed before the fix.
 5. Run `npm run gates` before every implementation commit. Run `npm run verify:all` for UI,
    release, cross-layer, or final-ticket changes.
-6. Change `package.json` and `package-lock.json` together when dependencies change. Installation is
-   always `npm ci`; a remotely resolved dependency tree is not release evidence.
+6. Treat `package.json` and `package-lock.json` as one install contract. After any package change,
+   prove `npm ci` accepts the lock. Commit both when dependencies or lock-represented metadata
+   changes; for script-only changes, keep dependency parity unchanged and record that fact in STATUS.
+   Never hand-edit meaningless lock content or accept a remotely resolved tree as release evidence.
 7. Allow only one Git operation at a time. Move a lock older than 60 seconds with no owning process
    to `work/_to_delete/`; never remove a fresh lock.
-8. Append `IN_PROGRESS`, `DONE`, `BOUNCED`, or verification evidence to
+8. Append `IN_PROGRESS`, `DONE`, `BOUNCED`, `BLOCKED`, or verification evidence to
    `docs/codex-takeover/STATUS.md`. Never rewrite its history.
 9. Push every DONE ticket. Conventional commit messages and status lines must state only gates and
    capabilities that actually passed.

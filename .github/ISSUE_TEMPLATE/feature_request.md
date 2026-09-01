@@ -16,7 +16,7 @@ Describe the smallest visible change, its honest empty/failure states, and the o
 ## Trust boundary
 
 Explain how outside content stays untrusted, who approves, which network origin or runner adapter is
-needed, and what must fail closed.
+needed (if any), and what must fail closed.
 
 ## Gates and evidence
 
