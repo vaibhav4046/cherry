@@ -175,14 +175,14 @@ test.describe('quick skill wizard', () => {
 
     // Approval remains a human action on the exact reviewed version.
     await expect(page.getByTestId('quick-ready')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/approved r\d+ by user/)).toBeVisible();
-    await expect(page.getByText(/verify: passed/)).toBeVisible();
+    await expect(page.getByText(/approved r\d+ by you/)).toBeVisible();
+    await expect(page.getByText(/Checks: passed/)).toBeVisible();
 
     // The skill is a real record: open it in the Skills library.
-    await page.getByRole('link', { name: 'See it in your Library' }).click();
+    await page.getByRole('link', { name: 'Open Library' }).click();
     await expect(page.getByTestId('skill-status')).toContainText('approved');
     // Nodes carry transcript evidence.
-    await expect(page.getByText(/Evidence in scope \([1-9]/)).toBeVisible();
+    await expect(page.getByText(/What the source said \([1-9]/)).toBeVisible();
   });
 
   test('wizard refuses an empty transcript path honestly', async ({ page }) => {
@@ -223,7 +223,7 @@ test.describe('notebook (sources · overview · studio)', () => {
     await page.getByTestId('studio-briefing').click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('briefing.md');
-    await expect(page.getByText(/briefing\.md saved to the mission files/)).toBeVisible();
+    await expect(page.getByText(/briefing\.md saved to the project files/)).toBeVisible();
 
     // The briefing is a genuine artifact: generate the skill, open mission files.
     await page.getByTestId('quick-generate').click();

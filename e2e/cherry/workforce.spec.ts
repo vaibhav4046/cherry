@@ -6,8 +6,8 @@ test.describe('workforce: crew, inbox, work thread', () => {
 
     // Workspace
     await page.goto('/studio');
-    await page.getByLabel('Workspace name').fill('Workforce workspace');
-    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await page.getByLabel('Space name').fill('Workforce workspace');
+    await page.getByRole('button', { name: 'Create space' }).click();
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
 
     // Crew: five editable profiles, honest idle status
@@ -51,8 +51,8 @@ test.describe('workforce: crew, inbox, work thread', () => {
 
   test('routines page renders honestly with no routines yet', async ({ page }) => {
     await page.goto('/studio');
-    await page.getByLabel('Workspace name').fill('Routine smoke');
-    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await page.getByLabel('Space name').fill('Routine smoke');
+    await page.getByRole('button', { name: 'Create space' }).click();
     await page.getByRole('link', { name: 'Routines', exact: true }).first().click();
     await expect(page.getByRole('heading', { name: /Routines/i }).first()).toBeVisible();
     await expect(page.getByText(/approved local or cloud execution host|approved skill/i).first()).toBeVisible();

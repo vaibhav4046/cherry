@@ -56,7 +56,7 @@ test.describe('responsive and accessible shell', () => {
 
   test('keyboard-only: workspace creation works without a mouse', async ({ page }) => {
     await page.goto('/studio');
-    await page.getByLabel('Workspace name').focus();
+    await page.getByLabel('Space name').focus();
     await page.keyboard.type('Keyboard workspace');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
@@ -66,9 +66,9 @@ test.describe('responsive and accessible shell', () => {
 test.describe('artifact preview isolation', () => {
   test('malicious artifact cannot reach Cherry storage or the network', async ({ page }) => {
     await page.goto('/studio');
-    await page.getByLabel('Workspace name').fill('Sandbox test');
-    await page.getByRole('button', { name: 'Create workspace' }).click();
-    await page.getByRole('link', { name: 'Create mission' }).first().click();
+    await page.getByLabel('Space name').fill('Sandbox test');
+    await page.getByRole('button', { name: 'Create space' }).click();
+    await page.getByRole('link', { name: 'Create project' }).first().click();
     await page.getByLabel('Title').fill('Sandbox mission');
     await page.getByLabel('Objective').fill('Prove the preview sandbox holds');
     await page.getByLabel('Definition of done (one item per line)').fill('sandbox holds');

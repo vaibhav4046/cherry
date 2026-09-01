@@ -23,10 +23,10 @@ test.describe('first skill', () => {
     await click(page.getByRole('button', { name: 'Create a skill' }));
 
     await expect(page.getByRole('heading', { name: 'Review the method' })).toBeVisible();
-    await click(page.getByRole('button', { name: 'Approve this exact version' }));
+    await click(page.getByRole('button', { name: 'Approve this version' }));
     await expect(page.getByTestId('quick-ready')).toBeVisible();
 
-    await click(page.getByRole('link', { name: 'See it in your Library' }));
+    await click(page.getByRole('link', { name: 'Open Library' }));
     await expect(page.getByTestId('skill-status')).toContainText('approved');
     expect(clicksAfterPaste).toBeLessThanOrEqual(5);
   });
@@ -39,14 +39,14 @@ test.describe('first skill', () => {
     await page.getByRole('button', { name: 'Create a skill' }).click();
 
     await expect(page.getByTitle(/YouTube player/)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Paste the transcript or captions' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Transcribe while I play it' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Paste transcript' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Transcribe locally' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await page.getByRole('button', { name: 'Paste transcript' }).click();
     await page.getByLabel('Transcript or captions').fill(rawLesson);
     await page.getByRole('button', { name: 'Review the method' }).click();
     await expect(page.getByRole('heading', { name: 'Review the method' })).toBeVisible();
-    await page.getByRole('button', { name: 'Approve this exact version' }).click();
+    await page.getByRole('button', { name: 'Approve this version' }).click();
     await expect(page.getByTestId('quick-ready')).toBeVisible();
   });
 
@@ -54,7 +54,7 @@ test.describe('first skill', () => {
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await page.getByRole('button', { name: 'Paste transcript' }).click();
     await page.getByTestId('quick-files').setInputFiles([
       { name: 'foundation.txt', mimeType: 'text/plain', buffer: Buffer.from('0:05 Create the upload foundation for the release.') },
       { name: 'verification.txt', mimeType: 'text/plain', buffer: Buffer.from('0:40 Check the upload foundation against evidence.') },
@@ -78,7 +78,7 @@ test.describe('first skill', () => {
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Transcribe while I play it' }).click();
+    await page.getByRole('button', { name: 'Transcribe locally' }).click();
 
     await expect(page.getByTestId('capture-tab-audio')).not.toHaveClass(/btn-primary/);
     await expect(page.locator('main button.btn-primary')).toHaveCount(1);
@@ -88,7 +88,7 @@ test.describe('first skill', () => {
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await page.getByRole('button', { name: 'Paste transcript' }).click();
     await page.getByTestId('quick-files').setInputFiles([
       { name: 'broken.vtt', mimeType: 'text/vtt', buffer: Buffer.from('WEBVTT\n\nnot a cue') },
       { name: 'valid.txt', mimeType: 'text/plain', buffer: Buffer.from('0:05 Create the first successful source method.') },
@@ -96,7 +96,7 @@ test.describe('first skill', () => {
 
     await expect(page.getByTestId('quick-steps')).toContainText('Create the first successful source method');
     await page.goto('/studio/sources');
-    const source = page.getByTestId('source-card').filter({ hasText: 'YouTube lesson' });
+    const source = page.getByTestId('source-card').filter({ hasText: 'YouTube video' });
     await expect(source).toContainText('Ready for skill');
     await expect(source).toContainText('Content hashed');
   });

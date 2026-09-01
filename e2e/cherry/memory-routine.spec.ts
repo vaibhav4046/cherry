@@ -9,8 +9,8 @@ test.describe('memory and routine surfaces', () => {
   test('memory vault exposes graph fallback and no overflow on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/studio');
-    await page.getByLabel('Workspace name').fill('Graph mobile workspace');
-    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await page.getByLabel('Space name').fill('Graph mobile workspace');
+    await page.getByRole('button', { name: 'Create space' }).click();
     await page.goto('/studio/memory');
     await expect(page.getByRole('heading', { name: 'Memory Vault' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Memory graph' })).toBeVisible();

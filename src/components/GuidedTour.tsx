@@ -63,67 +63,67 @@ export function GuidedTour() {
   const steps: TourStep[] = [
     {
       title: 'Welcome to the workshop',
-      body: 'Everything Cherry knows lives in your browser. The event strip below is the append-only proof ledger — every important action lands there, human or agent.',
+      body: 'Everything Cherry knows lives in your browser. Proof history records every important action by you, Cherry, or your agent.',
       route: '/studio',
-      lookFor: 'The mission list and the proof event strip.',
+      lookFor: 'The project list and Proof history.',
     },
     ...(activeMission
       ? [
           {
-            title: 'The mission',
-            body: 'A mission has an objective and a testable definition of done. Its state machine is enforced in the service layer — an agent cannot skip a state the UI would refuse.',
+            title: 'The project',
+            body: 'A project has one clear goal and checks that define done. Cherry keeps each step in order, so neither you nor your agent can skip required review.',
             route: `/studio/missions/${activeMission.id}`,
-            lookFor: 'The state chip, the definition-of-done stickers, and the evidence ledger with trust labels.',
+            lookFor: 'The status, completion checks, and source notes with review labels.',
           },
         ]
       : []),
     ...(activeMission?.lessonId
       ? [
           {
-            title: 'Cherry Watch',
-            body: 'The lesson was learned here: transcript segments, timestamped observations (spoken vs visual kept distinct), and computed coverage that cannot claim completeness without declared criteria.',
+            title: 'The source',
+            body: 'The transcript and your notes sit here with timestamps. Spoken and visual notes stay separate. Cherry only marks coverage complete when every listed check is met.',
             route: `/studio/watch/${activeMission.lessonId}`,
-            lookFor: 'The coverage panel — criteria satisfied, gaps listed honestly.',
+            lookFor: 'The coverage panel, including passed checks and any gaps.',
           },
         ]
       : []),
     ...(activeMission?.skillGraphId
       ? [
           {
-            title: 'The SkillGraph',
-            body: 'Observations became a versioned workflow. Every revision is snapshotted; approval binds to the exact revision reviewed. Edit anything and the approval goes stale — by design.',
+            title: 'The skill',
+            body: 'Source notes became a saved workflow. You approve the exact version you read. Editing it requires another approval.',
             route: `/studio/skills/${activeMission.skillGraphId}`,
-            lookFor: 'The revision history and the approval status showing who approved which revision.',
+            lookFor: 'Version history and the approval status for each version.',
           },
         ]
       : []),
     ...(activeMission?.artifactSetId
       ? [
           {
-            title: 'Real artifacts',
-            body: 'These are real files with versions and hashes, previewed in a sandboxed iframe that cannot reach the network or Cherry’s data. In this example the first attempt failed verification and was repaired — check the receipt next.',
+            title: 'Real files',
+            body: 'These are saved files with versions and hashes. The preview is isolated from the network and Cherry’s data. In this example, the first check failed and was repaired. Open Proof next.',
             route: `/studio/artifacts/${activeMission.artifactSetId}`,
-            lookFor: 'The file tree, the hash under the editor, and the isolated preview.',
+            lookFor: 'The file list, the hash under the editor, and the isolated preview.',
           },
         ]
       : []),
     {
       title: 'Proof',
-      body: 'The receipt was generated from the event ledger. Hit "Recompute hashes" — the SHA-256 over canonical JSON recomputes in front of you. Change one byte anywhere and it fails.',
+      body: 'Choose "Recompute hashes" to check the proof again. The result comes from recorded data, and changing one byte makes the check fail.',
       route: '/studio/proof',
-      lookFor: 'The failures-and-repairs section and the recompute button.',
+      lookFor: 'Failed checks, repairs, and the recompute button.',
     },
     {
       title: 'Agent View',
-      body: 'This is the WebMCP story: at most five tools + two global reads exist at a time, chosen by the mission phase. Attach a compatible ChatGPT/Codex client and the registrations go live; every tool call lands in this log.',
+      body: 'Cherry gives a connected agent at most five action tools and two read-only tools at once. The available tools follow the current project step. Every call appears in this log.',
       route: '/studio/agent',
-      lookFor: 'The aperture table with the current phase highlighted.',
+      lookFor: 'The tools table with the current project step highlighted.',
     },
     {
       title: 'Take it anywhere',
-      body: 'Approved skills compile to a portable Agent Skills bundle with Codex and Claude Code targets and a standalone verification script. Export the workspace itself as hash-verified JSON. That’s the loop: teach once, prove it, take it with you.',
+      body: 'Approved skills download as a bundle for Codex and Claude Code, including a verification script. You can also export your space as checked JSON. Teach once, approve what you read, and reuse it.',
       route: '/studio/skills',
-      lookFor: 'The skill card — open it and compile the bundle.',
+      lookFor: 'The skill card. Open it and download the bundle.',
     },
   ];
 

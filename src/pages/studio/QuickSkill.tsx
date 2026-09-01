@@ -36,6 +36,16 @@ import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
+function plainQuickError(message: string): string {
+  return message
+    .replace(/\bskill\s*graph\b/gi, (word) => (word[0] === word[0]?.toUpperCase() ? 'Skill' : 'skill'))
+    .replace(/\brevision binding\b/gi, 'approved version')
+    .replace(/\brevisions?\b/gi, (word) => (word.toLowerCase() === 'revision' ? 'version' : 'versions'))
+    .replace(/\bworkspaces?\b/gi, (word) => (word.toLowerCase() === 'workspace' ? 'space' : 'spaces'))
+    .replace(/\blessons?\b/gi, (word) => (word.toLowerCase() === 'lesson' ? 'source' : 'sources'))
+    .replace(/\bnodes?\b/gi, (word) => (word.toLowerCase() === 'node' ? 'step' : 'steps'));
+}
+
 export function classifyQuickSkillMaterial(material: string): 'raw' | 'youtube' | 'article' {
   try {
     const url = new URL(material.trim());
@@ -100,12 +110,12 @@ export default function QuickSkill() {
       setBusy(true); setError(null);
       try {
         const source = await getSource(sourceId);
-        if (!source || source.workspaceId !== activeWorkspace.id) throw new Error('That source is not available in the active workspace');
+        if (!source || source.workspaceId !== activeWorkspace.id) throw new Error('That source is not available in your current space');
         let loaded = await getLesson(source.lessonId);
-        if (!loaded) throw new Error('The source lesson could not be found');
+        if (!loaded) throw new Error('The source could not be found');
         let mission = loaded.missionId ? await getMission(loaded.missionId) : null;
         if (!mission) {
-          const created = await createMission({ workspaceId: activeWorkspace.id, title: source.title, objective: `Turn ${source.title} into an approved, portable skill.`, definitionOfDone: ['Evidence is linked to the source', 'The human approves the exact skill revision', 'Verification passes'] });
+          const created = await createMission({ workspaceId: activeWorkspace.id, title: source.title, objective: `Turn ${source.title} into an approved, portable skill.`, definitionOfDone: ['Each step links back to the source', 'You approve the exact skill version', 'Checks pass'] });
           if (!created.ok) throw new Error(created.error.message);
           mission = created.value;
           const linked = await updateMission(mission.id, { lessonId: source.lessonId });
@@ -129,7 +139,7 @@ export default function QuickSkill() {
           setStage('transcript');
         }
         await refresh();
-      } catch (thrown) { if (!cancelled) setError((thrown as Error).message); }
+      } catch (thrown) { if (!cancelled) setError(plainQuickError((thrown as Error).message)); }
       finally { if (!cancelled) setBusy(false); }
     })();
     return () => { cancelled = true; };
@@ -141,7 +151,7 @@ export default function QuickSkill() {
     try {
       return await work();
     } catch (thrown) {
-      setError((thrown as Error).message);
+      setError(plainQuickError((thrown as Error).message));
       return undefined;
     } finally {
       setBusy(false);
@@ -167,7 +177,7 @@ export default function QuickSkill() {
       const source = await createSource({
         workspaceId,
         kind: isUrl ? (isYouTube ? 'youtube' : 'article') : 'note',
-        title: isYouTube ? 'YouTube lesson' : isUrl ? `Article from ${url!.hostname.replace(/^www\./, '')}` : 'Pasted notes',
+        title: isYouTube ? 'YouTube video' : isUrl ? `Article from ${url!.hostname.replace(/^www\./, '')}` : 'Pasted notes',
         ...(isUrl ? { url: material, permissionAcknowledged: true } : { content: material, contentFormat: 'plain' as const }),
       });
       if (!source.ok) throw new Error(source.error.message);
@@ -175,7 +185,7 @@ export default function QuickSkill() {
         workspaceId,
         title: source.value.title,
         objective: 'Turn this material into an approved, portable skill.',
-        definitionOfDone: ['Skill approved at the exact version you reviewed', 'Verification passes'],
+        definitionOfDone: ['Skill approved at the exact version you reviewed', 'Checks pass'],
       });
       if (!mission.ok) throw new Error(mission.error.message);
       const linkedMission = await updateMission(mission.value.id, { lessonId: source.value.lessonId });
@@ -383,7 +393,7 @@ export default function QuickSkill() {
 
   async function handleStudioOutput(kind: 'briefing' | 'study-guide' | 'faq') {
     await withBusy(async () => {
-      if (!draft || !digest || !lesson) throw new Error('Ingest a source first');
+      if (!draft || !digest || !lesson) throw new Error('Add a source first');
       const builders = { briefing: buildBriefingDoc, 'study-guide': buildStudyGuide, faq: buildFaq } as const;
       const markdown = builders[kind](lesson.title, sources, digest, draft);
 
@@ -403,7 +413,7 @@ export default function QuickSkill() {
           }
           if (artifactSetId) {
             const written = await writeArtifactFile(artifactSetId, `${kind}.md`, markdown, 'system', `Generated ${kind} from sources`);
-            if (written.ok) note = `saved to the mission files (r${written.value.revision}) and downloaded`;
+            if (written.ok) note = `saved to the project files (r${written.value.revision}) and downloaded`;
           }
         }
       }
@@ -532,14 +542,14 @@ export default function QuickSkill() {
             <p style={{ fontSize: 14, margin: 0 }}>
               Whisper (tiny) runs in your browser — WebGPU when available. It downloads once (~40 MB),
               then works offline. The result is a <strong>draft</strong>: small models mishear, so review
-              the text below before deriving. Pasting the official transcript stays the exact path.
+              the text before creating the skill. Pasting the official transcript preserves its original wording.
             </p>
             <div className="row">
               <button type="button" className={capturing ? 'btn btn-danger' : 'btn'} onClick={() => void handleCaptureToggle()} data-testid="capture-tab-audio">
-                {capturing ? 'Stop capture & transcribe' : 'Capture this tab\u2019s audio'}
+                {capturing ? 'Stop and transcribe' : 'Capture tab audio'}
               </button>
               <label className="btn">
-                Transcribe a media file
+                Transcribe file
                 <input
                   type="file"
                   accept="audio/*,video/*"
@@ -583,7 +593,7 @@ export default function QuickSkill() {
                   {busy ? 'Preparing…' : 'Review the method'}
                 </button>
                 <label className="btn">
-                  Upload sources (.txt / .srt / .vtt — pick several)
+                  Upload files
                   <input
                     type="file"
                     accept=".txt,.srt,.vtt,text/plain"
@@ -621,14 +631,17 @@ export default function QuickSkill() {
                   void importText(text, 'user_text');
                 }}
               >
-                <textarea
-                  className="textarea"
-                  name="transcript"
-                  required
-                  style={{ minHeight: 120 }}
-                  placeholder="Paste another transcript, notes, or a doc…"
-                  data-testid="quick-transcript"
-                />
+                <label className="field">
+                  <span>Another transcript, note, or document</span>
+                  <textarea
+                    className="textarea"
+                    name="transcript"
+                    required
+                    style={{ minHeight: 120 }}
+                    placeholder="Paste another transcript, note, or document"
+                    data-testid="quick-transcript"
+                  />
+                </label>
                 <div className="row">
                   <button type="submit" className="btn btn-sm" disabled={busy} data-testid="quick-transcript-next">
                     {busy ? 'Adding…' : 'Add to notebook'}
@@ -670,7 +683,7 @@ export default function QuickSkill() {
               </div>
             ))}
             <p className="label" style={{ margin: 0 }}>
-              Everything lands as untrusted, time-stamped proof of where each step came from.
+              Outside content stays untrusted until you review it.
             </p>
           </section>
 
@@ -708,7 +721,7 @@ export default function QuickSkill() {
                   </details>
                 ) : null}
                 <p className="label" style={{ margin: 0 }}>
-                  Every sentence above exists verbatim in your sources — extractive, deterministic, cited.
+                  Every sentence above is copied from your sources and links back to where it came from.
                 </p>
               </section>
             ) : null}
@@ -742,7 +755,7 @@ export default function QuickSkill() {
               </ol>
               <div className="row">
                 <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
-                  {Icons.approve(16)} {busy ? 'Approving…' : 'Approve this exact version'}
+                  {Icons.approve(16)} {busy ? 'Approving…' : 'Approve this version'}
                 </button>
                 <span className="label">This records the exact version you reviewed. Agents can ask, not act.</span>
               </div>
@@ -757,7 +770,7 @@ export default function QuickSkill() {
             </p>
             <button type="button" className="studio-card" onClick={() => void handleStudioOutput('briefing')} disabled={busy} data-testid="studio-briefing">
               <span className="studio-card-title">{Icons.proof(15)} Briefing doc</span>
-              <span className="studio-card-sub">The lesson as a story — cited, timestamped</span>
+              <span className="studio-card-sub">The source as a story, linked to timestamps</span>
             </button>
             <button type="button" className="studio-card" onClick={() => void handleStudioOutput('study-guide')} disabled={busy} data-testid="studio-guide">
               <span className="studio-card-title">{Icons.memory(15)} Study guide</span>
@@ -779,24 +792,24 @@ export default function QuickSkill() {
             <div className="stack" style={{ gap: 'var(--sp-2)', flex: 1, minWidth: 220 }}>
               <h2 className="subhead">{graph.name} — approved & ready</h2>
               <div className="row">
-                <span className="sticker sticker-pass stamp-in">approved r{graph.approvedRevision} by user</span>
-                {verifyNote ? <span className="sticker sticker-pass verify-pop">verify: {verifyNote}</span> : null}
-                <span className="sticker">{graph.nodes.length} nodes</span>
+                <span className="sticker sticker-pass stamp-in">approved r{graph.approvedRevision} by you</span>
+                {verifyNote ? <span className="sticker sticker-pass verify-pop">Checks: {verifyNote}</span> : null}
+                <span className="sticker">{graph.nodes.length} steps</span>
               </div>
             </div>
           </div>
           <div className="stack" style={{ alignItems: 'flex-start' }}>
-            <Link to={`/studio/skills/${graph.id}`} className="btn btn-primary">See it in your Library</Link>
+            <Link to={`/studio/skills/${graph.id}`} className="btn btn-primary">Open Library</Link>
             <div className="row" style={{ gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
-              <Link to={buildRoutineDraftUrl(graph.workspaceId, graph.id)} className="btn">Use in a routine</Link>
-              <a href={buildConnectUrl(graph.targets)} className="btn">Send to an agent</a>
+              <Link to={buildRoutineDraftUrl(graph.workspaceId, graph.id)} className="btn">Use in routine</Link>
+              <a href={buildConnectUrl(graph.targets)} className="btn">Send to agent</a>
             </div>
             <button type="button" className="btn" onClick={teachAnother}>Teach another</button>
             <div className="row">
               <button type="button" className="btn btn-sm" onClick={() => void handleDownload()} disabled={busy} data-testid="quick-download">
                 {Icons.download(16)} Download bundle
               </button>
-              <button type="button" className="btn btn-sm" onClick={() => navigate('/studio/proof')}>See receipt</button>
+              <button type="button" className="btn btn-sm" onClick={() => navigate('/studio/proof')}>See proof</button>
             </div>
           </div>
           {bundleNote ? <p className="sticker sticker-pass" role="status">{bundleNote}</p> : null}

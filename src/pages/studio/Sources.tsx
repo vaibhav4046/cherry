@@ -21,8 +21,17 @@ import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 
 type Filter = 'all' | 'needs' | 'ready' | 'archived';
 
+function plainSourceError(message: string): string {
+  return message
+    .replace(/YouTube history provenance/gi, 'This YouTube history record')
+    .replace(/\btranscriptless\b/gi, 'without a transcript')
+    .replace(/\bYouTube lesson\b/gi, 'YouTube video')
+    .replace(/\bworkspaces?\b/gi, (word) => (word.toLowerCase() === 'workspace' ? 'space' : 'spaces'))
+    .replace(/\blessons?\b/gi, (word) => (word.toLowerCase() === 'lesson' ? 'source' : 'sources'));
+}
+
 const KIND_COPY: Record<SourceKind, { label: string; detail: string }> = {
-  youtube: { label: 'YouTube lesson', detail: 'Official player plus a transcript you supply.' },
+  youtube: { label: 'YouTube video', detail: 'Official player plus a transcript you supply.' },
   article: { label: 'Article or post', detail: 'Paste the body or add a permitted text export.' },
   note: { label: 'Note', detail: 'A private note authored in Cherry.' },
   file: { label: 'Text file', detail: '.txt, .md, .json, .srt, or .vtt imported locally.' },
@@ -227,7 +236,7 @@ export default function Sources() {
     try {
       const parsed = parseTakeoutWatchHistory(await file.text());
       input.value = '';
-      if (!parsed.ok) { setHistoryError(`${parsed.error.message}. Choose a valid Takeout JSON file and try again.`); return; }
+      if (!parsed.ok) { setHistoryError(`${plainSourceError(parsed.error.message)}. Choose a valid Takeout JSON file and try again.`); return; }
       showHistoryCandidates(parsed.value);
     } catch {
       input.value = '';
@@ -264,7 +273,7 @@ export default function Sources() {
       await reload(workspaceId); await refresh();
     } catch (thrown) {
       const message = (thrown as Error).message;
-      setHistoryError(message.includes('already exists') ? 'This source is already in your inbox. Choose another suggestion.' : message);
+      setHistoryError(message.includes('already exists') ? 'This source is already in your inbox. Choose another suggestion.' : plainSourceError(message));
       setSavingCandidateId(null);
     }
   }
@@ -315,7 +324,7 @@ export default function Sources() {
       setKind(ingestDraft?.kind ?? 'youtube');
     } catch (thrown) {
       const message = (thrown as Error).message;
-      setError(message.includes('already exists') ? 'This source is already in your inbox. Choose another source.' : message);
+      setError(message.includes('already exists') ? 'This source is already in your inbox. Choose another source.' : plainSourceError(message));
       window.requestAnimationFrame(() => saveErrorRef.current?.focus());
     } finally { setBusy(false); }
   }
@@ -326,12 +335,12 @@ export default function Sources() {
     if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com')) { setError('LinkedIn fetching is disabled; paste or upload the text instead.'); setBusy(false); return; }
     if (runnerReady !== true) { setNotice('Local fetcher not connected. Start and pair the optional Scrapling worker in Connections.'); setBusy(false); return; }
     const result = await requestSourceFetch(source.id);
-    if (!result.ok) setError(result.error.message);
+    if (!result.ok) setError(plainSourceError(result.error.message));
     else {
       const persistTerminalFailure = async (failure: SourceFetchFailure) => {
         const failed = await failSourceFetch(source.id, failure);
         setNotice(null);
-        setError(failed.ok || failed.error.code === 'conflict' ? failure.reason : failed.error.message);
+        setError(plainSourceError(failed.ok || failed.error.code === 'conflict' ? failure.reason : failed.error.message));
         await reload();
       };
       const job = await submitRunnerJob({ workspaceId: source.workspaceId, missionId: source.lessonId, adapter: 'scrapling-fetch', input: { url: source.url, allowedDomains: domain ? [domain] : [], maxBytes: 262144, respectRobots: true }, idempotencyKey: `source-fetch:${source.id}:${Date.now()}` });
@@ -364,7 +373,7 @@ export default function Sources() {
   }
 
   async function archive(source: SourceRecord) {
-    setBusy(true); const result = await archiveSource(source.id); if (!result.ok) setError(result.error.message); else setNotice('Source archived. It remains recoverable in the Archived filter.'); await reload(); setBusy(false);
+    setBusy(true); const result = await archiveSource(source.id); if (!result.ok) setError(plainSourceError(result.error.message)); else setNotice('Source archived. It remains recoverable in the Archived filter.'); await reload(); setBusy(false);
   }
 
   return (
@@ -375,7 +384,7 @@ export default function Sources() {
           <h1 className="display-sm" style={{ margin: 0 }}>Sources</h1>
           <p className="subhead" style={{ margin: 0, maxWidth: 720 }}>Save the material you want Cherry to turn into a method. Outside content stays untrusted until you review it.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button>
+        {sources.length > 0 ? <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button> : null}
       </header>
 
       {error && !open ? <p className="field-error" role="alert">{error}</p> : null}
@@ -387,6 +396,7 @@ export default function Sources() {
             <div className="stack" style={{ gap: 'var(--sp-2)' }}>
               <h2 id="bookmarklet-heading" className="subhead" style={{ margin: 0 }}>Save from any page</h2>
               <p style={{ margin: 0 }}>Works on any page you're viewing. Cherry only receives the address and title you send it.</p>
+              <p className="label" style={{ margin: 0 }}>Drag this bookmark to your bookmarks bar.</p>
               <p className="label" style={{ margin: 0 }}>A browser extension is not part of this sprint.</p>
             </div>
             <a ref={installBookmarklet} className="btn" draggable>Save to Cherry</a>
@@ -410,15 +420,30 @@ export default function Sources() {
         <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
           <h2 id="source-controls-heading" className="subhead" style={{ margin: 0 }}>Your materials</h2>
           <div className="row" role="group" aria-label="Filter sources" style={{ gap: 6, flexWrap: 'wrap' }}>
-            {([['all', 'All'], ['needs', 'Needs transcript'], ['ready', 'Ready for skill'], ['archived', 'Archived']] as const).map(([value, label]) => <button key={value} type="button" className={`btn btn-sm ${filter === value ? 'btn-primary' : ''}`} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
+            {([['all', 'All'], ['needs', 'Needs transcript'], ['ready', 'Ready for skill'], ['archived', 'Archived']] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className="btn btn-sm"
+                style={filter === value ? { borderColor: 'var(--color-accent)', background: 'var(--color-accent-tint)', color: 'var(--color-accent-deep)' } : undefined}
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
         {visible.length === 0 ? (
           <div className="empty-state" style={{ padding: 'var(--sp-8) var(--sp-4)' }}>
             <SourceIcon kind="article" size={30} />
-            <h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3>
-            <p>Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.</p>
-            <div className="row"><button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div>
+            <h3 className="subhead" style={{ margin: 0 }}>{sources.length === 0 ? 'Nothing here yet' : 'No sources match'}</h3>
+            <p>{sources.length === 0 ? 'Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.' : 'No saved sources match this filter.'}</p>
+            <div className="row">
+              {sources.length === 0
+                ? <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button>
+                : <button type="button" className="btn" onClick={() => setFilter('all')}>Clear filter</button>}
+            </div>
           </div>
         ) : (
           <div className="source-grid">
@@ -432,10 +457,10 @@ export default function Sources() {
                     <h3 style={{ margin: 0 }}>{source.title}</h3>
                     <p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>
                     {source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}
-                    {source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Private to this workspace</span>}
+                    {source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Saved only here</span>}
                   </div>
                   <p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>
-                  {source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{source.fetchError}</p> : null}
+                  {source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{plainSourceError(source.fetchError)}</p> : null}
                   {needsYouTubeTranscript ? (
                     <SourceMaterialChoices
                       compact
@@ -445,8 +470,8 @@ export default function Sources() {
                   ) : null}
                   <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                     {source.status !== 'archived' ? <>
-                      <Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Open lesson</Link>
-                      {!needsYouTubeTranscript ? <button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button> : null}
+                      <Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Review source</Link>
+                      {!needsYouTubeTranscript ? <button type="button" className="btn btn-sm" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button> : null}
                       {source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}
                       <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button>
                     </> : <span className="label">Recoverable archive</span>}
@@ -458,7 +483,7 @@ export default function Sources() {
         )}
       </section>
 
-      <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>A deliberate trust boundary</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A URL is metadata until you click a permitted fetch, and any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof ledger</Link></div></section>
+      <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>What Cherry will not do</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A saved address contains no page content until you choose a permitted fetch. Any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof</Link></div></section>
 
       <dialog ref={historyDialogRef} className="sheet source-dialog" aria-labelledby="history-import-title" onCancel={(event) => { event.preventDefault(); closeHistoryImport(); }} onClick={(event) => { if (event.target === event.currentTarget) closeHistoryImport(); }}>
         <div className="stack" style={{ gap: 'var(--sp-4)' }}>
@@ -493,7 +518,7 @@ export default function Sources() {
                         <p style={{ margin: 0 }}>{candidate.reason}</p>
                         <p className="label" style={{ margin: 0, overflowWrap: 'anywhere' }}>Source: {candidate.representative.title}</p>
                       </div>
-                      <button type="button" className="btn btn-sm" disabled={!historyPermission || savingCandidateId !== null} onClick={() => void saveHistoryCandidate(candidate)}>{savingCandidateId === candidate.id ? 'Saving…' : `Save ${candidate.label} source`}</button>
+                      <button type="button" className="btn btn-sm" aria-label={`Save ${candidate.label} source`} disabled={!historyPermission || savingCandidateId !== null} onClick={() => void saveHistoryCandidate(candidate)}>{savingCandidateId === candidate.id ? 'Saving…' : 'Save source'}</button>
                     </div>
                   </article>
                 ))}

@@ -39,7 +39,7 @@ test.describe('Save to Cherry ingest', () => {
 
   test('selects YouTube only for an official YouTube query', async ({ page }) => {
     await page.goto('/ingest?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ&title=Video');
-    await expect(page.getByRole('button', { name: /YouTube lesson/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: /YouTube video/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByLabel('URL (metadata only)')).toHaveValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   });
 
@@ -51,6 +51,7 @@ test.describe('Save to Cherry ingest', () => {
       "javascript:(()=>{window.open('http://127.0.0.1:4173/ingest?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title),'_blank','noopener');})();",
     );
     await expect(page.getByText("Works on any page you're viewing. Cherry only receives the address and title you send it.")).toBeVisible();
+    await expect(page.getByText('Drag this bookmark to your bookmarks bar.')).toBeVisible();
     await expect(page.getByText('A browser extension is not part of this sprint.')).toBeVisible();
   });
 

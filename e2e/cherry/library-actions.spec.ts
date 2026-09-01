@@ -17,39 +17,39 @@ test.describe('Library workflow actions', () => {
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(rawLesson);
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Approve this exact version' }).click();
+    await page.getByRole('button', { name: 'Approve this version' }).click();
 
     const ready = page.getByTestId('quick-ready');
     await expect(ready).toBeVisible();
-    const routineHref = await ready.getByRole('link', { name: 'Use in a routine' }).getAttribute('href');
+    const routineHref = await ready.getByRole('link', { name: 'Use in routine' }).getAttribute('href');
     expect(routineHref).toMatch(/\/studio\/routines\?workspaceId=.+&skillGraphId=.+/);
-    await expect(ready.getByRole('link', { name: 'Send to an agent' })).toHaveAttribute('href', '/connect#host-codex');
+    await expect(ready.getByRole('link', { name: 'Send to agent' })).toHaveAttribute('href', '/connect#host-codex');
 
-    await ready.getByRole('link', { name: 'See it in your Library' }).click();
+    await ready.getByRole('link', { name: 'Open Library' }).click();
     await expect(page.getByTestId('skill-status')).toContainText('approved');
     const skillName = (await page.getByRole('heading', { level: 1 }).textContent())?.trim();
     expect(skillName).toBeTruthy();
-    await expect(page.getByRole('link', { name: 'Use in a routine' })).toHaveAttribute('href', routineHref!);
-    await expect(page.getByRole('link', { name: 'Send to an agent' })).toHaveAttribute('href', '/connect#host-codex');
+    await expect(page.getByRole('link', { name: 'Use in routine' })).toHaveAttribute('href', routineHref!);
+    await expect(page.getByRole('link', { name: 'Send to agent' })).toHaveAttribute('href', '/connect#host-codex');
 
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(secondLesson);
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Approve this exact version' }).click();
+    await page.getByRole('button', { name: 'Approve this version' }).click();
     await expect(page.getByTestId('quick-ready')).toBeVisible();
 
     await page.goto('/studio/skills');
     const card = page.getByTestId('library-card').filter({ hasText: skillName! });
     await expect(card).toHaveCount(1);
     await expect(card).toContainText('install-ready');
-    await expect(card.getByRole('link', { name: 'Send to an agent' })).toHaveAttribute('href', '/connect#host-codex');
+    await expect(card.getByRole('link', { name: 'Send to agent' })).toHaveAttribute('href', '/connect#host-codex');
 
-    await card.getByRole('link', { name: 'Use in a routine' }).click();
+    await card.getByRole('link', { name: 'Use in routine' }).click();
     await expect(page).toHaveURL(/\/studio\/routines\?workspaceId=.+&skillGraphId=.+/);
     const form = page.getByTestId('routine-draft-form');
     await expect(form).toBeVisible();
     await expect(form.getByRole('heading', { name: 'Draft a routine' })).toBeFocused();
-    await expect(form.getByRole('status')).toContainText(`Routine draft ready for ${skillName}`);
+    await expect(form.getByRole('status')).toContainText(`${skillName} is approved exactly as you read it`);
     await expect(form.locator('select[name="skillGraphId"] option:checked')).toContainText(skillName!);
     await expect(page.getByTestId('routine-row')).toHaveCount(0);
 
@@ -73,7 +73,7 @@ test.describe('Library workflow actions', () => {
     await expect(form.getByRole('status')).not.toContainText('Nothing has been created yet.');
 
     await page.goto('/studio/skills');
-    await page.getByTestId('library-card').filter({ hasText: skillName! }).getByRole('link', { name: 'Send to an agent' }).click();
+    await page.getByTestId('library-card').filter({ hasText: skillName! }).getByRole('link', { name: 'Send to agent' }).click();
     await expect(page).toHaveURL('/connect#host-codex');
     await expect(page.locator('#host-codex')).toBeInViewport();
   });
@@ -82,9 +82,9 @@ test.describe('Library workflow actions', () => {
     await page.goto('/studio/quick');
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(rawLesson);
     await page.getByRole('button', { name: 'Create a skill' }).click();
-    await page.getByRole('button', { name: 'Approve this exact version' }).click();
+    await page.getByRole('button', { name: 'Approve this version' }).click();
 
-    const routineHref = await page.getByTestId('quick-ready').getByRole('link', { name: 'Use in a routine' }).getAttribute('href');
+    const routineHref = await page.getByTestId('quick-ready').getByRole('link', { name: 'Use in routine' }).getAttribute('href');
     expect(routineHref).toBeTruthy();
     const requested = new URL(routineHref!, 'http://cherry.local');
     const originalWorkspaceId = requested.searchParams.get('workspaceId');
@@ -94,7 +94,7 @@ test.describe('Library workflow actions', () => {
 
     await page.goto('/studio');
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Export workspace' }).click();
+    await page.getByRole('button', { name: 'Export space' }).click();
     const exportPath = await (await downloadPromise).path();
     expect(exportPath).toBeTruthy();
     const fileChooserPromise = page.waitForEvent('filechooser');
@@ -102,7 +102,7 @@ test.describe('Library workflow actions', () => {
     await (await fileChooserPromise).setFiles(exportPath!);
     await expect(page.getByText(/Imported "/)).toBeVisible();
 
-    const workspace = page.getByLabel('Workspace');
+    const workspace = page.getByLabel('Space');
     await expect(workspace).toBeVisible();
     const workspaceIds = await workspace.locator('option').evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
     const otherWorkspaceId = workspaceIds.find((id) => id !== originalWorkspaceId);
@@ -111,12 +111,12 @@ test.describe('Library workflow actions', () => {
     await expect(workspace).toHaveValue(otherWorkspaceId!);
 
     await page.goto('/studio/skills');
-    const originalAction = page.locator(`a[href="${routineHref}"]`).filter({ hasText: 'Use in a routine' });
+    const originalAction = page.locator(`a[href="${routineHref}"]`).filter({ hasText: 'Use in routine' });
     await expect(originalAction).toHaveCount(1);
     await originalAction.click();
 
     await expect(page).toHaveURL(routineHref!);
-    await expect(page.getByLabel('Workspace')).toHaveValue(originalWorkspaceId!);
+    await expect(page.getByLabel('Space')).toHaveValue(originalWorkspaceId!);
     await expect(page.getByTestId('routine-draft-form').locator('select[name="skillGraphId"]')).toHaveValue(skillGraphId!);
     await expect(page.getByTestId('routine-row')).toHaveCount(0);
   });

@@ -34,10 +34,10 @@ test.describe('YouTube source polish', () => {
 
     const source = page.getByTestId('source-card').filter({ hasText: 'Evidence-led release workflow' });
     await expect(source).toContainText('Needs transcript');
-    await expect(source.getByRole('button', { name: 'Paste the transcript or captions' })).toBeVisible();
-    await expect(source.getByRole('button', { name: 'Transcribe while I play it' })).toBeVisible();
+    await expect(source.getByRole('button', { name: 'Paste transcript' })).toBeVisible();
+    await expect(source.getByRole('button', { name: 'Transcribe locally' })).toBeVisible();
 
-    await source.getByRole('button', { name: 'Paste the transcript or captions' }).click();
+    await source.getByRole('button', { name: 'Paste transcript' }).click();
     await expect(page).toHaveURL(/\/studio\/quick\?sourceId=.+&method=paste$/);
     await expect(page.getByLabel('Transcript or captions')).toBeVisible();
   });

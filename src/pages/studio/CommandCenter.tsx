@@ -11,7 +11,58 @@ import { runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runn
 import { exportWorkspace, importWorkspace } from '../../cherry/persistence/workspace-archive.ts';
 import type { ProofEvent } from '../../cherry/core/domain-event.ts';
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
+import type { MissionState } from '../../cherry/mission/mission-model.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
+
+function approvalObjectLabel(objectType: ApprovalRecord['objectType']): string {
+  if (objectType === 'skillgraph') return 'skill';
+  if (objectType === 'consequential_action') return 'requested action';
+  if (objectType === 'runner_job') return 'local runner job';
+  return objectType;
+}
+
+function proofActorLabel(actorType: ProofEvent['actorType']): string {
+  if (actorType === 'human') return 'you';
+  if (actorType === 'agent') return 'your agent';
+  if (actorType === 'runner') return 'local runner';
+  return 'Cherry';
+}
+
+function proofSummary(event: ProofEvent): string {
+  if (event.type === 'skillgraph.drafted') return event.summary.replace(/^SkillGraph\b/, 'Skill').replace(/ drafted with (\d+) nodes$/, ' drafted with $1 steps');
+  if (event.type === 'skillgraph.revised') return event.summary.replace(/^SkillGraph revised to /, 'Skill updated to ');
+  if (event.type === 'skillgraph.approved' || event.type === 'skillgraph.rejected') return event.summary.replace(/^SkillGraph\b/, 'Skill').replace(/ by user$/, ' by you');
+  if (event.type === 'skillgraph.rolled_back') return event.summary.replace(/^SkillGraph rolled back to /, 'Skill restored to ');
+  if (event.type === 'receipt.created') return event.summary.replace(/^Proof receipt created/, 'Proof created');
+  if (event.type.startsWith('workspace.')) return event.summary.replace(/^Workspace\b/, 'Space');
+  if (event.type.startsWith('mission.')) return event.summary.replace(/^Mission\b/, 'Project');
+  if (event.type.startsWith('lesson.')) return event.summary.replace(/^Lesson\b/, 'Source');
+  if (event.type === 'export.created') return event.summary.replace(/^Workspace exported \((\d+) missions\b/, 'Space exported ($1 projects');
+  return event.summary;
+}
+
+function plainCommandError(message: string): string {
+  return message
+    .replace(/\bskill\s*graphs?\b/gi, (word) => (word.toLowerCase().endsWith('s') ? 'skills' : 'skill'))
+    .replace(/\brevision binding\b/gi, 'approved version')
+    .replace(/\brevisions?\b/gi, (word) => (word.toLowerCase() === 'revision' ? 'version' : 'versions'))
+    .replace(/\bworkspaces?\b/gi, (word) => (word.toLowerCase() === 'workspace' ? 'space' : 'spaces'))
+    .replace(/\bmissions?\b/gi, (word) => (word.toLowerCase() === 'mission' ? 'project' : 'projects'))
+    .replace(/\blessons?\b/gi, (word) => (word.toLowerCase() === 'lesson' ? 'source' : 'sources'))
+    .replace(/\bartifact sets?\b/gi, 'files');
+}
+
+const PROJECT_STATUS_LABEL: Record<MissionState, string> = {
+  DRAFT: 'Draft',
+  LEARNING: 'Learning',
+  PLANNING: 'Planning',
+  AWAITING_APPROVAL: 'Awaiting approval',
+  EXECUTING: 'Running',
+  VERIFYING: 'Checking',
+  COMPLETE: 'Complete',
+  BLOCKED: 'Blocked',
+  CANCELLED: 'Cancelled',
+};
 
 export default function CommandCenter() {
   const { activeWorkspace, activeMission, missions, refresh, setActiveMission, setActiveWorkspace } = useAppState();
@@ -93,7 +144,7 @@ export default function CommandCenter() {
     const name = String(form.get('name') ?? '').trim();
     const result = await createWorkspace({ name });
     if (!result.ok) {
-      setError(result.error.message);
+      setError(plainCommandError(result.error.message));
       return;
     }
     await refresh();
@@ -106,7 +157,7 @@ export default function CommandCenter() {
   async function handleDecision(approval: ApprovalRecord, decision: 'approved' | 'rejected') {
     setError(null);
     const result = await decideSkillGraphApproval(approval.id, decision, 'user');
-    if (!result.ok) setError(result.error.message);
+    if (!result.ok) setError(plainCommandError(result.error.message));
     await refresh();
     if (activeWorkspace) {
       setApprovals((await listApprovals(activeWorkspace.id)).filter((entry) => entry.decision === 'pending'));
@@ -117,7 +168,7 @@ export default function CommandCenter() {
     if (!activeWorkspace) return;
     const result = await exportWorkspace(activeWorkspace.id);
     if (!result.ok) {
-      setError(result.error.message);
+      setError(plainCommandError(result.error.message));
       return;
     }
     const blob = new Blob([JSON.stringify(result.value, null, 2)], { type: 'application/json' });
@@ -127,7 +178,7 @@ export default function CommandCenter() {
     anchor.download = `cherry-workspace-${activeWorkspace.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-    setNotice(`Workspace exported (hash ${result.value.integrity.payloadSha256.slice(0, 12)}…).`);
+    setNotice(`Space exported (hash ${result.value.integrity.payloadSha256.slice(0, 12)}…).`);
   }
 
   async function handleImportFile(file: File) {
@@ -135,7 +186,7 @@ export default function CommandCenter() {
     const text = await file.text();
     const result = await importWorkspace(text);
     if (!result.ok) {
-      setError(result.error.message);
+      setError(plainCommandError(result.error.message));
       return;
     }
     setNotice(`Imported "${result.value.name}" (hash ${result.value.hashVerified ? 'verified' : 'absent'}).`);
@@ -150,40 +201,40 @@ export default function CommandCenter() {
       const text = await response.text();
       const result = await importWorkspace(text, { markExample: true });
       if (!result.ok) {
-        setError(result.error.message);
+        setError(plainCommandError(result.error.message));
         return;
       }
-      setNotice(`Example workspace loaded (hash ${result.value.hashVerified ? 'verified' : 'absent'}). Delete it anytime from Connections.`);
+      setNotice(`Example space loaded (hash ${result.value.hashVerified ? 'verified' : 'absent'}). Delete it anytime from Connections.`);
       setActiveWorkspace(result.value.workspaceId);
       await refresh();
     } catch (fetchError) {
-      setError(`Could not load the example workspace: ${(fetchError as Error).message}`);
+      setError(plainCommandError(`Could not load the example space: ${(fetchError as Error).message}`));
     }
   }
 
   if (!activeWorkspace) {
     return (
       <div className="empty-state">
-        <CherryMascot pose="present" size={150} line="Hi! Give me a workspace and teach me a workflow — I will keep the receipts." />
+        <CherryMascot pose="present" size={150} line="Give Cherry a space, then teach it a workflow. Every important action stays recorded." />
         <h1 className="display-sm title-3d">Teach Cherry something</h1>
         <p className="subhead" style={{ maxWidth: 520 }}>
-          Create a local workspace. Everything stays in this browser until you export it.
+          Choose a name for your space. Everything stays in this browser until you export it.
         </p>
         <form onSubmit={handleCreateWorkspace} className="row" style={{ justifyContent: 'center' }}>
           <label className="field" style={{ minWidth: 260 }}>
-            <span>Workspace name</span>
-            <input className="input" name="name" required maxLength={120} placeholder="My first workspace" />
+            <span>Space name</span>
+            <input className="input" name="name" required maxLength={120} placeholder="My skills" />
           </label>
           <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
-            Create workspace
+            Create space
           </button>
         </form>
         {error ? <p className="field-error" role="alert">{error}</p> : null}
-        <div className="stack" style={{ alignItems: 'center' }}>
-          <span className="label">Or bring an exported workspace</span>
+        <details className="stack" style={{ textAlign: 'center' }}>
+          <summary className="link-quiet">Already use Cherry?</summary>
           <div className="row" style={{ justifyContent: 'center' }}>
             <label className="btn">
-              Import workspace JSON
+              Import space
               <input
                 type="file"
                 accept="application/json"
@@ -195,15 +246,14 @@ export default function CommandCenter() {
               />
             </label>
             <button type="button" className="btn" onClick={() => void handleImportExample()}>
-              Load the example workspace
+              Load example
             </button>
           </div>
-          <span className="label" style={{ maxWidth: 420 }}>
-            The example is a real exported workspace produced by Cherry operations. It is clearly labelled,
-            isolated from your data, and deletable.
-          </span>
+          <p className="label" style={{ maxWidth: 420 }}>
+            The example is a real Cherry export. It stays separate from your data and you can delete it.
+          </p>
           {notice ? <p className="sticker sticker-pass">{notice}</p> : null}
-        </div>
+        </details>
       </div>
     );
   }
@@ -216,11 +266,11 @@ export default function CommandCenter() {
           <button type="button" className="btn btn-primary" onClick={openSourceDialog}>
             Add a source
           </button>
-          <Link to="/studio/missions/new" className="btn">Create mission</Link>
+          <Link to="/studio/missions/new" className="btn">Create project</Link>
           <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
             Replay walkthrough
           </button>
-          <button type="button" className="btn" onClick={() => void handleExport()}>Export workspace</button>
+          <button type="button" className="btn" onClick={() => void handleExport()}>Export space</button>
           <label className="btn">
             Import
             <input
@@ -241,11 +291,11 @@ export default function CommandCenter() {
 
       <div className="grid-cards">
         <section className="card card-wash-cherry stack" aria-labelledby="missions-heading">
-          <h2 id="missions-heading" className="subhead">Missions</h2>
+          <h2 id="missions-heading" className="subhead">Projects</h2>
           {missions.length === 0 ? (
             <>
-              <p>No missions yet. A mission gives your agent an objective and a definition of done.</p>
-              <Link to="/studio/missions/new" className="btn">Create your first mission</Link>
+              <p>No projects yet. Give your agent one clear goal and a definition of done.</p>
+              <Link to="/studio/missions/new" className="btn">Create project</Link>
             </>
           ) : (
             <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
@@ -258,7 +308,7 @@ export default function CommandCenter() {
                   >
                     {mission.title}
                   </Link>
-                  <span className="sticker">{mission.state}</span>
+                  <span className="sticker">{PROJECT_STATUS_LABEL[mission.state]}</span>
                 </li>
               ))}
             </ul>
@@ -273,7 +323,7 @@ export default function CommandCenter() {
             approvals.map((approval) => (
               <div key={approval.id} className="stack" style={{ border: 'var(--border)', borderRadius: 'var(--radius-sticker)', padding: 'var(--sp-3)' }}>
                 <span className="label">
-                  {approval.objectType} · version {approval.objectRevision}
+                  {approvalObjectLabel(approval.objectType)} · version {approval.objectRevision}
                 </span>
                 <p style={{ margin: 0 }}>{approval.requestReason}</p>
                 <div className="row">
@@ -290,13 +340,13 @@ export default function CommandCenter() {
         </section>
 
         <section className="card card-wash-lavender stack" aria-labelledby="inbox-heading">
-          <h2 id="inbox-heading" className="subhead">Memory Inbox</h2>
+          <h2 id="inbox-heading" className="subhead">Memory requests</h2>
           <p>
             {memoryInboxCount === 0
               ? 'No proposed memories waiting. Nothing becomes memory without your approval.'
               : `${memoryInboxCount} proposed ${memoryInboxCount === 1 ? 'memory' : 'memories'} awaiting your decision.`}
           </p>
-          <Link to="/studio/memory" className="btn btn-sm">Open Memory Vault</Link>
+          <Link to="/studio/memory" className="btn btn-sm">Open memory</Link>
         </section>
 
         <section className="card stack" aria-labelledby="runner-heading">
@@ -309,8 +359,8 @@ export default function CommandCenter() {
             <p className="sticker sticker-wait">Runner found · not paired</p>
           ) : (
             <p>
-              No runner detected on this machine. The Studio is fully usable without one; a runner adds
-              scheduled deterministic jobs. See Connections for setup.
+              No runner detected on this machine. Cherry still works here; a runner adds scheduled jobs
+              with recorded results. See Connections for setup.
             </p>
           )}
           {attentionRuns > 0 ? (
@@ -322,17 +372,20 @@ export default function CommandCenter() {
       </div>
 
       <section aria-labelledby="events-heading" className="stack">
-        <h2 id="events-heading" className="subhead">Proof event strip</h2>
+        <h2 id="events-heading" className="subhead">Proof history</h2>
         {events.length === 0 ? (
-          <p className="card">No events yet. Every important action lands here as a permanent record.</p>
+          <div className="card stack">
+            <p>No proof yet. Add a source to begin.</p>
+            <Link to="/studio/quick" className="btn btn-sm">Add a source</Link>
+          </div>
         ) : (
           <div className="event-strip" aria-live="polite">
             {events.map((event) => (
               <div key={event.id} className="event-row">
                 <span className="mono">#{event.sequence}</span>
                 <span className="mono">{event.occurredAt.slice(11, 19)}</span>
-                <span className="sticker" style={{ padding: '2px 8px' }}>{event.actorType}</span>
-                <span>{event.summary}</span>
+                <span className="sticker" style={{ padding: '2px 8px' }}>{proofActorLabel(event.actorType)}</span>
+                <span>{proofSummary(event)}</span>
               </div>
             ))}
           </div>
@@ -360,11 +413,11 @@ export default function CommandCenter() {
           </Link>
           <Link to="/studio/sources" className="source-option" onClick={closeSourceDialog}>
             <span className="source-option-title">Sources inbox</span>
-            <span className="source-option-copy">Save YouTube lessons, articles, notes, and text files with provenance before choosing a skill.</span>
+            <span className="source-option-copy">Save YouTube videos, articles, notes, and text files with a record of where each came from.</span>
           </Link>
           <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
             <span className="source-option-title">Paste a transcript</span>
-            <span className="source-option-copy">Text, .srt or .vtt becomes timestamped evidence.</span>
+            <span className="source-option-copy">Text, .srt or .vtt records what the source said, with timestamps.</span>
           </Link>
           <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
             <span className="source-option-title">Upload text / Markdown / JSON</span>

@@ -4,6 +4,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { describeSchedule, draftRoutine, listApprovedSkillGraphs, listRoutines } from '../../cherry/workforce/routines-service.ts';
 import type { Routine } from '../../cherry/workforce/workforce-model.ts';
 import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
+import { plainRoutineMessage } from './routine-copy.ts';
 
 function fmt(iso: string | null): string {
   return iso ? new Date(iso).toLocaleString() : '—';
@@ -119,7 +120,7 @@ export default function RoutinesPage() {
     });
     setBusy(false);
     if (!created.ok) {
-      setError(created.error.message);
+      setError(plainRoutineMessage(created.error.message));
       return;
     }
     await refresh();
@@ -142,7 +143,7 @@ export default function RoutinesPage() {
     return (
       <div className="stack">
         <h1 className="display-sm title-3d">Routines</h1>
-        <p className="subhead">Create a workspace in the Command Center first — routines live inside it.</p>
+        <p className="subhead">Create your space in the Command Center before adding a routine.</p>
         <Link to="/studio" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Open Command Center</Link>
       </div>
     );
@@ -187,7 +188,7 @@ export default function RoutinesPage() {
             </p>
           ) : prefillKey && selectedGraph ? (
             <p className="quiet" role="status" style={{ margin: 0 }}>
-              Routine draft ready for {selectedGraph.name}. It is bound to approved r{selectedGraph.revision}. Nothing has been created yet.
+              {selectedGraph.name} is approved exactly as you read it at r{selectedGraph.revision}. Nothing has been created yet.
             </p>
           ) : null}
           <div className="row">
@@ -212,7 +213,7 @@ export default function RoutinesPage() {
         <h2 id="routines-heading" className="subhead" style={{ fontSize: 20 }}>Your routines ({routines.length})</h2>
         {routines.length === 0 ? (
           <p className="card">
-            No routines yet. Draft one above, or <Link to="/studio/skills">approve a skill</Link> to get started.
+            No routines yet. Choose an approved skill above to create one.
           </p>
         ) : (
           <div className="event-strip">
@@ -225,16 +226,18 @@ export default function RoutinesPage() {
                 <span style={{ fontSize: 14 }}>{describeSchedule(routine.schedule)}</span>
                 <span className="mono" style={{ fontSize: 13 }}>next {fmt(routine.nextRunAt)}</span>
                 <span className="mono" style={{ fontSize: 13 }}>last {fmt(routine.lastRunAt)}</span>
-                <span className="sticker" style={{ padding: '1px 8px', fontSize: 11 }}>{routine.executionHostId}</span>
+                <span className="sticker" style={{ padding: '1px 8px', fontSize: 11 }}>
+                  {routine.executionHostId === 'local-runner' ? 'local runner' : 'paired runner'}
+                </span>
               </Link>
             ))}
           </div>
         )}
       </section>
-      <section className="card stack" aria-label="Local runner pairing">
-        <h2 className="subhead" style={{ fontSize: 20 }}>Local runner</h2>
-        <p style={{ margin: 0 }}>Routines dispatch only to a paired local runner. Pairing and setup are shown here so an unavailable runner is recoverable.</p>
-        <span className="sticker sticker-wait">Setup required until a runner is paired</span>
+      <section className="card stack" aria-label="Run on your computer">
+        <h2 className="subhead" style={{ fontSize: 20 }}>Run on your computer</h2>
+        <p style={{ margin: 0 }}>A routine runs only while your paired local runner is online. Nothing runs in Cherry's cloud.</p>
+        <Link className="btn btn-sm" to="/studio/settings/connections" style={{ alignSelf: 'flex-start' }}>Check runner status</Link>
       </section>
     </div>
   );

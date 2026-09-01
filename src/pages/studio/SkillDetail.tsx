@@ -33,6 +33,23 @@ const EFFECT_LABELS: Record<string, string> = {
   'require-verification': 'must be verified',
 };
 
+function plainSkillMessage(message: string): string {
+  return message
+    .replace(/\bskill\s*graph\b/gi, (word) => (word[0] === word[0]?.toUpperCase() ? 'Skill' : 'skill'))
+    .replace(/\brevision binding\b/gi, 'approved version')
+    .replace(/\brevisions?\b/gi, (word) => (word.toLowerCase() === 'revision' ? 'version' : 'versions'))
+    .replace(/\bworkspaces?\b/gi, (word) => (word.toLowerCase() === 'workspace' ? 'space' : 'spaces'))
+    .replace(/\bmissions?\b/gi, (word) => (word.toLowerCase() === 'mission' ? 'project' : 'projects'))
+    .replace(/\blessons?\b/gi, (word) => (word.toLowerCase() === 'lesson' ? 'source' : 'sources'))
+    .replace(/\bnodes?\b/gi, (word) => (word.toLowerCase() === 'node' ? 'step' : 'steps'))
+    .replace(/\bprovenance\b/gi, 'where this came from')
+    .replace(/\bartifact set\b/gi, 'files');
+}
+
+function evaluationLabel(name: string): string {
+  return name === 'Skill graph is structurally valid' ? 'Skill is structurally valid' : name;
+}
+
 interface SchemaField {
   name: string;
   type: string;
@@ -114,7 +131,7 @@ export default function SkillDetail() {
     setError(null);
     setNotice(null);
     const result = await work();
-    if (!result.ok) setError(result.error.message);
+    if (!result.ok) setError(plainSkillMessage(result.error.message));
     else if (successNote) setNotice(successNote);
     await load();
     await refresh();
@@ -132,7 +149,7 @@ export default function SkillDetail() {
     );
     await run(
       () => reviseSkillGraph(graph!.id, { nodes: updatedNodes }, `Edited node "${selectedNode.title}"`, 'human', graph!.revision),
-      'Step updated as a new revision',
+      'Step updated as a new version',
     );
     setSelectedNode(null);
   }
@@ -147,7 +164,7 @@ export default function SkillDetail() {
       anchor.download = bundle.fileName;
       anchor.click();
       URL.revokeObjectURL(url);
-      setNotice(`Compiled ${bundle.fileName} (${bundle.fileList.length} files, sha256 ${bundle.sha256.slice(0, 12)}…)`);
+      setNotice(`Downloaded ${bundle.fileName} (${bundle.fileList.length} files, sha256 ${bundle.sha256.slice(0, 12)}…)`);
     }
   }
 
@@ -184,27 +201,27 @@ export default function SkillDetail() {
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
       {issues.length > 0 ? (
         <div className="field-error" role="alert">
-          <strong>Validation issues:</strong>
-          <ul>{issues.map((issue) => <li key={issue.code + (issue.nodeId ?? '')}>{issue.message}</li>)}</ul>
+          <strong>Fix before approval:</strong>
+          <ul>{issues.map((issue) => <li key={issue.code + (issue.nodeId ?? '')}>{plainSkillMessage(issue.message)}</li>)}</ul>
         </div>
       ) : null}
 
       <div className="row">
         {installReady ? (
           <>
-            <Link className="btn btn-primary" to={buildRoutineDraftUrl(graph.workspaceId, graph.id)}>Use in a routine</Link>
-            <a className="btn" href={buildConnectUrl(graph.targets)}>Send to an agent</a>
+            <Link className="btn btn-primary" to={buildRoutineDraftUrl(graph.workspaceId, graph.id)}>Use in routine</Link>
+            <a className="btn" href={buildConnectUrl(graph.targets)}>Send to agent</a>
           </>
         ) : null}
         {!pendingApproval && graph.status !== 'approved' ? (
           <button type="button" className="btn btn-primary" onClick={() => void run(() => requestSkillGraphApproval(graph.id, 'Review requested from the skill page', 'user'), 'Approval requested')}>
-            Request approval of r{graph.revision}
+            Request approval
           </button>
         ) : null}
         {pendingApproval ? (
           <>
             <button type="button" className="btn btn-primary" data-testid="approve-skill" onClick={() => void run(() => decideSkillGraphApproval(pendingApproval.id, 'approved', 'user'), 'Approved at this exact version')}>
-              Approve revision {graph.version}.{pendingApproval.objectRevision}
+              Approve this version
             </button>
             <button type="button" className="btn btn-danger" onClick={() => void run(() => decideSkillGraphApproval(pendingApproval.id, 'rejected', 'user'))}>
               Reject
@@ -217,9 +234,9 @@ export default function SkillDetail() {
           data-testid="compile-bundle"
           onClick={() => void handleCompile()}
           disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' ? 'Compiling requires an approval at the current revision' : 'Download the portable skill bundle'}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'Download the portable skill bundle'}
         >
-          Compile skill bundle (.zip)
+          Download bundle (.zip)
         </button>
         <button
           type="button"
@@ -227,7 +244,7 @@ export default function SkillDetail() {
           data-testid="export-skill-md"
           onClick={() => void handleExport('skill-md', 'download')}
           disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'Agent Skills format: Claude Code, Hermes-class agents'}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'Agent Skills format: Claude Code, Hermes-class agents'}
         >
           Download SKILL.md
         </button>
@@ -237,7 +254,7 @@ export default function SkillDetail() {
           data-testid="copy-agents-md"
           onClick={() => void handleExport('agents-md', 'copy')}
           disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'Copy the AGENTS.md block for Codex'}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Copying requires approval of the current version' : 'Copy the AGENTS.md block for Codex'}
         >
           Copy AGENTS.md (Codex)
         </button>
@@ -247,14 +264,14 @@ export default function SkillDetail() {
           data-testid="export-claude-md"
           onClick={() => void handleExport('claude-md', 'download')}
           disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Exports require an approval at the current revision' : 'CLAUDE.md install file for Claude Code'}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'CLAUDE.md install file for Claude Code'}
         >
           Download CLAUDE.md
         </button>
       </div>
 
       <div className="contract-grid">
-        <article className="card contract-doc" aria-label="Skill contract">
+        <article className="card contract-doc" aria-label="Skill details">
           <section className="contract-section" aria-labelledby="goal-heading">
             <h2 id="goal-heading" className="contract-h">Goal</h2>
             <p style={{ margin: 0 }}>{graph.purpose}</p>
@@ -301,12 +318,12 @@ export default function SkillDetail() {
             )}
             {selectedNode ? (
               <form onSubmit={handleEditNode} className="card card-wash-sky stack" style={{ marginTop: 'var(--sp-3)' }}>
-                <h3 className="label">Edit step — saves as a new revision</h3>
+                <h3 className="label">Edit step — saves as a new version</h3>
                 <label className="field"><span>Title</span><input className="input" name="title" defaultValue={selectedNode.title} required /></label>
                 <label className="field"><span>Goal</span><textarea className="textarea" name="goal" defaultValue={selectedNode.goal} required style={{ minHeight: 60 }} /></label>
                 <div className="row">
-                  <span className="sticker">{selectedNode.evidenceIds.length} evidence</span>
-                  <span className="sticker">{selectedNode.humanGateIds.length} approval gates</span>
+                  <span className="sticker">{selectedNode.evidenceIds.length} source notes</span>
+                  <span className="sticker">{selectedNode.humanGateIds.length} approvals needed</span>
                   <span className="sticker">if it fails: {FAILURE_LABELS[selectedNode.onFailure.strategy] ?? selectedNode.onFailure.strategy}</span>
                 </div>
                 <div className="row">
@@ -332,7 +349,7 @@ export default function SkillDetail() {
           </section>
 
           <section className="contract-section" aria-labelledby="evidence-list-heading">
-            <h2 id="evidence-list-heading" className="contract-h">Evidence in scope ({evidence.length})</h2>
+            <h2 id="evidence-list-heading" className="contract-h">What the source said ({evidence.length})</h2>
             {knowledgeRefs.length > 0 ? (
               <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, marginBottom: 'var(--sp-3)' }}>
                 {knowledgeRefs.map((reference) => {
@@ -371,7 +388,7 @@ export default function SkillDetail() {
               <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0 }}>
                 {graph.evaluations.map((evaluation) => (
                   <li key={evaluation.id}>
-                    {evaluation.name} <span className="quiet">— {evaluation.type} · {evaluation.severity}</span>
+                    {evaluationLabel(evaluation.name)} <span className="quiet">— {evaluation.type} · {evaluation.severity}</span>
                   </li>
                 ))}
               </ul>
@@ -391,10 +408,9 @@ export default function SkillDetail() {
               {graph.status} · r{graph.revision}
             </span>
             <dl className="rail-kv">
-              <dt>Version</dt><dd className="tnum">v{graph.version}</dd>
-              <dt>Revision</dt><dd className="tnum">r{graph.revision}</dd>
+              <dt>Skill version</dt><dd className="tnum">v{graph.version} · r{graph.revision}</dd>
               {typeof graph.approvedRevision === 'number' ? (
-                <><dt>Approved rev</dt><dd className="tnum">r{graph.approvedRevision}</dd></>
+                <><dt>Approved</dt><dd className="tnum">r{graph.approvedRevision}</dd></>
               ) : null}
               {graph.versionHash ? (
                 <><dt>Content hash</dt><dd className="mono tnum" title={graph.versionHash}>{graph.versionHash.slice(0, 12)}…</dd></>
@@ -410,14 +426,14 @@ export default function SkillDetail() {
 
           {graph.status === 'approved' && typeof graph.approvedRevision === 'number' ? (
             <section className="card checkpoint-panel stack" aria-labelledby="checkpoint-heading">
-              <h2 id="checkpoint-heading" className="contract-h" style={{ margin: 0 }}>Checkpoint — immutable once approved</h2>
-              {graph.versionHash ? <p className="checkpoint-hash" title="Content hash of the approved revision">{graph.versionHash}</p> : null}
-              <p className="contract-empty">approved r{graph.approvedRevision} by {graph.approvedBy}</p>
+              <h2 id="checkpoint-heading" className="contract-h" style={{ margin: 0 }}>Approved exactly as you read it</h2>
+              {graph.versionHash ? <p className="checkpoint-hash" title="Content hash of the approved version">{graph.versionHash}</p> : null}
+              <p className="contract-empty">approved r{graph.approvedRevision} by {graph.approvedBy === 'user' ? 'you' : graph.approvedBy}</p>
             </section>
           ) : null}
 
           <section className="card stack" aria-labelledby="versions-heading">
-            <h2 id="versions-heading" className="contract-h" style={{ margin: 0 }}>Revisions ({versions.length})</h2>
+            <h2 id="versions-heading" className="contract-h" style={{ margin: 0 }}>Version history ({versions.length})</h2>
             <div style={{ maxHeight: 260, overflowY: 'auto' }} className="stack">
               {[...versions].reverse().map((version) => (
                 <div key={version.id} className="event-row" style={{ justifyContent: 'space-between' }}>

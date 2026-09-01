@@ -22,16 +22,16 @@ export function SourceMaterialChoices({
       style={{ gap: compact ? 6 : 'var(--sp-3)', flexWrap: 'wrap' }}
     >
       <button type="button" className={`${buttonClass}${compact ? '' : ' btn-primary'}`} onClick={onPasteTranscript}>
-        Paste the transcript or captions
+        Paste transcript
       </button>
       {onTranscribeWhilePlaying ? (
         <button type="button" className={buttonClass} onClick={onTranscribeWhilePlaying}>
-          Transcribe while I play it
+          Transcribe locally
         </button>
       ) : null}
       {onRunnerFetch ? (
         <button type="button" className={buttonClass} disabled={busy} onClick={onRunnerFetch}>
-          My runner can fetch this page
+          Fetch with runner
         </button>
       ) : null}
     </div>

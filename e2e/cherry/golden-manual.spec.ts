@@ -17,12 +17,12 @@ test.describe('golden manual journey', () => {
 
     // Empty state: create workspace
     await expect(page.getByRole('heading', { name: 'Teach Cherry something' })).toBeVisible();
-    await page.getByLabel('Workspace name').fill('Golden journey workspace');
-    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await page.getByLabel('Space name').fill('Golden journey workspace');
+    await page.getByRole('button', { name: 'Create space' }).click();
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
 
     // Create mission
-    await page.getByRole('link', { name: 'Create mission' }).first().click();
+    await page.getByRole('link', { name: 'Create project' }).first().click();
     await page.getByLabel('Title').fill('Learn the landing snippet');
     await page.getByLabel('Objective').fill('Build a small landing page snippet following the lesson principles');
     await page.getByLabel('Definition of done (one item per line)').fill('index.html exists with an h1\nVerification passes');
@@ -85,10 +85,10 @@ test.describe('golden manual journey', () => {
     await expect(page.getByTestId('skill-status')).toContainText('r3');
 
     // Request approval and approve at the exact revision
-    await page.getByRole('button', { name: /Request approval of r[0-9]+/ }).click();
+    await page.getByRole('button', { name: 'Request approval', exact: true }).click();
     await page.getByTestId('approve-skill').click();
     await expect(page.getByTestId('skill-status')).toContainText('approved');
-    await expect(page.getByText(/approved r[0-9]+ by user/)).toBeVisible();
+    await expect(page.getByText(/approved r[0-9]+ by you/)).toBeVisible();
 
     // Back to the mission: move into execution and create artifacts
     await page.goto(missionUrl);
@@ -177,7 +177,7 @@ test.describe('golden manual journey', () => {
     // Export the workspace
     await page.getByRole('link', { name: 'Command', exact: true }).first().click();
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Export workspace' }).click();
+    await page.getByRole('button', { name: 'Export space' }).click();
     const download = await downloadPromise;
     const exportPath = await download.path();
     expect(exportPath).toBeTruthy();

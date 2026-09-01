@@ -35,7 +35,7 @@ const NAV_WORKFORCE: NavItem[] = [
 const NAV_ALL: NavItem[] = [...NAV_PRIMARY, ...NAV_WORKFORCE];
 
 const PRODUCT_STATE_LABEL: Record<ProductState, string> = {
-  empty: 'No mission yet',
+  empty: 'No project yet',
   onboarding: 'Getting started',
   learning: 'Learning',
   planning: 'Shaping the skill',
@@ -95,9 +95,9 @@ export function StudioLayout() {
 
   const hostPill = webmcp.supported
     ? {
-        text: `Host connected · ${webmcp.registered.length} tools`,
+        text: `Agent connected · ${webmcp.registered.length} tools`,
         className: 'sticker sticker-pass tnum',
-        title: `WebMCP active: ${webmcp.registered.length} tools registered`,
+        title: `An agent is connected. ${webmcp.registered.length} tools are available now.`,
       }
     : !isOnline
       ? {
@@ -106,10 +106,10 @@ export function StudioLayout() {
           title: 'This device is offline. Cherry keeps working — everything lives in this browser.',
         }
       : {
-          text: 'Local',
+          text: 'Manual mode',
           className: 'sticker',
           title:
-            'WebMCP is not available in this browser. Everything works manually; open Cherry in a compatible ChatGPT/Codex client to attach an agent.',
+            'No agent is connected in this browser. Everything works manually. Open Cherry in a compatible ChatGPT or Codex client to connect one.',
         };
 
   return (
@@ -121,7 +121,7 @@ export function StudioLayout() {
             {workspaces.length > 1 ? (
               <select
                 className="select workspace-select"
-                aria-label="Workspace"
+                aria-label="Space"
                 value={activeWorkspace?.id ?? ''}
                 onChange={(event) => setActiveWorkspace(event.target.value)}
               >
@@ -162,7 +162,7 @@ export function StudioLayout() {
         <main className="studio-main" id="studio-main">
           {ready ? <Outlet /> : (
             <div className="empty-state" role="status" aria-live="polite">
-              <span className="sticker sticker-cherry">Opening your workspace…</span>
+              <span className="sticker sticker-cherry">Opening your space…</span>
             </div>
           )}
         </main>
