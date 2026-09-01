@@ -61,22 +61,26 @@ export function parseYouTubeUrl(raw: string): Result<ParsedYouTubeUrl> {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     return invalid('Only http(s) YouTube URLs are supported');
   }
-  const host = url.hostname.toLowerCase();
+  if (url.username || url.password) {
+    return invalid('YouTube URLs cannot contain credentials');
+  }
+  if (url.port) {
+    return invalid('YouTube URLs cannot use a non-default port');
+  }
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!isYouTubeHost(host)) {
     return invalid(`Host ${host} is not a recognised YouTube domain`);
   }
 
   let videoId: string | null = null;
+  const segments = url.pathname.split('/').filter(Boolean);
   if (host === 'youtu.be') {
-    videoId = url.pathname.split('/').filter(Boolean)[0] ?? null;
+    if (segments.length === 1) videoId = segments[0] ?? null;
   } else {
-    const segments = url.pathname.split('/').filter(Boolean);
-    if (segments[0] === 'watch') {
+    if (segments.length === 1 && segments[0] === 'watch') {
       videoId = url.searchParams.get('v');
-    } else if (segments[0] === 'shorts' || segments[0] === 'embed' || segments[0] === 'live' || segments[0] === 'v') {
+    } else if (segments.length === 2 && (segments[0] === 'shorts' || segments[0] === 'embed' || segments[0] === 'live' || segments[0] === 'v')) {
       videoId = segments[1] ?? null;
-    } else if (url.searchParams.get('v')) {
-      videoId = url.searchParams.get('v');
     }
   }
 

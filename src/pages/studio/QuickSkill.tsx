@@ -31,6 +31,7 @@ import { completeSourceFetch, createSource, failSourceFetch, getSource, importSo
 import type { HumanTranscriptSource, SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
+import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
@@ -59,6 +60,9 @@ export default function QuickSkill() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sourceId = searchParams.get('sourceId');
+  const requestedSourceChoice = searchParams.get('method') === 'paste' || searchParams.get('method') === 'transcribe'
+    ? searchParams.get('method') as 'paste' | 'transcribe'
+    : null;
   const [stage, setStage] = useState<Stage>('source');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -119,13 +123,16 @@ export default function QuickSkill() {
           const preview = await previewQuickSkill(loaded.id);
           if (!preview.ok) throw new Error(preview.error.message);
           setDraft(preview.value); setKept(new Set(preview.value.steps.map((_, index) => index))); setDigest(digestSegments(segments)); setStage('review');
-        } else { setSourceChoice(null); setStage('transcript'); }
+        } else {
+          setSourceChoice(source.kind === 'youtube' ? requestedSourceChoice : requestedSourceChoice === 'paste' ? 'paste' : null);
+          setStage('transcript');
+        }
         await refresh();
       } catch (thrown) { if (!cancelled) setError((thrown as Error).message); }
       finally { if (!cancelled) setBusy(false); }
     })();
     return () => { cancelled = true; };
-  }, [activeWorkspace?.id, refresh, sourceId]);
+  }, [activeWorkspace?.id, refresh, requestedSourceChoice, sourceId]);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -477,9 +484,12 @@ export default function QuickSkill() {
                 />
               ) : null}
               <h2 className="subhead">Choose how to add the material</h2>
-              <button type="button" className="btn btn-primary" onClick={() => setSourceChoice('paste')}>Paste the transcript or captions</button>
-              {activeSource.kind === 'youtube' ? <button type="button" className="btn" onClick={() => setSourceChoice('transcribe')}>Transcribe while I play it</button> : null}
-              {activeSource.kind === 'article' && runnerReady ? <button type="button" className="btn" disabled={busy} onClick={() => void handleRunnerFetch()}>My runner can fetch this page</button> : null}
+              <SourceMaterialChoices
+                onPasteTranscript={() => setSourceChoice('paste')}
+                {...(activeSource.kind === 'youtube' ? { onTranscribeWhilePlaying: () => setSourceChoice('transcribe') } : {})}
+                {...(activeSource.kind === 'article' && runnerReady ? { onRunnerFetch: () => void handleRunnerFetch() } : {})}
+                busy={busy}
+              />
             </div>
           ) : null}
           {sourceChoice !== null ? <>

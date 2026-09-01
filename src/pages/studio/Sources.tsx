@@ -14,8 +14,10 @@ import {
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
+import { fetchYouTubeTitle } from '../../cherry/source/youtube-metadata.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import { Icons } from '../../components/Icons.tsx';
+import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 
 type Filter = 'all' | 'needs' | 'ready' | 'archived';
 
@@ -68,6 +70,8 @@ export default function Sources() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [metadataBusy, setMetadataBusy] = useState(false);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
   const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyCandidates, setHistoryCandidates] = useState<WatchHistoryCandidate[]>([]);
@@ -81,6 +85,8 @@ export default function Sources() {
   const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
   const historyTriggerRef = useRef<HTMLButtonElement | null>(null);
   const permissionRef = useRef<HTMLInputElement | null>(null);
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const urlRef = useRef<HTMLInputElement | null>(null);
   const installBookmarklet = useCallback((node: HTMLAnchorElement | null) => {
     // React sanitizes javascript: values in JSX. Install the deterministic,
     // local-only value whenever the conditional link enters the DOM.
@@ -214,6 +220,15 @@ export default function Sources() {
     }
   }
 
+  async function fetchTitle() {
+    setMetadataBusy(true);
+    setMetadataError(null);
+    const result = await fetchYouTubeTitle(urlRef.current?.value ?? '');
+    if (!result.ok) setMetadataError(result.error.message);
+    else if (titleRef.current) titleRef.current.value = result.value.title;
+    setMetadataBusy(false);
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -300,7 +315,7 @@ export default function Sources() {
           <h1 className="display-sm" style={{ margin: 0 }}>Sources</h1>
           <p className="subhead" style={{ margin: 0, maxWidth: 720 }}>Save the material you want Cherry to turn into a method. Outside content stays untrusted until you review it.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => { setError(null); setNotice(null); setOpen(true); }}>Save a source</button>
+        <button type="button" className="btn btn-primary" onClick={() => { setError(null); setMetadataError(null); setNotice(null); setOpen(true); }}>Save a source</button>
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
@@ -338,7 +353,49 @@ export default function Sources() {
             {([['all', 'All'], ['needs', 'Needs transcript'], ['ready', 'Ready for skill'], ['archived', 'Archived']] as const).map(([value, label]) => <button key={value} type="button" className={`btn btn-sm ${filter === value ? 'btn-primary' : ''}`} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
           </div>
         </div>
-        {visible.length === 0 ? <div className="empty-state" style={{ padding: 'var(--sp-8) var(--sp-4)' }}><SourceIcon kind="article" size={30} /><h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3><p>Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.</p><div className="row"><button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div></div> : <div className="source-grid">{visible.map((source) => { const status = statusLabel(source); return <article key={source.id} className="card source-card" data-testid="source-card"><div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}><span className="source-kind-icon"><SourceIcon kind={source.kind} /></span><span className={status.className}>{status.text}</span></div><div className="stack" style={{ gap: 4 }}><h3 style={{ margin: 0 }}>{source.title}</h3><p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>{source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}{source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Private to this workspace</span>}</div><p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>{source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{source.fetchError}</p> : null}<div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{source.status !== 'archived' ? <><Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Open lesson</Link><button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button>{source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}<button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button></> : <span className="label">Recoverable archive</span>}</div></article>; })}</div>}
+        {visible.length === 0 ? (
+          <div className="empty-state" style={{ padding: 'var(--sp-8) var(--sp-4)' }}>
+            <SourceIcon kind="article" size={30} />
+            <h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3>
+            <p>Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.</p>
+            <div className="row"><button type="button" className="btn btn-primary" onClick={() => { setError(null); setMetadataError(null); setNotice(null); setOpen(true); }}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div>
+          </div>
+        ) : (
+          <div className="source-grid">
+            {visible.map((source) => {
+              const status = statusLabel(source);
+              const needsYouTubeTranscript = source.kind === 'youtube' && source.status !== 'ready' && source.status !== 'archived';
+              return (
+                <article key={source.id} className="card source-card" data-testid="source-card">
+                  <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}><span className="source-kind-icon"><SourceIcon kind={source.kind} /></span><span className={status.className}>{status.text}</span></div>
+                  <div className="stack" style={{ gap: 4 }}>
+                    <h3 style={{ margin: 0 }}>{source.title}</h3>
+                    <p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>
+                    {source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}
+                    {source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Private to this workspace</span>}
+                  </div>
+                  <p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>
+                  {source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{source.fetchError}</p> : null}
+                  {needsYouTubeTranscript ? (
+                    <SourceMaterialChoices
+                      compact
+                      onPasteTranscript={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}&method=paste`)}
+                      onTranscribeWhilePlaying={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}&method=transcribe`)}
+                    />
+                  ) : null}
+                  <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                    {source.status !== 'archived' ? <>
+                      <Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Open lesson</Link>
+                      {!needsYouTubeTranscript ? <button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button> : null}
+                      {source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}
+                      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button>
+                    </> : <span className="label">Recoverable archive</span>}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>A deliberate trust boundary</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A URL is metadata until you click a permitted fetch, and any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof ledger</Link></div></section>
@@ -389,9 +446,19 @@ export default function Sources() {
       <dialog open={open} className="sheet source-dialog" aria-labelledby="save-source-title" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
         <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)}>
           <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">New material</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>Save a source</h2></div><button type="button" className="btn btn-sm" onClick={() => setOpen(false)} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
-          <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => setKind(candidate)}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
-          <label className="field"><span>Title</span><input name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" /></label>
-          <div className="row" style={{ gap: 'var(--sp-3)' }}><label className="field" style={{ flex: 1 }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label><label className="field" style={{ flex: 1 }}><span>URL <small>(metadata only)</small></span><input name="url" className="input" type="url" maxLength={2048} defaultValue={ingestDraft?.url ?? ''} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} /></label></div>
+          <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => { setKind(candidate); setMetadataError(null); }}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
+          <label className="field"><span>Title</span><input ref={titleRef} name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" /></label>
+          <div className="row" style={{ gap: 'var(--sp-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <label className="field" style={{ flex: '1 1 220px' }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label>
+            <div className="field" style={{ flex: '2 1 320px' }}>
+              <label htmlFor="source-url">URL <small>(metadata only)</small></label>
+              <div className="row" style={{ gap: 6, alignItems: 'stretch' }}>
+                <input id="source-url" ref={urlRef} name="url" className="input" type="url" maxLength={2048} defaultValue={ingestDraft?.url ?? ''} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} style={{ flex: 1, minWidth: 0 }} />
+                {kind === 'youtube' ? <button type="button" className="btn btn-sm" disabled={metadataBusy} onClick={() => void fetchTitle()}>{metadataBusy ? 'Fetching title' : 'Fetch title'}</button> : null}
+              </div>
+            </div>
+          </div>
+          {metadataError ? <p className="field-error" role="alert" style={{ margin: 0 }}>{metadataError}</p> : null}
           {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" accept=".txt,.md,.json,.srt,.vtt,text/plain,text/markdown,application/json" /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} defaultValue={ingestDraft?.text ?? ''} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
           {kind !== 'note' ? <label className="check-row"><input ref={permissionRef} type="checkbox" name="permission" required /><span>I have permission to use this material. Cherry records this acknowledgement; it does not verify ownership.</span></label> : null}
           {kind !== 'note' ? <label className="field"><span>Permission note <small>(optional)</small></span><input name="permissionNote" className="input" maxLength={1000} placeholder="e.g. my export, public license, or team permission" /></label> : null}

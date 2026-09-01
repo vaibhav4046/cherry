@@ -11,12 +11,16 @@ describe('YouTube URL parsing', () => {
     expect(result.ok && result.value.videoId).toBe('dQw4w9WgXcQ');
   });
 
-  it('parses youtu.be, shorts, embed, live, and bare id with timestamps', () => {
+  it('parses official mobile, music, nocookie, share, path, and bare-id forms', () => {
     for (const url of [
       'https://youtu.be/dQw4w9WgXcQ?t=90',
+      'youtu.be/dQw4w9WgXcQ',
       'https://www.youtube.com/shorts/dQw4w9WgXcQ',
       'https://www.youtube.com/embed/dQw4w9WgXcQ',
       'https://www.youtube.com/live/dQw4w9WgXcQ',
+      'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://music.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
       'dQw4w9WgXcQ',
     ]) {
       const result = parseYouTubeUrl(url);
@@ -32,6 +36,28 @@ describe('YouTube URL parsing', () => {
     expect(parseYouTubeUrl('https://www.youtube.com/watch?v=short').ok).toBe(false);
     expect(parseYouTubeUrl('javascript:alert(1)').ok).toBe(false);
     expect(parseYouTubeUrl('').ok).toBe(false);
+  });
+
+  it('rejects credentials and non-default ports on otherwise official hosts', () => {
+    for (const url of [
+      'https://user:pass@www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://user@youtu.be/dQw4w9WgXcQ',
+      'https://www.youtube.com:444/watch?v=dQw4w9WgXcQ',
+    ]) {
+      expect(parseYouTubeUrl(url).ok, url).toBe(false);
+    }
+  });
+
+  it('rejects arbitrary YouTube paths that smuggle a video id in query or path data', () => {
+    for (const url of [
+      'https://www.youtube.com/?v=dQw4w9WgXcQ',
+      'https://www.youtube.com/redirect?v=dQw4w9WgXcQ',
+      'https://www.youtube.com/attribution_link?u=%2Fwatch%3Fv%3DdQw4w9WgXcQ&v=dQw4w9WgXcQ',
+      'https://www.youtube.com/embed/dQw4w9WgXcQ/extra',
+      'https://youtu.be/dQw4w9WgXcQ/extra',
+    ]) {
+      expect(parseYouTubeUrl(url).ok, url).toBe(false);
+    }
   });
 
   it('builds a nocookie embed pinned to the app origin', () => {
