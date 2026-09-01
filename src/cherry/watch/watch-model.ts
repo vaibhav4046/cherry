@@ -3,6 +3,7 @@ export type TranscriptSource =
   | 'user_upload'
   | 'creator_authorized_captions'
   | 'local_transcription'
+  | 'runner_fetch'
   | 'unknown';
 
 export interface CoverageCriterion {

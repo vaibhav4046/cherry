@@ -5,6 +5,8 @@ import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import {
   completeSourceFetch,
+  attachSourceTranscript,
+  importSourceTranscript,
   createSource,
   findDuplicateSource,
   listSources,
@@ -72,6 +74,13 @@ describe('source inbox domain', () => {
     const fetch = await requestSourceFetch(linkedIn.id);
     expect(fetch.ok).toBe(false);
     if (!fetch.ok) expect(fetch.error.message).toContain('LinkedIn');
+
+    const nocookie = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'YouTube privacy player', url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', permissionAcknowledged: true,
+    }));
+    const nocookieFetch = await requestSourceFetch(nocookie.id);
+    expect(nocookieFetch.ok).toBe(false);
+    if (!nocookieFetch.ok) expect(nocookieFetch.error.message).toContain('YouTube');
   });
 
   it('does not let an unverified Scrapling result masquerade as fetched content', async () => {
@@ -99,6 +108,39 @@ describe('source inbox domain', () => {
     expect(fetched.status).toBe('ready');
     expect(await listTranscript(fetched.lessonId)).toHaveLength(2);
     expect(await listSources(workspace.id)).toHaveLength(1);
+    expect((await listTranscript(fetched.lessonId))[0]?.source).toBe('runner_fetch');
+  });
+
+  it('attaches a human-supplied URL transcript hash and format to its source record', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Transcript metadata' }));
+    const source = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Article', url: 'https://example.com/article', permissionAcknowledged: true,
+    }));
+    const content = '0:05 Create a concise, readable method.';
+    const updated = unwrap(await attachSourceTranscript(source.id, content));
+    expect(updated.status).toBe('ready');
+    expect(updated.contentFormat).toBe('plain');
+    expect(updated.fetchMethod).toBe('user_paste');
+    expect(updated.contentHash).toBe(await sha256Text(content));
+  });
+
+  it('imports a URL transcript and source metadata through one source-domain operation', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Imported metadata' }));
+    const source = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Article', url: 'https://example.com/article', permissionAcknowledged: true,
+    }));
+    const imported = unwrap(await importSourceTranscript(source.id, '0:05 Create a readable method.', 'user_text'));
+    expect(imported.source.contentHash).toBeTruthy();
+    expect(imported.source.contentFormat).toBe('plain');
+    expect((await listTranscript(source.lessonId))[0]?.source).toBe('user_text');
+  });
+
+  it('stores uploaded and local-transcription acquisition methods honestly', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Honest acquisition' }));
+    const uploaded = unwrap(await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Upload', url: 'https://example.com/upload', permissionAcknowledged: true }));
+    const local = unwrap(await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Local', url: 'https://example.com/local', permissionAcknowledged: true }));
+    expect(unwrap(await importSourceTranscript(uploaded.id, '0:05 Create the upload method.', 'user_upload', 'notes.txt')).source.fetchMethod).toBe('upload');
+    expect(unwrap(await importSourceTranscript(local.id, '0:05 Create the local method.', 'local_transcription')).source.fetchMethod).toBe('local_transcription');
   });
 
   it('exports and imports source records with their lesson references remapped', async () => {

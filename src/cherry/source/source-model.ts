@@ -2,7 +2,7 @@ export type SourceKind = 'youtube' | 'article' | 'note' | 'file';
 export type SourceStatus = 'saved' | 'ready' | 'archived';
 export type SourceContentFormat = 'plain' | 'markdown' | 'json' | 'srt' | 'vtt';
 export type SourceFetchStatus = 'not_requested' | 'queued' | 'fetched' | 'blocked' | 'failed';
-export type SourceFetchMethod = 'user_paste' | 'upload' | 'scrapling_fetch';
+export type SourceFetchMethod = 'user_paste' | 'upload' | 'local_transcription' | 'scrapling_fetch';
 
 export interface SourceRecord {
   id: string;
@@ -24,4 +24,3 @@ export interface SourceRecord {
   createdAt: string;
   updatedAt: string;
 }
-

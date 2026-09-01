@@ -14,8 +14,12 @@ test.describe('first skill', () => {
       await target.click();
     };
 
-    await page.goto('/studio/quick');
+    await page.goto('/');
+    await page.getByLabel('Main navigation').getByRole('link', { name: 'Open Studio' }).click();
+    await page.getByRole('link', { name: 'Quick skill' }).click();
+    await expect(page).toHaveURL(/\/studio\/quick$/);
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(rawLesson);
+    await expect(page.getByText('By continuing, you confirm you may use this material.')).toBeVisible();
     await click(page.getByRole('button', { name: 'Create a skill' }));
 
     await expect(page.getByRole('heading', { name: 'Review the method' })).toBeVisible();
@@ -28,7 +32,9 @@ test.describe('first skill', () => {
   });
 
   test('uses the official YouTube player and a user-supplied transcript', async ({ page }) => {
-    await page.goto('/studio/quick');
+    await page.goto('/');
+    await page.getByLabel('Main navigation').getByRole('link', { name: 'Open Studio' }).click();
+    await page.getByRole('link', { name: 'Quick skill' }).click();
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await page.getByRole('button', { name: 'Create a skill' }).click();
 

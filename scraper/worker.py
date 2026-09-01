@@ -20,7 +20,7 @@ from typing import Any
 
 MAX_BYTES = 262_144
 MAX_MARKDOWN_CHARS = 120_000
-BLOCKED_HOSTS = {"youtube.com", "www.youtube.com", "youtu.be", "linkedin.com", "www.linkedin.com"}
+BLOCKED_HOSTS = {"youtube.com", "www.youtube.com", "www.youtube-nocookie.com", "youtube-nocookie.com", "youtu.be", "linkedin.com", "www.linkedin.com"}
 TRACKING_KEYS = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid"}
 
 
@@ -39,7 +39,7 @@ def validate_request(payload: dict[str, Any]) -> tuple[str | None, str | None]:
     if parsed.fragment:
         return None, "URL fragments are not fetched; remove the fragment and retry"
     host = (parsed.hostname or "").lower().rstrip(".")
-    if not host or host in BLOCKED_HOSTS or host.endswith(".youtube.com") or host.endswith(".linkedin.com"):
+    if not host or host in BLOCKED_HOSTS or host.endswith(".youtube.com") or host.endswith(".youtube-nocookie.com") or host.endswith(".linkedin.com"):
         return None, "this domain is blocked by Cherry's source policy"
     allowed = payload.get("allowedDomains")
     if not isinstance(allowed, list) or not allowed:
@@ -133,4 +133,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -8,6 +8,7 @@ class WorkerContractTests(unittest.TestCase):
         for url in (
             "javascript:alert(1)",
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
             "https://www.linkedin.com/posts/example",
             "https://user:pass@example.com/post",
             "http://127.0.0.1:8080/private",
@@ -28,4 +29,3 @@ class WorkerContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

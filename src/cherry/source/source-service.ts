@@ -8,6 +8,8 @@ import { conflict, invalid, notFound, unsupported } from '../core/errors.ts';
 import type { ActorType } from '../core/domain-event.ts';
 import { sha256Text } from '../core/hash.ts';
 import { importTranscript, loadLesson } from '../watch/lesson-service.ts';
+import { isYouTubeHost } from '../watch/youtube-url.ts';
+import type { TranscriptSource } from '../watch/watch-model.ts';
 import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceRecord } from './source-model.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
@@ -68,7 +70,7 @@ function isBlockedFetchDomain(url: string | null): string | null {
   if (!url) return 'A public URL is required for a page fetch';
   const domain = urlDomain(url) ?? '';
   if (isPrivateHost(domain)) return 'Private or loopback addresses cannot be fetched';
-  if (domain === 'youtube.com' || domain.endsWith('.youtube.com') || domain === 'youtu.be') return 'YouTube stays official-player/transcript-only; Scrapling never fetches it';
+  if (isYouTubeHost(domain)) return 'YouTube stays official-player/transcript-only; Scrapling never fetches it';
   if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com')) return 'LinkedIn fetching is disabled; paste or upload the text instead';
   return null;
 }
@@ -102,7 +104,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
     return invalid('Acknowledge that you are permitted to use this source before saving it', { field: 'permissionAcknowledged' });
   }
   if (data.kind === 'youtube' && !url) return invalid('A YouTube lesson needs a URL');
-  if (data.kind === 'youtube' && url && !/youtube\.com|youtu\.be/i.test(new URL(url).hostname)) return invalid('YouTube lessons must use a YouTube URL');
+  if (data.kind === 'youtube' && url && !isYouTubeHost(new URL(url).hostname)) return invalid('YouTube lessons must use a YouTube URL');
   if (data.kind === 'file' && !content) return invalid('Select a text file before saving a file source');
   if (data.fetchMethod === 'scrapling_fetch' && !content) return invalid('Scrapling results must be verified before they are saved');
   const contentHash = content ? await sha256Text(content) : null;
@@ -193,7 +195,7 @@ export async function completeSourceFetch(sourceId: string, input: { markdown: s
   if (!/^[a-f0-9]{64}$/i.test(input.contentHash) || await sha256Text(input.markdown) !== input.contentHash.toLowerCase()) return invalid('Fetched content hash does not match the returned Markdown');
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
   if (current.fetchStatus !== 'queued') return conflict('Source fetch is not queued');
-  const imported = await importTranscript(current.lessonId, input.markdown, 'user_text', undefined, actorType);
+  const imported = await importTranscript(current.lessonId, input.markdown, 'runner_fetch', undefined, actorType);
   if (!imported.ok) return imported as Result<SourceRecord>;
   const next: SourceRecord = { ...current, status: 'ready', contentFormat: 'markdown', contentHash: input.contentHash, fetchStatus: 'fetched', fetchMethod: 'scrapling_fetch', fetchedAt: isoNow(), fetchError: null, updatedAt: isoNow() };
   await withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
@@ -201,6 +203,56 @@ export async function completeSourceFetch(sourceId: string, input: { markdown: s
     ctx.emit({ type: 'source.fetch_completed', actorType, objectType: 'source', objectId: sourceId, summary: `Fetched page from ${urlDomain(current.url) ?? 'public source'}`, payload: sourceEventPayload(next) });
   });
   return ok(next);
+}
+
+/** Records the content metadata for text the human supplied against a URL source. */
+export async function attachSourceTranscript(
+  sourceId: string,
+  content: string,
+  contentFormat: SourceContentFormat = 'plain',
+  actorType: ActorType = 'human',
+  transcriptSource: TranscriptSource = 'user_text',
+): Promise<Result<SourceRecord>> {
+  const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.length > MAX_CONTENT) return invalid('Transcript is empty or exceeds the 2 MiB limit');
+  const next: SourceRecord = {
+    ...current,
+    status: 'ready',
+    contentFormat,
+    contentHash: await sha256Text(trimmed),
+    fetchMethod: transcriptSource === 'user_upload' ? 'upload' : transcriptSource === 'local_transcription' ? 'local_transcription' : 'user_paste',
+    fetchStatus: 'not_requested',
+    fetchError: null,
+    updatedAt: isoNow(),
+  };
+  await withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
+    await ctx.db.sourceRecords.put(next);
+    ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Transcript saved for "${next.title}"`, payload: sourceEventPayload(next) });
+  });
+  return ok(next);
+}
+
+/**
+ * The Source Inbox boundary for user-supplied URL text. Keeping import and
+ * source metadata here prevents Quick Skill (or another caller) from
+ * accidentally creating transcript evidence without its SourceRecord hash.
+ */
+export async function importSourceTranscript(
+  sourceId: string,
+  content: string,
+  transcriptSource: TranscriptSource,
+  fileName?: string,
+  actorType: ActorType = 'human',
+  mode: 'replace' | 'append' = 'replace',
+): Promise<Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>> {
+  const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
+  const imported = await importTranscript(current.lessonId, content, transcriptSource, fileName, actorType, mode);
+  if (!imported.ok) return imported as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
+  const format: SourceContentFormat = fileName?.toLowerCase().endsWith('.srt') ? 'srt' : fileName?.toLowerCase().endsWith('.vtt') ? 'vtt' : 'plain';
+  const attached = await attachSourceTranscript(sourceId, content, format, actorType, transcriptSource);
+  if (!attached.ok) return attached as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
+  return ok({ source: attached.value, segmentCount: imported.value.segmentCount, totalSegments: imported.value.totalSegments });
 }
 
 export async function failSourceFetch(sourceId: string, reason: string, actorType: ActorType = 'runner'): Promise<Result<SourceRecord>> {

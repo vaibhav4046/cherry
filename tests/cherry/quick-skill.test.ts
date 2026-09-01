@@ -5,7 +5,8 @@ import { generateSkillFromLesson, previewQuickSkill } from '../../src/cherry/ski
 import { createMission, createWorkspace, updateMission } from '../../src/cherry/mission/mission-service.ts';
 import { importTranscript, loadLesson } from '../../src/cherry/watch/lesson-service.ts';
 import { listEvidence } from '../../src/cherry/evidence/evidence-service.ts';
-import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
+import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
+import { listApprovals, requestSkillGraphApproval, decideSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { compileSkillBundle } from '../../src/cherry/compiler/archive-builder.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import type { TranscriptSegment } from '../../src/cherry/watch/watch-model.ts';
@@ -146,6 +147,32 @@ describe('quick skill pipeline', () => {
 
     const none = await generateSkillFromLesson({ lessonId: lesson.id, name: 'None', keepStepIndices: [] });
     expect(none.ok).toBe(false);
+  });
+
+  it('labels runner-fetched transcript evidence as a tool result', async () => {
+    const { workspace, lesson } = await seededLesson();
+    unwrap(await importTranscript(lesson.id, '0:05 Create the frame.\n\n0:40 Check alignment.', 'runner_fetch', undefined, 'runner'));
+    unwrap(await generateSkillFromLesson({ lessonId: lesson.id, name: 'Runner evidence' }));
+    const evidence = await listEvidence(workspace.id);
+    expect(evidence.every((record) => record.provenanceMethod === 'tool_result')).toBe(true);
+  });
+
+  it('preserves local transcription provenance through generated evidence', async () => {
+    const { workspace, lesson } = await seededLesson();
+    unwrap(await importTranscript(lesson.id, '0:05 Create the frame.\n\n0:40 Check alignment.', 'local_transcription'));
+    unwrap(await generateSkillFromLesson({ lessonId: lesson.id, name: 'Local transcription' }));
+    const evidence = await listEvidence(workspace.id);
+    expect(evidence.every((record) => record.provenanceMethod === 'local_transcription')).toBe(true);
+  });
+
+  it('records approval requests as a human action while retaining the named requester', async () => {
+    const { workspace, lesson } = await seededLesson();
+    unwrap(await importTranscript(lesson.id, '0:05 Create the frame.\n\n0:40 Check alignment.', 'user_text'));
+    const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id, name: 'Human approval' }));
+    unwrap(await requestSkillGraphApproval(generated.graph.id, 'Reviewed by the person', 'user', 'human'));
+    const event = (await listProofEvents(workspace.id)).find((candidate) => candidate.type === 'skillgraph.approval_requested');
+    expect(event?.actorType).toBe('human');
+    expect((await listApprovals(workspace.id))[0]?.requestedBy).toBe('user');
   });
 });
 

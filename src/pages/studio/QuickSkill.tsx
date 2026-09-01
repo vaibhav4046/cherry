@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
-import { getLesson, importTranscript, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
-import { embedUrl } from '../../cherry/watch/youtube-url.ts';
+import { getLesson, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
+import { embedUrl, isYouTubeHost } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
 import { runVerification } from '../../cherry/verify/verification-service.ts';
@@ -22,12 +22,12 @@ import {
   type SourceDigest,
   type SourceInfo,
 } from '../../cherry/notebook/digest.ts';
-import type { Lesson } from '../../cherry/watch/watch-model.ts';
+import type { Lesson, TranscriptSource } from '../../cherry/watch/watch-model.ts';
 import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { DerivedSkillDraft } from '../../cherry/skillgraph/auto-draft.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { Icons } from '../../components/Icons.tsx';
-import { completeSourceFetch, createSource, failSourceFetch, getSource, requestSourceFetch, updateSource } from '../../cherry/source/source-service.ts';
+import { completeSourceFetch, createSource, failSourceFetch, getSource, importSourceTranscript, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
 
@@ -37,8 +37,7 @@ export function classifyQuickSkillMaterial(material: string): 'raw' | 'youtube' 
   try {
     const url = new URL(material.trim());
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'raw';
-    const host = url.hostname.toLowerCase();
-    return host === 'youtu.be' || host.endsWith('.youtu.be') || host === 'youtube.com' || host.endsWith('.youtube.com') ? 'youtube' : 'article';
+    return isYouTubeHost(url.hostname) ? 'youtube' : 'article';
   } catch {
     return 'raw';
   }
@@ -78,6 +77,7 @@ export default function QuickSkill() {
   const [activeSource, setActiveSource] = useState<SourceRecord | null>(null);
   const [sourceChoice, setSourceChoice] = useState<'paste' | 'transcribe' | null>(null);
   const [runnerReady, setRunnerReady] = useState(false);
+  const [transcriptSource, setTranscriptSource] = useState<TranscriptSource>('user_text');
 
   useEffect(() => {
     void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
@@ -190,10 +190,11 @@ export default function QuickSkill() {
     });
   }
 
-  async function importText(text: string, source: 'user_text' | 'user_upload', fileName?: string) {
+  async function importText(text: string, source: TranscriptSource, fileName?: string) {
     await withBusy(async () => {
       const mode = sourceCount === 0 ? 'replace' : 'append';
-      const imported = await importTranscript(lesson!.id, text, source, fileName, 'human', mode);
+      if (!activeSource) throw new Error('Choose a source before importing a transcript.');
+      const imported = await importSourceTranscript(activeSource.id, text, source, fileName, 'human', mode);
       if (!imported.ok) throw new Error(imported.error.message);
       setSourceCount((count) => count + 1);
       setSources((current) => [
@@ -212,11 +213,7 @@ export default function QuickSkill() {
       setDigest(digestSegments(await listTranscript(lesson!.id)));
       setAddingSource(false);
       setStage('review');
-      if (activeSource) {
-        const ready = await updateSource(activeSource.id, { status: 'ready' }, 'human');
-        if (!ready.ok) throw new Error(ready.error.message);
-        setActiveSource(ready.value);
-      }
+      setActiveSource(imported.value.source);
     });
   }
 
@@ -231,24 +228,26 @@ export default function QuickSkill() {
   async function handleRunnerFetch() {
     await withBusy(async () => {
       if (!activeSource?.url) throw new Error('Start with an article first.');
+      if (activeSource.kind !== 'article') throw new Error('Only public articles can be fetched by the runner.');
       const queued = await requestSourceFetch(activeSource.id);
       if (!queued.ok) throw new Error(queued.error.message);
       setActiveSource(queued.value);
-      if (!lesson?.missionId) throw new Error('This article is not linked to a project. Start again.');
-      const domain = new URL(queued.value.url!).hostname;
-      const job = await submitRunnerJob({
+      try {
+        if (!lesson?.missionId) throw new Error('This article is not linked to a project. Start again.');
+        const domain = new URL(queued.value.url!).hostname;
+        const job = await submitRunnerJob({
         workspaceId: queued.value.workspaceId,
         missionId: lesson.missionId,
         adapter: 'scrapling-fetch',
         input: { url: queued.value.url, allowedDomains: [domain], maxBytes: 262144, respectRobots: true },
         idempotencyKey: `source-fetch:${queued.value.id}:${Date.now()}`,
-      });
-      if (!job.ok) { await failSourceFetch(queued.value.id, job.error.message); throw new Error(job.error.message); }
-      for (let attempt = 0; attempt < 60; attempt += 1) {
+        });
+        if (!job.ok) throw new Error(job.error.message);
+        for (let attempt = 0; attempt < 60; attempt += 1) {
         await new Promise((resolve) => window.setTimeout(resolve, 500));
         const status = await pollRunnerJob(job.value.jobId);
-        if (!status.ok) { await failSourceFetch(queued.value.id, status.error.message); throw new Error(status.error.message); }
-        if (status.value.status === 'failed') { const message = status.value.result?.stderr || 'The local fetch failed.'; await failSourceFetch(queued.value.id, message); throw new Error(message); }
+        if (!status.ok) throw new Error(status.error.message);
+        if (status.value.status === 'failed' || status.value.status === 'cancelled') throw new Error(status.value.result?.stderr || `The local fetch was ${status.value.status}.`);
         if (status.value.status !== 'succeeded') continue;
         const payload = JSON.parse(status.value.result?.stdout ?? '{}') as { status?: string; markdown?: string; contentHash?: string; reason?: string };
         if (payload.status !== 'fetched' || !payload.markdown || !payload.contentHash) throw new Error(payload.reason ?? 'The local fetch returned no readable page.');
@@ -266,13 +265,18 @@ export default function QuickSkill() {
         setSourceCount(1);
         setStage('review');
         return;
+        }
+        throw new Error('The local fetch timed out after 30 seconds.');
+      } catch (thrown) {
+        const message = (thrown as Error).message || 'The local fetch failed.';
+        await failSourceFetch(queued.value.id, message);
+        throw thrown;
       }
-      await failSourceFetch(queued.value.id, 'The local fetch timed out after 30 seconds.');
-      throw new Error('The local fetch timed out after 30 seconds.');
     });
   }
 
-  function fillTranscript(text: string) {
+  function fillTranscript(text: string, source: TranscriptSource = 'user_text') {
+    setTranscriptSource(source);
     if (transcriptRef.current) {
       transcriptRef.current.value = text;
       transcriptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
@@ -283,7 +287,7 @@ export default function QuickSkill() {
     setError(null);
     try {
       const text = await transcribeMediaFile(file, setAutoProgress);
-      fillTranscript(text);
+      fillTranscript(text, 'local_transcription');
     } catch (thrown) {
       setAutoProgress(null);
       setError(`On-device transcription failed: ${(thrown as Error).message}`);
@@ -306,7 +310,7 @@ export default function QuickSkill() {
       captureRef.current = null;
       const pcm = await decodeToMono16k(await blob.arrayBuffer());
       const text = await transcribePcm(pcm, setAutoProgress);
-      fillTranscript(text);
+      fillTranscript(text, 'local_transcription');
     } catch (thrown) {
       setCapturing(false);
       captureRef.current = null;
@@ -325,7 +329,7 @@ export default function QuickSkill() {
       if (!generated.ok) throw new Error(generated.error.message);
 
       // Human approval: you just reviewed the exact steps on this screen.
-      const request = await requestSkillGraphApproval(generated.value.graph.id, 'Reviewed in Quick Skill', 'user');
+      const request = await requestSkillGraphApproval(generated.value.graph.id, 'Reviewed in Quick Skill', 'user', 'human');
       if (!request.ok) throw new Error(request.error.message);
       const decided = await decideSkillGraphApproval(request.value.approval.id, 'approved', 'user');
       if (!decided.ok) throw new Error(decided.error.message);
@@ -406,7 +410,7 @@ export default function QuickSkill() {
 
   function teachAnother() {
     captureRef.current?.stop();
-    setStage('source'); setError(null); setLesson(null); setActiveSource(null); setDraft(null); setKept(new Set()); setGraph(null); setVerifyNote(null); setBundleNote(null); setSourceCount(0); setSources([]); setDigest(null); setOutputNote(null); setAddingSource(false); setSourceChoice(null); setAutoProgress(null); setCapturing(false);
+    setStage('source'); setError(null); setLesson(null); setActiveSource(null); setDraft(null); setKept(new Set()); setGraph(null); setVerifyNote(null); setBundleNote(null); setSourceCount(0); setSources([]); setDigest(null); setOutputNote(null); setAddingSource(false); setSourceChoice(null); setTranscriptSource('user_text'); setAutoProgress(null); setCapturing(false);
     navigate('/studio/quick');
   }
 
@@ -436,6 +440,7 @@ export default function QuickSkill() {
             <span>Paste a YouTube link, an article link, or raw text.</span>
             <textarea className="textarea" name="material" autoFocus required style={{ minHeight: 160 }} />
           </label>
+          <p className="label" style={{ margin: 0 }}>By continuing, you confirm you may use this material. Cherry records this acknowledgement; it does not verify ownership.</p>
           <button type="submit" className="btn btn-primary" disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="quick-source-next">
             {busy ? 'Preparing…' : 'Create a skill'}
           </button>
@@ -541,7 +546,7 @@ export default function QuickSkill() {
               onSubmit={(event) => {
                 event.preventDefault();
                 const text = String(new FormData(event.currentTarget).get('transcript') ?? '');
-                void importText(text, 'user_text');
+                void importText(text, transcriptSource);
               }}
               className="stack"
             >
@@ -648,7 +653,7 @@ export default function QuickSkill() {
               <p className="kicker" style={{ fontSize: 12 }}>Notebook</p>
               <h2 className="subhead" style={{ fontSize: 22, margin: 0 }}>{skillName.trim() || lesson?.title || 'Untitled notebook'}</h2>
               <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>
-                {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {digest?.wordCount ?? 0} words ingested · named for you
+                {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {digest?.wordCount ?? 0} words added · named for you
               </span>
             </section>
             {digest ? (

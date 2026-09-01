@@ -5,6 +5,7 @@ describe('classifyQuickSkillMaterial', () => {
   it('routes only complete YouTube hosts to the official-player path', () => {
     expect(classifyQuickSkillMaterial('https://youtu.be/dQw4w9WgXcQ')).toBe('youtube');
     expect(classifyQuickSkillMaterial('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe('youtube');
+    expect(classifyQuickSkillMaterial('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')).toBe('youtube');
     expect(classifyQuickSkillMaterial('https://notyoutube.com/watch?v=dQw4w9WgXcQ')).toBe('article');
   });
 

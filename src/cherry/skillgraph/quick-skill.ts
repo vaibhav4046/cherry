@@ -6,6 +6,17 @@ import { updateMission } from '../mission/mission-service.ts';
 import type { Evaluation } from './skillgraph-model.ts';
 import type { SkillGraph } from './skillgraph-model.ts';
 import { deriveSkillFromTranscript, type DerivedSkillDraft } from './auto-draft.ts';
+import type { TranscriptSource } from '../watch/watch-model.ts';
+import type { ProvenanceMethod } from '../evidence/evidence-model.ts';
+
+const provenanceForTranscriptSource: Record<TranscriptSource, ProvenanceMethod> = {
+  user_text: 'user_typed',
+  user_upload: 'user_upload',
+  creator_authorized_captions: 'creator_authorized_captions',
+  local_transcription: 'local_transcription',
+  runner_fetch: 'tool_result',
+  unknown: 'unknown',
+};
 
 export interface QuickSkillInput {
   lessonId: string;
@@ -88,7 +99,7 @@ export async function generateSkillFromLesson(input: QuickSkillInput): Promise<R
         lessonId: lesson.id,
         sourceType: 'transcript',
         claim: step.sourceText.slice(0, 2000),
-        provenanceMethod: lesson.transcriptSource === 'user_upload' ? 'user_upload' : 'user_typed',
+        provenanceMethod: provenanceForTranscriptSource[lesson.transcriptSource ?? 'unknown'],
         timestampSeconds: step.timestampSeconds,
         transferability: 'unknown',
         ...(lesson.canonicalUrl ? { sourceUri: lesson.canonicalUrl } : {}),

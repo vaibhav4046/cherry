@@ -12,6 +12,11 @@ const ALLOWED_HOSTS = new Set([
   'youtu.be',
 ]);
 
+/** The deliberately small set of official YouTube hosts Cherry recognises. */
+export function isYouTubeHost(host: string): boolean {
+  return ALLOWED_HOSTS.has(host.toLowerCase().replace(/\.$/, ''));
+}
+
 export interface ParsedYouTubeUrl {
   videoId: string;
   canonicalUrl: string;
@@ -51,7 +56,7 @@ export function parseYouTubeUrl(raw: string): Result<ParsedYouTubeUrl> {
     return invalid('Only http(s) YouTube URLs are supported');
   }
   const host = url.hostname.toLowerCase();
-  if (!ALLOWED_HOSTS.has(host)) {
+  if (!isYouTubeHost(host)) {
     return invalid(`Host ${host} is not a recognised YouTube domain`);
   }
 
