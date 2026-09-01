@@ -6,8 +6,8 @@ import { createMission, createWorkspace, transitionMission, updateMission } from
 import { getLesson, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl, isYouTubeFamilyHost } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
-import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
-import { runVerification } from '../../cherry/verify/verification-service.ts';
+import { requestSkillGraphApproval, decideSkillGraphApproval, getSkillGraph, listApprovals } from '../../cherry/skillgraph/skillgraph-service.ts';
+import { listVerifications, runVerification } from '../../cherry/verify/verification-service.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
 import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, readLocalMediaBytes, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
@@ -36,6 +36,15 @@ import { LOCAL_TEXT_FILE_ACCEPT, readLocalTextFile } from '../../cherry/source/l
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
 import { AddToCherry } from './AddToCherry.tsx';
+import {
+  clearQuickSkillDraft,
+  hasQuickSkillDraftContent,
+  keptIndicesForLesson,
+  quickSkillDraftMatches,
+  readQuickSkillDraft,
+  writeQuickSkillDraft,
+  type QuickSkillDraft,
+} from '../../cherry/skillgraph/quick-skill-draft.ts';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
@@ -70,7 +79,7 @@ export function transcriptImportMode(hasPersistedTranscript: boolean, batchIndex
  * every stage, same domain services as the manual flow.
  */
 export default function QuickSkill() {
-  const { activeWorkspace, refresh } = useAppState();
+  const { activeWorkspace, ready, refresh } = useAppState();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sourceId = searchParams.get('sourceId');
@@ -97,7 +106,6 @@ export default function QuickSkill() {
   const [addingSource, setAddingSource] = useState(false);
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
   const materialRef = useRef<HTMLTextAreaElement | null>(null);
-  const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
   const transcriptFilesRef = useRef<HTMLInputElement | null>(null);
   const uploadInFlightRef = useRef(false);
   const mediaFileRef = useRef<HTMLInputElement | null>(null);
@@ -111,6 +119,15 @@ export default function QuickSkill() {
   const [transcriptSource, setTranscriptSource] = useState<HumanTranscriptSource>('user_text');
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [transcribingFile, setTranscribingFile] = useState(false);
+  const [material, setMaterial] = useState('');
+  const [transcriptText, setTranscriptText] = useState('');
+  const [additionalSourceText, setAdditionalSourceText] = useState('');
+  const [draftHydrated, setDraftHydrated] = useState(false);
+  const [anchorResolved, setAnchorResolved] = useState(sourceId === null);
+  const draftSnapshotRef = useRef<QuickSkillDraft | null>(null);
+  const draftCanPersistRef = useRef(false);
+  const workInFlightRef = useRef(false);
+  const approvalInFlightRef = useRef(false);
 
   async function handleLoadStarterLibrary() {
     setBusy(true);
@@ -141,16 +158,80 @@ export default function QuickSkill() {
   }, [requestedAdd, stage]);
 
   useEffect(() => {
-    if (!sourceId || !activeWorkspace) return;
+    if (!ready) return;
     let cancelled = false;
+    const stored = readQuickSkillDraft(window.localStorage);
+    const resetSourceState = () => {
+      captureRef.current?.stop();
+      setStage('source');
+      setError(null);
+      setLesson(null);
+      setActiveSource(null);
+      setDraft(null);
+      setKept(new Set());
+      setGraph(null);
+      setVerifyNote(null);
+      setBundleNote(null);
+      setSourceCount(0);
+      setSources([]);
+      setDigest(null);
+      setOutputNote(null);
+      setAddingSource(false);
+      setAutoProgress(null);
+      setCapturing(false);
+    };
+
+    if (!sourceId) {
+      resetSourceState();
+      setAnchorResolved(true);
+      if (requestedAdd) {
+        clearQuickSkillDraft(window.localStorage);
+        setMaterial('');
+        setTranscriptText('');
+        setAdditionalSourceText('');
+        setSourceChoice(null);
+        setTranscriptSource('user_text');
+        setSkillName('');
+      } else if (stored && quickSkillDraftMatches(stored, activeWorkspace?.id ?? null)) {
+        if (stored.sourceId) {
+          setAnchorResolved(false);
+          setDraftHydrated(false);
+          navigate(`/studio/quick?sourceId=${encodeURIComponent(stored.sourceId)}`, { replace: true });
+          return () => { cancelled = true; };
+        }
+        setMaterial(stored.material);
+        setTranscriptText(stored.transcriptText);
+        setAdditionalSourceText(stored.additionalSourceText);
+        setSourceChoice(stored.sourceChoice);
+        setTranscriptSource(stored.transcriptSource);
+        setSkillName(stored.skillName);
+      } else {
+        setMaterial('');
+        setTranscriptText('');
+        setAdditionalSourceText('');
+        setSourceChoice(null);
+        setTranscriptSource('user_text');
+        setSkillName('');
+      }
+      setDraftHydrated(true);
+      return () => { cancelled = true; };
+    }
+
+    setAnchorResolved(false);
+    setDraftHydrated(false);
+    resetSourceState();
+    if (!activeWorkspace) return () => { cancelled = true; };
+
     void (async () => {
-      setBusy(true); setError(null);
+      setBusy(true);
       try {
         const source = await getSource(sourceId);
         if (!source || source.workspaceId !== activeWorkspace.id) throw new Error('That source is not available in your current space');
+        const matchingDraft = stored && quickSkillDraftMatches(stored, activeWorkspace.id, source.id) ? stored : null;
         let loaded = await getLesson(source.lessonId);
         if (!loaded) throw new Error('The source could not be found');
         let mission = loaded.missionId ? await getMission(loaded.missionId) : null;
+        let createdMission = false;
         if (!mission) {
           const created = await createMission({ workspaceId: activeWorkspace.id, title: source.title, objective: `Turn ${source.title} into an approved, portable skill.`, definitionOfDone: ['Each step links back to the source', 'You approve the exact skill version', 'Checks pass'] });
           if (!created.ok) throw new Error(created.error.message);
@@ -161,28 +242,162 @@ export default function QuickSkill() {
           if (!lessonLinked.ok) throw new Error(lessonLinked.error.message);
           loaded = lessonLinked.value;
           await transitionMission(mission.id, 'LEARNING');
+          createdMission = true;
         } else if (mission.state === 'DRAFT') {
           await transitionMission(mission.id, 'LEARNING');
         }
         const segments = await listTranscript(loaded.id);
         if (cancelled) return;
-        setLesson(loaded); setActiveSource(source); setSkillName(source.title); setSourceCount(segments.length > 0 ? 1 : 0);
-        if (segments.length > 0) {
+
+        setAnchorResolved(true);
+        setLesson(loaded);
+        setActiveSource(source);
+        setMaterial('');
+        setTranscriptText(matchingDraft?.transcriptText ?? '');
+        setAdditionalSourceText(matchingDraft?.additionalSourceText ?? '');
+        setTranscriptSource(matchingDraft?.transcriptSource ?? 'user_text');
+        setSkillName(matchingDraft?.skillName || source.title);
+        setSourceCount(segments.length > 0 ? 1 : 0);
+
+        if (segments.length === 0) {
+          setSourceChoice(
+            matchingDraft?.sourceChoice
+              ?? (source.kind === 'youtube' ? requestedSourceChoice : requestedSourceChoice === 'paste' ? 'paste' : null),
+          );
+          setStage('transcript');
+        } else {
           const preview = await previewQuickSkill(loaded.id);
           if (!preview.ok) throw new Error(preview.error.message);
-          setDraft(preview.value); setKept(new Set(preview.value.steps.map((_, index) => index))); setDigest(digestSegments(segments)); setStage('review');
-        } else {
-          setSourceChoice(source.kind === 'youtube' ? requestedSourceChoice : requestedSourceChoice === 'paste' ? 'paste' : null);
-          setStage('transcript');
+          const combinedText = segments.map((segment) => segment.text).join(' ');
+          setTranscriptText('');
+          setSourceChoice(null);
+          setDraft(preview.value);
+          setDigest(digestSegments(segments));
+          setSources([{
+            title: source.title,
+            summary: summarizeText(combinedText),
+            segmentCount: segments.length,
+            kind: source.kind === 'file' ? 'file' : 'paste',
+          }]);
+
+          const persistedGraph = mission.skillGraphId ? await getSkillGraph(mission.skillGraphId) : null;
+          const graphBelongsToFlow = persistedGraph
+            && persistedGraph.workspaceId === activeWorkspace.id
+            && persistedGraph.missionId === mission.id;
+          if (graphBelongsToFlow) {
+            setGraph(persistedGraph);
+            setSkillName(persistedGraph.name);
+            const graphIndices = preview.value.steps.flatMap((step, index) => (
+              persistedGraph.nodes.some((node) => node.kind === step.kind && node.title === step.title && node.goal === step.goal)
+                ? [index]
+                : []
+            ));
+            setKept(new Set(graphIndices));
+            if (persistedGraph.status === 'approved' && persistedGraph.approvedRevision === persistedGraph.revision) {
+              const reports = await listVerifications(activeWorkspace.id, mission.id);
+              const exactReport = reports.find((report) => (
+                report.skillGraphId === persistedGraph.id
+                && report.skillGraphRevision === persistedGraph.revision
+              ));
+              setVerifyNote(exactReport
+                ? `${exactReport.status} · ${exactReport.totalAssertions - exactReport.blockingFailures}/${exactReport.totalAssertions} assertions`
+                : null);
+              setStage('ready');
+              clearQuickSkillDraft(window.localStorage);
+            } else {
+              setStage('review');
+            }
+          } else {
+            const restored = matchingDraft
+              ? keptIndicesForLesson(matchingDraft, loaded.id, loaded.revision, preview.value.steps.length)
+              : null;
+            setKept(new Set(restored ?? preview.value.steps.map((_, index) => index)));
+            setStage('review');
+          }
         }
-        await refresh();
-      } catch (thrown) { if (!cancelled) setError(plainQuickError((thrown as Error).message)); }
-      finally { if (!cancelled) setBusy(false); }
+        if (createdMission) await refresh();
+      } catch (thrown) {
+        if (!cancelled) {
+          setError(plainQuickError((thrown as Error).message));
+          setStage('source');
+        }
+      } finally {
+        if (!cancelled) {
+          setBusy(false);
+          setDraftHydrated(true);
+        }
+      }
     })();
     return () => { cancelled = true; };
-  }, [activeWorkspace?.id, refresh, requestedSourceChoice, sourceId]);
+  }, [activeWorkspace?.id, navigate, ready, refresh, requestedAdd, requestedSourceChoice, sourceId]);
+
+  draftSnapshotRef.current = stage === 'ready' ? null : {
+    schemaVersion: 1,
+    savedAt: new Date().toISOString(),
+    workspaceId: activeSource?.workspaceId ?? activeWorkspace?.id ?? null,
+    sourceId: activeSource?.id ?? sourceId,
+    material,
+    sourceChoice,
+    transcriptText,
+    transcriptSource,
+    additionalSourceText,
+    skillName,
+    kept: lesson && draft
+      ? { lessonId: lesson.id, lessonRevision: lesson.revision, indices: [...kept].sort((a, b) => a - b) }
+      : null,
+  };
+  draftCanPersistRef.current = ready && draftHydrated && anchorResolved && stage !== 'ready';
+
+  useEffect(() => {
+    if (!ready || !draftHydrated || !anchorResolved || stage === 'ready') return;
+    const timer = window.setTimeout(() => {
+      const snapshot = draftSnapshotRef.current;
+      if (snapshot) {
+        const current = { ...snapshot, savedAt: new Date().toISOString() };
+        if (hasQuickSkillDraftContent(current)) writeQuickSkillDraft(window.localStorage, current);
+        else clearQuickSkillDraft(window.localStorage);
+      }
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [
+    activeSource?.id,
+    activeSource?.workspaceId,
+    activeWorkspace?.id,
+    additionalSourceText,
+    anchorResolved,
+    draft,
+    draftHydrated,
+    kept,
+    lesson,
+    material,
+    ready,
+    skillName,
+    sourceChoice,
+    sourceId,
+    stage,
+    transcriptSource,
+    transcriptText,
+  ]);
+
+  useEffect(() => {
+    const flushDraft = () => {
+      const snapshot = draftSnapshotRef.current;
+      if (snapshot && draftCanPersistRef.current) {
+        const current = { ...snapshot, savedAt: new Date().toISOString() };
+        if (hasQuickSkillDraftContent(current)) writeQuickSkillDraft(window.localStorage, current);
+        else clearQuickSkillDraft(window.localStorage);
+      }
+    };
+    window.addEventListener('pagehide', flushDraft);
+    return () => {
+      window.removeEventListener('pagehide', flushDraft);
+      flushDraft();
+    };
+  }, []);
 
   async function withBusy<T>(work: () => Promise<T>): Promise<T | undefined> {
+    if (workInFlightRef.current) return undefined;
+    workInFlightRef.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -191,15 +406,15 @@ export default function QuickSkill() {
       setError(plainQuickError((thrown as Error).message));
       return undefined;
     } finally {
+      workInFlightRef.current = false;
       setBusy(false);
     }
   }
 
   async function handleSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const material = String(data.get('material') ?? '').trim();
-    if (!material) { setError('Paste a link or text to continue.'); return; }
+    const submittedMaterial = material.trim();
+    if (!submittedMaterial) { setError('Paste a link or text to continue.'); return; }
     await withBusy(async () => {
       let workspaceId = activeWorkspace?.id;
       if (!workspaceId) {
@@ -207,15 +422,15 @@ export default function QuickSkill() {
         if (!created.ok) throw new Error(created.error.message);
         workspaceId = created.value.id;
       }
-      const materialKind = classifyQuickSkillMaterial(material);
-      const url = materialKind === 'raw' ? null : new URL(material);
+      const materialKind = classifyQuickSkillMaterial(submittedMaterial);
+      const url = materialKind === 'raw' ? null : new URL(submittedMaterial);
       const isUrl = materialKind !== 'raw';
       const isYouTube = materialKind === 'youtube';
       const source = await createSource({
         workspaceId,
         kind: isUrl ? (isYouTube ? 'youtube' : 'article') : 'note',
         title: isYouTube ? 'YouTube video' : isUrl ? `Article from ${url!.hostname.replace(/^www\./, '')}` : 'Pasted notes',
-        ...(isUrl ? { url: material, permissionAcknowledged: true } : { content: material, contentFormat: 'plain' as const }),
+        ...(isUrl ? { url: submittedMaterial, permissionAcknowledged: true } : { content: submittedMaterial, contentFormat: 'plain' as const }),
       });
       if (!source.ok) throw new Error(source.error.message);
       const mission = await createMission({
@@ -231,6 +446,9 @@ export default function QuickSkill() {
       if (!loaded.ok) throw new Error(loaded.error.message);
       await transitionMission(mission.value.id, 'LEARNING');
       setActiveSource(source.value);
+      setMaterial('');
+      setTranscriptText('');
+      setAdditionalSourceText('');
       setSkillName('');
       setLesson(loaded.value);
       if (!isUrl) {
@@ -240,13 +458,14 @@ export default function QuickSkill() {
         setKept(new Set(preview.value.steps.map((_, index) => index)));
         setDigest(digestSegments(await listTranscript(loaded.value.id)));
         setSourceCount(1);
-        setSources([{ title: source.value.title, summary: summarizeText(material), segmentCount: (await listTranscript(loaded.value.id)).length, kind: 'paste' }]);
+        setSources([{ title: source.value.title, summary: summarizeText(submittedMaterial), segmentCount: (await listTranscript(loaded.value.id)).length, kind: 'paste' }]);
         setStage('review');
       } else {
         setSourceChoice(null);
         setStage('transcript');
       }
       await refresh();
+      navigate(`/studio/quick?sourceId=${encodeURIComponent(source.value.id)}`, { replace: true });
     });
   }
 
@@ -255,6 +474,9 @@ export default function QuickSkill() {
     const mode = requestedMode ?? transcriptImportMode((await listTranscript(lesson.id)).length > 0, 0);
     const imported = await importSourceTranscript(activeSource.id, text, source, fileName, 'human', mode);
     if (!imported.ok) throw new Error(imported.error.message);
+    const updatedLesson = await getLesson(lesson.id);
+    if (!updatedLesson) throw new Error('The saved source could not be reloaded.');
+    setLesson(updatedLesson);
     setSourceCount((count) => count + 1);
     setSources((current) => [
       ...current,
@@ -270,6 +492,8 @@ export default function QuickSkill() {
     setDraft(preview.value);
     setKept(new Set(preview.value.steps.map((_, index) => index)));
     setDigest(digestSegments(await listTranscript(lesson.id)));
+    setTranscriptText('');
+    setAdditionalSourceText('');
     setAddingSource(false);
     setStage('review');
     setActiveSource(imported.value.source);
@@ -390,10 +614,7 @@ export default function QuickSkill() {
 
   function fillTranscript(text: string, source: HumanTranscriptSource = 'user_text') {
     setTranscriptSource(source);
-    if (transcriptRef.current) {
-      transcriptRef.current.value = text;
-      transcriptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    setTranscriptText(text);
   }
 
   async function handleAutoFile(file: File) {
@@ -454,41 +675,63 @@ export default function QuickSkill() {
   }
 
   async function handleGenerate() {
-    await withBusy(async () => {
-      const generated = await generateSkillFromLesson({
-        lessonId: lesson!.id,
-        ...(skillName.trim() ? { name: skillName } : {}),
-        keepStepIndices: [...kept],
-      });
-      if (!generated.ok) throw new Error(generated.error.message);
+    if (approvalInFlightRef.current) return;
+    approvalInFlightRef.current = true;
+    try {
+      await withBusy(async () => {
+        let graphToApprove = graph;
+        if (!graphToApprove || graphToApprove.missionId !== lesson!.missionId || graphToApprove.workspaceId !== lesson!.workspaceId) {
+          const generated = await generateSkillFromLesson({
+            lessonId: lesson!.id,
+            ...(skillName.trim() ? { name: skillName } : {}),
+            keepStepIndices: [...kept],
+          });
+          if (!generated.ok) throw new Error(generated.error.message);
+          graphToApprove = generated.value.graph;
+        }
 
-      // Human approval: you just reviewed the exact steps on this screen.
-      const request = await requestSkillGraphApproval(generated.value.graph.id, 'Reviewed in Quick Skill', 'user', 'human');
-      if (!request.ok) throw new Error(request.error.message);
-      const decided = await decideSkillGraphApproval(request.value.approval.id, 'approved', 'user');
-      if (!decided.ok) throw new Error(decided.error.message);
-      setGraph(decided.value.graph);
+        // Human approval: you just reviewed the exact steps on this screen.
+        const approvals = await listApprovals(graphToApprove.workspaceId);
+        const pending = approvals.find((approval) => (
+          approval.objectType === 'skillgraph'
+          && approval.objectId === graphToApprove.id
+          && approval.objectRevision === graphToApprove.revision
+          && approval.decision === 'pending'
+        ));
+        let approvalId = pending?.id ?? null;
+        if (!approvalId) {
+          const request = await requestSkillGraphApproval(graphToApprove.id, 'Reviewed in Quick Skill', 'user', 'human');
+          if (!request.ok) throw new Error(request.error.message);
+          approvalId = request.value.approval.id;
+        }
+        const decided = await decideSkillGraphApproval(approvalId, 'approved', 'user');
+        if (!decided.ok) throw new Error(decided.error.message);
+        setGraph(decided.value.graph);
 
-      // Deterministic verification + receipt on the real mission.
-      if (lesson!.missionId) {
-        await transitionMission(lesson!.missionId, 'PLANNING', 'system');
-        await transitionMission(lesson!.missionId, 'AWAITING_APPROVAL', 'system');
-        await transitionMission(lesson!.missionId, 'EXECUTING', 'system');
-        await transitionMission(lesson!.missionId, 'VERIFYING', 'system');
-        const verified = await runVerification({ missionId: lesson!.missionId });
-        if (verified.ok) {
-          setVerifyNote(
-            `${verified.value.status} · ${verified.value.totalAssertions - verified.value.blockingFailures}/${verified.value.totalAssertions} assertions`,
-          );
-          if (verified.value.status === 'passed') {
-            await transitionMission(lesson!.missionId, 'COMPLETE', 'system');
-            await createProofReceipt(lesson!.missionId);
+        // Deterministic verification + receipt on the real mission.
+        if (lesson!.missionId) {
+          await transitionMission(lesson!.missionId, 'PLANNING', 'system');
+          await transitionMission(lesson!.missionId, 'AWAITING_APPROVAL', 'system');
+          await transitionMission(lesson!.missionId, 'EXECUTING', 'system');
+          await transitionMission(lesson!.missionId, 'VERIFYING', 'system');
+          const verified = await runVerification({ missionId: lesson!.missionId });
+          if (verified.ok) {
+            setVerifyNote(
+              `${verified.value.status} · ${verified.value.totalAssertions - verified.value.blockingFailures}/${verified.value.totalAssertions} assertions`,
+            );
+            if (verified.value.status === 'passed') {
+              await transitionMission(lesson!.missionId, 'COMPLETE', 'system');
+              await createProofReceipt(lesson!.missionId);
+            }
           }
         }
-      }
-      setStage('ready');
-      await refresh();
-    });
+        setStage('ready');
+        clearQuickSkillDraft(window.localStorage);
+        await refresh();
+      });
+    } finally {
+      approvalInFlightRef.current = false;
+    }
   }
 
   async function handleStudioOutput(kind: 'briefing' | 'study-guide' | 'faq') {
@@ -544,7 +787,8 @@ export default function QuickSkill() {
 
   function teachAnother() {
     captureRef.current?.stop();
-    setStage('source'); setError(null); setLesson(null); setActiveSource(null); setDraft(null); setKept(new Set()); setGraph(null); setVerifyNote(null); setBundleNote(null); setSourceCount(0); setSources([]); setDigest(null); setOutputNote(null); setAddingSource(false); setSourceChoice(null); setTranscriptSource('user_text'); setAutoProgress(null); setCapturing(false);
+    clearQuickSkillDraft(window.localStorage);
+    setStage('source'); setError(null); setLesson(null); setActiveSource(null); setDraft(null); setKept(new Set()); setGraph(null); setVerifyNote(null); setBundleNote(null); setSourceCount(0); setSources([]); setDigest(null); setOutputNote(null); setAddingSource(false); setSourceChoice(null); setTranscriptSource('user_text'); setAutoProgress(null); setCapturing(false); setMaterial(''); setTranscriptText(''); setAdditionalSourceText(''); setSkillName('');
     navigate('/studio/quick');
   }
 
@@ -577,7 +821,17 @@ export default function QuickSkill() {
         <form onSubmit={handleSource} className="card stack" style={{ gap: 'var(--sp-4)' }}>
           <label className="field">
             <span>Paste a YouTube link, an article link, or raw text.</span>
-            <textarea ref={materialRef} className="textarea" name="material" autoFocus required style={{ minHeight: 160 }} />
+            <textarea
+              ref={materialRef}
+              className="textarea"
+              name="material"
+              autoFocus
+              required
+              maxLength={1_000_000}
+              value={material}
+              onChange={(event) => setMaterial(event.currentTarget.value)}
+              style={{ minHeight: 160 }}
+            />
           </label>
           <p className="label" style={{ margin: 0 }}>By continuing, you confirm you may use this material. Cherry records this acknowledgement; it does not verify ownership.</p>
           <button type="submit" className="btn btn-primary" disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="quick-source-next">
@@ -687,12 +941,11 @@ export default function QuickSkill() {
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                const text = String(new FormData(event.currentTarget).get('transcript') ?? '');
-                void importText(text, transcriptSource);
+                void importText(transcriptText, transcriptSource);
               }}
               className="stack"
             >
-              <label className="field"><span>Transcript or captions</span><textarea ref={transcriptRef} className="textarea" name="transcript" required style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" /></label>
+              <label className="field"><span>Transcript or captions</span><textarea className="textarea" name="transcript" required maxLength={1_500_000} value={transcriptText} onChange={(event) => setTranscriptText(event.currentTarget.value)} style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" /></label>
               <div className="row">
                 <button type="submit" className="btn btn-primary" disabled={busy} data-testid="quick-transcript-next">
                   {busy ? 'Preparing…' : 'Review the method'}
@@ -732,8 +985,7 @@ export default function QuickSkill() {
                 style={{ gap: 'var(--sp-2)' }}
                 onSubmit={(event) => {
                   event.preventDefault();
-                  const text = String(new FormData(event.currentTarget).get('transcript') ?? '');
-                  void importText(text, 'user_text');
+                  void importText(additionalSourceText, 'user_text');
                 }}
               >
                 <label className="field">
@@ -742,6 +994,9 @@ export default function QuickSkill() {
                     className="textarea"
                     name="transcript"
                     required
+                    maxLength={1_000_000}
+                    value={additionalSourceText}
+                    onChange={(event) => setAdditionalSourceText(event.currentTarget.value)}
                     style={{ minHeight: 120 }}
                     placeholder="Paste another transcript, note, or document"
                     data-testid="quick-transcript"
