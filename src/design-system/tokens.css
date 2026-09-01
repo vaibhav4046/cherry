@@ -398,6 +398,11 @@ label.field > span:first-child { font-size: var(--text-caption); font-weight: 70
 @media (max-width: 833px) {
   .studio-rail { display: none; }
   .studio-main { padding: var(--sp-4); padding-bottom: 96px; }
+  /* The bottom bar is fixed, so anything scrolled into view can land under it
+     and swallow the next tap. Reserve the bar's height below any element the
+     browser scrolls to, and let the last content clear it. */
+  .studio-main :where(a, button, summary, details, [tabindex], input, textarea, select) { scroll-margin-bottom: 104px; }
+  .studio-main > *:last-child { margin-bottom: var(--sp-4); }
   .bottom-nav {
     display: flex;
     position: fixed;

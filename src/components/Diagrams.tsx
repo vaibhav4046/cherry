@@ -173,7 +173,7 @@ export function ProofFlow() {
 export function ConnectArch() {
   const chips = [200, 252, 304, 356, 408];
   return (
-    <svg viewBox="0 0 1200 470" role="img" aria-label="Illustrated architecture: your browser tab runs Cherry Wine locally with the mission state and at most five tools exposed; a WebMCP cable connects it to your own Claude or ChatGPT subscription, which reads state, calls tools, and watches the lesson with you. Below sits the gate: approvals, trust, and memory are human-only.">
+    <svg viewBox="0 0 1200 470" role="img" aria-label="Illustrated architecture: your browser tab runs Cherry Wine locally with the mission state and at most five tools exposed; a WebMCP cable connects it to your own Claude or ChatGPT subscription, which reads state, calls tools, and asks for approvals it can never grant. Below sits the gate: approvals, trust, and memory are human-only.">
       <Plate w={1200} h={470}>
         {/* Browser window */}
         <rect x={50} y={70} width={440} height={270} rx={18} fill={CREAM} stroke={INK} strokeWidth={3} />
@@ -211,7 +211,7 @@ export function ConnectArch() {
         <rect x={760} y={228} width={340} height={36} rx={18} fill={MAROON} stroke={CREAM} strokeWidth={1.5} />
         <text x={930} y={251} textAnchor="middle" fontFamily={FONT} fontWeight={700} fontSize={13} fill={CREAM}>reads state · calls tools</text>
         <rect x={760} y={276} width={340} height={36} rx={18} fill={MAROON} stroke={CREAM} strokeWidth={1.5} />
-        <text x={930} y={299} textAnchor="middle" fontFamily={FONT} fontWeight={700} fontSize={13} fill={CREAM}>watches the lesson with you</text>
+        <text x={930} y={299} textAnchor="middle" fontFamily={FONT} fontWeight={700} fontSize={13} fill={CREAM}>asks, never approves</text>
         <Label x={930} y={378} title="YOUR AGENT" sub="Claude · ChatGPT — your subscription, no API key" />
 
         {/* WebMCP cable */}

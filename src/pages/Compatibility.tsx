@@ -70,8 +70,8 @@ const ROWS: Row[] = [
   },
   {
     surface: 'Codex install target',
-    status: 'shipped',
-    evidence: 'Generated AGENTS.md + install.md per bundle; structure test-validated. A live Codex host was not available on this machine.',
+    status: 'validated',
+    evidence: "Validated in a live Codex CLI host on 2026-09-01 (codex-cli 0.151.0-alpha.7.2, signed in through ChatGPT): the stdio bridge was registered with codex mcp add, the host listed Cherry's tools, read the workspace export, and verified the compiled bundle's SHA-256. Full transcript with exact hashes and reproduction steps: docs/release/CODEX_MCP_CAPTURE.md. The workspace used is the labelled example, so its approval is reference state, not a live human approval.",
   },
   {
     surface: 'Native MCP bridge (stdio, read/verify)',
