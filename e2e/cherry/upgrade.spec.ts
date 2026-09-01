@@ -154,14 +154,7 @@ test.describe('quick skill wizard', () => {
     await page.goto('/studio/quick');
     await expect(page.getByRole('heading', { name: 'Quick Skill' })).toBeVisible();
 
-    // Stage 1: manual lesson (no video needed in CI), name, permission.
-    await page.getByText('More options').click();
-    await page.getByLabel('Skill name').fill('Wizard hero workflow');
-    await page.getByTestId('quick-source-next').click();
-
-    // Stage 2: paste a transcript.
-    await expect(page.getByTestId('quick-transcript')).toBeVisible();
-    await page.getByTestId('quick-transcript').fill(
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(
       [
         '0:05 Create a new frame for the hero section',
         '0:40 Always keep the heading a real h1 for accessibility',
@@ -169,9 +162,9 @@ test.describe('quick skill wizard', () => {
         '1:50 Check the spacing against the grid',
       ].join('\n'),
     );
-    await page.getByTestId('quick-transcript-next').click();
+    await page.getByTestId('quick-source-next').click();
 
-    // Stage 3: review derived steps — real checkboxes over real derivations.
+    // Raw text reaches review without a transcript interstitial.
     await expect(page.getByTestId('quick-steps')).toBeVisible();
     const checkboxes = page.getByTestId('quick-steps').locator('input[type="checkbox"]');
     await expect(checkboxes.first()).toBeChecked();
@@ -180,18 +173,13 @@ test.describe('quick skill wizard', () => {
 
     await page.getByTestId('quick-generate').click();
 
-    // Stage 4: approved, verified, downloadable.
+    // Approval remains a human action on the exact reviewed version.
     await expect(page.getByTestId('quick-ready')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/approved r\d+ by user/)).toBeVisible();
     await expect(page.getByText(/verify: passed/)).toBeVisible();
 
-    const downloadPromise = page.waitForEvent('download');
-    await page.getByTestId('quick-download').click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe('wizard-hero-workflow-v0.1.0.zip');
-
     // The skill is a real record: open it in the Skills library.
-    await page.getByRole('link', { name: 'Open in Skills' }).click();
+    await page.getByRole('link', { name: 'See it in your Library' }).click();
     await expect(page.getByTestId('skill-status')).toContainText('approved');
     // Nodes carry transcript evidence.
     await expect(page.getByText(/Evidence in scope \([1-9]/)).toBeVisible();
@@ -199,14 +187,9 @@ test.describe('quick skill wizard', () => {
 
   test('wizard refuses an empty transcript path honestly', async ({ page }) => {
     await page.goto('/studio/quick');
-    await page.getByText('More options').click();
-    await page.getByLabel('Skill name').fill('No transcript');
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('   ');
     await page.getByTestId('quick-source-next').click();
-    await expect(page.getByTestId('quick-transcript')).toBeVisible();
-    // HTML required attribute blocks empty submit; type whitespace to reach the service validation.
-    await page.getByTestId('quick-transcript').fill('   ');
-    await page.getByTestId('quick-transcript-next').click();
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('Paste a link or text');
   });
 });
 
@@ -214,16 +197,14 @@ test.describe('notebook (sources · overview · studio)', () => {
   test('drop sources, get an instant overview, generate a real briefing artifact', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('/studio/quick');
-    await page.getByTestId('quick-source-next').click();
-
-    await page.getByTestId('quick-transcript').fill(
+    await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(
       [
         '0:05 Create a hero section with a real heading for the landing page',
         '0:40 The hero section needs a main landmark so screen readers find the landing page',
         '1:20 Always check color contrast on the hero section before shipping',
       ].join('\n'),
     );
-    await page.getByTestId('quick-transcript-next').click();
+    await page.getByTestId('quick-source-next').click();
 
     // Three-pane notebook appears with an instant deterministic overview.
     await expect(page.getByTestId('notebook')).toBeVisible();

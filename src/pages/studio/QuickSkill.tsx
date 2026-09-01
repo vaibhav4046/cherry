@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
-import { getLesson, importTranscript, listTranscript, loadLesson, updateLesson } from '../../cherry/watch/lesson-service.ts';
+import { getLesson, importTranscript, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherry/skillgraph/skillgraph-service.ts';
@@ -27,9 +27,22 @@ import type { SkillGraph } from '../../cherry/skillgraph/skillgraph-model.ts';
 import type { DerivedSkillDraft } from '../../cherry/skillgraph/auto-draft.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { Icons } from '../../components/Icons.tsx';
-import { getSource, updateSource } from '../../cherry/source/source-service.ts';
+import { completeSourceFetch, createSource, failSourceFetch, getSource, requestSourceFetch, updateSource } from '../../cherry/source/source-service.ts';
+import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
+import type { SourceRecord } from '../../cherry/source/source-model.ts';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
+
+export function classifyQuickSkillMaterial(material: string): 'raw' | 'youtube' | 'article' {
+  try {
+    const url = new URL(material.trim());
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'raw';
+    const host = url.hostname.toLowerCase();
+    return host === 'youtu.be' || host.endsWith('.youtu.be') || host === 'youtube.com' || host.endsWith('.youtube.com') ? 'youtube' : 'article';
+  } catch {
+    return 'raw';
+  }
+}
 
 /**
  * Quick Skill: paste a YouTube link (or skip the video), paste the transcript,
@@ -62,6 +75,13 @@ export default function QuickSkill() {
   const captureRef = useRef<TabCapture | null>(null);
   const [autoProgress, setAutoProgress] = useState<TranscribeProgress | null>(null);
   const [capturing, setCapturing] = useState(false);
+  const [activeSource, setActiveSource] = useState<SourceRecord | null>(null);
+  const [sourceChoice, setSourceChoice] = useState<'paste' | 'transcribe' | null>(null);
+  const [runnerReady, setRunnerReady] = useState(false);
+
+  useEffect(() => {
+    void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
+  }, []);
 
   useEffect(() => {
     if (!sourceId || !activeWorkspace) return;
@@ -89,12 +109,12 @@ export default function QuickSkill() {
         }
         const segments = await listTranscript(loaded.id);
         if (cancelled) return;
-        setLesson(loaded); setSkillName(source.title); setSourceCount(segments.length > 0 ? 1 : 0);
+        setLesson(loaded); setActiveSource(source); setSkillName(source.title); setSourceCount(segments.length > 0 ? 1 : 0);
         if (segments.length > 0) {
           const preview = await previewQuickSkill(loaded.id);
           if (!preview.ok) throw new Error(preview.error.message);
           setDraft(preview.value); setKept(new Set(preview.value.steps.map((_, index) => index))); setDigest(digestSegments(segments)); setStage('review');
-        } else setStage('transcript');
+        } else { setSourceChoice(null); setStage('transcript'); }
         await refresh();
       } catch (thrown) { if (!cancelled) setError((thrown as Error).message); }
       finally { if (!cancelled) setBusy(false); }
@@ -118,10 +138,8 @@ export default function QuickSkill() {
   async function handleSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const url = String(data.get('url') ?? '').trim();
-    const name = String(data.get('name') ?? '').trim();
-    // Consent line sits beside the submit; submitting is the acknowledgment gesture.
-    const permission = true;
+    const material = String(data.get('material') ?? '').trim();
+    if (!material) { setError('Paste a link or text to continue.'); return; }
     await withBusy(async () => {
       let workspaceId = activeWorkspace?.id;
       if (!workspaceId) {
@@ -129,27 +147,45 @@ export default function QuickSkill() {
         if (!created.ok) throw new Error(created.error.message);
         workspaceId = created.value.id;
       }
+      const materialKind = classifyQuickSkillMaterial(material);
+      const url = materialKind === 'raw' ? null : new URL(material);
+      const isUrl = materialKind !== 'raw';
+      const isYouTube = materialKind === 'youtube';
+      const source = await createSource({
+        workspaceId,
+        kind: isUrl ? (isYouTube ? 'youtube' : 'article') : 'note',
+        title: isYouTube ? 'YouTube lesson' : isUrl ? `Article from ${url!.hostname.replace(/^www\./, '')}` : 'Pasted notes',
+        ...(isUrl ? { url: material, permissionAcknowledged: true } : { content: material, contentFormat: 'plain' as const }),
+      });
+      if (!source.ok) throw new Error(source.error.message);
       const mission = await createMission({
         workspaceId,
-        title: name || 'Quick skill (auto-named on generate)',
-        objective: `Turn ${url ? 'a permitted video lesson' : 'lesson material'} into an approved, portable skill.`,
+        title: source.value.title,
+        objective: 'Turn this material into an approved, portable skill.',
         definitionOfDone: ['Skill approved at the exact version you reviewed', 'Verification passes'],
       });
       if (!mission.ok) throw new Error(mission.error.message);
-      const loaded = await loadLesson({
-        workspaceId,
-        missionId: mission.value.id,
-        title: name || 'Quick lesson',
-        kind: url ? 'youtube' : 'manual',
-        ...(url ? { url } : {}),
-        permissionAcknowledged: permission,
-      });
+      const linkedMission = await updateMission(mission.value.id, { lessonId: source.value.lessonId });
+      if (!linkedMission.ok) throw new Error(linkedMission.error.message);
+      const loaded = await updateLesson(source.value.lessonId, { missionId: mission.value.id });
       if (!loaded.ok) throw new Error(loaded.error.message);
-      await updateMission(mission.value.id, { lessonId: loaded.value.id });
       await transitionMission(mission.value.id, 'LEARNING');
-      setSkillName(name);
+      setActiveSource(source.value);
+      setSkillName('');
       setLesson(loaded.value);
-      setStage('transcript');
+      if (!isUrl) {
+        const preview = await previewQuickSkill(loaded.value.id);
+        if (!preview.ok) throw new Error(preview.error.message);
+        setDraft(preview.value);
+        setKept(new Set(preview.value.steps.map((_, index) => index)));
+        setDigest(digestSegments(await listTranscript(loaded.value.id)));
+        setSourceCount(1);
+        setSources([{ title: source.value.title, summary: summarizeText(material), segmentCount: (await listTranscript(loaded.value.id)).length, kind: 'paste' }]);
+        setStage('review');
+      } else {
+        setSourceChoice(null);
+        setStage('transcript');
+      }
       await refresh();
     });
   }
@@ -176,7 +212,11 @@ export default function QuickSkill() {
       setDigest(digestSegments(await listTranscript(lesson!.id)));
       setAddingSource(false);
       setStage('review');
-      if (sourceId) await updateSource(sourceId, { status: 'ready' }, 'human');
+      if (activeSource) {
+        const ready = await updateSource(activeSource.id, { status: 'ready' }, 'human');
+        if (!ready.ok) throw new Error(ready.error.message);
+        setActiveSource(ready.value);
+      }
     });
   }
 
@@ -186,6 +226,50 @@ export default function QuickSkill() {
       const text = await file.text();
       await importText(text, 'user_upload', file.name);
     }
+  }
+
+  async function handleRunnerFetch() {
+    await withBusy(async () => {
+      if (!activeSource?.url) throw new Error('Start with an article first.');
+      const queued = await requestSourceFetch(activeSource.id);
+      if (!queued.ok) throw new Error(queued.error.message);
+      setActiveSource(queued.value);
+      if (!lesson?.missionId) throw new Error('This article is not linked to a project. Start again.');
+      const domain = new URL(queued.value.url!).hostname;
+      const job = await submitRunnerJob({
+        workspaceId: queued.value.workspaceId,
+        missionId: lesson.missionId,
+        adapter: 'scrapling-fetch',
+        input: { url: queued.value.url, allowedDomains: [domain], maxBytes: 262144, respectRobots: true },
+        idempotencyKey: `source-fetch:${queued.value.id}:${Date.now()}`,
+      });
+      if (!job.ok) { await failSourceFetch(queued.value.id, job.error.message); throw new Error(job.error.message); }
+      for (let attempt = 0; attempt < 60; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        const status = await pollRunnerJob(job.value.jobId);
+        if (!status.ok) { await failSourceFetch(queued.value.id, status.error.message); throw new Error(status.error.message); }
+        if (status.value.status === 'failed') { const message = status.value.result?.stderr || 'The local fetch failed.'; await failSourceFetch(queued.value.id, message); throw new Error(message); }
+        if (status.value.status !== 'succeeded') continue;
+        const payload = JSON.parse(status.value.result?.stdout ?? '{}') as { status?: string; markdown?: string; contentHash?: string; reason?: string };
+        if (payload.status !== 'fetched' || !payload.markdown || !payload.contentHash) throw new Error(payload.reason ?? 'The local fetch returned no readable page.');
+        const completed = await completeSourceFetch(queued.value.id, { markdown: payload.markdown, contentHash: payload.contentHash });
+        if (!completed.ok) throw new Error(completed.error.message);
+        const loaded = await getLesson(completed.value.lessonId);
+        if (!loaded) throw new Error('The saved material is unavailable.');
+        setActiveSource(completed.value);
+        setLesson(loaded);
+        const preview = await previewQuickSkill(loaded.id);
+        if (!preview.ok) throw new Error(preview.error.message);
+        setDraft(preview.value);
+        setKept(new Set(preview.value.steps.map((_, index) => index)));
+        setDigest(digestSegments(await listTranscript(loaded.id)));
+        setSourceCount(1);
+        setStage('review');
+        return;
+      }
+      await failSourceFetch(queued.value.id, 'The local fetch timed out after 30 seconds.');
+      throw new Error('The local fetch timed out after 30 seconds.');
+    });
   }
 
   function fillTranscript(text: string) {
@@ -320,6 +404,12 @@ export default function QuickSkill() {
     });
   }
 
+  function teachAnother() {
+    captureRef.current?.stop();
+    setStage('source'); setError(null); setLesson(null); setActiveSource(null); setDraft(null); setKept(new Set()); setGraph(null); setVerifyNote(null); setBundleNote(null); setSourceCount(0); setSources([]); setDigest(null); setOutputNote(null); setAddingSource(false); setSourceChoice(null); setAutoProgress(null); setCapturing(false);
+    navigate('/studio/quick');
+  }
+
   const stageIndex = ['source', 'transcript', 'review', 'ready'].indexOf(stage);
 
   return (
@@ -327,8 +417,7 @@ export default function QuickSkill() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm">Quick Skill</h1>
         <p className="subhead">
-          Video link → transcript → skill. Cherry drafts the workflow deterministically from your
-          transcript; you review, approve, and install. No API key involved.
+          Turn material you chose into a method you can read, approve, and use.
         </p>
         <div className="row" data-testid="quick-stages">
           {['Source', 'Transcript', 'Review & approve', 'Install'].map((label, index) => (
@@ -344,31 +433,35 @@ export default function QuickSkill() {
       {stage === 'source' ? (
         <form onSubmit={handleSource} className="card stack" style={{ gap: 'var(--sp-4)' }}>
           <label className="field">
-            <span>Paste a YouTube link — that is all Cherry needs</span>
-            <input className="input" name="url" placeholder="https://youtu.be/…" inputMode="url" autoFocus style={{ fontSize: 17, padding: '16px 20px' }} />
+            <span>Paste a YouTube link, an article link, or raw text.</span>
+            <textarea className="textarea" name="material" autoFocus required style={{ minHeight: 160 }} />
           </label>
-          <details>
-            <summary className="label" style={{ cursor: 'pointer' }}>More options</summary>
-            <div className="stack" style={{ gap: 'var(--sp-3)', marginTop: 'var(--sp-3)' }}>
-              <label className="field">
-                <span>Skill name</span>
-                <input className="input" name="name" maxLength={120} placeholder="Leave blank — Cherry names it from the content" />
-              </label>
-              <p className="label" style={{ margin: 0 }}>No video? Leave the link blank and paste notes on the next step instead.</p>
-            </div>
-          </details>
           <button type="submit" className="btn btn-primary" disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="quick-source-next">
-            {Icons.quick(16)} {busy ? 'Setting up…' : 'Continue'}
+            {busy ? 'Preparing…' : 'Create a skill'}
           </button>
-          <p className="label" style={{ margin: 0 }}>
-            Continuing confirms you may learn from this source and will not copy its branding or assets.
-            The video plays in the official YouTube player — Cherry never scrapes captions or media.
-          </p>
         </form>
       ) : null}
 
       {stage === 'transcript' && lesson ? (
         <div className="stack" style={{ gap: 'var(--sp-4)' }}>
+          {sourceChoice === null && activeSource ? (
+            <div className="card stack">
+              {activeSource.kind === 'youtube' && lesson.videoId ? (
+                <iframe
+                  title={`YouTube player: ${activeSource.title}`}
+                  src={embedUrl(lesson.videoId, window.location.origin)}
+                  style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', display: 'block' }}
+                  allow="accelerometer; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : null}
+              <h2 className="subhead">Choose how to add the material</h2>
+              <button type="button" className="btn btn-primary" onClick={() => setSourceChoice('paste')}>Paste the transcript or captions</button>
+              {activeSource.kind === 'youtube' ? <button type="button" className="btn" onClick={() => setSourceChoice('transcribe')}>Transcribe while I play it</button> : null}
+              {activeSource.kind === 'article' && runnerReady ? <button type="button" className="btn" disabled={busy} onClick={() => void handleRunnerFetch()}>My runner can fetch this page</button> : null}
+            </div>
+          ) : null}
+          {sourceChoice !== null ? <>
           {lesson.kind === 'youtube' && lesson.videoId ? (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <iframe
@@ -399,7 +492,7 @@ export default function QuickSkill() {
               </div>
             </div>
           ) : null}
-          <div className="card card-wash-lavender stack" data-testid="auto-transcribe">
+          {sourceChoice === 'transcribe' ? <div className="card card-wash-lavender stack" data-testid="auto-transcribe">
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <h2 className="subhead">Auto-transcribe on this device</h2>
               <span className="sticker">no key · audio never leaves this machine</span>
@@ -435,10 +528,10 @@ export default function QuickSkill() {
               Capture flow: press capture, choose this tab and tick "share tab audio", play the video, stop.
               Cherry never touches YouTube data — it transcribes your own playback, locally.
             </p>
-          </div>
+          </div> : null}
 
           <div className="card card-wash-sky stack">
-            <h2 className="subhead">Paste the transcript</h2>
+            <h2 className="subhead">Paste the transcript or captions</h2>
             <p style={{ fontSize: 14, margin: 0 }}>
               On YouTube: open the video → description → <strong>Show transcript</strong> → click the
               ⋮ menu → toggle timestamps if you like → select all → copy. Paste it here. Plain notes
@@ -452,10 +545,10 @@ export default function QuickSkill() {
               }}
               className="stack"
             >
-              <textarea ref={transcriptRef} className="textarea" name="transcript" required style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" />
+              <label className="field"><span>Transcript or captions</span><textarea ref={transcriptRef} className="textarea" name="transcript" required style={{ minHeight: 180 }} placeholder={'0:05 Create a new frame for the hero section\n0:40 Always keep the heading a real h1\n1:10 Add the navigation bar…'} data-testid="quick-transcript" /></label>
               <div className="row">
                 <button type="submit" className="btn btn-primary" disabled={busy} data-testid="quick-transcript-next">
-                  {busy ? 'Parsing…' : 'Derive the skill'}
+                  {busy ? 'Preparing…' : 'Review the method'}
                 </button>
                 <label className="btn">
                   Upload sources (.txt / .srt / .vtt — pick several)
@@ -474,6 +567,7 @@ export default function QuickSkill() {
               </div>
             </form>
           </div>
+          </> : null}
         </div>
       ) : null}
 
@@ -589,7 +683,7 @@ export default function QuickSkill() {
 
             <section className="card stack" aria-labelledby="steps-heading">
               <h2 id="steps-heading" className="subhead" style={{ fontSize: 20 }}>
-                Derived workflow ({kept.size} of {draft.steps.length} steps kept{sourceCount > 1 ? ` · ${sourceCount} sources` : ''})
+                Review the method ({kept.size} of {draft.steps.length} steps kept{sourceCount > 1 ? ` · ${sourceCount} sources` : ''})
               </h2>
               <ol className="stack" style={{ margin: 0, paddingLeft: 'var(--sp-5)' }} data-testid="quick-steps">
                 {draft.steps.map((step, index) => (
@@ -616,9 +710,9 @@ export default function QuickSkill() {
               </ol>
               <div className="row">
                 <button type="button" className="btn btn-primary" onClick={() => void handleGenerate()} disabled={busy || kept.size === 0} data-testid="quick-generate">
-                  {Icons.approve(16)} {busy ? 'Generating…' : `Generate & approve ${kept.size} steps`}
+                  {Icons.approve(16)} {busy ? 'Approving…' : 'Approve this exact version'}
                 </button>
-                <span className="label">Approving records a real approval at the exact version you reviewed by you.</span>
+                <span className="label">This records the exact version you reviewed. Agents can ask, not act.</span>
               </div>
             </section>
           </div>
@@ -627,8 +721,7 @@ export default function QuickSkill() {
           <section className="card card-wash-lavender stack" aria-labelledby="studio-heading" style={{ alignSelf: 'start' }}>
             <h2 id="studio-heading" className="subhead" style={{ fontSize: 20 }}>Studio</h2>
             <p style={{ fontSize: 13, margin: 0 }}>
-              One-click documents built from your sources. Saved as real files in the mission workspace
-              and downloaded.
+              One-click documents built from your sources. Saved as real files and downloaded.
             </p>
             <button type="button" className="studio-card" onClick={() => void handleStudioOutput('briefing')} disabled={busy} data-testid="studio-briefing">
               <span className="studio-card-title">{Icons.proof(15)} Briefing doc</span>
@@ -660,23 +753,21 @@ export default function QuickSkill() {
               </div>
             </div>
           </div>
-          <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => void handleDownload()} disabled={busy} data-testid="quick-download">
-              {Icons.download(16)} Download skill bundle (.zip)
-            </button>
-            <Link to={`/studio/skills/${graph.id}`} className="btn">Open in Skills</Link>
-            <button type="button" className="btn" onClick={() => navigate('/studio/proof')}>See the receipt</button>
+          <div className="stack" style={{ alignItems: 'flex-start' }}>
+            <Link to={`/studio/skills/${graph.id}`} className="btn btn-primary">See it in your Library</Link>
+            <Link to="/connect" className="link-quiet">Send to an agent</Link>
+            <button type="button" className="btn" onClick={teachAnother}>Teach another</button>
+            <div className="row">
+              <button type="button" className="btn btn-sm" onClick={() => void handleDownload()} disabled={busy} data-testid="quick-download">
+                {Icons.download(16)} Download bundle
+              </button>
+              <button type="button" className="btn btn-sm" onClick={() => navigate('/studio/proof')}>See receipt</button>
+            </div>
           </div>
           {bundleNote ? <p className="sticker sticker-pass" role="status">{bundleNote}</p> : null}
           <div className="stack" style={{ gap: 'var(--sp-2)' }}>
             <h3 className="label">Install it</h3>
-            <p style={{ fontSize: 14, margin: 0 }}>
-              <strong>Claude Code:</strong> unzip into <code className="mono">~/.claude/skills/</code> — the folder name
-              is the skill name; Claude discovers SKILL.md automatically.{' '}
-              <strong>Codex:</strong> follow <code className="mono">targets/codex/install.md</code> inside the bundle.{' '}
-              <strong>ChatGPT (WebMCP):</strong> nothing to install — open this page in a compatible client and the
-              tools attach live (see <Link to="/studio/agent">Agent View</Link>).
-            </p>
+            <p style={{ fontSize: 14, margin: 0 }}>Use the Library to download or connect this approved skill where you need it.</p>
           </div>
         </div>
       ) : null}
