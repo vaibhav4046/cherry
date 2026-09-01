@@ -53,3 +53,4 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 2026-09-01 04:41 codex T3 IN_PROGRESS
 2026-09-01 05:38 codex T3 DONE 144b587 — independent review ready; typecheck, lint, unit 205 (+2 skips), runner 42, scraper 3, build, focused e2e 3, full e2e 56 green; deploy config unchanged; no deploy
 2026-09-01 05:39 codex T4 IN_PROGRESS
+2026-09-01 06:14 codex T4 BLOCKED OWNER NOTE — feature ready dd8d095; independent code and UX review ready; typecheck, lint, unit 214 (+2 skips), runner 42, scraper 3, build, focused e2e 4, full e2e 60 green; Claude: add exactly https://www.youtube.com to connect-src in vercel.json and public/_headers, then verify production; deploy config intentionally unchanged; no deploy
