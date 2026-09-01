@@ -1,11 +1,21 @@
 import { z } from 'zod';
-import { guarded, objectSchema, toolError, toolText, type CherryToolDefinition, type CherryToolResult } from './tool-contract.ts';
+import {
+  guarded,
+  MAX_RESULT_CHARS,
+  objectSchema,
+  redactToolText,
+  toolError,
+  toolText,
+  type CherryToolDefinition,
+  type CherryToolResult,
+} from './tool-contract.ts';
 import { buildWorkforceToolDefinitions } from './workforce-tools.ts';
 import type { Result } from '../core/result.ts';
 import {
   createMission,
   createWorkspace,
   getMission,
+  getWorkspace,
   listMissions,
   listRuns,
   listWorkspaces,
@@ -15,6 +25,7 @@ import {
 } from '../mission/mission-service.ts';
 import { productStateForMission } from '../mission/mission-state.ts';
 import { addEvidence, listEvidence } from '../evidence/evidence-service.ts';
+import type { EvidenceRecord } from '../evidence/evidence-model.ts';
 import {
   importTranscript,
   lessonCoverage,
@@ -33,6 +44,8 @@ import {
   requestSkillGraphApproval,
   reviseSkillGraph,
 } from '../skillgraph/skillgraph-service.ts';
+import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
+import { listSkillEvidence } from '../skillgraph/skill-evidence.ts';
 import { compileCorrection, listMemories, proposeMemory } from '../memory/memory-service.ts';
 import { createArtifactSet, listArtifactFiles, writeArtifactFile } from '../artifacts/artifact-service.ts';
 import { getVerification, listVerifications, runVerification, recordRepair } from '../verify/verification-service.ts';
@@ -44,6 +57,7 @@ import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../libra
 import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
 import { runnerStatus } from '../runner-client/runner-api.ts';
+import { isSyntheticSampleGraph, SYNTHETIC_SAMPLE_NOTICE } from '../skillgraph/sample-state.ts';
 
 /**
  * Active workspace/mission context is injected by the registration manager so
@@ -70,6 +84,219 @@ function requireWorkspace(context: ToolContext): string | CherryToolResult {
   const id = context.getActiveWorkspaceId();
   if (!id) return toolError('conflict', 'No active workspace. Create one first with create_workspace.');
   return id;
+}
+
+interface SkillCitation {
+  creator?: string;
+  title?: string;
+  url?: string;
+  timestampSeconds?: number;
+}
+
+interface SkillCitationEnvelope {
+  citationCount: number;
+  citations: SkillCitation[];
+  citationsTruncated: boolean;
+}
+
+interface SkillApprovalContext {
+  sample: boolean;
+  approvalKind: 'human-decision' | 'synthetic-sample-state';
+  sampleNotice?: string;
+}
+
+const MAX_SKILL_CITATIONS = 3;
+const SKILL_CITATION_JSON_BUDGET = 430;
+
+function serializedLength(payload: unknown): number {
+  return redactToolText(JSON.stringify(payload)).length;
+}
+
+/**
+ * get_skill promises machine-readable JSON. Its payload builders budget the
+ * complete serialized envelope before this function is called, so the generic
+ * text cap can never cut one of these responses in the middle of an object.
+ */
+function boundedSkillJson(payload: unknown): CherryToolResult {
+  const serialized = redactToolText(JSON.stringify(payload));
+  if (serialized.length > MAX_RESULT_CHARS) {
+    return toolError('conflict', 'The skill response could not fit in one bounded JSON result. Request a smaller part.');
+  }
+  return toolText(serialized);
+}
+
+function fitStringProperty(
+  payload: Record<string, unknown>,
+  key: string,
+  value: string,
+  maximumLength: number,
+): void {
+  let low = 0;
+  let high = Math.min(value.length, maximumLength);
+  let fitted = '';
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = value.slice(0, middle);
+    const next = { ...payload, [key]: candidate };
+    if (serializedLength(next) <= MAX_RESULT_CHARS) {
+      fitted = candidate;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  payload[key] = fitted;
+}
+
+function appendIfBounded<T>(payload: Record<string, unknown>, key: string, value: T): boolean {
+  const values = payload[key] as T[];
+  values.push(value);
+  if (serializedLength(payload) <= MAX_RESULT_CHARS) return true;
+  values.pop();
+  return false;
+}
+
+function boundedSkillSummary(
+  graph: SkillGraph,
+  citations: SkillCitationEnvelope,
+  approvalContext: SkillApprovalContext,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    skillId: '',
+    name: '',
+    purpose: '',
+    status: graph.status,
+    version: '',
+    revision: graph.revision,
+    approvedRevision: graph.approvedRevision ?? null,
+    installReady: graph.status === 'approved' && graph.approvedRevision === graph.revision,
+    stepCount: graph.nodes.length,
+    steps: [],
+    stepsTruncated: false,
+    guardrailCount: graph.guardrails.length,
+    guardrails: [],
+    guardrailsTruncated: false,
+    evaluationCount: graph.evaluations.length,
+    evaluations: [],
+    evaluationsTruncated: false,
+    ...citations,
+    ...approvalContext,
+    formats: ['skill-md', 'agents-md', 'claude-md'],
+  };
+
+  fitStringProperty(payload, 'skillId', graph.id, 96);
+  fitStringProperty(payload, 'version', graph.version, 32);
+  fitStringProperty(payload, 'name', graph.name, 80);
+  for (const node of graph.nodes.slice(0, 8)) {
+    if (!appendIfBounded(payload, 'steps', {
+      title: node.title.slice(0, 60),
+      kind: node.kind,
+      humanGates: node.humanGateIds.length,
+    })) break;
+  }
+  payload.stepsTruncated = (payload.steps as unknown[]).length < graph.nodes.length;
+
+  for (const rule of graph.guardrails.slice(0, 5)) {
+    if (!appendIfBounded(payload, 'guardrails', { effect: rule.effect, title: rule.title.slice(0, 60) })) break;
+  }
+  payload.guardrailsTruncated = (payload.guardrails as unknown[]).length < graph.guardrails.length;
+
+  for (const evaluation of graph.evaluations.slice(0, 5)) {
+    if (!appendIfBounded(payload, 'evaluations', {
+      name: evaluation.name.slice(0, 60),
+      severity: evaluation.severity,
+    })) break;
+  }
+  payload.evaluationsTruncated = (payload.evaluations as unknown[]).length < graph.evaluations.length;
+  fitStringProperty(payload, 'purpose', graph.purpose, 240);
+  return payload;
+}
+
+async function skillApprovalContext(graph: SkillGraph): Promise<SkillApprovalContext> {
+  const workspace = await getWorkspace(graph.workspaceId);
+  if (workspace?.isExample === true || isSyntheticSampleGraph(graph)) {
+    return {
+      sample: true,
+      approvalKind: 'synthetic-sample-state',
+      sampleNotice: SYNTHETIC_SAMPLE_NOTICE,
+    };
+  }
+  return { sample: false, approvalKind: 'human-decision' };
+}
+
+function splitSkillContent(
+  content: string,
+  buildPayload: (part: number, totalParts: number, chunk: string) => Record<string, unknown>,
+): string[] | null {
+  // Reserve enough digits for any realistic file. The actual part numbers are
+  // smaller, so a chunk that fits this envelope also fits the returned one.
+  const conservativePart = Number.MAX_SAFE_INTEGER;
+  const emptyEnvelope = buildPayload(conservativePart, conservativePart, '');
+  if (serializedLength(emptyEnvelope) > MAX_RESULT_CHARS) return null;
+  if (content.length === 0) return [''];
+
+  const chunks: string[] = [];
+  let offset = 0;
+  while (offset < content.length) {
+    let low = 1;
+    let high = content.length - offset;
+    let fittedLength = 0;
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      const candidate = content.slice(offset, offset + middle);
+      if (serializedLength(buildPayload(conservativePart, conservativePart, candidate)) <= MAX_RESULT_CHARS) {
+        fittedLength = middle;
+        low = middle + 1;
+      } else {
+        high = middle - 1;
+      }
+    }
+    if (fittedLength === 0) return null;
+    chunks.push(content.slice(offset, offset + fittedLength));
+    offset += fittedLength;
+  }
+  return chunks;
+}
+
+function safeHttpUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && !parsed.username && !parsed.password
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function citationFromEvidence(record: EvidenceRecord): SkillCitation {
+  const sourceUrl = safeHttpUrl(record.sourceUri);
+  return {
+    ...(record.sourceCreator ? { creator: record.sourceCreator.slice(0, 48) } : {}),
+    ...(record.sourceTitle ? { title: record.sourceTitle.slice(0, 96) } : {}),
+    ...(sourceUrl ? { url: sourceUrl.slice(0, 192) } : {}),
+    ...(typeof record.timestampSeconds === 'number' ? { timestampSeconds: record.timestampSeconds } : {}),
+  };
+}
+
+async function skillCitationEnvelope(graph: SkillGraph): Promise<SkillCitationEnvelope> {
+  const scoped = (await listSkillEvidence(graph)).filter(
+    (record) =>
+      Boolean(record.sourceCreator || record.sourceTitle || record.sourceUri) ||
+      typeof record.timestampSeconds === 'number',
+  );
+  const citations: SkillCitation[] = [];
+  for (const record of scoped.slice(0, MAX_SKILL_CITATIONS)) {
+    const candidate = citationFromEvidence(record);
+    if (JSON.stringify([...citations, candidate]).length > SKILL_CITATION_JSON_BUDGET) break;
+    citations.push(candidate);
+  }
+  return {
+    citationCount: scoped.length,
+    citations,
+    citationsTruncated: citations.length < scoped.length,
+  };
 }
 
 export function buildToolDefinitions(context: ToolContext): CherryToolDefinition[] {
@@ -252,7 +479,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'list_skills',
     description:
-      'Read the cross-workspace skill library: every skill Cherry has learned, with status, version/revision, approval hash, tags, and install readiness. Read-only and always available. Skills marked installReady are approved by a human at their exact revision.',
+      'Read the cross-workspace skill library with status, exact revision, approval hash, sample label, and install readiness. For sample=false, installReady records a live human decision. sample=true is a labelled synthetic reference state and never proof of a user decision.',
     inputSchema: objectSchema(
       { status: { type: 'string', description: "Optional filter: 'approved' returns only install-ready skills (default 'all')" } },
       [],
@@ -263,19 +490,29 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     execute: guarded(listSkillsSchema, async (input) => {
       const entries = await listLibraryEntries();
       const filtered = input.status === 'approved' ? entries.filter((entry) => entry.installReady) : entries;
-      return toolText({
+      const payload: Record<string, unknown> = {
         totalCount: filtered.length,
-        skills: filtered.slice(0, 8).map((entry) => ({
+        returnedCount: 0,
+        skills: [],
+        skillsTruncated: false,
+        note: 'get_skill serves install-ready content. Live approvals stay human-only; labelled samples report sample=true.',
+      };
+      for (const entry of filtered.slice(0, 8)) {
+        if (!appendIfBounded(payload, 'skills', {
           skillId: entry.skillId,
           name: entry.name.slice(0, 60),
           purpose: entry.purpose.slice(0, 80),
           status: entry.status,
           installReady: entry.installReady,
+          sample: entry.sample,
+          approvalKind: entry.sample ? 'synthetic-sample-state' : 'human-decision',
           revision: entry.revision,
           approvalHash: entry.approvalHash ? entry.approvalHash.slice(0, 16) : null,
-        })),
-        note: 'First 8 shown; recommend_skills ranks by task. get_skill serves install-ready content. Approvals stay human-only.',
-      });
+        })) break;
+      }
+      payload.returnedCount = (payload.skills as unknown[]).length;
+      payload.skillsTruncated = (payload.skills as unknown[]).length < filtered.length;
+      return boundedSkillJson(payload);
     }),
   });
 
@@ -283,7 +520,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'recommend_skills',
     description:
-      'Given a task description, rank the skills in this library that would help, with explainable lexical matching (no hidden model calls). Returns approved, install-ready skills first, each bound to an exact revision and approval hash. Read-only and always available.',
+      'Rank helpful skills with explainable lexical matching and no hidden model call. Results include exact revision, approval hash, and sample label. sample=true is a synthetic reference state, not proof of a live human approval.',
     inputSchema: objectSchema(
       {
         task: { type: 'string', description: 'What the agent is trying to do right now' },
@@ -301,18 +538,29 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         name: match.name.slice(0, 60),
         purpose: match.purpose.slice(0, 120),
         installReady: match.installReady,
+        sample: match.sample,
+        approvalKind: match.sample ? 'synthetic-sample-state' : 'human-decision',
         revision: match.revision,
         approvalHash: match.approvalHash ? match.approvalHash.slice(0, 16) : null,
         score: match.score,
         matchedOn: match.matchedOn.slice(0, 4),
       }));
-      return toolText({
-        recommendations,
+      const payload: Record<string, unknown> = {
+        recommendationCount: recommendations.length,
+        returnedCount: 0,
+        recommendations: [],
+        recommendationsTruncated: false,
         note:
           recommendations.length === 0
             ? 'No skills match this task yet. A human can teach one from a real source via start_apprenticeship, or in the studio.'
-            : 'Scores are deterministic lexical matches (matchedOn explains each). Use get_skill with a skillId for install-ready content.',
-      });
+            : 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.',
+      };
+      for (const recommendation of recommendations) {
+        if (!appendIfBounded(payload, 'recommendations', recommendation)) break;
+      }
+      payload.returnedCount = (payload.recommendations as unknown[]).length;
+      payload.recommendationsTruncated = (payload.recommendations as unknown[]).length < recommendations.length;
+      return boundedSkillJson(payload);
     }),
   });
 
@@ -324,7 +572,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'get_skill',
     description:
-      "Read one skill. format 'summary' (default) returns the contract: goal, steps, guardrails, verification, revision, approval hash. File formats ('skill-md' for Agent Skills/Claude/Hermes, 'agents-md' for Codex, 'claude-md') return install-ready markdown and require a human approval at the exact current revision.",
+      "Read one skill with bounded source citations. format 'summary' (default) returns its contract. Live files require a human approval at the exact current revision. Labelled samples report sample=true and approvalKind='synthetic-sample-state'; that state is not proof of a live decision.",
     inputSchema: objectSchema(
       {
         skillId: { type: 'string', description: 'Skill id from list_skills or recommend_skills' },
@@ -341,48 +589,58 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       if (format === 'summary') {
         const graph = await getSkillGraph(input.skillId);
         if (!graph) return toolError('not_found', 'No skill with that id. Use list_skills first.', { skillId: input.skillId });
-        return toolText({
-          skillId: graph.id,
-          name: graph.name,
-          purpose: graph.purpose,
-          status: graph.status,
-          version: graph.version,
-          revision: graph.revision,
-          approvedRevision: graph.approvedRevision ?? null,
-          installReady: graph.status === 'approved' && graph.approvedRevision === graph.revision,
-          steps: graph.nodes.slice(0, 8).map((node) => ({ title: node.title.slice(0, 60), kind: node.kind, humanGates: node.humanGateIds.length })),
-          guardrails: graph.guardrails.slice(0, 5).map((rule) => ({ effect: rule.effect, title: rule.title.slice(0, 60) })),
-          evaluations: graph.evaluations.slice(0, 5).map((evaluation) => ({ name: evaluation.name.slice(0, 60), severity: evaluation.severity })),
-          formats: ['skill-md', 'agents-md', 'claude-md'],
-        });
+        const [citations, approvalContext] = await Promise.all([
+          skillCitationEnvelope(graph),
+          skillApprovalContext(graph),
+        ]);
+        return boundedSkillJson(boundedSkillSummary(graph, citations, approvalContext));
       }
       const rendered = await exportSkillFile(input.skillId, format);
       if (!rendered.ok) return toolError(rendered.error.code, rendered.error.message, rendered.error.details);
       const file = rendered.value;
-      // Results are capped at MAX_RESULT_CHARS, so install files stream in
-      // bounded parts with a full-file hash the agent can verify after joining.
-      const PART_SIZE = 900;
-      const totalParts = Math.max(1, Math.ceil(file.content.length / PART_SIZE));
-      const part = input.part ?? 1;
-      if (part > totalParts) {
-        return toolError('validation', `part ${part} out of range; the file has ${totalParts} parts`, { totalParts });
-      }
-      const contentSha256 = await sha256Text(file.content);
-      return toolText({
-        fileName: file.fileName,
+      const graph = await getSkillGraph(input.skillId);
+      if (!graph) return toolError('not_found', 'No skill with that id. Use list_skills first.', { skillId: input.skillId });
+      const [citations, approvalContext] = await Promise.all([
+        skillCitationEnvelope(graph),
+        skillApprovalContext(graph),
+      ]);
+      // Secret-shaped strings are redacted before hashing and partitioning so
+      // the advertised hash always describes the exact content the host sees.
+      const deliveredContent = redactToolText(file.content);
+      const contentSha256 = await sha256Text(deliveredContent);
+      const common = {
+        fileName: file.fileName.slice(0, 120),
         format: file.format,
         revision: file.revision,
-        part,
-        totalParts,
         contentSha256,
-        content: file.content.slice((part - 1) * PART_SIZE, part * PART_SIZE),
+        ...citations,
+        ...approvalContext,
         install:
           file.format === 'agents-md'
             ? 'Append to your project AGENTS.md.'
             : file.format === 'claude-md'
               ? 'Drop into your project for Claude Code.'
               : 'Save as SKILL.md in a skills directory.',
+      };
+      const buildPart = (part: number, totalParts: number, content: string) => ({
+        ...common,
+        part,
+        totalParts,
+        content,
       });
+      // Size each part against the complete serialized JSON envelope. This is
+      // intentionally dynamic: quotes, control characters and Unicode can make
+      // two equally long Markdown slices serialize to very different sizes.
+      const chunks = splitSkillContent(deliveredContent, buildPart);
+      if (!chunks) {
+        return toolError('conflict', 'The skill metadata could not fit in a bounded JSON result.');
+      }
+      const totalParts = chunks.length;
+      const part = input.part ?? 1;
+      if (part > totalParts) {
+        return toolError('validation', `part ${part} out of range; the file has ${totalParts} parts`, { totalParts });
+      }
+      return boundedSkillJson(buildPart(part, totalParts, chunks[part - 1]!));
     }),
   });
 

@@ -8,7 +8,7 @@
     "revision": 1,
     "createdAt": "2026-08-29T16:58:04.116Z",
     "updatedAt": "2026-08-29T16:58:04.116Z",
-    "description": "Shipped example workspace. Safe to delete. Everything in it was produced by real Cherry operations."
+    "description": "Shipped labelled example workspace. Safe to delete. Its approval is synthetic reference state, not proof of a live human decision."
   },
   "missions": [
     {
@@ -328,11 +328,11 @@
         "claude-code"
       ],
       "approvedRevision": 1,
-      "approvedBy": "user",
+      "approvedBy": "sample-fixture-state",
       "approvedAt": "2026-08-29T16:58:04.146Z",
       "createdAt": "2026-08-29T16:58:04.141Z",
       "updatedAt": "2026-08-29T16:58:04.146Z",
-      "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac"
+      "versionHash": "b307e37a7a5097efed5f894d33ea4dd414938657a279cb25e7e08d7659df8f98"
     }
   ],
   "skillVersions": [
@@ -581,14 +581,14 @@
           "claude-code"
         ],
         "approvedRevision": 1,
-        "approvedBy": "user",
+        "approvedBy": "sample-fixture-state",
         "approvedAt": "2026-08-29T16:58:04.146Z",
         "createdAt": "2026-08-29T16:58:04.141Z",
         "updatedAt": "2026-08-29T16:58:04.146Z",
-        "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac"
+        "versionHash": "b307e37a7a5097efed5f894d33ea4dd414938657a279cb25e7e08d7659df8f98"
       },
-      "versionHash": "a5d31a6109c8566fce0cf052a8a8136a97951488639ba0f67aa40492395034ac",
-      "changeSummary": "Revision approved by user",
+      "versionHash": "b307e37a7a5097efed5f894d33ea4dd414938657a279cb25e7e08d7659df8f98",
+      "changeSummary": "Revision approved as synthetic sample state",
       "createdAt": "2026-08-29T16:58:04.146Z",
       "actorType": "human"
     }
@@ -742,11 +742,12 @@
       "objectRevision": 1,
       "decision": "approved",
       "requestedAt": "2026-08-29T16:58:04.145Z",
-      "requestedBy": "user",
-      "requestReason": "Example: review the drafted skill",
-      "decidedBy": "user",
+      "requestedBy": "sample-fixture-state",
+      "requestReason": "Labelled sample state for the shipped example",
+      "decidedBy": "sample-fixture-state",
       "decidedAt": "2026-08-29T16:58:04.146Z",
-      "contentHash": "2241fc93fd9e2094fc8cc1f1f9f2b76699017a1208944802c116cd09800ad30b"
+      "contentHash": "2241fc93fd9e2094fc8cc1f1f9f2b76699017a1208944802c116cd09800ad30b",
+      "comment": "Synthetic fixture approval; not a live human decision."
     }
   ],
   "artifactSets": [
@@ -1032,7 +1033,7 @@
       "occurredAt": "2026-08-29T16:58:04.146Z",
       "objectType": "skillgraph",
       "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
-      "summary": "Approval requested for r1: Example: review the drafted skill",
+      "summary": "Approval requested for r1: Labelled sample state for the shipped example",
       "payload": {
         "revision": 1,
         "approvalId": "ap-01M1779YFHN4051QZV9VH7X0RG"
@@ -1047,7 +1048,7 @@
       "occurredAt": "2026-08-29T16:58:04.147Z",
       "objectType": "skillgraph",
       "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
-      "summary": "SkillGraph r1 approved by user",
+      "summary": "SkillGraph r1 approved as synthetic sample state",
       "payload": {
         "revision": 1,
         "approvalId": "ap-01M1779YFHN4051QZV9VH7X0RG",
@@ -1397,7 +1398,7 @@
           "occurredAt": "2026-08-29T16:58:04.146Z",
           "objectType": "skillgraph",
           "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
-          "summary": "Approval requested for r1: Example: review the drafted skill",
+          "summary": "Approval requested for r1: Labelled sample state for the shipped example",
           "payloadHash": null
         },
         {
@@ -1409,7 +1410,7 @@
           "occurredAt": "2026-08-29T16:58:04.147Z",
           "objectType": "skillgraph",
           "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
-          "summary": "SkillGraph r1 approved by user",
+          "summary": "SkillGraph r1 approved as synthetic sample state",
           "payloadHash": null
         },
         {
@@ -1504,7 +1505,7 @@
           "objectId": "sg-01M1779YFDFTENKXQ4MGSHTHX1",
           "objectRevision": 1,
           "decision": "approved",
-          "decidedBy": "user",
+          "decidedBy": "sample-fixture-state",
           "decidedAt": "2026-08-29T16:58:04.146Z",
           "contentHash": "2241fc93fd9e2094fc8cc1f1f9f2b76699017a1208944802c116cd09800ad30b"
         }
@@ -1540,7 +1541,7 @@
         "verifiedSeparately": true,
         "exitCode": null
       },
-      "receiptHash": "b8dd59e7e0f369f1e81b43cab6327117ff524843772ce46b6e41c398d8dd638f",
+      "receiptHash": "8574bc7d97bb66a7c0de07947c6fdfd487c140373093f5ba071786b3bcf7ba58",
       "createdAt": "2026-08-29T16:58:04.156Z"
     }
   ],
@@ -1548,6 +1549,6 @@
   "integrity": {
     "canonicalization": "JCS-RFC8785",
     "hashAlgorithm": "SHA-256",
-    "payloadSha256": "fa13a1fc262e1d17024eb90f9f7b00d2743c4afd9eb0105345d86e0e432db35b"
+    "payloadSha256": "9b3a8e1102fdf4b6fff5f0779b9ba9a8a831a2706796de18ef3d32a9cff019b6"
   }
 }

@@ -27,8 +27,8 @@ export default function Skills() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm">Skill Library</h1>
         <p className="subhead" style={{ margin: 0 }}>
-          Find every skill you have approved. Download one for Codex or Claude Code, use it in a
-          routine, or send it to a connected agent.
+          Find skills you approved and any labelled samples you chose to load. Download one for
+          Codex or Claude Code, use it in a routine, or send it to a connected agent.
         </p>
       </header>
 
@@ -95,6 +95,11 @@ export default function Skills() {
               <span className={entry.installReady ? 'sticker sticker-pass' : entry.status === 'rejected' ? 'sticker sticker-fail' : 'sticker sticker-wait'}>
                 {entry.installReady ? 'install-ready' : entry.status}
               </span>
+              {entry.sample ? (
+                <span className="sticker sticker-wait" title="Synthetic reference state; not proof of your approval">
+                  sample state
+                </span>
+              ) : null}
               <span className="sticker">v{entry.version} · r{entry.revision}</span>
               {entry.approvalHash ? (
                 <span className="sticker mono" title={`Approval content hash ${entry.approvalHash}`}>

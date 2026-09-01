@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { freshDb } from '../setup.ts';
 import {
+  createExampleWorkspace,
   createMission,
   createWorkspace,
+  getWorkspace,
   transitionMission,
   updateMission,
   getMission,
@@ -64,6 +66,15 @@ describe('workspace and mission flow', () => {
     const { workspace } = await seedWorkspaceAndMission();
     const bad = await createMission({ workspaceId: workspace.id, title: '', objective: 'x', definitionOfDone: [] });
     expect(bad.ok).toBe(false);
+  });
+
+  it('does not let the general workspace API assign the example flag', async () => {
+    const workspace = unwrap(await createWorkspace({
+      name: 'Ordinary workspace',
+      isExample: true,
+    } as Parameters<typeof createWorkspace>[0]));
+
+    expect(workspace.isExample).toBeUndefined();
   });
 });
 
@@ -375,6 +386,17 @@ describe('workspace export/import round trip', () => {
     expect(importedEvidence.some((record) => record.claim === 'Round trip claim')).toBe(true);
     const importedMission = await getMission(mission.id);
     expect(importedMission?.workspaceId).toBe(workspace.id); // original untouched
+  });
+
+  it('does not preserve an archive-supplied example flag during an ordinary import', async () => {
+    const source = unwrap(await createExampleWorkspace({ name: 'Fixture source' }));
+    const exported = unwrap(await exportWorkspace(source.id));
+    expect(exported.workspace['isExample']).toBe(true);
+
+    const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
+    const importedWorkspace = await getWorkspace(imported.workspaceId);
+
+    expect(importedWorkspace?.isExample).toBeUndefined();
   });
 
   it('rejects corrupted and malformed imports without writing anything', async () => {

@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppState } from '../app/AppState.tsx';
-import { createMission, createWorkspace, deleteWorkspace, listWorkspaces } from '../cherry/mission/mission-service.ts';
-import { importWorkspace } from '../cherry/persistence/workspace-archive.ts';
+import { createExampleWorkspace, createMission } from '../cherry/mission/mission-service.ts';
+import {
+  loadExampleWorkspace,
+  resetExampleWorkspaces,
+  SHOWCASE_EXAMPLE_WORKSPACE,
+} from '../cherry/persistence/example-workspace-loader.ts';
 import { listProofEvents } from '../cherry/persistence/transactions.ts';
 import { getLesson, listTranscript, listObservations } from '../cherry/watch/lesson-service.ts';
 import type { Lesson } from '../cherry/watch/watch-model.ts';
@@ -76,6 +80,7 @@ const EMPTY_DATA: ShowcaseData = {
  */
 export function Showcase() {
   const { ready, activeWorkspace, activeMission, missions, webmcp, refresh, setActiveWorkspace } = useAppState();
+  const navigate = useNavigate();
   const [data, setData] = useState<ShowcaseData>(EMPTY_DATA);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +136,7 @@ export function Showcase() {
     setError(null);
     setNotice(null);
     try {
-      const workspace = await createWorkspace({ name: 'Showcase run' }, 'human');
+      const workspace = await createExampleWorkspace(SHOWCASE_EXAMPLE_WORKSPACE, 'human');
       if (!workspace.ok) {
         setError(workspace.error.message);
         return;
@@ -173,17 +178,39 @@ export function Showcase() {
     setError(null);
     setNotice(null);
     try {
-      const response = await fetch('/examples/example-workspace.json');
-      if (!response.ok) throw new Error(`example not found (${response.status})`);
-      const result = await importWorkspace(await response.text(), { markExample: true });
+      const result = await loadExampleWorkspace('golden-loop');
       if (!result.ok) {
         setError(result.error.message);
       } else {
         setActiveWorkspace(result.value.workspaceId);
-        setNotice(`SAMPLE workspace imported (hash ${result.value.hashVerified ? 'verified' : 'absent'}). It is labelled as an example and deletable from Connections.`);
+        setNotice(
+          result.value.status === 'imported'
+            ? `SAMPLE workspace imported (hash ${result.value.hashVerified ? 'verified' : 'absent'}). It is labelled as an example and deletable from Connections.`
+            : 'SAMPLE workspace is already loaded. No duplicate was created.',
+        );
       }
     } catch (importError) {
       setError((importError as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadStarterLibrary() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await loadExampleWorkspace('starter-library');
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      setActiveWorkspace(result.value.workspaceId);
+      await refresh();
+      navigate('/studio/skills');
+    } catch (importError) {
+      setError(importError instanceof Error ? importError.message : 'The starter library could not be loaded. Try again.');
     } finally {
       setBusy(false);
     }
@@ -194,20 +221,17 @@ export function Showcase() {
     setError(null);
     setNotice(null);
     try {
-      const all = await listWorkspaces();
-      const demoWorkspaces = all.filter(
-        (workspace) => workspace.isExample === true || workspace.name === 'Showcase run' || workspace.name.startsWith('EXAMPLE'),
-      );
-      for (const workspace of demoWorkspaces) {
-        const result = await deleteWorkspace(workspace.id);
-        if (!result.ok) setError(result.error.message);
+      const result = await resetExampleWorkspaces();
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
       }
       setActiveWorkspace(null);
       await refresh();
       await loadAll();
       setNotice(
-        demoWorkspaces.length > 0
-          ? `Reset: removed ${demoWorkspaces.length} demo workspace(s). Your own workspaces were not touched.`
+        result.value.deleted > 0
+          ? `Reset: removed ${result.value.deleted} demo workspace(s). Your own workspaces were not touched.`
           : 'Nothing to reset — no demo workspaces exist.',
       );
     } catch (resetError) {
@@ -409,6 +433,9 @@ export function Showcase() {
             <button type="button" className="btn" onClick={() => void loadSample()} disabled={busy} data-testid="showcase-load-sample">
               Load labelled sample
             </button>
+            <button type="button" className="btn" onClick={() => void loadStarterLibrary()} disabled={busy} data-testid="showcase-load-starter-library">
+              Load sample library
+            </button>
             <button type="button" className="btn btn-sm showcase-btn-quiet" onClick={() => void resetDemo()} disabled={busy} data-testid="showcase-reset-demo">
               Reset demo
             </button>
@@ -417,7 +444,7 @@ export function Showcase() {
             </button>
           </div>
           <p className="label" style={{ margin: 0 }}>
-            Reset demo removes only workspaces this page created (fresh runs and the labelled sample) — never your own work.
+            The starter library is a labelled synthetic reference snapshot; its approval state is not your decision. Reset demo removes only registered examples — never your own work.
           </p>
           {notice ? <p className="label" role="status">{notice}</p> : null}
           {error ? <p className="field-error" role="alert">{error}</p> : null}
@@ -430,7 +457,7 @@ export function Showcase() {
               {activeWorkspace ? (
                 <p style={{ margin: 0 }}>
                   Workspace <strong>{activeWorkspace.name}</strong>{' '}
-                  {activeWorkspace.name.startsWith('EXAMPLE') ? <span className="sticker sticker-wait">SAMPLE DATA</span> : null}
+                  {activeWorkspace.isExample === true ? <span className="sticker sticker-wait">SAMPLE DATA</span> : null}
                   {' · '}
                   {missions.length} mission(s)
                 </p>

@@ -30,9 +30,10 @@ export const createMissionInput = z.object({
 });
 export type CreateMissionInput = z.input<typeof createMissionInput>;
 
-export async function createWorkspace(
+async function persistWorkspace(
   input: CreateWorkspaceInput,
-  actorType: ActorType = 'human',
+  actorType: ActorType,
+  isExample: boolean,
 ): Promise<Result<WorkspaceRecord>> {
   const parsed = createWorkspaceInput.safeParse(input);
   if (!parsed.success) return invalid('Workspace input is invalid', { issues: parsed.error.issues });
@@ -46,6 +47,7 @@ export async function createWorkspace(
     updatedAt: now,
   };
   if (parsed.data.description) workspace.description = parsed.data.description;
+  if (isExample) workspace.isExample = true;
 
   await withWorkspaceTx(workspace.id, ['workspaces'], async (ctx) => {
     await ctx.db.workspaces.add(workspace);
@@ -58,6 +60,21 @@ export async function createWorkspace(
     });
   });
   return ok(workspace);
+}
+
+export async function createWorkspace(
+  input: CreateWorkspaceInput,
+  actorType: ActorType = 'human',
+): Promise<Result<WorkspaceRecord>> {
+  return persistWorkspace(input, actorType, false);
+}
+
+/** Internal fixture boundary. Product workspace creation must use createWorkspace. */
+export async function createExampleWorkspace(
+  input: CreateWorkspaceInput,
+  actorType: ActorType = 'system',
+): Promise<Result<WorkspaceRecord>> {
+  return persistWorkspace(input, actorType, true);
 }
 
 export async function listWorkspaces(): Promise<WorkspaceRecord[]> {

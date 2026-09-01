@@ -15,8 +15,9 @@ import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { exportSkillFile, type SkillExportFormat } from '../../cherry/library/library-service.ts';
 import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
-import { listEvidence } from '../../cherry/evidence/evidence-service.ts';
 import type { EvidenceRecord } from '../../cherry/evidence/evidence-model.ts';
+import { listSkillEvidence } from '../../cherry/skillgraph/skill-evidence.ts';
+import { getWorkspace } from '../../cherry/mission/mission-service.ts';
 import { useAppState } from '../../app/AppState.tsx';
 
 const FAILURE_LABELS: Record<string, string> = {
@@ -48,6 +49,28 @@ function plainSkillMessage(message: string): string {
 
 function evaluationLabel(name: string): string {
   return name === 'Skill graph is structurally valid' ? 'Skill is structurally valid' : name;
+}
+
+function formatEvidenceTimestamp(seconds: number): string {
+  const wholeSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(wholeSeconds / 3600);
+  const minutes = Math.floor((wholeSeconds % 3600) / 60);
+  const remainder = wholeSeconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+    : `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+function safeHttpUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && !parsed.username && !parsed.password
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 interface SchemaField {
@@ -91,6 +114,7 @@ export default function SkillDetail() {
   const [versions, setVersions] = useState<SkillGraphVersion[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
+  const [isSample, setIsSample] = useState(false);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -100,9 +124,18 @@ export default function SkillDetail() {
     const loaded = await getSkillGraph(skillId);
     setGraph(loaded ?? null);
     if (loaded) {
-      setVersions(await listSkillGraphVersions(loaded.id));
-      setApprovals((await listApprovals(loaded.workspaceId)).filter((approval) => approval.objectId === loaded.id));
-      setEvidence(await listEvidence(loaded.workspaceId, loaded.missionId ? { missionId: loaded.missionId } : undefined));
+      const [loadedVersions, workspaceApprovals, loadedEvidence, workspace] = await Promise.all([
+        listSkillGraphVersions(loaded.id),
+        listApprovals(loaded.workspaceId),
+        listSkillEvidence(loaded),
+        getWorkspace(loaded.workspaceId),
+      ]);
+      setVersions(loadedVersions);
+      setApprovals(workspaceApprovals.filter((approval) => approval.objectId === loaded.id));
+      setEvidence(loadedEvidence);
+      setIsSample(workspace?.isExample === true);
+    } else {
+      setIsSample(false);
     }
   }, [skillId]);
 
@@ -195,6 +228,11 @@ export default function SkillDetail() {
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
         <h1 className="display-sm">{graph.name}</h1>
         <p className="subhead">{graph.purpose}</p>
+        {isSample ? (
+          <p className="label" data-testid="skill-sample-notice">
+            Labelled sample state. Its approval demonstrates the boundary; it is not proof of your decision.
+          </p>
+        ) : null}
       </header>
 
       {error ? <p className="field-error" role="alert">{error}</p> : null}
@@ -349,7 +387,8 @@ export default function SkillDetail() {
           </section>
 
           <section className="contract-section" aria-labelledby="evidence-list-heading">
-            <h2 id="evidence-list-heading" className="contract-h">What the source said ({evidence.length})</h2>
+            <h2 id="evidence-list-heading" className="contract-h">Where this came from</h2>
+            <p className="contract-empty">{evidence.length} source {evidence.length === 1 ? 'note' : 'notes'}</p>
             {knowledgeRefs.length > 0 ? (
               <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, marginBottom: 'var(--sp-3)' }}>
                 {knowledgeRefs.map((reference) => {
@@ -365,12 +404,30 @@ export default function SkillDetail() {
             ) : null}
             {evidence.length > 0 ? (
               <div className="stack" style={{ maxHeight: 220, overflowY: 'auto' }}>
-                {evidence.map((record) => (
-                  <div key={record.id} className="event-row">
-                    <span className={record.trust === 'untrusted' ? 'sticker sticker-fail' : 'sticker sticker-pass'} style={{ padding: '2px 8px' }}>{record.trust}</span>
-                    <span>{record.claim}</span>
-                  </div>
-                ))}
+                {evidence.map((record) => {
+                  const sourceHref = safeHttpUrl(record.sourceUri);
+                  return (
+                    <div key={record.id} className="event-row" style={{ alignItems: 'flex-start' }}>
+                      <span className={record.trust === 'untrusted' ? 'sticker sticker-fail' : 'sticker sticker-pass'} style={{ padding: '2px 8px' }}>{record.trust}</span>
+                      <span className="stack" style={{ gap: 4 }}>
+                        <span>{record.claim}</span>
+                        {(record.sourceCreator || record.sourceTitle || record.sourceUri || typeof record.timestampSeconds === 'number') ? (
+                          <span className="quiet row" style={{ gap: 6 }}>
+                            {record.sourceCreator ? <span>{record.sourceCreator}</span> : null}
+                            {sourceHref ? (
+                              <a href={sourceHref} target="_blank" rel="noreferrer">
+                                {record.sourceTitle ?? 'Open source'}
+                              </a>
+                            ) : (record.sourceTitle || record.sourceUri) ? <span>{record.sourceTitle ?? record.sourceUri}</span> : null}
+                            {typeof record.timestampSeconds === 'number' ? (
+                              <span className="mono">{formatEvidenceTimestamp(record.timestampSeconds)}</span>
+                            ) : null}
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               knowledgeRefs.length === 0 ? <p className="contract-empty">None recorded.</p> : null

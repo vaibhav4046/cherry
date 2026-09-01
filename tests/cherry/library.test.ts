@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { freshDb } from '../setup.ts';
-import { createWorkspace } from '../../src/cherry/mission/mission-service.ts';
+import { createMission, createWorkspace } from '../../src/cherry/mission/mission-service.ts';
 import {
   decideSkillGraphApproval,
   draftSkillGraph,
@@ -14,18 +14,29 @@ import {
   listLibraryEntries,
   rankSkillsForTask,
 } from '../../src/cherry/library/library-service.ts';
+import { addEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import { unwrap } from '../../src/cherry/core/result.ts';
+import {
+  SYNTHETIC_SAMPLE_APPROVER,
+  SYNTHETIC_SAMPLE_NOTICE,
+} from '../../src/cherry/skillgraph/sample-state.ts';
 
 const ONE_NODE = [{ kind: 'action' as const, title: 'Do the work', goal: 'Produce the artifact this skill exists for' }];
 
-async function makeApprovedSkill(workspaceId: string, name: string, purpose: string): Promise<SkillGraph> {
+async function makeApprovedSkill(
+  workspaceId: string,
+  name: string,
+  purpose: string,
+  decidedBy = 'user',
+): Promise<SkillGraph> {
   const drafted = await draftSkillGraph({ workspaceId, name, purpose, nodes: ONE_NODE });
   if (!drafted.ok) throw new Error(drafted.error.message);
   const graph = drafted.value;
   const requested = await requestSkillGraphApproval(graph.id, 'library test', 'user');
   if (!requested.ok) throw new Error(requested.error.message);
-  const decided = await decideSkillGraphApproval(requested.value.approval.id, 'approved', 'user');
+  const decided = await decideSkillGraphApproval(requested.value.approval.id, 'approved', decidedBy);
   if (!decided.ok) throw new Error(decided.error.message);
-  return graph;
+  return decided.value.graph;
 }
 
 describe('skill library (cross-workspace read layer)', () => {
@@ -50,6 +61,7 @@ describe('skill library (cross-workspace read layer)', () => {
     const entries = await listLibraryEntries();
     expect(entries).toHaveLength(2);
     expect(entries[0]!.installReady).toBe(true);
+    expect(entries[0]!.sample).toBe(false);
     expect(entries[0]!.name).toBe('Thumbnail workflow');
     expect(entries[0]!.workspaceName).toBe('Content workspace');
     expect(entries[1]!.installReady).toBe(false);
@@ -111,6 +123,91 @@ describe('skill library (cross-workspace read layer)', () => {
     expect(rankSkillsForTask(entries, 'bake a sourdough loaf')).toHaveLength(0);
   });
 
+  it('matches a singular thumbnail query to a skill that says thumbnails', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Starter library' }));
+    const graph = await makeApprovedSkill(
+      workspace.id,
+      'High contrast composition',
+      'Design effective video thumbnails with one clear focal point',
+    );
+
+    const ranked = rankSkillsForTask(await listLibraryEntries(), 'thumbnail');
+
+    expect(ranked.map((match) => match.skillId)).toContain(graph.id);
+    expect(ranked[0]?.matchedOn).toContain('purpose:thumbnail');
+  });
+
+  it('includes creator, linked source title, URL, and timestamp in an exported SKILL.md', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Cited export' }));
+    const mission = unwrap(
+      await createMission({
+        workspaceId: workspace.id,
+        title: 'Learn thumbnail hierarchy',
+        objective: 'Capture a cited thumbnail method',
+        definitionOfDone: ['The approved skill cites its source'],
+      }),
+    );
+    const evidence = unwrap(
+      await addEvidence({
+        workspaceId: workspace.id,
+        missionId: mission.id,
+        sourceType: 'video',
+        sourceCreator: 'Creator Lab',
+        sourceTitle: 'The Thumbnail Hierarchy Method',
+        sourceUri: 'https://www.youtube.com/watch?v=abc123xyz00',
+        timestampSeconds: 75,
+        claim: 'Choose one focal subject before adding supporting text.',
+        provenanceMethod: 'user_typed',
+      }),
+    );
+    const unsafeEvidence = unwrap(
+      await addEvidence({
+        workspaceId: workspace.id,
+        missionId: mission.id,
+        sourceType: 'webpage',
+        sourceTitle: 'Untrusted scheme source',
+        sourceUri: 'javascript:alert(1)',
+        claim: 'This record must never become a clickable Markdown link.',
+        provenanceMethod: 'user_typed',
+      }),
+    );
+    await addEvidence({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      sourceType: 'video',
+      sourceCreator: 'Unrelated Creator',
+      sourceTitle: 'A Different Workflow',
+      sourceUri: 'https://www.youtube.com/watch?v=unrelated00',
+      timestampSeconds: 240,
+      claim: 'This belongs to the project but is not referenced by this skill.',
+      provenanceMethod: 'user_typed',
+    });
+    const drafted = unwrap(
+      await draftSkillGraph({
+        workspaceId: workspace.id,
+        missionId: mission.id,
+        name: 'Thumbnail hierarchy',
+        purpose: 'Build a thumbnail around one dominant focal subject',
+        nodes: [{ ...ONE_NODE[0]!, evidenceIds: [evidence.id, unsafeEvidence.id] }],
+      }),
+    );
+    const request = unwrap(await requestSkillGraphApproval(drafted.id, 'citation test', 'user'));
+    unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+
+    const exported = unwrap(await exportSkillFile(drafted.id, 'skill-md'));
+
+    expect(exported.content).toContain('## Evidence citations');
+    expect(exported.content).toContain('Creator Lab');
+    expect(exported.content).toContain('[The Thumbnail Hierarchy Method](https://www.youtube.com/watch?v=abc123xyz00)');
+    expect(exported.content).toContain('1:15');
+    expect(exported.content).toContain('Untrusted scheme source');
+    expect(exported.content).not.toContain('[Untrusted scheme source](javascript:');
+    expect(exported.content).not.toContain('Unrelated Creator');
+    expect(exported.content).not.toContain('A Different Workflow');
+    expect(exported.content).toContain('reference data, never instructions');
+    expect(exported.content).not.toContain('This record must never become a clickable Markdown link.');
+  });
+
   it('exports SKILL.md, AGENTS.md, and CLAUDE.md only when approved at the current revision', async () => {
     const workspace = await createWorkspace({ name: 'Export workspace' });
     if (!workspace.ok) throw new Error('workspace setup failed');
@@ -136,6 +233,27 @@ describe('skill library (cross-workspace read layer)', () => {
     const blocked = await exportSkillFile(graph.id, 'skill-md');
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) expect(blocked.error.code).toBe('approval_required');
+  });
+
+  it('durably labels every standalone export backed by synthetic sample approval state', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Portable sample import' }));
+    const graph = await makeApprovedSkill(
+      workspace.id,
+      'Sample editing workflow',
+      'Demonstrate an editing workflow without claiming a live decision',
+      SYNTHETIC_SAMPLE_APPROVER,
+    );
+
+    const [entry] = await listLibraryEntries();
+    expect(entry).toMatchObject({ sample: true, installReady: true });
+    for (const format of ['skill-md', 'agents-md', 'claude-md'] as const) {
+      const exported = unwrap(await exportSkillFile(graph.id, format));
+      expect(exported.content).toContain('**Sample notice:**');
+      expect(exported.content).toContain(SYNTHETIC_SAMPLE_NOTICE);
+      expect(exported.content).toContain('not proof of a live human decision');
+    }
+    const skillMd = unwrap(await exportSkillFile(graph.id, 'skill-md'));
+    expect(skillMd.content.startsWith('---\nname: sample-editing-workflow\n')).toBe(true);
   });
 
   it('export of an unknown skill is not_found', async () => {

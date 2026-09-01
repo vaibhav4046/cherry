@@ -33,6 +33,7 @@ import type { HumanTranscriptSource, SourceFetchFailure } from '../../cherry/sou
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
+import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
@@ -98,6 +99,24 @@ export default function QuickSkill() {
   const [sourceChoice, setSourceChoice] = useState<'paste' | 'transcribe' | null>(null);
   const [runnerReady, setRunnerReady] = useState(false);
   const [transcriptSource, setTranscriptSource] = useState<HumanTranscriptSource>('user_text');
+
+  async function handleLoadStarterLibrary() {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await loadExampleWorkspace('starter-library');
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      await refresh();
+      navigate('/studio/skills');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'The starter library could not be loaded. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
@@ -805,6 +824,12 @@ export default function QuickSkill() {
               <a href={buildConnectUrl(graph.targets)} className="btn">Send to agent</a>
             </div>
             <button type="button" className="btn" onClick={teachAnother}>Teach another</button>
+            <button type="button" className="btn" onClick={() => void handleLoadStarterLibrary()} disabled={busy} data-testid="quick-load-starter-library">
+              Load sample library
+            </button>
+            <p className="label" style={{ margin: 0 }}>
+              Labelled reference data. Its approval state is not your decision.
+            </p>
             <div className="row">
               <button type="button" className="btn btn-sm" onClick={() => void handleDownload()} disabled={busy} data-testid="quick-download">
                 {Icons.download(16)} Download bundle

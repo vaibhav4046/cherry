@@ -286,8 +286,9 @@ export async function importWorkspace(
 
   const db = getDb();
   const now = isoNow();
+  const { isExample: _archiveExampleFlag, ...portableWorkspace } = parsed.workspace as Record<string, unknown>;
   const importedWorkspace = {
-    ...(parsed.workspace as Record<string, unknown>),
+    ...portableWorkspace,
     id: newWorkspaceId,
     name: `${String(workspace.name)}${options?.markExample ? '' : ' (imported)'}`,
     updatedAt: now,

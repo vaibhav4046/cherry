@@ -5,8 +5,12 @@ const channelId = 'UCSTUDIONORTH12345678901';
 
 async function saveYouTubeSource(page: Page, title: string) {
   await page.getByRole('button', { name: 'Save a source' }).first().click();
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('URL (metadata only)').fill(anchorVideoUrl);
+  const titleInput = page.getByRole('textbox', { name: 'Title', exact: true });
+  const urlInput = page.getByRole('textbox', { name: 'URL (metadata only)', exact: true });
+  await titleInput.fill(title);
+  await expect(titleInput).toHaveValue(title);
+  await urlInput.fill(anchorVideoUrl);
+  await expect(urlInput).toHaveValue(anchorVideoUrl);
   await page.getByRole('checkbox', { name: /I have permission to use this material/ }).check();
   await page.getByRole('button', { name: 'Save locally' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);

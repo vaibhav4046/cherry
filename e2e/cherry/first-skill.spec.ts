@@ -25,6 +25,7 @@ test.describe('first skill', () => {
     await expect(page.getByRole('heading', { name: 'Review the method' })).toBeVisible();
     await click(page.getByRole('button', { name: 'Approve this version' }));
     await expect(page.getByTestId('quick-ready')).toBeVisible();
+    await expect(page.getByTestId('quick-load-starter-library')).toBeVisible();
 
     await click(page.getByRole('link', { name: 'Open Library' }));
     await expect(page.getByTestId('skill-status')).toContainText('approved');

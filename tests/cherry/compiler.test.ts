@@ -8,8 +8,13 @@ import { runVerification } from '../../src/cherry/verify/verification-service.ts
 import { compileSkillBundle, validateBundleZip } from '../../src/cherry/compiler/archive-builder.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import { sha256Bytes } from '../../src/cherry/core/hash.ts';
+import { addEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import {
+  SYNTHETIC_SAMPLE_APPROVER,
+  SYNTHETIC_SAMPLE_NOTICE,
+} from '../../src/cherry/skillgraph/sample-state.ts';
 
-async function approvedSkillFixture() {
+async function approvedSkillFixture(decidedBy = 'user') {
   const workspace = unwrap(await createWorkspace({ name: 'Bundle workspace' }));
   const mission = unwrap(
     await createMission({
@@ -19,13 +24,38 @@ async function approvedSkillFixture() {
       definitionOfDone: ['Bundle compiles'],
     }),
   );
+  const referencedEvidence = unwrap(
+    await addEvidence({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      sourceType: 'webpage',
+      sourceTitle: 'Referenced source',
+      sourceUri: 'https://example.com/referenced',
+      claim: 'Use semantic landmarks in the generated page.',
+      provenanceMethod: 'user_typed',
+    }),
+  );
+  await addEvidence({
+    workspaceId: workspace.id,
+    missionId: mission.id,
+    sourceType: 'webpage',
+    sourceTitle: 'Unrelated project source',
+    sourceUri: 'https://example.com/unrelated',
+    claim: 'This project note is not part of the compiled skill.',
+    provenanceMethod: 'user_typed',
+  });
   const graph = unwrap(
     await draftSkillGraph({
       workspaceId: workspace.id,
       missionId: mission.id,
       name: 'Landing Snippet Builder',
       purpose: 'Builds accessible landing snippets from lesson principles',
-      nodes: [{ kind: 'build', title: 'Write the page', goal: 'Create index.html with landmarks' }],
+      nodes: [{
+        kind: 'build',
+        title: 'Write the page',
+        goal: 'Create index.html with landmarks',
+        evidenceIds: [referencedEvidence.id],
+      }],
     }),
   );
   const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Bundle artifacts'));
@@ -40,7 +70,7 @@ async function approvedSkillFixture() {
   );
   unwrap(await runVerification({ missionId: mission.id }));
   const request = unwrap(await requestSkillGraphApproval(graph.id, 'ready', 'user'));
-  const decided = unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+  const decided = unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', decidedBy));
   return { workspace, mission, graph: decided.graph };
 }
 
@@ -83,6 +113,16 @@ describe('skill bundle compiler', () => {
     const skillMd = await zip.file('landing-snippet-builder/SKILL.md')!.async('string');
     expect(skillMd.startsWith('---\nname: landing-snippet-builder\n')).toBe(true);
     expect(skillMd.split('\n').length).toBeLessThan(500);
+    expect(skillMd).toContain('Referenced source');
+    expect(skillMd).not.toContain('Unrelated project source');
+
+    const evidenceMd = await zip.file('landing-snippet-builder/references/evidence.md')!.async('string');
+    expect(evidenceMd).toContain('Use semantic landmarks in the generated page.');
+    expect(evidenceMd).not.toContain('This project note is not part of the compiled skill.');
+
+    const observations = await zip.file('landing-snippet-builder/references/observations.json')!.async('string');
+    expect(observations).toContain('Use semantic landmarks in the generated page.');
+    expect(observations).not.toContain('This project note is not part of the compiled skill.');
 
     // Manifest hashes recompute for every listed file.
     const manifest = JSON.parse(await zip.file('landing-snippet-builder/MANIFEST.json')!.async('string')) as {
@@ -100,6 +140,29 @@ describe('skill bundle compiler', () => {
     };
     expect(receipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
     expect(receipt.status).toBe('verified');
+  });
+
+  it('carries synthetic sample disclosure inside the bundle and target files', async () => {
+    const { graph } = await approvedSkillFixture(SYNTHETIC_SAMPLE_APPROVER);
+    const bundle = unwrap(await compileSkillBundle(graph.id));
+    const zip = await JSZip.loadAsync(bundle.blob as never);
+    const root = 'landing-snippet-builder/';
+
+    for (const path of [
+      'SKILL.md',
+      'policies/approvals.md',
+      'targets/codex/AGENTS.md',
+      'targets/claude-code/CLAUDE.md',
+    ]) {
+      const content = await zip.file(`${root}${path}`)!.async('string');
+      expect(content, path).toContain(SYNTHETIC_SAMPLE_NOTICE);
+    }
+    const metadata = JSON.parse(await zip.file(`${root}cherry.json`)!.async('string')) as Record<string, unknown>;
+    expect(metadata).toMatchObject({
+      sample: true,
+      approvalKind: 'synthetic-sample-state',
+      sampleNotice: SYNTHETIC_SAMPLE_NOTICE,
+    });
   });
 
   it('rejects archives with traversal paths or mismatched names', async () => {

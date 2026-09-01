@@ -182,7 +182,8 @@ test.describe('quick skill wizard', () => {
     await page.getByRole('link', { name: 'Open Library' }).click();
     await expect(page.getByTestId('skill-status')).toContainText('approved');
     // Nodes carry transcript evidence.
-    await expect(page.getByText(/What the source said \([1-9]/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Where this came from' })).toBeVisible();
+    await expect(page.getByText(/[1-9] source notes?/)).toBeVisible();
   });
 
   test('wizard refuses an empty transcript path honestly', async ({ page }) => {

@@ -5,8 +5,8 @@ import { sha256Bytes, sha256Canonical } from '../core/hash.ts';
 import { ok, type Result } from '../core/result.ts';
 import { invalid, notFound, approvalRequired } from '../core/errors.ts';
 import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
-import { listEvidence } from '../evidence/evidence-service.ts';
 import { listMemories } from '../memory/memory-service.ts';
+import { listSkillEvidence } from '../skillgraph/skill-evidence.ts';
 import { createProofReceipt } from '../proof/proof-service.ts';
 import {
   buildEvidenceMarkdown,
@@ -17,6 +17,11 @@ import {
   skillDirectoryName,
 } from './skill-markdown.ts';
 import { buildClaudeTarget, buildCodexTarget, buildVerifyScript } from './target-files.ts';
+import {
+  isSyntheticSampleGraph,
+  labelSyntheticSampleMarkdown,
+  SYNTHETIC_SAMPLE_NOTICE,
+} from '../skillgraph/sample-state.ts';
 
 export interface CompiledBundle {
   fileName: string;
@@ -44,7 +49,7 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
   }
 
   const mission = graph.missionId ? await db.missions.get(graph.missionId) : undefined;
-  const evidence = await listEvidence(graph.workspaceId, graph.missionId ? { missionId: graph.missionId } : undefined);
+  const evidence = await listSkillEvidence(graph);
   const memories = await listMemories(graph.workspaceId, { status: 'approved' });
 
   const receiptResult = graph.missionId ? await createProofReceipt(graph.missionId) : null;
@@ -52,10 +57,12 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
   const receipt = receiptResult?.value ?? null;
 
   const directory = skillDirectoryName(graph);
+  const sample = isSyntheticSampleGraph(graph);
+  const labelSample = (content: string) => sample ? labelSyntheticSampleMarkdown(content) : content;
   const zip = new JSZip();
   const root = zip.folder(directory)!;
 
-  const skillMd = buildSkillMarkdown(graph, evidence, memories);
+  const skillMd = labelSample(buildSkillMarkdown(graph, evidence, memories));
   root.file('SKILL.md', skillMd);
   root.file(
     'cherry.json',
@@ -68,6 +75,9 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
         skillRevision: graph.revision,
         approvedBy: graph.approvedBy,
         approvedAt: graph.approvedAt,
+        sample,
+        approvalKind: sample ? 'synthetic-sample-state' : 'human-decision',
+        ...(sample ? { sampleNotice: SYNTHETIC_SAMPLE_NOTICE } : {}),
         exportedAt: new Date().toISOString(),
       },
       null,
@@ -122,14 +132,16 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
   root.file('policies/originality.md', buildOriginalityPolicyMarkdown());
   root.file(
     'policies/approvals.md',
-    [
+    labelSample([
       '# Approval policy',
       '',
-      `This skill was approved by ${graph.approvedBy ?? 'the user'} at revision ${graph.approvedRevision}.`,
+      sample
+        ? 'The approval stored in this labelled sample is synthetic reference state, not a live human decision.'
+        : `This skill was approved by ${graph.approvedBy ?? 'the user'} at revision ${graph.approvedRevision}.`,
       'Any edit to the skill graph invalidates that approval and requires a new one.',
       ...graph.humanGates.map((gate) => `- Gate: ${gate.title} (${gate.action}) — ${gate.reason}`),
       '',
-    ].join('\n'),
+    ].join('\n')),
   );
 
   root.file(
@@ -161,14 +173,14 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
   root.file('scripts/verify.mjs', buildVerifyScript());
 
   const codex = buildCodexTarget(graph, directory);
-  root.file('targets/codex/AGENTS.md', codex.agentsMd);
-  root.file('targets/codex/install.md', codex.installMd);
+  root.file('targets/codex/AGENTS.md', labelSample(codex.agentsMd));
+  root.file('targets/codex/install.md', labelSample(codex.installMd));
 
   const claude = buildClaudeTarget(graph, directory);
-  root.file('targets/claude-code/CLAUDE.md', claude.claudeMd);
-  root.file('targets/claude-code/install.md', claude.installMd);
+  root.file('targets/claude-code/CLAUDE.md', labelSample(claude.claudeMd));
+  root.file('targets/claude-code/install.md', labelSample(claude.installMd));
   root.file('targets/claude-code/hooks.example.json', claude.hooksExample);
-  root.file('targets/claude-code/agents/cherry-skill-agent.md', claude.agentFile);
+  root.file('targets/claude-code/agents/cherry-skill-agent.md', labelSample(claude.agentFile));
 
   // Manifest with per-file hashes so verify.mjs can check integrity offline.
   const fileList: string[] = [];

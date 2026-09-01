@@ -33,13 +33,13 @@ export const HARD_CAP_BYTES = 8 * 1024;
 
 const SECRET_PATTERN = /(rk_live_|sk_live_|gh[pousr]_|xox[baprs]-|Bearer\s+)[A-Za-z0-9._:-]+/gi;
 
-function redact(value: string): string {
+export function redactToolText(value: string): string {
   return value.replace(SECRET_PATTERN, '[redacted]');
 }
 
 function safeDetailValue(value: unknown, depth = 0): unknown {
   if (depth > 2) return '[omitted]';
-  if (typeof value === 'string') return redact(value).slice(0, 400);
+  if (typeof value === 'string') return redactToolText(value).slice(0, 400);
   if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value;
   if (Array.isArray(value)) return value.slice(0, 8).map((entry) => safeDetailValue(entry, depth + 1));
   if (typeof value === 'object') {
@@ -65,7 +65,7 @@ function capUtf8(value: string, maxBytes: number): string {
 }
 
 export function toolText(payload: unknown): CherryToolResult {
-  let text = redact(typeof payload === 'string' ? payload : JSON.stringify(payload) ?? String(payload));
+  let text = redactToolText(typeof payload === 'string' ? payload : JSON.stringify(payload) ?? String(payload));
   if (text.length > MAX_RESULT_CHARS) {
     text = `${text.slice(0, MAX_RESULT_CHARS)}… (truncated; use a read tool with an id for details)`;
   }
@@ -82,7 +82,7 @@ export function toolError(code: CherryErrorCode, message: string, details?: Reco
         ]),
       )
     : undefined;
-  const payload = { error: code, message: redact(message).slice(0, 800), ...(safeDetails && Object.keys(safeDetails).length > 0 ? { details: safeDetails } : {}) };
+  const payload = { error: code, message: redactToolText(message).slice(0, 800), ...(safeDetails && Object.keys(safeDetails).length > 0 ? { details: safeDetails } : {}) };
   return {
     content: [{ type: 'text', text: capUtf8(JSON.stringify(payload), HARD_CAP_BYTES) }],
     isError: true,

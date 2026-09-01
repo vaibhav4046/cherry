@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { freshDb } from '../setup.ts';
-import { createMission, createWorkspace, transitionMission, updateMission } from '../../src/cherry/mission/mission-service.ts';
+import { createMission, createWorkspace, listWorkspaces, transitionMission, updateMission } from '../../src/cherry/mission/mission-service.ts';
 import { loadLesson, importTranscript, recordObservation, addCoverageCriterion } from '../../src/cherry/watch/lesson-service.ts';
 import { addEvidence, setEvidenceTrust } from '../../src/cherry/evidence/evidence-service.ts';
 import { draftSkillGraph, decideSkillGraphApproval, requestSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
@@ -9,8 +10,10 @@ import { proposeMemory, decideMemory } from '../../src/cherry/memory/memory-serv
 import { createArtifactSet, writeArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
 import { runVerification } from '../../src/cherry/verify/verification-service.ts';
 import { createProofReceipt } from '../../src/cherry/proof/proof-service.ts';
-import { exportWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
+import { exportWorkspace, importWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
+import { SYNTHETIC_SAMPLE_APPROVER } from '../../src/cherry/skillgraph/sample-state.ts';
+import { exportSkillFile, listLibraryEntries } from '../../src/cherry/library/library-service.ts';
 
 /**
  * Generates the shipped importable example workspace from REAL domain
@@ -18,9 +21,27 @@ import { unwrap } from '../../src/cherry/core/result.ts';
  *   GENERATE_EXAMPLE=1 npx vitest run tests/cherry/example-workspace.gen.test.ts
  */
 describe('example workspace generator', () => {
+  it('keeps the shipped golden example labelled after an ordinary portable import', async () => {
+    freshDb();
+    const raw = readFileSync(resolve(process.cwd(), 'public/examples/example-workspace.json'), 'utf8');
+    const imported = unwrap(await importWorkspace(raw));
+    expect(imported.hashVerified).toBe(true);
+
+    const [workspace] = await listWorkspaces();
+    expect(workspace!.isExample).not.toBe(true);
+    const [entry] = await listLibraryEntries();
+    expect(entry).toMatchObject({ sample: true, installReady: true });
+    const exported = unwrap(await exportSkillFile(entry!.skillId, 'skill-md'));
+    expect(exported.content).toContain('**Sample notice:**');
+    expect(exported.content).toContain('not proof of a live human decision');
+  });
+
   it.skipIf(!process.env.GENERATE_EXAMPLE)('generates public/examples/example-workspace.json', async () => {
     freshDb();
-    const workspace = unwrap(await createWorkspace({ name: 'EXAMPLE — Learn a landing page workflow', description: 'Shipped example workspace. Safe to delete. Everything in it was produced by real Cherry operations.' }));
+    const workspace = unwrap(await createWorkspace({
+      name: 'EXAMPLE — Learn a landing page workflow',
+      description: 'Shipped labelled example workspace. Safe to delete. Its approval is synthetic reference state, not proof of a live human decision.',
+    }));
     const mission = unwrap(
       await createMission({
         workspaceId: workspace.id,
@@ -72,8 +93,17 @@ describe('example workspace generator', () => {
     );
     unwrap(await updateMission(mission.id, { skillGraphId: graph.id }));
     unwrap(await transitionMission(mission.id, 'PLANNING'));
-    const request = unwrap(await requestSkillGraphApproval(graph.id, 'Example: review the drafted skill', 'user'));
-    unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+    const request = unwrap(await requestSkillGraphApproval(
+      graph.id,
+      'Labelled sample state for the shipped example',
+      SYNTHETIC_SAMPLE_APPROVER,
+    ));
+    unwrap(await decideSkillGraphApproval(
+      request.approval.id,
+      'approved',
+      SYNTHETIC_SAMPLE_APPROVER,
+      'Synthetic fixture approval; not a live human decision.',
+    ));
     unwrap(await transitionMission(mission.id, 'AWAITING_APPROVAL'));
     unwrap(await transitionMission(mission.id, 'EXECUTING'));
 

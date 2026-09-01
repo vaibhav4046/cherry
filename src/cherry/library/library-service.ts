@@ -1,12 +1,16 @@
 import { listWorkspaces } from '../mission/mission-service.ts';
 import { getSkillGraph, listApprovals, listSkillGraphs } from '../skillgraph/skillgraph-service.ts';
 import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
-import { listEvidence } from '../evidence/evidence-service.ts';
 import { listMemories } from '../memory/memory-service.ts';
+import { listSkillEvidence } from '../skillgraph/skill-evidence.ts';
 import { buildSkillMarkdown, skillDirectoryName } from '../compiler/skill-markdown.ts';
 import { buildClaudeTarget, buildCodexTarget } from '../compiler/target-files.ts';
 import { ok, type Result } from '../core/result.ts';
 import { approvalRequired, notFound } from '../core/errors.ts';
+import {
+  isSyntheticSampleGraph,
+  labelSyntheticSampleMarkdown,
+} from '../skillgraph/sample-state.ts';
 
 /**
  * Cross-workspace skill library: read-only aggregation over approved (and
@@ -34,6 +38,8 @@ export interface LibraryEntry {
   evaluationCount: number;
   workspaceId: string;
   workspaceName: string;
+  /** Labelled reference data. Its approval state is illustrative, not a live user decision. */
+  sample: boolean;
   missionId: string | null;
   updatedAt: string;
 }
@@ -50,7 +56,7 @@ export interface SkillExportFile {
   version: string;
 }
 
-function toEntry(graph: SkillGraph, workspaceName: string, approvalHash: string | null): LibraryEntry {
+function toEntry(graph: SkillGraph, workspaceName: string, approvalHash: string | null, sample: boolean): LibraryEntry {
   return {
     skillId: graph.id,
     name: graph.name,
@@ -67,6 +73,7 @@ function toEntry(graph: SkillGraph, workspaceName: string, approvalHash: string 
     evaluationCount: graph.evaluations.length,
     workspaceId: graph.workspaceId,
     workspaceName,
+    sample,
     missionId: graph.missionId ?? null,
     updatedAt: graph.updatedAt,
   };
@@ -85,7 +92,12 @@ export async function listLibraryEntries(): Promise<LibraryEntry[]> {
           approval.decision === 'approved' &&
           approval.objectRevision === (graph.approvedRevision ?? -1),
       );
-      entries.push(toEntry(graph, workspace.name, binding?.contentHash ?? null));
+      entries.push(toEntry(
+        graph,
+        workspace.name,
+        binding?.contentHash ?? null,
+        workspace.isExample === true || isSyntheticSampleGraph(graph),
+      ));
     }
   }
   return entries.sort((a, b) => {
@@ -118,6 +130,7 @@ export interface SkillRecommendation {
   version: string;
   revision: number;
   approvalHash: string | null;
+  sample: boolean;
   score: number;
   matchedOn: string[];
 }
@@ -131,7 +144,12 @@ function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((token) => token.length > 2 && !STOP_WORDS.has(token));
+    .filter((token) => token.length > 2 && !STOP_WORDS.has(token))
+    .map((token) => {
+      if (token.length > 4 && token.endsWith('ies')) return `${token.slice(0, -3)}y`;
+      if (token.length > 4 && token.endsWith('s') && !/(ss|us|is)$/.test(token)) return token.slice(0, -1);
+      return token;
+    });
 }
 
 /**
@@ -168,6 +186,7 @@ export function rankSkillsForTask(entries: LibraryEntry[], task: string, limit =
       version: entry.version,
       revision: entry.revision,
       approvalHash: entry.approvalHash,
+      sample: entry.sample,
       score,
       matchedOn: [...matchedOn].slice(0, 8),
     });
@@ -176,9 +195,10 @@ export function rankSkillsForTask(entries: LibraryEntry[], task: string, limit =
 }
 
 /**
- * Render one skill as an installable file. Mirrors the compiler's gate: every
- * export format requires a human approval at the exact current revision, the
- * same rule the .zip bundle enforces.
+ * Render one skill as an installable file. Mirrors the compiler's gate. Live
+ * export formats require a human approval at the exact current revision,
+ * the same rule the .zip bundle enforces. Shipped synthetic sample state is
+ * exportable only with a durable notice inside the file itself.
  */
 export async function exportSkillFile(skillGraphId: string, format: SkillExportFormat): Promise<Result<SkillExportFile>> {
   const graph = await getSkillGraph(skillGraphId);
@@ -191,8 +211,10 @@ export async function exportSkillFile(skillGraphId: string, format: SkillExportF
     });
   }
   const directory = skillDirectoryName(graph);
+  const sample = isSyntheticSampleGraph(graph);
+  const labelSample = (content: string) => sample ? labelSyntheticSampleMarkdown(content) : content;
   const wrap = (fileName: string, content: string): Result<SkillExportFile> =>
-    ok({ fileName, mimeType: 'text/markdown', content, skillId: graph.id, format, revision: graph.revision, version: graph.version });
+    ok({ fileName, mimeType: 'text/markdown', content: labelSample(content), skillId: graph.id, format, revision: graph.revision, version: graph.version });
 
   if (format === 'agents-md') {
     return wrap(`${directory}-AGENTS.md`, buildCodexTarget(graph, directory).agentsMd);
@@ -200,7 +222,7 @@ export async function exportSkillFile(skillGraphId: string, format: SkillExportF
   if (format === 'claude-md') {
     return wrap(`${directory}-CLAUDE.md`, buildClaudeTarget(graph, directory).claudeMd);
   }
-  const evidence = await listEvidence(graph.workspaceId, graph.missionId ? { missionId: graph.missionId } : undefined);
+  const evidence = await listSkillEvidence(graph);
   const memories = await listMemories(graph.workspaceId, { status: 'approved' });
   return wrap(`${directory}-SKILL.md`, buildSkillMarkdown(graph, evidence, memories));
 }
