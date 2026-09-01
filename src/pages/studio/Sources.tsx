@@ -20,8 +20,9 @@ import {
 import type { ChannelWatch, ChannelWatchRunnerOutcome } from '../../cherry/source/channel-watch-model.ts';
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
-import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
+import type { SourceContentFormat, SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
 import { fetchYouTubeTitle } from '../../cherry/source/youtube-metadata.ts';
+import { decodeLocalTextBytes, inspectLocalTextContent, inspectLocalTextFile } from '../../cherry/source/local-text-file.ts';
 import {
   checkRunnerChannelWatch,
   listRunnerChannelWatchJobs,
@@ -36,6 +37,7 @@ import {
 } from '../../cherry/runner-client/runner-api.ts';
 import { Icons } from '../../components/Icons.tsx';
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
+import { AddToCherry, isAddToCherryPath, type AddToCherryPath } from './AddToCherry.tsx';
 
 type Filter = 'all' | 'needs' | 'ready' | 'archived';
 
@@ -52,7 +54,7 @@ const KIND_COPY: Record<SourceKind, { label: string; detail: string }> = {
   youtube: { label: 'YouTube video', detail: 'Official player plus a transcript you supply.' },
   article: { label: 'Article or post', detail: 'Paste the body or add a permitted text export.' },
   note: { label: 'Note', detail: 'A private note authored in Cherry.' },
-  file: { label: 'Text file', detail: '.txt, .md, .json, .srt, or .vtt imported locally.' },
+  file: { label: 'Text file', detail: '.txt, .md, .srt, or .vtt imported locally.' },
 };
 
 function SourceIcon({ kind, size = 22 }: { kind: SourceKind; size?: number }) {
@@ -144,6 +146,11 @@ export default function Sources() {
     () => ingestDraftFromSearch(isIngestRoute ? location.search : ''),
     [isIngestRoute, location.search],
   );
+  const addIntent = useMemo<AddToCherryPath | null>(() => {
+    if (isIngestRoute) return null;
+    const value = new URLSearchParams(location.search).get('add');
+    return isAddToCherryPath(value) ? value : null;
+  }, [isIngestRoute, location.search]);
   const bookmarklet = useMemo(
     () => bookmarkletHref(bookmarkletOrigin(window.location.origin)),
     [],
@@ -171,11 +178,13 @@ export default function Sources() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyPermission, setHistoryPermission] = useState(false);
   const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
+  const [addContext, setAddContext] = useState<'channel' | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const sourceDialogRef = useRef<HTMLDialogElement | null>(null);
   const sourceReturnFocusRef = useRef<HTMLElement | null>(null);
   const saveErrorRef = useRef<HTMLParagraphElement | null>(null);
   const metadataRequestIdRef = useRef(0);
+  const lastAutoFileNameRef = useRef<string | null>(null);
   const historyDialogRef = useRef<HTMLDialogElement | null>(null);
   const watchDialogRef = useRef<HTMLDialogElement | null>(null);
   const watchChannelIdRef = useRef<HTMLInputElement | null>(null);
@@ -185,6 +194,7 @@ export default function Sources() {
   const historyFileRef = useRef<HTMLInputElement | null>(null);
   const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
   const historyTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const historyReturnFocusRef = useRef<HTMLElement | null>(null);
   const permissionRef = useRef<HTMLInputElement | null>(null);
   const titleRef = useRef<HTMLInputElement | null>(null);
   const urlRef = useRef<HTMLInputElement | null>(null);
@@ -218,6 +228,39 @@ export default function Sources() {
     setKind(ingestDraft.kind);
     setOpen(true);
   }, [ingestDraft]);
+  useEffect(() => {
+    if (!addIntent) return;
+    const trigger = document.querySelector<HTMLElement>('[data-add-to-cherry-trigger]');
+    setError(null);
+    setNotice(null);
+    setMetadataError(null);
+    setMetadataNotice(null);
+
+    if (addIntent === 'history') {
+      historyReturnFocusRef.current = trigger;
+      setHistoryCandidates([]);
+      setHistorySummary(null);
+      setHistoryError(null);
+      setHistoryPermission(false);
+      setSavingCandidateId(null);
+      setOpen(false);
+      setHistoryOpen(true);
+    } else if (addIntent === 'bookmarklet') {
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById('save-from-any-tab');
+        target?.scrollIntoView({ block: 'start' });
+        target?.focus();
+      });
+    } else {
+      const kindForIntent: SourceKind = addIntent === 'article' ? 'article' : addIntent === 'text' ? 'note' : addIntent === 'file' ? 'file' : 'youtube';
+      sourceReturnFocusRef.current = trigger;
+      setKind(kindForIntent);
+      setAddContext(addIntent === 'channel' ? 'channel' : null);
+      setOpen(true);
+    }
+
+    navigate('/studio/sources', { replace: true });
+  }, [addIntent, navigate]);
   useEffect(() => () => { metadataRequestIdRef.current += 1; }, []);
   useEffect(() => {
     const dialog = sourceDialogRef.current;
@@ -227,13 +270,14 @@ export default function Sources() {
       if (!dialog.open) dialog.showModal();
       frame = window.requestAnimationFrame(() => {
         if (ingestDraft?.requiresPermission) permissionRef.current?.focus();
+        else if (kind === 'file') fileRef.current?.focus();
         else titleRef.current?.focus();
       });
     } else if (dialog.open) {
       dialog.close();
     }
     return () => { if (frame !== null) window.cancelAnimationFrame(frame); };
-  }, [ingestDraft?.requiresPermission, open]);
+  }, [ingestDraft?.requiresPermission, kind, open]);
   useEffect(() => {
     const dialog = historyDialogRef.current;
     if (!dialog) return;
@@ -316,18 +360,11 @@ export default function Sources() {
     setMetadataNotice(null);
   }
 
-  function openSourceDialog(trigger?: HTMLElement) {
-    sourceReturnFocusRef.current = trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-    setError(null);
-    setNotice(null);
-    invalidateMetadataLookup();
-    setOpen(true);
-  }
-
   function closeSourceDialog() {
     invalidateMetadataLookup();
     setError(null);
     setOpen(false);
+    setAddContext(null);
     const returnTarget = sourceReturnFocusRef.current;
     sourceReturnFocusRef.current = null;
     if (returnTarget?.isConnected) window.requestAnimationFrame(() => returnTarget.focus());
@@ -336,12 +373,26 @@ export default function Sources() {
   function selectSourceKind(nextKind: SourceKind) {
     invalidateMetadataLookup();
     setKind(nextKind);
+    if (nextKind !== 'youtube') setAddContext(null);
+  }
+
+  function selectLocalFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    if (titleRef.current) {
+      const currentTitle = titleRef.current.value.trim();
+      if (!currentTitle || currentTitle === lastAutoFileNameRef.current) titleRef.current.value = file.name;
+    }
+    lastAutoFileNameRef.current = file.name;
+    setError(null);
   }
 
   function closeHistoryImport() {
     setHistoryOpen(false);
     clearHistoryImport();
-    window.requestAnimationFrame(() => historyTriggerRef.current?.focus());
+    const returnTarget = historyReturnFocusRef.current ?? historyTriggerRef.current;
+    historyReturnFocusRef.current = null;
+    window.requestAnimationFrame(() => returnTarget?.focus());
   }
 
   function closeWatchDialog(restoreFocus = true) {
@@ -610,24 +661,44 @@ export default function Sources() {
     const title = String(form.get('title') ?? '').trim();
     const url = String(form.get('url') ?? '').trim();
     let content = String(form.get('content') ?? '');
+    let contentFormat: SourceContentFormat = kind === 'article' ? 'markdown' : 'plain';
     const file = fileRef.current?.files?.[0];
-    if (file && kind === 'file') content = await file.text();
     setBusy(true); setError(null); setNotice(null);
     try {
+      if (kind === 'file') {
+        if (!file) throw new Error('Choose a .txt, .md, .srt, or .vtt file.');
+        const inspected = inspectLocalTextFile(file);
+        if (!inspected.ok) throw new Error(inspected.error);
+        const decoded = decodeLocalTextBytes(new Uint8Array(await file.arrayBuffer()));
+        if (!decoded.ok) throw new Error(decoded.error);
+        content = decoded.value;
+        const contentInspection = inspectLocalTextContent(content);
+        if (!contentInspection.ok) throw new Error(contentInspection.error);
+        contentFormat = inspected.value.contentFormat;
+      }
+      const continueToChannelWatch = addContext === 'channel' && kind === 'youtube';
       const workspaceId = await workspaceIdForSave();
       const created = await createSource({
         workspaceId, kind, title: title || (file?.name ?? KIND_COPY[kind].label),
         ...(String(form.get('creator') ?? '').trim() ? { creator: String(form.get('creator')).trim() } : {}),
         ...(url ? { url } : {}),
-        ...(content.trim() ? { content, contentFormat: kind === 'file' ? (file?.name.endsWith('.srt') ? 'srt' : file?.name.endsWith('.vtt') ? 'vtt' : file?.name.endsWith('.json') ? 'json' : file?.name.endsWith('.md') ? 'markdown' : 'plain') : kind === 'article' ? 'markdown' : 'plain', fetchMethod: file ? 'upload' : 'user_paste' } : {}),
+        ...(content.trim() ? { content, contentFormat, fetchMethod: file ? 'upload' : 'user_paste' } : {}),
         permissionAcknowledged: form.get('permission') === 'on',
         permissionNote: String(form.get('permissionNote') ?? '').trim() || undefined,
       });
       if (!created.ok) throw new Error(created.error.message);
-      closeSourceDialog(); setNotice('Source saved locally. Review it before turning it into a skill.');
+      closeSourceDialog();
       await reload(workspaceId); await refresh();
       formElement.reset();
+      lastAutoFileNameRef.current = null;
       setKind(ingestDraft?.kind ?? 'youtube');
+      if (continueToChannelWatch) {
+        watchReturnFocusRef.current = document.querySelector<HTMLElement>('[data-add-to-cherry-trigger]');
+        setWatchSource(created.value);
+        setNotice('The video is saved. Add the channel ID and approve its daily check.');
+      } else {
+        setNotice('Source saved locally. Review it before turning it into a skill.');
+      }
     } catch (thrown) {
       const message = (thrown as Error).message;
       setError(message.includes('already exists') ? 'This source is already in your inbox. Choose another source.' : plainSourceError(message));
@@ -692,14 +763,14 @@ export default function Sources() {
           <h1 className="display-sm" style={{ margin: 0 }}>Sources</h1>
           <p className="subhead" style={{ margin: 0, maxWidth: 720 }}>Save the material you want Cherry to turn into a method. Outside content stays untrusted until you review it.</p>
         </div>
-        {sources.length > 0 ? <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button> : null}
+        {!isIngestRoute ? <AddToCherry className="btn btn-primary" /> : null}
       </header>
 
       {error && !open ? <p className="field-error" role="alert">{error}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
 
       {!isIngestRoute ? (
-        <section className="card stack" aria-labelledby="bookmarklet-heading">
+        <section id="save-from-any-tab" tabIndex={-1} className="card stack" aria-labelledby="bookmarklet-heading">
           <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
             <div className="stack" style={{ gap: 'var(--sp-2)' }}>
               <h2 id="bookmarklet-heading" className="subhead" style={{ margin: 0 }}>Save from any page</h2>
@@ -719,7 +790,7 @@ export default function Sources() {
               <h2 id="history-heading" className="subhead" style={{ margin: 0 }}>Find patterns in your YouTube history</h2>
               <p style={{ margin: 0 }}>Choose your Takeout file locally. Cherry suggests source links, and you decide which one to save.</p>
             </div>
-            <button ref={historyTriggerRef} type="button" className="btn" onClick={() => { clearHistoryImport(); setOpen(false); setHistoryOpen(true); }}>Import YouTube history</button>
+            <button ref={historyTriggerRef} type="button" className="btn" onClick={(event) => { historyReturnFocusRef.current = event.currentTarget; clearHistoryImport(); setOpen(false); setHistoryOpen(true); }}>Import YouTube history</button>
           </div>
         </section>
       ) : null}
@@ -747,11 +818,9 @@ export default function Sources() {
             <SourceIcon kind="article" size={30} />
             <h3 className="subhead" style={{ margin: 0 }}>{sources.length === 0 ? 'Nothing here yet' : 'No sources match'}</h3>
             <p>{sources.length === 0 ? 'Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.' : 'No saved sources match this filter.'}</p>
-            <div className="row">
-              {sources.length === 0
-                ? <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button>
-                : <button type="button" className="btn" onClick={() => setFilter('all')}>Clear filter</button>}
-            </div>
+            {sources.length === 0
+              ? <p className="label" style={{ margin: 0 }}>Choose Add to Cherry above to start.</p>
+              : <button type="button" className="btn" onClick={() => setFilter('all')}>Clear filter</button>}
           </div>
         ) : (
           <div className="source-grid">
@@ -944,8 +1013,9 @@ export default function Sources() {
 
       <dialog ref={sourceDialogRef} className="sheet source-dialog" aria-labelledby="save-source-title" onCancel={(event) => { event.preventDefault(); closeSourceDialog(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSourceDialog(); }} style={{ maxHeight: 'calc(100dvh - var(--sp-4) * 2)', overflowY: 'auto', overscrollBehavior: 'contain' }}>
         <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)} aria-describedby={error ? 'save-source-error' : undefined}>
-          <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">New material</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>Save a source</h2></div><button type="button" className="btn btn-sm" onClick={closeSourceDialog} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
-          <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => selectSourceKind(candidate)}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
+          <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">{addContext === 'channel' ? 'Step 1 of 2' : 'New material'}</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>{addContext === 'channel' ? 'Start a channel watch' : 'Save a source'}</h2></div><button type="button" className="btn btn-sm" onClick={closeSourceDialog} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
+          {addContext === 'channel' ? <p style={{ margin: 0 }}>Start with one official video from the channel. After you save it, Cherry asks for the channel ID and your approval for the paired runner's daily check.</p> : null}
+          <fieldset className="source-kind-grid"><legend className="label">{addContext === 'channel' ? 'Channel source type' : 'Choose the source type'}</legend>{(addContext === 'channel' ? ['youtube'] as SourceKind[] : Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => selectSourceKind(candidate)}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
           <label className="field"><span>Title</span><input ref={titleRef} name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" onInput={invalidateMetadataLookup} /></label>
           <div className="row" style={{ gap: 'var(--sp-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <label className="field" style={{ flex: '1 1 220px' }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label>
@@ -959,7 +1029,7 @@ export default function Sources() {
           </div>
           {metadataError ? <p className="field-error" role="alert" style={{ margin: 0 }}>{metadataError}</p> : null}
           {metadataNotice ? <p className="label" role="status" style={{ margin: 0 }}>{metadataNotice}</p> : null}
-          {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" accept=".txt,.md,.json,.srt,.vtt,text/plain,text/markdown,application/json" /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} defaultValue={ingestDraft?.text ?? ''} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
+          {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" required accept=".txt,.md,.srt,.vtt,text/plain,text/markdown,text/vtt,application/x-subrip" onChange={selectLocalFile} /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} defaultValue={ingestDraft?.text ?? ''} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
           {kind !== 'note' ? <label className="check-row"><input ref={permissionRef} type="checkbox" name="permission" required /><span>I have permission to use this material. Cherry records this acknowledgement; it does not verify ownership.</span></label> : null}
           {kind !== 'note' ? <label className="field"><span>Permission note <small>(optional)</small></span><input name="permissionNote" className="input" maxLength={1000} placeholder="e.g. my export, public license, or team permission" /></label> : null}
           {error ? <p ref={saveErrorRef} id="save-source-error" className="field-error" role="alert" tabIndex={-1} style={{ margin: 0 }}>{error}</p> : null}

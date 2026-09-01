@@ -2,10 +2,8 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Source Inbox', () => {
   test('saves user-selected note and article sources, survives reload, and reuses a lesson', async ({ page }) => {
-    await page.goto('/studio/sources');
+    await page.goto('/studio/sources?add=text');
     await expect(page.getByRole('heading', { name: 'Sources' })).toBeVisible();
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
-    await page.getByRole('button', { name: /Note/ }).click();
     await page.getByLabel('Title').fill('A tiny review loop');
     await page.getByRole('textbox', { name: 'Note', exact: true }).fill('Review the evidence before turning it into a skill.');
     await page.getByRole('button', { name: 'Save locally' }).click();
@@ -17,9 +15,7 @@ test.describe('Source Inbox', () => {
     await expect(page.getByRole('heading', { name: 'Quick Skill' })).toBeVisible();
     await expect(page.getByText('Review & approve')).toBeVisible();
 
-    await page.goto('/studio/sources');
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
-    await page.getByRole('button', { name: /Article or post/ }).click();
+    await page.goto('/studio/sources?add=article');
     await page.getByLabel('Title').fill('Public article metadata');
     await page.getByLabel('URL (metadata only)').fill('https://example.com/article');
     await page.getByLabel('Body or permitted export (optional)').fill('A permitted article export with one useful paragraph.');
@@ -35,9 +31,7 @@ test.describe('Source Inbox', () => {
   });
 
   test('surfaces explicit fetch limits without starting a request', async ({ page }) => {
-    await page.goto('/studio/sources');
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
-    await page.getByRole('button', { name: /Article or post/ }).click();
+    await page.goto('/studio/sources?add=article');
     await page.getByLabel('Title').fill('LinkedIn export');
     await page.getByLabel('URL (metadata only)').fill('https://www.linkedin.com/posts/example');
     await page.getByLabel('Body or permitted export (optional)').fill('Pasted export text.');

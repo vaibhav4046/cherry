@@ -4,7 +4,7 @@ const anchorVideoUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 const channelId = 'UCSTUDIONORTH12345678901';
 
 async function saveYouTubeSource(page: Page, title: string) {
-  await page.getByRole('button', { name: 'Save a source' }).first().click();
+  await page.goto('/studio/sources?add=youtube');
   const titleInput = page.getByRole('textbox', { name: 'Title', exact: true });
   const urlInput = page.getByRole('textbox', { name: 'URL (metadata only)', exact: true });
   await titleInput.fill(title);

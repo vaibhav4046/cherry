@@ -14,8 +14,7 @@ test.describe('YouTube source polish', () => {
       });
     });
 
-    await page.goto('/studio/sources');
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
+    await page.goto('/studio/sources?add=youtube');
     const dialog = page.getByRole('dialog', { name: 'Save a source' });
     await expect(dialog).toBeVisible();
     await expect(page.getByLabel('Title')).toBeFocused();
@@ -56,8 +55,7 @@ test.describe('YouTube source polish', () => {
       });
     });
 
-    await page.goto('/studio/sources');
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
+    await page.goto('/studio/sources?add=youtube');
     const title = page.getByLabel('Title');
     const url = page.getByLabel('URL (metadata only)');
     await title.fill('My title');
@@ -77,9 +75,8 @@ test.describe('YouTube source polish', () => {
   });
 
   test('closes the modal with Escape and returns focus to its trigger', async ({ page }) => {
-    await page.goto('/studio/sources');
-    const trigger = page.getByRole('button', { name: 'Save a source' }).first();
-    await trigger.click();
+    await page.goto('/studio/sources?add=youtube');
+    const trigger = page.getByRole('button', { name: 'Add to Cherry' });
 
     const dialog = page.getByRole('dialog', { name: 'Save a source' });
     await expect(dialog).toBeVisible();
@@ -91,17 +88,14 @@ test.describe('YouTube source polish', () => {
   });
 
   test('keeps a save failure visible and focused inside the modal', async ({ page }) => {
-    await page.goto('/studio/sources');
-    const trigger = page.getByRole('button', { name: 'Save a source' }).first();
-
-    await trigger.click();
+    await page.goto('/studio/sources?add=youtube');
     await page.getByLabel('Title').fill('Duplicate source');
     await page.getByLabel('URL (metadata only)').fill(videoUrl);
     await page.getByRole('checkbox', { name: /I have permission to use this material/ }).check();
     await page.getByRole('button', { name: 'Save locally' }).click();
     await expect(page.getByRole('dialog', { name: 'Save a source' })).not.toBeVisible();
 
-    await trigger.click();
+    await page.goto('/studio/sources?add=youtube');
     const dialog = page.getByRole('dialog', { name: 'Save a source' });
     await page.getByLabel('Title').fill('Duplicate source');
     await page.getByLabel('URL (metadata only)').fill(videoUrl);

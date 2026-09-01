@@ -34,6 +34,7 @@ import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runne
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
+import { AddToCherry } from './AddToCherry.tsx';
 
 type Stage = 'source' | 'transcript' | 'review' | 'ready';
 
@@ -75,6 +76,9 @@ export default function QuickSkill() {
   const requestedSourceChoice = searchParams.get('method') === 'paste' || searchParams.get('method') === 'transcribe'
     ? searchParams.get('method') as 'paste' | 'transcribe'
     : null;
+  const requestedAdd = ['youtube', 'article', 'text'].includes(searchParams.get('add') ?? '')
+    ? searchParams.get('add')
+    : null;
   const [stage, setStage] = useState<Stage>('source');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -91,6 +95,7 @@ export default function QuickSkill() {
   const [outputNote, setOutputNote] = useState<string | null>(null);
   const [addingSource, setAddingSource] = useState(false);
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
+  const materialRef = useRef<HTMLTextAreaElement | null>(null);
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
   const captureRef = useRef<TabCapture | null>(null);
   const [autoProgress, setAutoProgress] = useState<TranscribeProgress | null>(null);
@@ -121,6 +126,12 @@ export default function QuickSkill() {
   useEffect(() => {
     void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
   }, []);
+
+  useEffect(() => {
+    if (stage !== 'source' || !requestedAdd) return;
+    const frame = window.requestAnimationFrame(() => materialRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestedAdd, stage]);
 
   useEffect(() => {
     if (!sourceId || !activeWorkspace) return;
@@ -472,10 +483,15 @@ export default function QuickSkill() {
   return (
     <div className="stack" style={{ gap: 'var(--sp-6)', maxWidth: 900 }}>
       <header className="stack" style={{ gap: 'var(--sp-2)' }}>
-        <h1 className="display-sm">Quick Skill</h1>
-        <p className="subhead">
-          Turn material you chose into a method you can read, approve, and use.
-        </p>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
+          <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+            <h1 className="display-sm">Quick Skill</h1>
+            <p className="subhead">
+              Turn material you chose into a method you can read, approve, and use.
+            </p>
+          </div>
+          {stage === 'source' ? <AddToCherry /> : null}
+        </div>
         <div className="row" data-testid="quick-stages">
           {['Source', 'Transcript', 'Review & approve', 'Install'].map((label, index) => (
             <span key={label} className={index === stageIndex ? 'sticker sticker-cherry' : index < stageIndex ? 'sticker sticker-pass' : 'sticker'}>
@@ -491,7 +507,7 @@ export default function QuickSkill() {
         <form onSubmit={handleSource} className="card stack" style={{ gap: 'var(--sp-4)' }}>
           <label className="field">
             <span>Paste a YouTube link, an article link, or raw text.</span>
-            <textarea className="textarea" name="material" autoFocus required style={{ minHeight: 160 }} />
+            <textarea ref={materialRef} className="textarea" name="material" autoFocus required style={{ minHeight: 160 }} />
           </label>
           <p className="label" style={{ margin: 0 }}>By continuing, you confirm you may use this material. Cherry records this acknowledgement; it does not verify ownership.</p>
           <button type="submit" className="btn btn-primary" disabled={busy} style={{ alignSelf: 'flex-start' }} data-testid="quick-source-next">

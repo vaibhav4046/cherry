@@ -51,16 +51,17 @@ test.describe('plain-language Studio', () => {
 
     await page.goto('/studio');
 
-    await page.getByRole('button', { name: 'Add a source' }).click();
-    const sourceDialog = page.getByRole('dialog', { name: 'Add a source' });
-    await expect(sourceDialog).toContainText('where each came from');
-    await expect(sourceDialog).toContainText('what the source said, with timestamps');
+    await page.getByRole('button', { name: 'Add to Cherry' }).click();
+    const sourceDialog = page.getByRole('dialog', { name: 'Add to Cherry' });
+    await expect(sourceDialog).toContainText('Outside content stays untrusted until you review it.');
+    await expect(sourceDialog).toContainText('Read a .txt, .md, .srt, or .vtt file in this browser.');
     await expectPlainLanguage(sourceDialog);
-    await sourceDialog.getByRole('button', { name: 'Close' }).click();
+    await sourceDialog.getByRole('button', { name: 'Close Add to Cherry' }).click();
 
     await page.goto('/studio/sources');
     await expect(page.getByRole('heading', { name: 'Sources' })).toBeVisible();
-    await page.getByRole('button', { name: 'Save a source' }).first().click();
+    await page.getByRole('button', { name: 'Add to Cherry' }).click();
+    await page.getByRole('dialog', { name: 'Add to Cherry' }).getByRole('link', { name: 'Text file' }).click();
     const saveSource = page.getByRole('dialog', { name: 'Save a source' });
     await expect(saveSource.getByRole('button', { name: /YouTube video/ })).toBeVisible();
     await expectPlainLanguage(saveSource);

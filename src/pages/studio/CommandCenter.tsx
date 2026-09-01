@@ -13,6 +13,7 @@ import type { ProofEvent } from '../../cherry/core/domain-event.ts';
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
 import type { MissionState } from '../../cherry/mission/mission-model.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
+import { AddToCherry } from './AddToCherry.tsx';
 
 function approvalObjectLabel(objectType: ApprovalRecord['objectType']): string {
   if (objectType === 'skillgraph') return 'skill';
@@ -76,15 +77,6 @@ export default function CommandCenter() {
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const sourceDialogRef = useRef<HTMLDialogElement>(null);
-
-  function openSourceDialog() {
-    sourceDialogRef.current?.showModal();
-  }
-
-  function closeSourceDialog() {
-    sourceDialogRef.current?.close();
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -229,6 +221,7 @@ export default function CommandCenter() {
             Create space
           </button>
         </form>
+        <AddToCherry />
         {error ? <p className="field-error" role="alert">{error}</p> : null}
         <details className="stack" style={{ textAlign: 'center' }}>
           <summary className="link-quiet">Already use Cherry?</summary>
@@ -263,9 +256,7 @@ export default function CommandCenter() {
       <header className="row" style={{ justifyContent: 'space-between' }}>
         <h1 className="display-sm title-3d">Command Center</h1>
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={openSourceDialog}>
-            Add a source
-          </button>
+          <AddToCherry className="btn btn-primary" />
           <Link to="/studio/missions/new" className="btn">Create project</Link>
           <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
             Replay walkthrough
@@ -392,42 +383,6 @@ export default function CommandCenter() {
         )}
       </section>
 
-      <dialog
-        ref={sourceDialogRef}
-        className="sheet source-dialog"
-        aria-labelledby="add-source-title"
-        onClick={(event) => {
-          if (event.target === sourceDialogRef.current) closeSourceDialog();
-        }}
-      >
-        <div className="stack" style={{ gap: 'var(--sp-4)' }}>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <h2 id="add-source-title" className="subhead" style={{ margin: 0 }}>Add a source</h2>
-            <button type="button" className="btn btn-sm" onClick={closeSourceDialog}>Close</button>
-          </div>
-          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
-            <span className="source-option-title">YouTube link</span>
-            <span className="source-option-copy">
-              Plays in the official player. Cherry reads the transcript you paste or upload — it does not scrape captions.
-            </span>
-          </Link>
-          <Link to="/studio/sources" className="source-option" onClick={closeSourceDialog}>
-            <span className="source-option-title">Sources inbox</span>
-            <span className="source-option-copy">Save YouTube videos, articles, notes, and text files with a record of where each came from.</span>
-          </Link>
-          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
-            <span className="source-option-title">Paste a transcript</span>
-            <span className="source-option-copy">Text, .srt or .vtt records what the source said, with timestamps.</span>
-          </Link>
-          <Link to="/studio/quick" className="source-option" onClick={closeSourceDialog}>
-            <span className="source-option-title">Upload text / Markdown / JSON</span>
-            <span className="source-option-copy">Imported locally and hashed. Nothing leaves this browser.</span>
-          </Link>
-          <Link to="/showcase" className="link-quiet" onClick={closeSourceDialog}>
-            No source handy? Load the labelled sample
-          </Link>
-        </div>
-      </dialog>
     </div>
   );
 }
