@@ -84,7 +84,7 @@ function StateReporter({ onChange }: { onChange: (controls: PrivyControls) => vo
  */
 export default function PrivyAuthBridge({ appId, clientId, onChange }: BridgeProps) {
   return (
-    <PrivyProvider appId={appId} clientId={clientId} config={{ loginMethods: ['email'] }}>
+    <PrivyProvider appId={appId} clientId={clientId} config={{ loginMethods: ['email'], appearance: { walletList: [] } }}>
       <StateReporter onChange={onChange} />
     </PrivyProvider>
   );

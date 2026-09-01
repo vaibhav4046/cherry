@@ -8,6 +8,12 @@ export interface AuthContextValue {
   state: AuthState;
   /** True only when VITE_PRIVY_APP_ID is set at build time. */
   configured: boolean;
+  /**
+   * Loads the auth SDK on demand. Guests never pay for auth: the SDK chunk is
+   * requested only when a screen that offers sign-in calls this (or when a
+   * stored session means the user is already signed in). No-op in guest builds.
+   */
+  activate?(): void;
   sendCode(email: string): Promise<Result<void>>;
   loginWithCode(email: string, code: string): Promise<Result<void>>;
   logout(): Promise<void>;

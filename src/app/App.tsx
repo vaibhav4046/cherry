@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
+import { RouteMeta } from './RouteMeta.tsx';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
 import { Compatibility } from '../pages/Compatibility.tsx';
@@ -39,6 +40,7 @@ function Loading() {
 export function App() {
   return (
     <Suspense fallback={<Loading />}>
+      <RouteMeta />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/showcase" element={<Showcase />} />

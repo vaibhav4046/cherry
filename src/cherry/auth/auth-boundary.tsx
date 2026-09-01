@@ -1,4 +1,4 @@
-import { Component, useContext, useEffect, useMemo, useState } from 'react';
+import { Component, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import { fail } from '../core/result.ts';
 import { authScopeKey } from './auth-provider.ts';
@@ -47,6 +47,20 @@ class BridgeErrorBoundary extends Component<{ onError: (message: string) => void
  *   while the SDK loads in a lazy chunk; any load or init failure downgrades to
  *   'setup_required' instead of blocking or crashing the app.
  */
+/** True when a previous Privy session left a token behind, so a returning
+ * signed-in user gets their session restored on any route. */
+function hasStoredPrivySession(): boolean {
+  try {
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key !== null && key.startsWith('privy:')) return true;
+    }
+  } catch {
+    // Storage unavailable (private mode, blocked): treat as no session.
+  }
+  return false;
+}
+
 export function AuthBoundary({ children }: { children: ReactNode }) {
   const appId = readEnv('VITE_PRIVY_APP_ID');
   const clientId = readEnv('VITE_PRIVY_CLIENT_ID');
@@ -54,9 +68,13 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
   const [Bridge, setBridge] = useState<ComponentType<BridgeProps> | null>(null);
   const [controls, setControls] = useState<PrivyControls | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Guests never download the auth SDK. It loads only when a sign-in surface
+  // asks for it (activate) or a stored session should be restored.
+  const [activated, setActivated] = useState<boolean>(() => Boolean(appId) && hasStoredPrivySession());
+  const activate = useCallback(() => setActivated(true), []);
 
   useEffect(() => {
-    if (!appId) return;
+    if (!appId || !activated) return;
     let cancelled = false;
     import('./privy-provider.tsx')
       .then((mod) => {
@@ -68,16 +86,33 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [appId]);
+  }, [appId, activated]);
 
   const value = useMemo<AuthContextValue>(() => {
     if (!appId) return GUEST_CONTEXT_VALUE;
+    if (!activated) {
+      const state: AuthState = { status: 'guest', user: null, providerName: 'Privy' };
+      const wake = () => {
+        activate();
+        return Promise.resolve(fail<void>('temporary', 'Sign-in is starting. Try again in a moment.'));
+      };
+      return {
+        state,
+        configured: true,
+        activate,
+        sendCode: wake,
+        loginWithCode: wake,
+        logout: () => Promise.resolve(),
+        authScopeKey: () => authScopeKey(null),
+      };
+    }
     if (loadError !== null) {
       const state: AuthState = { status: 'setup_required', user: null, providerName: 'Privy', error: loadError };
       const refuse = () => Promise.resolve(fail<void>('unsupported', `Privy failed to load: ${loadError}`));
       return {
         state,
         configured: true,
+        activate,
         sendCode: refuse,
         loginWithCode: refuse,
         logout: () => Promise.resolve(),
@@ -89,12 +124,13 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
     return {
       state,
       configured: true,
+      activate,
       sendCode: controls ? (email) => controls.sendCode(email) : stillLoading,
       loginWithCode: controls ? (email, code) => controls.loginWithCode(email, code) : stillLoading,
       logout: controls ? () => controls.logout() : () => Promise.resolve(),
       authScopeKey: () => authScopeKey(state.user),
     };
-  }, [appId, loadError, controls]);
+  }, [appId, activated, activate, loadError, controls]);
 
   return (
     <>

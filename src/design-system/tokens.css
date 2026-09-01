@@ -284,6 +284,11 @@ label.field > span:first-child { font-size: var(--text-caption); font-weight: 70
 .stack { display: flex; flex-direction: column; gap: var(--sp-4); }
 .row { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-4); }
+/* Grid items default to min-width:auto, which lets wide <pre>/<code> content
+   force the track past the viewport on phones. Zero it so overflow-x on the
+   content works instead. */
+.grid-cards > * { min-width: 0; }
+.grid-cards pre { max-width: 100%; }
 
 /* ---------- Marquee ---------- */
 .marquee {

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../cherry/auth/auth-boundary.tsx';
 
 const SETUP_DOC_URL = 'https://github.com/vaibhav4046/cherry/blob/main/docs/PRIVY_SETUP.md';
@@ -9,7 +9,13 @@ const SETUP_DOC_URL = 'https://github.com/vaibhav4046/cherry/blob/main/docs/PRIV
  * and "signed in" is only ever shown for a truly authenticated session.
  */
 export function AccountPanel() {
-  const { state, configured, sendCode, loginWithCode, logout } = useAuth();
+  const { state, configured, activate, sendCode, loginWithCode, logout } = useAuth();
+
+  // The Account card is the sign-in surface, so it is the one place that asks
+  // for the auth SDK. Everywhere else, guests never download it.
+  useEffect(() => {
+    activate?.();
+  }, [activate]);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);

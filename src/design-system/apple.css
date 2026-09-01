@@ -297,3 +297,6 @@ a { color: var(--color-accent); }
   .top-nav { padding-inline: 16px; }
   .home-hero { padding-block: 56px; }
 }
+
+/* Minimum touch target for small inline text links on dense pages. */
+.tap-link { display: inline-block; padding: 14px 4px; margin: -14px -4px; }

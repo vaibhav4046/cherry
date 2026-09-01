@@ -190,7 +190,7 @@ export function Connect() {
 
           <p className="label">
             Status labels follow the same honesty rule as the{' '}
-            <Link to="/compatibility">compatibility table</Link>: validated means automated tests or a
+            <Link to="/compatibility" className="tap-link">compatibility table</Link>: validated means automated tests or a
             captured live session in this repository; nothing is claimed beyond what happened.
           </p>
         </div>
