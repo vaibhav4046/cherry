@@ -142,8 +142,8 @@ async function makeMaximalEscapedSkill() {
         evaluations: Array.from({ length: 100 }, (_, index) => ({
           id: `evaluation-${index}`,
           name: `Evaluation ${index + 1}: ${escapeHeavy}`,
-          type: 'manual' as const,
-          severity: 'info' as const,
+          type: index === 0 ? 'graph' as const : 'manual' as const,
+          severity: index === 0 ? 'blocking' as const : 'info' as const,
           config: { note: escapeHeavy },
         })),
       },

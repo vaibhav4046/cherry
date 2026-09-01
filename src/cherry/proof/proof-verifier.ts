@@ -2,6 +2,7 @@ import { sha256CanonicalExcluding, sha256Text } from '../core/hash.ts';
 import { ok, type Result } from '../core/result.ts';
 import { invalid } from '../core/errors.ts';
 import type { ProofReceipt } from './proof-model.ts';
+import { RECEIPT_HASH_EXCLUSIONS } from './proof-model.ts';
 
 export interface ReceiptVerification {
   receiptId: string;
@@ -28,10 +29,18 @@ export async function verifyReceipt(
   if (receipt.canonicalization.algorithm !== 'JCS-RFC8785' || receipt.canonicalization.hashAlgorithm !== 'SHA-256') {
     return invalid('Receipt declares an unsupported canonicalization');
   }
+  const declaredExclusions = receipt.canonicalization.exclusions;
+  if (
+    !Array.isArray(declaredExclusions)
+    || declaredExclusions.length !== RECEIPT_HASH_EXCLUSIONS.length
+    || declaredExclusions.some((entry, index) => entry !== RECEIPT_HASH_EXCLUSIONS[index])
+  ) {
+    return invalid('Receipt declares unsupported hash exclusions');
+  }
 
   const recomputedHash = await sha256CanonicalExcluding(
     receipt as unknown as Record<string, unknown>,
-    receipt.canonicalization.exclusions,
+    RECEIPT_HASH_EXCLUSIONS,
   );
   const hashMatches = recomputedHash === receipt.receiptHash;
 
@@ -39,7 +48,15 @@ export async function verifyReceipt(
   if (artifactContents) {
     for (const artifact of receipt.artifacts) {
       const content = artifactContents.get(artifact.path);
-      if (content === undefined) continue;
+      if (content === undefined) {
+        artifactChecks.push({
+          path: artifact.path,
+          matches: false,
+          recomputed: '',
+          stored: artifact.sha256,
+        });
+        continue;
+      }
       const recomputed = await sha256Text(content);
       artifactChecks.push({
         path: artifact.path,
@@ -63,9 +80,12 @@ export async function verifyReceipt(
   const notes: string[] = [];
   if (!hashMatches) notes.push('Receipt hash does not match its canonical content.');
   for (const check of artifactChecks.filter((entry) => !entry.matches)) {
-    notes.push(`Artifact ${check.path} hash mismatch.`);
+    notes.push(check.recomputed
+      ? `Artifact ${check.path} hash mismatch.`
+      : `Artifact ${check.path} was not supplied for verification.`);
   }
   if (!eventsMonotonic) notes.push('Event sequence numbers are not strictly increasing.');
+  if (!artifactContents && receipt.artifacts.length > 0) notes.push('Artifact bodies were not supplied, so only the receipt snapshot was checked.');
   if (notes.length === 0) notes.push('Hash recomputation matches. The receipt is tamper-evident, not cryptographically signed.');
 
   const verdict: ReceiptVerification['verdict'] =

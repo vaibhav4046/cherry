@@ -16,6 +16,7 @@ import type {
 } from './proof-model.ts';
 import { RECEIPT_HASH_EXCLUSIONS } from './proof-model.ts';
 import { listArtifactFiles } from '../artifacts/artifact-service.ts';
+import { buildArtifactManifestHash } from '../verify/verification-service.ts';
 
 const PROVIDER_KINDS = new Set(['manual', 'webmcp-host', 'codex-cli', 'claude-cli', 'local-model', 'runner'] as const);
 const PROVIDER_STATUSES = new Set(['not-used', 'completed', 'failed', 'cancelled', 'blocked'] as const);
@@ -51,6 +52,7 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   if (!mission.skillGraphId) return invalid('Mission has no skill graph; a receipt needs one');
   const graph = await db.skillGraphs.get(mission.skillGraphId);
   if (!graph) return notFound('SkillGraph', mission.skillGraphId);
+  const artifactSet = mission.artifactSetId ? await db.artifactSets.get(mission.artifactSetId) : null;
 
   const [events, runs, routineRows, artifactFiles, verificationRows, evidenceRows, memoryRows, memoryVersions, sourceRows] = await Promise.all([
     listProofEvents(mission.workspaceId),
@@ -113,7 +115,16 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
   const verifications = (await db.verifications.where('workspaceId').equals(mission.workspaceId).toArray())
     .filter((report) => report.missionId === mission.id)
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
-  const latest = verifications[verifications.length - 1];
+  const currentArtifactManifestHash = await buildArtifactManifestHash(artifactFiles);
+  const exactVerifications = verifications.filter((report) => (
+    report.skillGraphId === graph.id
+    && report.skillGraphRevision === graph.revision
+    && report.artifactSetId === (mission.artifactSetId ?? null)
+    && report.artifactSetRevision === (artifactSet?.revision ?? null)
+    && report.artifactManifestHash === currentArtifactManifestHash
+    && (!mission.artifactSetId || artifactSet !== null)
+  ));
+  const latest = exactVerifications[exactVerifications.length - 1];
   const assertions: ProofAssertion[] = latest
     ? latest.results.map((result) => ({
         id: result.id,
@@ -221,6 +232,62 @@ export async function createProofReceipt(missionId: string): Promise<Result<Proo
 
 export async function getReceipt(receiptId: string): Promise<ProofReceipt | undefined> {
   return getDb().receipts.get(receiptId);
+}
+
+/**
+ * A receipt is immutable historical proof. This separate check answers the
+ * authority question: does that exact verified snapshot still describe the
+ * mission, skill revision, artifact set, and file contents that exist now?
+ */
+export async function proofReceiptMatchesCurrentState(receipt: ProofReceipt): Promise<boolean> {
+  if (receipt.status !== 'verified' || receipt.assertions.length === 0) return false;
+  const db = getDb();
+  const mission = await db.missions.get(receipt.missionId);
+  if (!mission || mission.workspaceId !== receipt.workspaceId || mission.skillGraphId !== receipt.skillGraphId) return false;
+  const graph = await db.skillGraphs.get(receipt.skillGraphId);
+  if (
+    !graph
+    || graph.missionId !== mission.id
+    || graph.revision !== receipt.skillGraphRevision
+    || graph.status !== 'approved'
+    || graph.approvedRevision !== graph.revision
+  ) return false;
+
+  const artifactSet = mission.artifactSetId ? await db.artifactSets.get(mission.artifactSetId) : null;
+  if (mission.artifactSetId && !artifactSet) return false;
+  const files = mission.artifactSetId ? await listArtifactFiles(mission.artifactSetId) : [];
+  const receiptArtifacts = receipt.artifacts
+    .map((artifact) => ({
+      path: artifact.path,
+      mediaType: artifact.mediaType,
+      sizeBytes: artifact.sizeBytes,
+      sha256: artifact.sha256,
+      revision: artifact.artifactRevision ?? null,
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  const currentArtifacts = files.map((file) => ({
+    path: file.path,
+    mediaType: file.mediaType,
+    sizeBytes: file.sizeBytes,
+    sha256: file.sha256,
+    revision: file.revision,
+  }));
+  if (JSON.stringify(receiptArtifacts) !== JSON.stringify(currentArtifacts)) return false;
+
+  const manifestHash = await buildArtifactManifestHash(files);
+  const assertionIds = receipt.assertions.map((assertion) => assertion.id);
+  const reports = await db.verifications.where('workspaceId').equals(receipt.workspaceId).toArray();
+  return reports.some((report) => (
+    report.missionId === mission.id
+    && report.status === 'passed'
+    && report.skillGraphId === graph.id
+    && report.skillGraphRevision === graph.revision
+    && report.artifactSetId === (mission.artifactSetId ?? null)
+    && report.artifactSetRevision === (artifactSet?.revision ?? null)
+    && report.artifactManifestHash === manifestHash
+    && report.results.length === assertionIds.length
+    && report.results.every((result, index) => result.id === assertionIds[index])
+  ));
 }
 
 export async function listReceipts(workspaceId: string): Promise<ProofReceipt[]> {

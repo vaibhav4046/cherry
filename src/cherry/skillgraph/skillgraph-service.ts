@@ -249,9 +249,12 @@ export async function requestSkillGraphApproval(
   if (graph.versionHash !== recomputedHash) return invalid('SkillGraph version hash is invalid');
 
   const issues = validateSkillGraph(graph);
-  const blocking = issues.filter((issue) => issue.code !== 'no_evaluations');
+  const blocking = issues;
   if (blocking.length > 0) {
     return invalid('SkillGraph has validation issues that block review', { issues: blocking });
+  }
+  if (!graph.evaluations.some((evaluation) => evaluation.severity === 'blocking' || evaluation.severity === 'error')) {
+    return invalid('SkillGraph needs at least one blocking or error check before review');
   }
 
   const now = isoNow();

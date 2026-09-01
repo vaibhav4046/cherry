@@ -24,6 +24,10 @@ export interface VerificationReport {
   skillGraphId?: string | null;
   skillGraphRevision?: number | null;
   artifactSetId?: string | null;
+  /** Exact persisted artifact-set revision checked by this report. */
+  artifactSetRevision?: number | null;
+  /** Canonical hash of paths, revisions, stored hashes, and recomputed content hashes. */
+  artifactManifestHash?: string | null;
   startedAt: string;
   finishedAt: string;
   status: 'passed' | 'failed';

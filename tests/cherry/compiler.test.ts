@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { freshDb } from '../setup.ts';
 import { createMission, createWorkspace, updateMission } from '../../src/cherry/mission/mission-service.ts';
-import { draftSkillGraph, decideSkillGraphApproval, requestSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
+import { draftSkillGraph, decideSkillGraphApproval, requestSkillGraphApproval, reviseSkillGraph } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { createArtifactSet, writeArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
 import { runVerification } from '../../src/cherry/verify/verification-service.ts';
 import { compileSkillBundle, validateBundleZip } from '../../src/cherry/compiler/archive-builder.ts';
@@ -71,7 +71,7 @@ async function approvedSkillFixture(decidedBy = 'user') {
   unwrap(await runVerification({ missionId: mission.id }));
   const request = unwrap(await requestSkillGraphApproval(graph.id, 'ready', 'user'));
   const decided = unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', decidedBy));
-  return { workspace, mission, graph: decided.graph };
+  return { workspace, mission, artifactSet, graph: decided.graph };
 }
 
 describe('skill bundle compiler', () => {
@@ -140,6 +140,56 @@ describe('skill bundle compiler', () => {
     };
     expect(receipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
     expect(receipt.status).toBe('verified');
+  });
+
+  it('refuses a newly approved skill revision until that exact revision is checked', async () => {
+    const { graph, mission } = await approvedSkillFixture();
+    const revised = unwrap(await reviseSkillGraph(graph.id, { purpose: `${graph.purpose}. Revised.` }, 'Revise after verification'));
+    const request = unwrap(await requestSkillGraphApproval(revised.id, 'Approve the revision', 'user'));
+    const approved = unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user')).graph;
+
+    const stale = await compileSkillBundle(approved.id);
+    expect(stale).toMatchObject({ ok: false, error: { code: 'validation' } });
+    if (!stale.ok) expect(stale.error.message).toContain('current skill and files');
+
+    unwrap(await runVerification({ missionId: mission.id }));
+    expect((await compileSkillBundle(approved.id)).ok).toBe(true);
+  });
+
+  it('refuses changed artifacts until their exact current manifest is checked', async () => {
+    const { graph, mission, artifactSet } = await approvedSkillFixture();
+    unwrap(await writeArtifactFile(
+      artifactSet.id,
+      'index.html',
+      '<html lang="en"><head><title>changed</title></head><body><main><h1>changed</h1></main></body></html>',
+      'human',
+      'Changed after verification',
+    ));
+
+    const stale = await compileSkillBundle(graph.id);
+    expect(stale).toMatchObject({ ok: false, error: { code: 'validation' } });
+    if (!stale.ok) expect(stale.error.message).toContain('current skill and files');
+
+    unwrap(await runVerification({ missionId: mission.id }));
+    expect((await compileSkillBundle(graph.id)).ok).toBe(true);
+  });
+
+  it('refuses to compile a graph after its mission is repointed to another skill', async () => {
+    const { workspace, graph, mission } = await approvedSkillFixture();
+    const replacement = unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Replacement skill',
+      purpose: 'Replace the mission skill without authorizing the old bundle',
+      nodes: [{ kind: 'build', title: 'Replace', goal: 'Use the replacement' }],
+    }));
+    unwrap(await updateMission(mission.id, { skillGraphId: replacement.id }));
+    unwrap(await runVerification({ missionId: mission.id }));
+    const request = unwrap(await requestSkillGraphApproval(replacement.id, 'ready', 'user'));
+    unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+
+    const stale = await compileSkillBundle(graph.id);
+    expect(stale).toMatchObject({ ok: false, error: { code: 'validation' } });
   });
 
   it('carries synthetic sample disclosure inside the bundle and target files', async () => {

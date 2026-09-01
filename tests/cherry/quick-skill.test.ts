@@ -10,6 +10,7 @@ import { listApprovals, requestSkillGraphApproval, decideSkillGraphApproval } fr
 import { compileSkillBundle } from '../../src/cherry/compiler/archive-builder.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import type { TranscriptSegment } from '../../src/cherry/watch/watch-model.ts';
+import { runVerification } from '../../src/cherry/verify/verification-service.ts';
 
 function segment(index: number, start: number, text: string): TranscriptSegment {
   return { id: `s${index}`, workspaceId: 'ws', lessonId: 'ls', index, startSeconds: start, endSeconds: start + 20, text, source: 'user_text' };
@@ -132,6 +133,7 @@ describe('quick skill pipeline', () => {
     expect(bad.ok).toBe(false);
     const request = unwrap(await requestSkillGraphApproval(generated.graph.id, 'Quick skill review', 'user'));
     unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+    unwrap(await runVerification({ missionId: mission.id }));
     const bundle = unwrap(await compileSkillBundle(generated.graph.id));
     expect(bundle.fileName).toBe('hero-section-workflow-v0.1.0.zip');
   });

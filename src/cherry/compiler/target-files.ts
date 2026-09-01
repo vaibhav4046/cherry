@@ -184,9 +184,13 @@ if (existsSync(receiptPath)) {
   const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
   const stored = receipt.receiptHash;
   const clone = JSON.parse(JSON.stringify(receipt));
-  for (const exclusion of receipt.canonicalization?.exclusions ?? ['receiptHash']) {
-    delete clone[exclusion];
+  const expectedExclusions = ['receiptHash'];
+  const declaredExclusions = receipt.canonicalization?.exclusions;
+  if (!Array.isArray(declaredExclusions) || JSON.stringify(declaredExclusions) !== JSON.stringify(expectedExclusions)) {
+    console.error('FAIL: receipt declares unsupported hash exclusions');
+    failures += 1;
   }
+  delete clone.receiptHash;
   const recomputed = sha256(Buffer.from(canonicalize(clone), 'utf8'));
   if (recomputed !== stored) {
     console.error('FAIL: receipt hash mismatch');

@@ -2,9 +2,9 @@ import { getDb } from '../persistence/cherry-db.ts';
 import { withWorkspaceTx } from '../persistence/transactions.ts';
 import { newId } from '../core/ids.ts';
 import { isoNow } from '../core/clock.ts';
-import { sha256Text } from '../core/hash.ts';
+import { sha256Canonical, sha256Text } from '../core/hash.ts';
 import { ok, type Result } from '../core/result.ts';
-import { notFound } from '../core/errors.ts';
+import { invalid, notFound } from '../core/errors.ts';
 import { validateSkillGraph } from '../skillgraph/skillgraph-validator.ts';
 import type { SkillGraph, Evaluation } from '../skillgraph/skillgraph-model.ts';
 import type { ArtifactFile } from '../artifacts/artifact-model.ts';
@@ -33,6 +33,22 @@ interface VerifyContext {
   files: ArtifactFile[];
   entryPath: string | null;
   previewErrors: string[];
+  previewObserved: boolean;
+}
+
+export async function buildArtifactManifestHash(files: ArtifactFile[]): Promise<string> {
+  const manifest = await Promise.all(files
+    .slice()
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(async (file) => ({
+      path: file.path,
+      mediaType: file.mediaType,
+      revision: file.revision,
+      sizeBytes: file.sizeBytes,
+      storedSha256: file.sha256,
+      contentSha256: await sha256Text(file.content),
+    })));
+  return sha256Canonical(manifest);
 }
 
 function pass(evidence: string[]): { status: 'passed'; evidence: string[] } {
@@ -128,6 +144,13 @@ function buildAssertion(evaluation: Evaluation, context: VerifyContext): Asserti
       return {
         evaluation,
         run: async () => {
+          if (!context.previewObserved) {
+            return {
+              status: 'blocked',
+              evidence: ['No sandboxed preview observation was supplied for this run'],
+              errorCode: 'runtime_not_observed',
+            };
+          }
           if (context.previewErrors.length > 0) {
             return failWith(
               ['Preview reported runtime errors:', ...context.previewErrors.slice(0, 5)],
@@ -159,6 +182,14 @@ function buildAssertion(evaluation: Evaluation, context: VerifyContext): Asserti
       return {
         evaluation,
         run: async () => {
+          if (context.files.length === 0) {
+            if (!context.graph) return failWith(['No files or skill graph were available to hash'], null, 'hashable state', 'hash_input_missing');
+            const recomputed = await sha256Canonical({ ...context.graph, versionHash: undefined });
+            if (recomputed !== context.graph.versionHash) {
+              return failWith(['Stored skill graph hash does not match its content'], recomputed, context.graph.versionHash, 'hash_mismatch');
+            }
+            return pass([`Skill graph r${context.graph.revision}: ${recomputed.slice(0, 12)}… ok`]);
+          }
           const evidence: string[] = [];
           for (const file of context.files) {
             const recomputed = await sha256Text(file.content);
@@ -172,7 +203,7 @@ function buildAssertion(evaluation: Evaluation, context: VerifyContext): Asserti
             }
             evidence.push(`${file.path}: ${recomputed.slice(0, 12)}… ok`);
           }
-          return pass(evidence.length > 0 ? evidence.slice(0, 20) : ['No files to hash']);
+          return pass(evidence.slice(0, 20));
         },
       };
     case 'accessibility':
@@ -252,6 +283,7 @@ export async function runVerification(options: RunVerificationOptions): Promise<
     files,
     entryPath: artifactSet?.entryPath ?? null,
     previewErrors: options.previewErrors ?? [],
+    previewObserved: options.previewErrors !== undefined,
   };
 
   const evaluations: Evaluation[] = graph?.evaluations ?? [
@@ -263,6 +295,10 @@ export async function runVerification(options: RunVerificationOptions): Promise<
       config: {},
     },
   ];
+  if (evaluations.length === 0) return invalid('Verification requires at least one declared check');
+  if (!evaluations.some((evaluation) => evaluation.severity === 'blocking' || evaluation.severity === 'error')) {
+    return invalid('Verification requires at least one blocking or error check');
+  }
 
   const startedAt = isoNow();
   const results: AssertionResult[] = [];
@@ -287,8 +323,9 @@ export async function runVerification(options: RunVerificationOptions): Promise<
   }
 
   const blockingFailures = results.filter(
-    (result) => result.status === 'failed' && (result.severity === 'blocking' || result.severity === 'error'),
+    (result) => result.status !== 'passed' && (result.severity === 'blocking' || result.severity === 'error'),
   ).length;
+  const artifactManifestHash = await buildArtifactManifestHash(files);
 
   const report: VerificationReport = {
     id: newId('vr'),
@@ -297,6 +334,8 @@ export async function runVerification(options: RunVerificationOptions): Promise<
     skillGraphId: graph?.id ?? null,
     skillGraphRevision: graph?.revision ?? null,
     artifactSetId: mission.artifactSetId ?? null,
+    artifactSetRevision: artifactSet?.revision ?? null,
+    artifactManifestHash,
     startedAt,
     finishedAt: isoNow(),
     status: blockingFailures === 0 ? 'passed' : 'failed',

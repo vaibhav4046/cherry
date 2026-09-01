@@ -423,6 +423,24 @@ describe('artifacts, verification, repair, proof', () => {
     expect(verification.hashMatches).toBe(true);
     expect(verification.eventsMonotonic).toBe(true);
 
+    const missingArtifact = unwrap(await verifyReceipt(receipt, new Map()));
+    expect(missingArtifact.verdict).toBe('tampered');
+    expect(missingArtifact.artifactChecks).toEqual([
+      expect.objectContaining({ path: 'index.html', matches: false }),
+    ]);
+
+    const exclusionAttack = structuredClone(receipt);
+    exclusionAttack.canonicalization.exclusions = ['receiptHash', 'events'];
+    exclusionAttack.events[0]!.summary += ' hidden by a forged exclusion';
+    exclusionAttack.receiptHash = await sha256CanonicalExcluding(
+      exclusionAttack as unknown as Record<string, unknown>,
+      exclusionAttack.canonicalization.exclusions,
+    );
+    await expect(verifyReceipt(exclusionAttack)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'validation' },
+    });
+
     const exported = unwrap(await exportWorkspace(workspace.id));
     const exportedMissionCreated = (exported.proofEvents as Array<{ id: string; payloadHash?: string }>)
       .find((event) => event.id === missionCreated?.id);

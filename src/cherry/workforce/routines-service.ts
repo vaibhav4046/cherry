@@ -14,6 +14,7 @@ import { fail as err, ok, type Result } from '../core/result.ts';
 import type { ActorType } from '../core/domain-event.ts';
 import type { RunRecord, RunStatus } from '../mission/mission-model.ts';
 import { verifyReceipt } from '../proof/proof-verifier.ts';
+import { proofReceiptMatchesCurrentState } from '../proof/proof-service.ts';
 import { sha256Canonical } from '../core/hash.ts';
 import type { ApprovalRecord } from '../approval/approval-model.ts';
 import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
@@ -450,6 +451,7 @@ export async function settleRun(
     if (receipt.status !== 'verified') return err('approval_required', 'Receipt is not verified.');
     const verification = await verifyReceipt(receipt);
     if (!verification.ok || verification.value.verdict !== 'valid') return err('approval_required', 'Receipt verification failed; run cannot be marked successful.');
+    if (!(await proofReceiptMatchesCurrentState(receipt))) return err('approval_required', 'Receipt no longer matches the current approved skill and files.');
   }
   const now = isoNow();
   const terminalProviderStatus = status === 'succeeded' ? 'completed' : status === 'failed' ? 'failed' : status === 'cancelled' ? 'cancelled' : status === 'setup-required' && details.provider?.status === 'completed' ? 'completed' : run.provider?.status;

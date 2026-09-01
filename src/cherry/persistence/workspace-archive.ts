@@ -865,6 +865,8 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
       && isOptionalNullableId(row['skillGraphId'])
       && (row['skillGraphRevision'] === undefined || row['skillGraphRevision'] === null || Number.isInteger(row['skillGraphRevision']) && Number(row['skillGraphRevision']) >= 1)
       && isOptionalNullableId(row['artifactSetId'])
+      && (row['artifactSetRevision'] === undefined || row['artifactSetRevision'] === null || Number.isInteger(row['artifactSetRevision']) && Number(row['artifactSetRevision']) >= 1)
+      && (row['artifactManifestHash'] === undefined || row['artifactManifestHash'] === null || typeof row['artifactManifestHash'] === 'string' && /^[a-f0-9]{64}$/.test(row['artifactManifestHash']))
       && isIsoDate(row['startedAt'])
       && isIsoDate(row['finishedAt'])
       && isOneOf(row['status'], ['passed', 'failed'])

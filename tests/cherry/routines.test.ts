@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { freshDb } from '../setup.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
-import { createWorkspace, createMission } from '../../src/cherry/mission/mission-service.ts';
+import { createWorkspace, createMission, updateMission } from '../../src/cherry/mission/mission-service.ts';
 import {
   decideSkillGraphApproval,
   draftSkillGraph,
@@ -23,6 +23,9 @@ import {
 } from '../../src/cherry/workforce/routines-service.ts';
 import type { ScheduleSpec } from '../../src/cherry/workforce/workforce-model.ts';
 import { exportWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
+import { createArtifactSet, writeArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
+import { runVerification } from '../../src/cherry/verify/verification-service.ts';
+import { createProofReceipt } from '../../src/cherry/proof/proof-service.ts';
 
 async function seedApprovedGraph() {
   const workspace = unwrap(await createWorkspace({ name: 'Routines workspace' }));
@@ -280,5 +283,39 @@ describe('routines service', () => {
     expect(failed.finishedAt).toBe('2026-09-01T12:01:00.000Z');
     expect((await getRoutine(workspace.id, routine.id))?.lastRunAt).toBe('2026-09-01T12:01:00.000Z');
     await expect(exportWorkspace(workspace.id)).resolves.toMatchObject({ ok: true });
+  });
+
+  it('refuses a historical verified receipt after the current artifacts change', async () => {
+    const { workspace, graph } = await seedApprovedGraph();
+    const mission = await getDb().missions.get(graph.missionId!);
+    if (!mission) throw new Error('mission missing');
+    const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Routine output'));
+    unwrap(await updateMission(mission.id, { skillGraphId: graph.id, artifactSetId: artifactSet.id }));
+    unwrap(await writeArtifactFile(artifactSet.id, 'result.txt', 'first', 'human'));
+
+    const routine = unwrap(await draftRoutine({ workspaceId: workspace.id, skillGraphId: graph.id }));
+    unwrap(await approveRoutine(workspace.id, routine.id, routine.revision));
+    const requested = unwrap(await requestRunNow(workspace.id, routine.id));
+    const token = requested.runnerCapabilityToken!;
+    unwrap(await settleRun(requested.id, 'running', { runnerCapabilityToken: token }));
+    unwrap(await runVerification({ missionId: mission.id }));
+    const oldReceipt = unwrap(await createProofReceipt(mission.id));
+    expect(oldReceipt.runId).toBe(requested.id);
+    expect(oldReceipt.status).toBe('verified');
+
+    unwrap(await writeArtifactFile(artifactSet.id, 'result.txt', 'second', 'human'));
+    const refused = await settleRun(requested.id, 'succeeded', {
+      runnerCapabilityToken: token,
+      receiptId: oldReceipt.receiptId,
+    });
+    expect(refused).toMatchObject({ ok: false, error: { code: 'approval_required' } });
+
+    unwrap(await runVerification({ missionId: mission.id }));
+    const currentReceipt = unwrap(await createProofReceipt(mission.id));
+    const succeeded = unwrap(await settleRun(requested.id, 'succeeded', {
+      runnerCapabilityToken: token,
+      receiptId: currentReceipt.receiptId,
+    }));
+    expect(succeeded.status).toBe('succeeded');
   });
 });

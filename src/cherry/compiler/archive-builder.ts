@@ -48,13 +48,25 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
     });
   }
 
-  const mission = graph.missionId ? await db.missions.get(graph.missionId) : undefined;
+  if (!graph.missionId) return invalid('A verified mission is required before compiling this skill');
+  const mission = await db.missions.get(graph.missionId);
+  if (!mission) return notFound('Mission', graph.missionId);
+  if (mission.skillGraphId !== graph.id) {
+    return invalid('This mission is no longer bound to the requested skill');
+  }
   const evidence = await listSkillEvidence(graph);
   const memories = await listMemories(graph.workspaceId, { status: 'approved' });
 
-  const receiptResult = graph.missionId ? await createProofReceipt(graph.missionId) : null;
-  if (receiptResult && !receiptResult.ok) return receiptResult;
-  const receipt = receiptResult?.value ?? null;
+  const receiptResult = await createProofReceipt(graph.missionId);
+  if (!receiptResult.ok) return receiptResult;
+  const receipt = receiptResult.value;
+  if (
+    receipt.status !== 'verified'
+    || receipt.skillGraphId !== graph.id
+    || receipt.skillGraphRevision !== graph.revision
+  ) {
+    return invalid('Run checks against the current skill and files before compiling');
+  }
 
   const directory = skillDirectoryName(graph);
   const sample = isSyntheticSampleGraph(graph);
@@ -85,8 +97,8 @@ export async function compileSkillBundle(skillGraphId: string): Promise<Result<C
     ),
   );
   root.file('skillgraph.json', JSON.stringify(graph, null, 2));
-  if (mission) root.file('mission.json', JSON.stringify(mission, null, 2));
-  if (receipt) root.file('receipt.json', JSON.stringify(receipt, null, 2));
+  root.file('mission.json', JSON.stringify(mission, null, 2));
+  root.file('receipt.json', JSON.stringify(receipt, null, 2));
 
   root.file(
     'agents/openai.yaml',
