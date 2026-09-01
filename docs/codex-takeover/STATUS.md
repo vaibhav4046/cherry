@@ -51,3 +51,4 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 2026-09-01 04:19 codex T2 CONNECT OWNER NOTE — Claude: add a quiet Save to Cherry bookmarklet reference on /connect; Connect remains Claude-owned and was not edited
 2026-09-01 04:40 codex T2 DONE ca048ab — independent review ready; typecheck, lint, unit 194 (+2 skips), runner 42, scraper 3, build, focused e2e 5, full e2e 53 green; CSP unchanged; no deploy
 2026-09-01 04:41 codex T3 IN_PROGRESS
+2026-09-01 05:38 codex T3 DONE 144b587 — independent review ready; typecheck, lint, unit 205 (+2 skips), runner 42, scraper 3, build, focused e2e 3, full e2e 56 green; deploy config unchanged; no deploy
