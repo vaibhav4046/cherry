@@ -83,6 +83,13 @@ describe('YouTube watch-history parsing', () => {
     expect(parsed.skippedRows).toBe(3);
     expect(parsed.entries.every((entry) => entry.title === `YouTube video ${entry.videoId}`)).toBe(true);
   });
+
+  it('bounds newline-heavy pasted input before allocating derived rows', () => {
+    const parsed = parsePastedYouTubeUrls(Array.from({ length: 25_000 }, () => 'not-a-youtube-url').join('\n'));
+
+    expect(parsed.entries).toEqual([]);
+    expect(parsed.skippedRows).toBe(20_001);
+  });
 });
 
 describe('YouTube watch-history candidate ranking', () => {
@@ -128,5 +135,30 @@ describe('YouTube watch-history candidate ranking', () => {
     expect(second).toEqual(first);
     expect(first).toHaveLength(2);
     expect(first[0]).toMatchObject({ kind: 'video', reason: 'From the URL list you pasted.' });
+  });
+
+  it('keeps recurring patterns ahead of newer one-off videos', () => {
+    const recurring = ['patternVid1', 'patternVid2', 'patternVid3'].map((videoId, index) => ({
+      videoId,
+      canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+      title: `Durable evidence workflow ${index + 1}`,
+      channel: null,
+      watchedAt: `2025-01-0${index + 1}T00:00:00.000Z`,
+    }));
+    const oneOffs = Array.from({ length: 10 }, (_, index) => {
+      const videoId = `oneOffVid${String(index).padStart(2, '0')}`;
+      return {
+        videoId,
+        canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        title: `Unique topic ${index}`,
+        channel: null,
+        watchedAt: `2026-08-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`,
+      };
+    });
+
+    const ranked = rankWatchHistoryCandidates([...oneOffs, ...recurring]);
+    expect(ranked.some((candidate) => candidate.id === 'keyword:durable')).toBe(true);
+    expect(ranked.some((candidate) => candidate.id === 'keyword:evidence')).toBe(true);
+    expect(ranked.some((candidate) => candidate.id === 'keyword:workflow')).toBe(true);
   });
 });

@@ -4,6 +4,21 @@ import { expect, test, type Request } from '@playwright/test';
 const fixturePath = resolve(process.cwd(), 'tests/fixtures/watch-history.sample.json');
 
 test.describe('Local YouTube watch-history import', () => {
+  test('uses a modal keyboard path and restores focus on Escape', async ({ page }) => {
+    await page.goto('/studio/sources');
+    const trigger = page.getByRole('button', { name: 'Import YouTube history' });
+    await trigger.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Import your YouTube history' });
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate((node) => (node as HTMLDialogElement).matches(':modal'))).toBe(true);
+    await expect(page.getByLabel('YouTube Takeout JSON')).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  });
+
   test('ranks a local Takeout file without network activity and saves only the chosen source', async ({ page }) => {
     await page.goto('/studio/sources');
     await expect(page.getByRole('heading', { name: 'Sources' })).toBeVisible();

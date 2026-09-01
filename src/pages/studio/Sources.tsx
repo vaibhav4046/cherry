@@ -76,8 +76,10 @@ export default function Sources() {
   const [historyPermission, setHistoryPermission] = useState(false);
   const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const historyDialogRef = useRef<HTMLDialogElement | null>(null);
   const historyFileRef = useRef<HTMLInputElement | null>(null);
   const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
+  const historyTriggerRef = useRef<HTMLButtonElement | null>(null);
   const permissionRef = useRef<HTMLInputElement | null>(null);
   const installBookmarklet = useCallback((node: HTMLAnchorElement | null) => {
     // React sanitizes javascript: values in JSX. Install the deterministic,
@@ -105,6 +107,18 @@ export default function Sources() {
     const frame = window.requestAnimationFrame(() => permissionRef.current?.focus());
     return () => window.cancelAnimationFrame(frame);
   }, [ingestDraft, open]);
+  useEffect(() => {
+    const dialog = historyDialogRef.current;
+    if (!dialog) return;
+    let frame: number | null = null;
+    if (historyOpen) {
+      if (!dialog.open) dialog.showModal();
+      frame = window.requestAnimationFrame(() => historyFileRef.current?.focus());
+    } else if (dialog.open) {
+      dialog.close();
+    }
+    return () => { if (frame !== null) window.cancelAnimationFrame(frame); };
+  }, [historyOpen]);
   const visible = useMemo(() => sources.filter((source) => {
     if (filter === 'archived') return source.status === 'archived';
     if (source.status === 'archived') return false;
@@ -133,6 +147,7 @@ export default function Sources() {
   function closeHistoryImport() {
     setHistoryOpen(false);
     clearHistoryImport();
+    window.requestAnimationFrame(() => historyTriggerRef.current?.focus());
   }
 
   function showHistoryCandidates(parsed: WatchHistoryParse) {
@@ -311,7 +326,7 @@ export default function Sources() {
               <h2 id="history-heading" className="subhead" style={{ margin: 0 }}>Find patterns in your YouTube history</h2>
               <p style={{ margin: 0 }}>Choose your Takeout file locally. Cherry suggests source links, and you decide which one to save.</p>
             </div>
-            <button type="button" className="btn" onClick={() => { clearHistoryImport(); setOpen(false); setHistoryOpen(true); }}>Import YouTube history</button>
+            <button ref={historyTriggerRef} type="button" className="btn" onClick={() => { clearHistoryImport(); setOpen(false); setHistoryOpen(true); }}>Import YouTube history</button>
           </div>
         </section>
       ) : null}
@@ -328,7 +343,7 @@ export default function Sources() {
 
       <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>A deliberate trust boundary</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A URL is metadata until you click a permitted fetch, and any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof ledger</Link></div></section>
 
-      <dialog open={historyOpen} className="sheet source-dialog" aria-labelledby="history-import-title" onClick={(event) => { if (event.target === event.currentTarget) closeHistoryImport(); }}>
+      <dialog ref={historyDialogRef} className="sheet source-dialog" aria-labelledby="history-import-title" onCancel={(event) => { event.preventDefault(); closeHistoryImport(); }} onClick={(event) => { if (event.target === event.currentTarget) closeHistoryImport(); }}>
         <div className="stack" style={{ gap: 'var(--sp-4)' }}>
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div className="stack" style={{ gap: 4 }}>

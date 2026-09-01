@@ -5,6 +5,8 @@ import { parseYouTubeUrl } from '../watch/youtube-url.ts';
 export const MAX_WATCH_HISTORY_CHARACTERS = 16 * 1024 * 1024;
 export const MAX_WATCH_HISTORY_FILE_BYTES = 16 * 1024 * 1024;
 const MAX_WATCH_HISTORY_ROWS = 20_000;
+const MAX_KEYWORDS_PER_TITLE = 16;
+const MAX_TRACKED_KEYWORDS = 4_096;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_WINDOW_MS = 90 * DAY_MS;
 
@@ -137,9 +139,26 @@ export function parsePastedYouTubeUrls(raw: string): WatchHistoryParse {
   if (raw.length > MAX_WATCH_HISTORY_CHARACTERS) return { entries: [], skippedRows: 1 };
   const entries: WatchHistoryEntry[] = [];
   const seen = new Set<string>();
-  let skippedRows = 0;
-  const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  for (const line of lines.slice(0, MAX_WATCH_HISTORY_ROWS)) {
+  const lines: string[] = [];
+  let overflowed = false;
+  let lineStart = 0;
+
+  // Scan only until the first non-empty row beyond the import limit. This keeps
+  // newline-heavy input from allocating an unbounded array of derived strings.
+  for (let index = 0; index <= raw.length; index += 1) {
+    if (index !== raw.length && raw.charCodeAt(index) !== 10) continue;
+    const line = raw.slice(lineStart, index).trim();
+    lineStart = index + 1;
+    if (!line) continue;
+    if (lines.length === MAX_WATCH_HISTORY_ROWS) {
+      overflowed = true;
+      break;
+    }
+    lines.push(line);
+  }
+
+  let skippedRows = overflowed ? 1 : 0;
+  for (const line of lines) {
     const parsed = parseYouTubeUrl(line);
     if (!parsed.ok || !/^https?:\/\//i.test(line) || seen.has(parsed.value.videoId)) {
       skippedRows += 1;
@@ -154,7 +173,6 @@ export function parsePastedYouTubeUrls(raw: string): WatchHistoryParse {
       watchedAt: null,
     });
   }
-  if (lines.length > MAX_WATCH_HISTORY_ROWS) skippedRows += lines.length - MAX_WATCH_HISTORY_ROWS;
   return { entries, skippedRows };
 }
 
@@ -175,7 +193,9 @@ function preferRepresentative(left: WatchHistoryEntry, right: WatchHistoryEntry)
 
 function uniqueVideos(entries: readonly WatchHistoryEntry[]): WatchHistoryEntry[] {
   const byVideo = new Map<string, WatchHistoryEntry>();
-  for (const entry of entries) {
+  for (let index = 0; index < entries.length && index < MAX_WATCH_HISTORY_ROWS; index += 1) {
+    const entry = entries[index];
+    if (!entry) continue;
     const current = byVideo.get(entry.videoId);
     byVideo.set(entry.videoId, current ? preferRepresentative(current, entry) : entry);
   }
@@ -183,11 +203,11 @@ function uniqueVideos(entries: readonly WatchHistoryEntry[]): WatchHistoryEntry[
 }
 
 function keywords(title: string): string[] {
-  const tokens = normalizedKey(title)
+  const tokens = normalizedKey(title.slice(0, 300))
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(' ')
     .filter((token) => token.length >= 3 && !STOPWORDS.has(token));
-  return [...new Set(tokens)];
+  return [...new Set(tokens)].sort(compareText).slice(0, MAX_KEYWORDS_PER_TITLE);
 }
 
 function groupStats(entries: readonly WatchHistoryEntry[], referenceTime: number | null): {
@@ -258,22 +278,25 @@ export function rankWatchHistoryCandidates(
       if (!currentLabel || compareText(entry.channel, currentLabel) < 0) channelLabels.set(key, entry.channel);
     }
     for (const keyword of keywords(entry.title)) {
-      const group = keywordGroups.get(keyword) ?? [];
+      const existing = keywordGroups.get(keyword);
+      if (!existing && keywordGroups.size >= MAX_TRACKED_KEYWORDS) continue;
+      const group = existing ?? [];
       group.push(entry);
       keywordGroups.set(keyword, group);
     }
   }
 
-  const candidates: WatchHistoryCandidate[] = [];
+  const patternCandidates: WatchHistoryCandidate[] = [];
   for (const [key, group] of channelGroups) {
-    if (uniqueVideos(group).length >= 2) candidates.push(groupCandidate('channel', key, channelLabels.get(key) ?? key, group, referenceTime));
+    if (uniqueVideos(group).length >= 2) patternCandidates.push(groupCandidate('channel', key, channelLabels.get(key) ?? key, group, referenceTime));
   }
   for (const [key, group] of keywordGroups) {
-    if (uniqueVideos(group).length >= 3) candidates.push(groupCandidate('keyword', key, key, group, referenceTime));
+    if (uniqueVideos(group).length >= 3) patternCandidates.push(groupCandidate('keyword', key, key, group, referenceTime));
   }
+  const videoCandidates: WatchHistoryCandidate[] = [];
   for (const entry of unique) {
     const stats = groupStats([entry], referenceTime);
-    candidates.push({
+    videoCandidates.push({
       id: `video:${entry.videoId}`,
       kind: 'video',
       label: entry.title,
@@ -285,10 +308,17 @@ export function rankWatchHistoryCandidates(
   }
 
   const kindOrder = { channel: 0, keyword: 1, video: 2 } as const;
-  return candidates.sort((left, right) => (
+  const compareCandidate = (left: WatchHistoryCandidate, right: WatchHistoryCandidate) => (
     right.score - left.score
     || kindOrder[left.kind] - kindOrder[right.kind]
     || compareText(left.id, right.id)
     || compareText(left.representative.videoId, right.representative.videoId)
-  )).slice(0, Math.min(limit, 10));
+  );
+  const cappedLimit = Math.min(limit, 10);
+  patternCandidates.sort(compareCandidate);
+  videoCandidates.sort(compareCandidate);
+
+  // Repeated channels and topics are the import's useful signal. One-off videos
+  // fill remaining space, but cannot crowd those patterns out of the bounded list.
+  return [...patternCandidates, ...videoCandidates].slice(0, cappedLimit);
 }
