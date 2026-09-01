@@ -524,6 +524,17 @@ describe('MCP inspector data (call log + retired tools)', () => {
     }
     const text = toolText({ message: '😀'.repeat(5000) }).content[0]!.text;
     expect(new TextEncoder().encode(text).length).toBeLessThanOrEqual(HARD_CAP_BYTES);
+    expect(text.length).toBeLessThanOrEqual(MAX_RESULT_CHARS);
+    expect(() => JSON.parse(text)).not.toThrow();
+    expect(JSON.parse(text)).toMatchObject({ truncated: true });
+    const oversizedList = toolText(
+      Array.from({ length: 5 }, (_, index) => ({
+        id: `source-${index}`,
+        title: `Creator source ${index} ${'x'.repeat(300)}`,
+      })),
+    ).content[0]!.text;
+    expect(() => JSON.parse(oversizedList)).not.toThrow();
+    expect(new TextEncoder().encode(oversizedList).length).toBeLessThanOrEqual(HARD_CAP_BYTES);
     const error = parseResult(toolError('validation', 'bad sk_live_secret', { raw: 'xoxb-123', safe: true }));
     expect(error.error).toBe('validation');
     expect(String(error.message)).not.toContain('sk_live');

@@ -48,29 +48,59 @@ function safeDetailValue(value: unknown, depth = 0): unknown {
   return String(value).slice(0, 200);
 }
 
-/** Truncate by encoded UTF-8 bytes, never by UTF-16 code units. */
-function capUtf8(value: string, maxBytes: number): string {
-  const encoder = new TextEncoder();
-  if (encoder.encode(value).length <= maxBytes) return value;
-  const suffix = '… (truncated; use a read tool with an id for details)';
-  const suffixBytes = encoder.encode(suffix).length;
-  const target = Math.max(0, maxBytes - suffixBytes);
-  let output = '';
-  for (const character of value) {
-    const candidate = output + character;
-    if (encoder.encode(candidate).length > target) break;
-    output = candidate;
+const textEncoder = new TextEncoder();
+
+function fitsResultCaps(value: string): boolean {
+  return value.length <= MAX_RESULT_CHARS && textEncoder.encode(value).length <= HARD_CAP_BYTES;
+}
+
+function serializeToolPayload(payload: unknown): string {
+  if (typeof payload === 'string') {
+    const redacted = redactToolText(payload);
+    try {
+      JSON.parse(redacted);
+      return redacted;
+    } catch {
+      return JSON.stringify(redacted);
+    }
   }
-  return `${output}${suffix}`;
+  const serialized = JSON.stringify(payload);
+  return redactToolText(serialized ?? JSON.stringify(String(payload)));
+}
+
+/**
+ * Keep every tool response machine-readable. Oversized payloads become a
+ * bounded JSON envelope instead of a corrupt JSON prefix.
+ */
+function boundedJsonText(payload: unknown): string {
+  const serialized = serializeToolPayload(payload);
+  if (fitsResultCaps(serialized)) return serialized;
+
+  const base = {
+    truncated: true,
+    originalChars: serialized.length,
+    originalBytes: textEncoder.encode(serialized).length,
+    preview: '',
+    next: 'Use a read tool with an id for details.',
+  };
+  let low = 0;
+  let high = Math.min(serialized.length, MAX_RESULT_CHARS);
+  let fitted = JSON.stringify(base);
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = JSON.stringify({ ...base, preview: serialized.slice(0, middle) });
+    if (fitsResultCaps(candidate)) {
+      fitted = candidate;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return fitted;
 }
 
 export function toolText(payload: unknown): CherryToolResult {
-  let text = redactToolText(typeof payload === 'string' ? payload : JSON.stringify(payload) ?? String(payload));
-  if (text.length > MAX_RESULT_CHARS) {
-    text = `${text.slice(0, MAX_RESULT_CHARS)}… (truncated; use a read tool with an id for details)`;
-  }
-  text = capUtf8(text, HARD_CAP_BYTES);
-  return { content: [{ type: 'text', text }] };
+  return { content: [{ type: 'text', text: boundedJsonText(payload) }] };
 }
 
 export function toolError(code: CherryErrorCode, message: string, details?: Record<string, unknown>): CherryToolResult {
@@ -84,7 +114,7 @@ export function toolError(code: CherryErrorCode, message: string, details?: Reco
     : undefined;
   const payload = { error: code, message: redactToolText(message).slice(0, 800), ...(safeDetails && Object.keys(safeDetails).length > 0 ? { details: safeDetails } : {}) };
   return {
-    content: [{ type: 'text', text: capUtf8(JSON.stringify(payload), HARD_CAP_BYTES) }],
+    content: [{ type: 'text', text: boundedJsonText(payload) }],
     isError: true,
   };
 }
