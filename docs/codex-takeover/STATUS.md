@@ -40,3 +40,4 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 2026-09-01 00:25 claude WINE IDENTITY DEPLOYED — 6ac8acb live (dpl_4XrzghKZH4), render-verified; landing/nav/CTAs now cherry wine; incident fix c450b50 also live
 2026-09-01 01:05 codex  T1 DONE 991255b — typecheck, lint, unit, runner, build, focused e2e green
 2026-09-01 01:05 claude SPRINT 2 PUBLISHED — 08_SPRINT2_ULTIMATUM.md adds T8-T14 (starter library, uncut demo recording, live Codex MCP self-validation, UI inspection sweep, perf/meta, add-anything menu, judge card); brand icons colorized in Claude lane
+2026-09-01 morning claude SPRINT 3 PUBLISHED — 09_SPRINT3_ENDGAME.md: T15 continuous 10/10 rubric loop, T16 real-usage proof runs with screenshots, T17 harness codification (AGENTS.md layers + HARNESS.md + gates scripts), T18 contribution/star-ready repo, T19 final technical report, T20 launch kit drafts
