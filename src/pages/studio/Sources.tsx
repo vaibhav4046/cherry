@@ -72,6 +72,7 @@ export default function Sources() {
   const [busy, setBusy] = useState(false);
   const [metadataBusy, setMetadataBusy] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [metadataNotice, setMetadataNotice] = useState<string | null>(null);
   const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyCandidates, setHistoryCandidates] = useState<WatchHistoryCandidate[]>([]);
@@ -80,6 +81,10 @@ export default function Sources() {
   const [historyPermission, setHistoryPermission] = useState(false);
   const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const sourceDialogRef = useRef<HTMLDialogElement | null>(null);
+  const sourceReturnFocusRef = useRef<HTMLElement | null>(null);
+  const saveErrorRef = useRef<HTMLParagraphElement | null>(null);
+  const metadataRequestIdRef = useRef(0);
   const historyDialogRef = useRef<HTMLDialogElement | null>(null);
   const historyFileRef = useRef<HTMLInputElement | null>(null);
   const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
@@ -105,14 +110,29 @@ export default function Sources() {
   }, [isIngestRoute]);
   useEffect(() => {
     if (!ingestDraft) return;
+    metadataRequestIdRef.current += 1;
+    setMetadataBusy(false);
+    setMetadataError(null);
+    setMetadataNotice(null);
     setKind(ingestDraft.kind);
     setOpen(true);
   }, [ingestDraft]);
+  useEffect(() => () => { metadataRequestIdRef.current += 1; }, []);
   useEffect(() => {
-    if (!open || !ingestDraft?.requiresPermission) return;
-    const frame = window.requestAnimationFrame(() => permissionRef.current?.focus());
-    return () => window.cancelAnimationFrame(frame);
-  }, [ingestDraft, open]);
+    const dialog = sourceDialogRef.current;
+    if (!dialog) return;
+    let frame: number | null = null;
+    if (open) {
+      if (!dialog.open) dialog.showModal();
+      frame = window.requestAnimationFrame(() => {
+        if (ingestDraft?.requiresPermission) permissionRef.current?.focus();
+        else titleRef.current?.focus();
+      });
+    } else if (dialog.open) {
+      dialog.close();
+    }
+    return () => { if (frame !== null) window.cancelAnimationFrame(frame); };
+  }, [ingestDraft?.requiresPermission, open]);
   useEffect(() => {
     const dialog = historyDialogRef.current;
     if (!dialog) return;
@@ -148,6 +168,35 @@ export default function Sources() {
     setSavingCandidateId(null);
     if (historyFileRef.current) historyFileRef.current.value = '';
     historyPasteFormRef.current?.reset();
+  }
+
+  function invalidateMetadataLookup() {
+    metadataRequestIdRef.current += 1;
+    setMetadataBusy(false);
+    setMetadataError(null);
+    setMetadataNotice(null);
+  }
+
+  function openSourceDialog(trigger?: HTMLElement) {
+    sourceReturnFocusRef.current = trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setError(null);
+    setNotice(null);
+    invalidateMetadataLookup();
+    setOpen(true);
+  }
+
+  function closeSourceDialog() {
+    invalidateMetadataLookup();
+    setError(null);
+    setOpen(false);
+    const returnTarget = sourceReturnFocusRef.current;
+    sourceReturnFocusRef.current = null;
+    if (returnTarget?.isConnected) window.requestAnimationFrame(() => returnTarget.focus());
+  }
+
+  function selectSourceKind(nextKind: SourceKind) {
+    invalidateMetadataLookup();
+    setKind(nextKind);
   }
 
   function closeHistoryImport() {
@@ -221,16 +270,27 @@ export default function Sources() {
   }
 
   async function fetchTitle() {
+    const requestId = metadataRequestIdRef.current + 1;
+    metadataRequestIdRef.current = requestId;
+    const requestedUrl = urlRef.current?.value ?? '';
     setMetadataBusy(true);
     setMetadataError(null);
-    const result = await fetchYouTubeTitle(urlRef.current?.value ?? '');
-    if (!result.ok) setMetadataError(result.error.message);
-    else if (titleRef.current) titleRef.current.value = result.value.title;
+    setMetadataNotice(null);
+    const result = await fetchYouTubeTitle(requestedUrl);
+    if (requestId !== metadataRequestIdRef.current) return;
     setMetadataBusy(false);
+    if (!result.ok) {
+      setMetadataError(result.error.message);
+      return;
+    }
+    if (!titleRef.current || urlRef.current?.value !== requestedUrl) return;
+    titleRef.current.value = result.value.title;
+    setMetadataNotice(`Title fetched: ${result.value.title}`);
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    invalidateMetadataLookup();
     const form = new FormData(event.currentTarget);
     const title = String(form.get('title') ?? '').trim();
     const url = String(form.get('url') ?? '').trim();
@@ -249,14 +309,14 @@ export default function Sources() {
         permissionNote: String(form.get('permissionNote') ?? '').trim() || undefined,
       });
       if (!created.ok) throw new Error(created.error.message);
-      setOpen(false); setNotice('Source saved locally. Review it before turning it into a skill.');
+      closeSourceDialog(); setNotice('Source saved locally. Review it before turning it into a skill.');
       await reload(workspaceId); await refresh();
       event.currentTarget.reset();
       setKind(ingestDraft?.kind ?? 'youtube');
     } catch (thrown) {
       const message = (thrown as Error).message;
-      setError(message);
-      if (message.includes('already exists')) setNotice('This source is already in your inbox.');
+      setError(message.includes('already exists') ? 'This source is already in your inbox. Choose another source.' : message);
+      window.requestAnimationFrame(() => saveErrorRef.current?.focus());
     } finally { setBusy(false); }
   }
 
@@ -315,10 +375,10 @@ export default function Sources() {
           <h1 className="display-sm" style={{ margin: 0 }}>Sources</h1>
           <p className="subhead" style={{ margin: 0, maxWidth: 720 }}>Save the material you want Cherry to turn into a method. Outside content stays untrusted until you review it.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => { setError(null); setMetadataError(null); setNotice(null); setOpen(true); }}>Save a source</button>
+        <button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button>
       </header>
 
-      {error ? <p className="field-error" role="alert">{error}</p> : null}
+      {error && !open ? <p className="field-error" role="alert">{error}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
 
       {!isIngestRoute ? (
@@ -358,7 +418,7 @@ export default function Sources() {
             <SourceIcon kind="article" size={30} />
             <h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3>
             <p>Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.</p>
-            <div className="row"><button type="button" className="btn btn-primary" onClick={() => { setError(null); setMetadataError(null); setNotice(null); setOpen(true); }}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div>
+            <div className="row"><button type="button" className="btn btn-primary" onClick={(event) => openSourceDialog(event.currentTarget)}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div>
           </div>
         ) : (
           <div className="source-grid">
@@ -443,26 +503,28 @@ export default function Sources() {
         </div>
       </dialog>
 
-      <dialog open={open} className="sheet source-dialog" aria-labelledby="save-source-title" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-        <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)}>
-          <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">New material</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>Save a source</h2></div><button type="button" className="btn btn-sm" onClick={() => setOpen(false)} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
-          <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => { setKind(candidate); setMetadataError(null); }}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
-          <label className="field"><span>Title</span><input ref={titleRef} name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" /></label>
+      <dialog ref={sourceDialogRef} className="sheet source-dialog" aria-labelledby="save-source-title" onCancel={(event) => { event.preventDefault(); closeSourceDialog(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSourceDialog(); }} style={{ maxHeight: 'calc(100dvh - var(--sp-4) * 2)', overflowY: 'auto', overscrollBehavior: 'contain' }}>
+        <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)} aria-describedby={error ? 'save-source-error' : undefined}>
+          <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">New material</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>Save a source</h2></div><button type="button" className="btn btn-sm" onClick={closeSourceDialog} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
+          <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => selectSourceKind(candidate)}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
+          <label className="field"><span>Title</span><input ref={titleRef} name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" onInput={invalidateMetadataLookup} /></label>
           <div className="row" style={{ gap: 'var(--sp-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <label className="field" style={{ flex: '1 1 220px' }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label>
-            <div className="field" style={{ flex: '2 1 320px' }}>
-              <label htmlFor="source-url">URL <small>(metadata only)</small></label>
+            <div className="stack" style={{ flex: '2 1 320px', gap: 6 }}>
+              <label htmlFor="source-url" className="field"><span>URL <small>(metadata only)</small></span></label>
               <div className="row" style={{ gap: 6, alignItems: 'stretch' }}>
-                <input id="source-url" ref={urlRef} name="url" className="input" type="url" maxLength={2048} defaultValue={ingestDraft?.url ?? ''} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} style={{ flex: 1, minWidth: 0 }} />
+                <input id="source-url" ref={urlRef} name="url" className="input" type="url" maxLength={2048} defaultValue={ingestDraft?.url ?? ''} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} style={{ flex: 1, minWidth: 0 }} onInput={invalidateMetadataLookup} />
                 {kind === 'youtube' ? <button type="button" className="btn btn-sm" disabled={metadataBusy} onClick={() => void fetchTitle()}>{metadataBusy ? 'Fetching title' : 'Fetch title'}</button> : null}
               </div>
             </div>
           </div>
           {metadataError ? <p className="field-error" role="alert" style={{ margin: 0 }}>{metadataError}</p> : null}
+          {metadataNotice ? <p className="label" role="status" style={{ margin: 0 }}>{metadataNotice}</p> : null}
           {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" accept=".txt,.md,.json,.srt,.vtt,text/plain,text/markdown,application/json" /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} defaultValue={ingestDraft?.text ?? ''} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
           {kind !== 'note' ? <label className="check-row"><input ref={permissionRef} type="checkbox" name="permission" required /><span>I have permission to use this material. Cherry records this acknowledgement; it does not verify ownership.</span></label> : null}
           {kind !== 'note' ? <label className="field"><span>Permission note <small>(optional)</small></span><input name="permissionNote" className="input" maxLength={1000} placeholder="e.g. my export, public license, or team permission" /></label> : null}
-          <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save locally'}</button></div>
+          {error ? <p ref={saveErrorRef} id="save-source-error" className="field-error" role="alert" tabIndex={-1} style={{ margin: 0 }}>{error}</p> : null}
+          <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="btn" onClick={closeSourceDialog}>Cancel</button><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save locally'}</button></div>
         </form>
       </dialog>
     </div>
