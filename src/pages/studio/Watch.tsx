@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   getLesson,
@@ -15,6 +15,7 @@ import {
 import { embedUrl } from '../../cherry/watch/youtube-url.ts';
 import type { CoverageReport, Lesson, Observation, TranscriptSegment } from '../../cherry/watch/watch-model.ts';
 import { Icons } from '../../components/Icons.tsx';
+import { LOCAL_TEXT_FILE_ACCEPT, readLocalTextFile } from '../../cherry/source/local-text-file.ts';
 
 // The embed always loads from the privacy-enhanced host (youtube-url.ts), so
 // outbound player commands target that exact origin — never a wildcard.
@@ -41,6 +42,9 @@ export default function Watch() {
   const [error, setError] = useState<string | null>(null);
   const [positionSeconds, setPositionSeconds] = useState(0);
   const playerRef = useRef<HTMLIFrameElement | null>(null);
+  const transcriptFileRef = useRef<HTMLInputElement | null>(null);
+  const transcriptImportInFlightRef = useRef(false);
+  const [importingTranscript, setImportingTranscript] = useState(false);
 
   const load = useCallback(async () => {
     if (!lessonId) return;
@@ -105,20 +109,59 @@ export default function Watch() {
 
   async function handleTranscriptPaste(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (transcriptImportInFlightRef.current) return;
+    transcriptImportInFlightRef.current = true;
+    setImportingTranscript(true);
     setError(null);
-    const form = new FormData(event.currentTarget);
-    const text = String(form.get('transcript') ?? '');
-    const result = await importTranscript(lesson!.id, text, 'user_text');
-    if (!result.ok) setError(result.error.message);
-    await load();
+    try {
+      const form = new FormData(event.currentTarget);
+      const text = String(form.get('transcript') ?? '');
+      const result = await importTranscript(lesson!.id, text, 'user_text');
+      if (!result.ok) setError(result.error.message);
+      await load();
+    } catch (thrown) {
+      setError(thrown instanceof Error ? thrown.message : 'That transcript could not be imported. Try again.');
+    } finally {
+      transcriptImportInFlightRef.current = false;
+      setImportingTranscript(false);
+    }
   }
 
   async function handleTranscriptFile(file: File) {
+    if (transcriptImportInFlightRef.current) return;
+    transcriptImportInFlightRef.current = true;
+    setImportingTranscript(true);
     setError(null);
-    const text = await file.text();
-    const result = await importTranscript(lesson!.id, text, 'user_upload', file.name);
-    if (!result.ok) setError(result.error.message);
-    await load();
+    try {
+      const fileRead = await readLocalTextFile(file);
+      if (!fileRead.ok) {
+        setError(fileRead.error);
+        return;
+      }
+      const result = await importTranscript(lesson!.id, fileRead.value.content, 'user_upload', file.name);
+      if (!result.ok) setError(result.error.message);
+      await load();
+    } catch (thrown) {
+      setError(thrown instanceof Error ? thrown.message : 'That transcript file could not be imported. Try again.');
+    } finally {
+      transcriptImportInFlightRef.current = false;
+      setImportingTranscript(false);
+    }
+  }
+
+  function chooseTranscriptFile() {
+    if (transcriptImportInFlightRef.current) return;
+    const input = transcriptFileRef.current;
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  function handleTranscriptFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (file) void handleTranscriptFile(file);
   }
 
   async function handleObservation(event: FormEvent<HTMLFormElement>) {
@@ -232,19 +275,19 @@ export default function Watch() {
                   <textarea className="textarea" name="transcript" placeholder={'[0:12] The presenter opens the layout panel…'} />
                 </label>
                 <div className="row">
-                  <button type="submit" className="btn">Import pasted text</button>
-                  <label className="btn">
-                    Upload file
-                    <input
-                      type="file"
-                      accept=".txt,.srt,.vtt,text/plain"
-                      className="sr-only"
-                      onChange={(event) => {
-                        const file = event.currentTarget.files?.[0];
-                        if (file) void handleTranscriptFile(file);
-                      }}
-                    />
-                  </label>
+                  <button type="submit" className="btn" disabled={importingTranscript}>Import pasted text</button>
+                  <button type="button" className="btn" disabled={importingTranscript} aria-busy={importingTranscript} onClick={chooseTranscriptFile}>
+                    {importingTranscript ? 'Importing file' : 'Upload file'}
+                  </button>
+                  <input
+                    ref={transcriptFileRef}
+                    type="file"
+                    accept={LOCAL_TEXT_FILE_ACCEPT}
+                    hidden
+                    tabIndex={-1}
+                    disabled={importingTranscript}
+                    onChange={handleTranscriptFileChange}
+                  />
                 </div>
               </form>
             ) : (

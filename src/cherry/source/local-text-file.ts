@@ -1,6 +1,7 @@
 import type { SourceContentFormat } from './source-model.ts';
 
 export const MAX_LOCAL_TEXT_FILE_BYTES = 2 * 1024 * 1024;
+export const LOCAL_TEXT_FILE_ACCEPT = '.txt,.md,.srt,.vtt';
 
 const FORMAT_BY_EXTENSION: Readonly<Record<string, SourceContentFormat>> = {
   '.txt': 'plain',
@@ -11,6 +12,12 @@ const FORMAT_BY_EXTENSION: Readonly<Record<string, SourceContentFormat>> = {
 
 type LocalTextFileInspection =
   | { ok: true; value: { contentFormat: SourceContentFormat } }
+  | { ok: false; error: string };
+
+type ReadableLocalTextFile = Pick<File, 'name' | 'size' | 'arrayBuffer'>;
+
+type LocalTextFileRead =
+  | { ok: true; value: { content: string; contentFormat: SourceContentFormat } }
   | { ok: false; error: string };
 
 /** Validate a user-selected text file before any browser read occurs. */
@@ -37,4 +44,22 @@ export function inspectLocalTextContent(content: string): { ok: true } | { ok: f
   if (!content.trim()) return { ok: false, error: 'That file contains no readable text. Choose another file.' };
   if (content.includes('\0')) return { ok: false, error: 'That file does not look like text. Choose another file.' };
   return { ok: true };
+}
+
+/** Inspect first, then read and decode only a bounded, supported text file. */
+export async function readLocalTextFile(file: ReadableLocalTextFile): Promise<LocalTextFileRead> {
+  const inspected = inspectLocalTextFile(file);
+  if (!inspected.ok) return inspected;
+
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } catch {
+    return { ok: false, error: 'That file could not be read. Choose it again.' };
+  }
+  const decoded = decodeLocalTextBytes(bytes);
+  if (!decoded.ok) return decoded;
+  const content = inspectLocalTextContent(decoded.value);
+  if (!content.ok) return content;
+  return { ok: true, value: { content: decoded.value, contentFormat: inspected.value.contentFormat } };
 }

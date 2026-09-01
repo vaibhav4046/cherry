@@ -11,6 +11,9 @@ import {
   createWorkspace,
   listWorkspaces,
 } from '../../src/cherry/mission/mission-service.ts';
+import { importShippedExampleWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
+import { ALL_STORES, getDb } from '../../src/cherry/persistence/cherry-db.ts';
+import { sha256CanonicalExcluding } from '../../src/cherry/core/hash.ts';
 
 const goldenFixture = readFileSync(resolve(process.cwd(), 'public/examples/example-workspace.json'), 'utf8');
 
@@ -61,6 +64,22 @@ describe('labelled example workspace loader', () => {
     expect(first.value.workspaceId).toBe(second.value.workspaceId);
     expect(requests).toBe(1);
     expect(await listWorkspaces()).toHaveLength(1);
+  });
+
+  it('rejects a wrong-kind or self-rehashed imitation with zero writes', async () => {
+    const snapshot = async () => Object.fromEntries(await Promise.all(
+      ALL_STORES.map(async (store) => [store, await getDb().table(store).toArray()]),
+    ));
+    const before = await snapshot();
+
+    await expect(importShippedExampleWorkspace(goldenFixture, 'starter-library')).resolves.toMatchObject({ ok: false });
+    expect(await snapshot()).toEqual(before);
+
+    const imitation = JSON.parse(goldenFixture) as Record<string, unknown>;
+    (imitation['workspace'] as Record<string, unknown>)['description'] = 'Shipped labelled example workspace — modified';
+    (imitation['integrity'] as Record<string, unknown>)['payloadSha256'] = await sha256CanonicalExcluding(imitation, ['integrity']);
+    await expect(importShippedExampleWorkspace(JSON.stringify(imitation), 'golden-loop')).resolves.toMatchObject({ ok: false });
+    expect(await snapshot()).toEqual(before);
   });
 
   it('resets persisted examples without deleting a user workspace whose name starts with EXAMPLE', async () => {

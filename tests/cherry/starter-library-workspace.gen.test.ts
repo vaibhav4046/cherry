@@ -12,13 +12,12 @@ import {
   listSkillGraphs,
   listSkillGraphVersions,
 } from '../../src/cherry/skillgraph/skillgraph-service.ts';
-import { importWorkspace, type WorkspaceExport } from '../../src/cherry/persistence/workspace-archive.ts';
+import { importShippedExampleWorkspace, importWorkspace, type WorkspaceExport } from '../../src/cherry/persistence/workspace-archive.ts';
 import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../../src/cherry/library/library-service.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import type { EvidenceRecord } from '../../src/cherry/evidence/evidence-model.ts';
 import type { SkillGraph } from '../../src/cherry/skillgraph/skillgraph-model.ts';
 import type { Lesson } from '../../src/cherry/watch/watch-model.ts';
-import { SYNTHETIC_SAMPLE_NOTICE } from '../../src/cherry/skillgraph/sample-state.ts';
 
 const FIXTURE_PATH = resolve(process.cwd(), 'public/examples/starter-library-workspace.json');
 
@@ -103,21 +102,21 @@ describe('shipped starter library workspace', () => {
       && graph.nodes.every((node) => node.evidenceIds.every((id) => graph.knowledge?.some((ref) => ref.evidenceId === id)))
     ))).toBe(true);
 
-    // The ordinary portable-import path intentionally strips the resettable
-    // workspace flag. The synthetic approval actor must preserve honest sample
-    // classification in the library and in files that leave Cherry.
+    // The ordinary portable-import path strips every approval/trust capability,
+    // including labelled fixture state. Only the exact shipped-example path may
+    // preserve demonstrative approvals, so an arbitrary rehashed archive cannot
+    // make itself install-ready.
     freshDb();
     unwrap(await importWorkspace(raw));
     const [portableWorkspace] = await listWorkspaces();
     expect(portableWorkspace!.isExample).not.toBe(true);
     const portableEntries = await listLibraryEntries();
     expect(portableEntries).toHaveLength(STARTER_LIBRARY_MANIFEST.skills.length);
-    expect(portableEntries.every((entry) => entry.sample)).toBe(true);
-    const portableExport = unwrap(await exportSkillFile(portableEntries[0]!.skillId, 'skill-md'));
-    expect(portableExport.content).toContain(SYNTHETIC_SAMPLE_NOTICE);
+    expect(portableEntries.every((entry) => !entry.sample && !entry.installReady && entry.approvalHash === null)).toBe(true);
+    expect((await exportSkillFile(portableEntries[0]!.skillId, 'skill-md')).ok).toBe(false);
 
     freshDb();
-    const imported = unwrap(await importWorkspace(raw, { markExample: true }));
+    const imported = unwrap(await importShippedExampleWorkspace(raw, 'starter-library'));
     expect(imported.hashVerified).toBe(true);
 
     const [entries, graphs, approvals, evidence, lessons, missions, sources] = await Promise.all([
@@ -171,7 +170,7 @@ describe('shipped starter library workspace', () => {
     expect(installFile.content.toLowerCase()).toContain('thumbnail');
 
     const tampered = raw.replace('starter-library-v1', 'starter-library-v2');
-    const rejected = await importWorkspace(tampered, { markExample: true });
+    const rejected = await importShippedExampleWorkspace(tampered, 'starter-library');
     expect(rejected.ok).toBe(false);
     if (!rejected.ok) expect(rejected.error.message).toContain('integrity hash');
   });

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { decodeLocalTextBytes, inspectLocalTextContent, inspectLocalTextFile, MAX_LOCAL_TEXT_FILE_BYTES } from '../../src/cherry/source/local-text-file.ts';
+import {
+  decodeLocalTextBytes,
+  inspectLocalTextContent,
+  inspectLocalTextFile,
+  MAX_LOCAL_TEXT_FILE_BYTES,
+  readLocalTextFile,
+} from '../../src/cherry/source/local-text-file.ts';
 
 describe('local Cherry text files', () => {
   it.each([
@@ -30,6 +36,47 @@ describe('local Cherry text files', () => {
       ok: false,
       error: 'That file is larger than 2 MiB. Choose a smaller text file.',
     });
+  });
+
+  it('does not read rejected files and returns validated UTF-8 content for accepted files', async () => {
+    let reads = 0;
+    const oversized = {
+      name: 'large.txt',
+      size: MAX_LOCAL_TEXT_FILE_BYTES + 1,
+      arrayBuffer: async () => {
+        reads += 1;
+        return new ArrayBuffer(0);
+      },
+    };
+    await expect(readLocalTextFile(oversized)).resolves.toEqual({
+      ok: false,
+      error: 'That file is larger than 2 MiB. Choose a smaller text file.',
+    });
+    expect(reads).toBe(0);
+
+    await expect(readLocalTextFile({ ...oversized, name: 'empty.txt', size: 0 })).resolves.toEqual({
+      ok: false,
+      error: 'That file is empty. Choose a text file with content.',
+    });
+    await expect(readLocalTextFile({ ...oversized, name: 'renamed.exe', size: 12 })).resolves.toEqual({
+      ok: false,
+      error: 'Choose a .txt, .md, .srt, or .vtt file.',
+    });
+    expect(reads).toBe(0);
+
+    const bytes = new TextEncoder().encode('A review checklist.');
+    await expect(readLocalTextFile({
+      name: 'method.md',
+      size: bytes.byteLength,
+      arrayBuffer: async () => {
+        reads += 1;
+        return bytes.buffer;
+      },
+    })).resolves.toEqual({
+      ok: true,
+      value: { content: 'A review checklist.', contentFormat: 'markdown' },
+    });
+    expect(reads).toBe(1);
   });
 
   it('rejects decoded content that is blank, BOM-only, or binary-looking', () => {

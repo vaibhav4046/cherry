@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { startTour } from '../../components/GuidedTour.tsx';
@@ -8,12 +8,13 @@ import { listApprovals, decideSkillGraphApproval } from '../../cherry/skillgraph
 import { listMemories } from '../../cherry/memory/memory-service.ts';
 import { listRuns } from '../../cherry/mission/mission-service.ts';
 import { runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
-import { exportWorkspace, importWorkspace } from '../../cherry/persistence/workspace-archive.ts';
+import { exportWorkspace, importWorkspace, readWorkspaceArchiveFile, WORKSPACE_ARCHIVE_FILE_ACCEPT } from '../../cherry/persistence/workspace-archive.ts';
 import type { ProofEvent } from '../../cherry/core/domain-event.ts';
 import type { ApprovalRecord } from '../../cherry/approval/approval-model.ts';
 import type { MissionState } from '../../cherry/mission/mission-model.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { AddToCherry } from './AddToCherry.tsx';
+import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
 
 function approvalObjectLabel(objectType: ApprovalRecord['objectType']): string {
   if (objectType === 'skillgraph') return 'skill';
@@ -70,6 +71,8 @@ export default function CommandCenter() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const entryHandledRef = useRef(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importInFlightRef = useRef(false);
   const [events, setEvents] = useState<ProofEvent[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [memoryInboxCount, setMemoryInboxCount] = useState(0);
@@ -77,6 +80,7 @@ export default function CommandCenter() {
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +162,8 @@ export default function CommandCenter() {
 
   async function handleExport() {
     if (!activeWorkspace) return;
+    setError(null);
+    setNotice(null);
     const result = await exportWorkspace(activeWorkspace.id);
     if (!result.ok) {
       setError(plainCommandError(result.error.message));
@@ -173,35 +179,69 @@ export default function CommandCenter() {
     setNotice(`Space exported (hash ${result.value.integrity.payloadSha256.slice(0, 12)}…).`);
   }
 
-  async function handleImportFile(file: File) {
+  async function runWorkspaceImport(work: () => Promise<void>) {
+    if (importInFlightRef.current) return;
+    importInFlightRef.current = true;
+    setImporting(true);
     setError(null);
-    const text = await file.text();
-    const result = await importWorkspace(text);
-    if (!result.ok) {
-      setError(plainCommandError(result.error.message));
-      return;
+    setNotice(null);
+    try {
+      await work();
+    } catch (thrown) {
+      setError(plainCommandError(thrown instanceof Error ? thrown.message : 'The import failed and nothing was saved. Try again.'));
+    } finally {
+      importInFlightRef.current = false;
+      setImporting(false);
     }
-    setNotice(`Imported "${result.value.name}" (hash ${result.value.hashVerified ? 'verified' : 'absent'}).`);
-    await refresh();
   }
 
-  async function handleImportExample() {
-    setError(null);
-    try {
-      const response = await fetch('/examples/example-workspace.json');
-      if (!response.ok) throw new Error(`example not found (${response.status})`);
-      const text = await response.text();
-      const result = await importWorkspace(text, { markExample: true });
+  async function handleImportFile(file: File) {
+    await runWorkspaceImport(async () => {
+      const fileRead = await readWorkspaceArchiveFile(file);
+      if (!fileRead.ok) {
+        setError(fileRead.error);
+        return;
+      }
+      const result = await importWorkspace(fileRead.value);
       if (!result.ok) {
         setError(plainCommandError(result.error.message));
         return;
       }
-      setNotice(`Example space loaded (hash ${result.value.hashVerified ? 'verified' : 'absent'}). Delete it anytime from Connections.`);
+      setNotice(result.value.status === 'already-imported'
+        ? `That exact export is already in Cherry as "${result.value.name}".`
+        : `Imported "${result.value.name}" (hash verified).`);
+      await refresh();
+    });
+  }
+
+  function chooseWorkspaceArchive() {
+    if (importInFlightRef.current) return;
+    const input = importInputRef.current;
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  function handleWorkspaceArchiveChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (file) void handleImportFile(file);
+  }
+
+  async function handleImportExample() {
+    await runWorkspaceImport(async () => {
+      const result = await loadExampleWorkspace('golden-loop');
+      if (!result.ok) {
+        setError(plainCommandError(result.error.message));
+        return;
+      }
+      setNotice(result.value.status === 'already-loaded'
+        ? 'Example space already loaded. Delete it anytime from Connections.'
+        : 'Example space loaded (hash verified). Delete it anytime from Connections.');
       setActiveWorkspace(result.value.workspaceId);
       await refresh();
-    } catch (fetchError) {
-      setError(plainCommandError(`Could not load the example space: ${(fetchError as Error).message}`));
-    }
+    });
   }
 
   if (!activeWorkspace) {
@@ -226,20 +266,21 @@ export default function CommandCenter() {
         <details className="stack" style={{ textAlign: 'center' }}>
           <summary className="link-quiet">Already use Cherry?</summary>
           <div className="row" style={{ justifyContent: 'center' }}>
-            <label className="btn">
-              Import space
-              <input
-                type="file"
-                accept="application/json"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  if (file) void handleImportFile(file);
-                }}
-              />
-            </label>
-            <button type="button" className="btn" onClick={() => void handleImportExample()}>
-              Load example
+            <button type="button" className="btn" disabled={importing} aria-busy={importing} onClick={chooseWorkspaceArchive}>
+              {importing ? 'Importing' : 'Import space'}
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept={WORKSPACE_ARCHIVE_FILE_ACCEPT}
+              hidden
+              tabIndex={-1}
+              disabled={importing}
+              data-testid="workspace-import-file"
+              onChange={handleWorkspaceArchiveChange}
+            />
+            <button type="button" className="btn" disabled={importing} onClick={() => void handleImportExample()}>
+              {importing ? 'Loading' : 'Load example'}
             </button>
           </div>
           <p className="label" style={{ maxWidth: 420 }}>
@@ -262,18 +303,19 @@ export default function CommandCenter() {
             Replay walkthrough
           </button>
           <button type="button" className="btn" onClick={() => void handleExport()}>Export space</button>
-          <label className="btn">
-            Import
-            <input
-              type="file"
-              accept="application/json"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file) void handleImportFile(file);
-              }}
-            />
-          </label>
+          <button type="button" className="btn" disabled={importing} aria-busy={importing} onClick={chooseWorkspaceArchive}>
+            {importing ? 'Importing' : 'Import'}
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept={WORKSPACE_ARCHIVE_FILE_ACCEPT}
+            hidden
+            tabIndex={-1}
+            disabled={importing}
+            data-testid="workspace-import-file"
+            onChange={handleWorkspaceArchiveChange}
+          />
         </div>
       </header>
 

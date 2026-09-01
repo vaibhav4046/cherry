@@ -426,7 +426,8 @@ describe('channel watch domain', () => {
     const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
     const importedWatches = await listChannelWatches(imported.workspaceId);
     expect(importedWatches).toHaveLength(1);
-    expect(importedWatches[0]).toMatchObject({ channelId: CHANNEL_ID, enabled: true, revision: 1 });
+    expect(importedWatches[0]).toMatchObject({ channelId: CHANNEL_ID, enabled: false, revision: 1 });
+    expect(importedWatches[0]!.disabledAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(importedWatches[0]!.id).toBe(importedWatches[0]!.sourceId);
     expect(importedWatches[0]!.id).not.toBe(watch.id);
     expect(importedWatches[0]!.actionHash).toBe(await sha256Canonical({

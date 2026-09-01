@@ -1,6 +1,6 @@
 import { fail, ok, type Result } from '../core/result.ts';
 import { deleteWorkspace, listWorkspaces } from '../mission/mission-service.ts';
-import { importWorkspace } from './workspace-archive.ts';
+import { importShippedExampleWorkspace } from './workspace-archive.ts';
 
 export type ExampleWorkspaceKind = 'golden-loop' | 'starter-library';
 
@@ -72,7 +72,7 @@ async function importExampleWorkspace(
     if (!response.ok) {
       return fail('temporary', `The labelled example could not be loaded (${response.status}). Try again.`);
     }
-    const imported = await importWorkspace(await response.text(), { markExample: true });
+    const imported = await importShippedExampleWorkspace(await response.text(), kind);
     if (!imported.ok) return imported;
     return ok({ ...imported.value, status: 'imported' });
   } catch (error) {

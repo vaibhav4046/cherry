@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
 import { useAppState } from '../../app/AppState.tsx';
@@ -10,7 +10,7 @@ import { requestSkillGraphApproval, decideSkillGraphApproval } from '../../cherr
 import { runVerification } from '../../cherry/verify/verification-service.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
 import { createProofReceipt } from '../../cherry/proof/proof-service.ts';
-import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
+import { startTabAudioCapture, transcribeMediaFile, transcribePcm, decodeToMono16k, readLocalMediaBytes, type TabCapture, type TranscribeProgress } from '../../cherry/transcribe/local-whisper.ts';
 import { createArtifactSet, writeArtifactFile } from '../../cherry/artifacts/artifact-service.ts';
 import { getMission } from '../../cherry/mission/mission-service.ts';
 import {
@@ -32,6 +32,7 @@ import { completeSourceFetch, createSource, failSourceFetch, getSource, importSo
 import type { HumanTranscriptSource, SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
 import type { SourceRecord } from '../../cherry/source/source-model.ts';
+import { LOCAL_TEXT_FILE_ACCEPT, readLocalTextFile } from '../../cherry/source/local-text-file.ts';
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
 import { AddToCherry } from './AddToCherry.tsx';
@@ -97,6 +98,10 @@ export default function QuickSkill() {
   const wizardPlayerRef = useRef<HTMLIFrameElement | null>(null);
   const materialRef = useRef<HTMLTextAreaElement | null>(null);
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
+  const transcriptFilesRef = useRef<HTMLInputElement | null>(null);
+  const uploadInFlightRef = useRef(false);
+  const mediaFileRef = useRef<HTMLInputElement | null>(null);
+  const mediaFileInFlightRef = useRef(false);
   const captureRef = useRef<TabCapture | null>(null);
   const [autoProgress, setAutoProgress] = useState<TranscribeProgress | null>(null);
   const [capturing, setCapturing] = useState(false);
@@ -104,6 +109,8 @@ export default function QuickSkill() {
   const [sourceChoice, setSourceChoice] = useState<'paste' | 'transcribe' | null>(null);
   const [runnerReady, setRunnerReady] = useState(false);
   const [transcriptSource, setTranscriptSource] = useState<HumanTranscriptSource>('user_text');
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [transcribingFile, setTranscribingFile] = useState(false);
 
   async function handleLoadStarterLibrary() {
     setBusy(true);
@@ -243,42 +250,84 @@ export default function QuickSkill() {
     });
   }
 
-  async function importText(text: string, source: HumanTranscriptSource, fileName?: string, requestedMode?: 'replace' | 'append') {
-    await withBusy(async () => {
-      if (!activeSource || !lesson) throw new Error('Choose a source before importing a transcript.');
-      const mode = requestedMode ?? transcriptImportMode((await listTranscript(lesson.id)).length > 0, 0);
-      const imported = await importSourceTranscript(activeSource.id, text, source, fileName, 'human', mode);
-      if (!imported.ok) throw new Error(imported.error.message);
-      setSourceCount((count) => count + 1);
-      setSources((current) => [
-        ...current,
-        {
-          title: fileName ?? `Pasted text ${current.length + 1}`,
-          summary: summarizeText(text),
-          segmentCount: imported.value.segmentCount,
-          kind: fileName ? 'file' : 'paste',
-        },
-      ]);
-      const preview = await previewQuickSkill(lesson!.id);
-      if (!preview.ok) throw new Error(preview.error.message);
-      setDraft(preview.value);
-      setKept(new Set(preview.value.steps.map((_, index) => index)));
-      setDigest(digestSegments(await listTranscript(lesson!.id)));
-      setAddingSource(false);
-      setStage('review');
-      setActiveSource(imported.value.source);
-    });
+  async function persistTranscriptText(text: string, source: HumanTranscriptSource, fileName?: string, requestedMode?: 'replace' | 'append') {
+    if (!activeSource || !lesson) throw new Error('Choose a source before importing a transcript.');
+    const mode = requestedMode ?? transcriptImportMode((await listTranscript(lesson.id)).length > 0, 0);
+    const imported = await importSourceTranscript(activeSource.id, text, source, fileName, 'human', mode);
+    if (!imported.ok) throw new Error(imported.error.message);
+    setSourceCount((count) => count + 1);
+    setSources((current) => [
+      ...current,
+      {
+        title: fileName ?? `Pasted text ${current.length + 1}`,
+        summary: summarizeText(text),
+        segmentCount: imported.value.segmentCount,
+        kind: fileName ? 'file' : 'paste',
+      },
+    ]);
+    const preview = await previewQuickSkill(lesson.id);
+    if (!preview.ok) throw new Error(preview.error.message);
+    setDraft(preview.value);
+    setKept(new Set(preview.value.steps.map((_, index) => index)));
+    setDigest(digestSegments(await listTranscript(lesson.id)));
+    setAddingSource(false);
+    setStage('review');
+    setActiveSource(imported.value.source);
   }
 
-  async function importFiles(files: FileList) {
+  async function importText(text: string, source: HumanTranscriptSource, fileName?: string, requestedMode?: 'replace' | 'append') {
+    await withBusy(() => persistTranscriptText(text, source, fileName, requestedMode));
+  }
+
+  async function importFiles(files: readonly File[]) {
+    if (uploadInFlightRef.current) return;
     if (!lesson) { setError('Choose a source before importing transcript files.'); return; }
-    // Re-read persisted state after each attempt. A malformed first file must
-    // not force the next valid file into append mode against an empty lesson.
-    for (const file of Array.from(files)) {
-      const text = await file.text();
-      const hasPersistedTranscript = (await listTranscript(lesson.id)).length > 0;
-      await importText(text, 'user_upload', file.name, transcriptImportMode(hasPersistedTranscript, 0));
+    uploadInFlightRef.current = true;
+    setUploadingFiles(true);
+    setBusy(true);
+    setError(null);
+    const failures: string[] = [];
+    try {
+      // Re-read persisted state after each attempt. A malformed first file must
+      // not force the next valid file into append mode against an empty lesson.
+      for (const file of files) {
+        const fileRead = await readLocalTextFile(file);
+        if (!fileRead.ok) {
+          failures.push(`${file.name}: ${fileRead.error}`);
+          continue;
+        }
+        try {
+          const hasPersistedTranscript = (await listTranscript(lesson.id)).length > 0;
+          await persistTranscriptText(fileRead.value.content, 'user_upload', file.name, transcriptImportMode(hasPersistedTranscript, 0));
+        } catch (thrown) {
+          failures.push(`${file.name}: ${plainQuickError((thrown as Error).message)}`);
+        }
+      }
+      if (failures.length > 0) {
+        const visibleFailures = failures.slice(0, 3).join(' ');
+        const remainder = failures.length > 3 ? ` ${failures.length - 3} more files were not added.` : '';
+        setError(`Some files were not added. ${visibleFailures}${remainder}`);
+      }
+    } finally {
+      uploadInFlightRef.current = false;
+      setUploadingFiles(false);
+      setBusy(false);
     }
+  }
+
+  function chooseTranscriptFiles() {
+    if (uploadInFlightRef.current || busy) return;
+    const input = transcriptFilesRef.current;
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  function handleTranscriptFilesChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (files.length > 0) void importFiles(files);
   }
 
   async function handleRunnerFetch() {
@@ -348,6 +397,9 @@ export default function QuickSkill() {
   }
 
   async function handleAutoFile(file: File) {
+    if (mediaFileInFlightRef.current) return;
+    mediaFileInFlightRef.current = true;
+    setTranscribingFile(true);
     setError(null);
     try {
       const text = await transcribeMediaFile(file, setAutoProgress);
@@ -355,7 +407,25 @@ export default function QuickSkill() {
     } catch (thrown) {
       setAutoProgress(null);
       setError(`On-device transcription failed: ${(thrown as Error).message}`);
+    } finally {
+      mediaFileInFlightRef.current = false;
+      setTranscribingFile(false);
     }
+  }
+
+  function chooseMediaFile() {
+    if (mediaFileInFlightRef.current || capturing) return;
+    const input = mediaFileRef.current;
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  function handleMediaFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (file) void handleAutoFile(file);
   }
 
   async function handleCaptureToggle() {
@@ -372,7 +442,7 @@ export default function QuickSkill() {
       const blob = await capture.result;
       setCapturing(false);
       captureRef.current = null;
-      const pcm = await decodeToMono16k(await blob.arrayBuffer());
+      const pcm = await decodeToMono16k(await readLocalMediaBytes(blob));
       const text = await transcribePcm(pcm, setAutoProgress);
       fillTranscript(text, 'local_transcription');
     } catch (thrown) {
@@ -583,18 +653,18 @@ export default function QuickSkill() {
               <button type="button" className={capturing ? 'btn btn-danger' : 'btn'} onClick={() => void handleCaptureToggle()} data-testid="capture-tab-audio">
                 {capturing ? 'Stop and transcribe' : 'Capture tab audio'}
               </button>
-              <label className="btn">
-                Transcribe file
-                <input
-                  type="file"
-                  accept="audio/*,video/*"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const file = event.currentTarget.files?.[0];
-                    if (file) void handleAutoFile(file);
-                  }}
-                />
-              </label>
+              <button type="button" className="btn" disabled={capturing || transcribingFile} aria-busy={transcribingFile} onClick={chooseMediaFile}>
+                {transcribingFile ? 'Transcribing file' : 'Transcribe file'}
+              </button>
+              <input
+                ref={mediaFileRef}
+                type="file"
+                accept="audio/*,video/*"
+                hidden
+                tabIndex={-1}
+                disabled={capturing || transcribingFile}
+                onChange={handleMediaFileChange}
+              />
             </div>
             {autoProgress ? (
               <p className="sticker sticker-wait" role="status" style={{ whiteSpace: 'normal' }}>
@@ -612,7 +682,7 @@ export default function QuickSkill() {
             <p style={{ fontSize: 14, margin: 0 }}>
               On YouTube: open the video → description → <strong>Show transcript</strong> → click the
               ⋮ menu → toggle timestamps if you like → select all → copy. Paste it here. Plain notes
-              work too — Cherry parses .txt/.srt/.vtt and timestamped lines.
+              work too — Cherry parses .txt/.md/.srt/.vtt and timestamped lines.
             </p>
             <form
               onSubmit={(event) => {
@@ -627,20 +697,20 @@ export default function QuickSkill() {
                 <button type="submit" className="btn btn-primary" disabled={busy} data-testid="quick-transcript-next">
                   {busy ? 'Preparing…' : 'Review the method'}
                 </button>
-                <label className="btn">
-                  Upload files
-                  <input
-                    type="file"
-                    accept=".txt,.srt,.vtt,text/plain"
-                    multiple
-                    className="sr-only"
-                    data-testid="quick-files"
-                    onChange={(event) => {
-                      const files = event.currentTarget.files;
-                      if (files && files.length > 0) void importFiles(files);
-                    }}
-                  />
-                </label>
+                <button type="button" className="btn" disabled={busy || uploadingFiles} aria-busy={uploadingFiles} onClick={chooseTranscriptFiles}>
+                  {uploadingFiles ? 'Reading files' : 'Upload files'}
+                </button>
+                <input
+                  ref={transcriptFilesRef}
+                  type="file"
+                  accept={LOCAL_TEXT_FILE_ACCEPT}
+                  multiple
+                  hidden
+                  tabIndex={-1}
+                  disabled={busy || uploadingFiles}
+                  data-testid="quick-files"
+                  onChange={handleTranscriptFilesChange}
+                />
               </div>
             </form>
           </div>
@@ -681,19 +751,20 @@ export default function QuickSkill() {
                   <button type="submit" className="btn btn-sm" disabled={busy} data-testid="quick-transcript-next">
                     {busy ? 'Adding…' : 'Add to notebook'}
                   </button>
-                  <label className="btn btn-sm">
-                    Upload files
-                    <input
-                      type="file"
-                      accept=".txt,.srt,.vtt,text/plain"
-                      multiple
-                      className="sr-only"
-                      onChange={(event) => {
-                        const files = event.currentTarget.files;
-                        if (files && files.length > 0) void importFiles(files);
-                      }}
-                    />
-                  </label>
+                  <button type="button" className="btn btn-sm" disabled={busy || uploadingFiles} aria-busy={uploadingFiles} onClick={chooseTranscriptFiles}>
+                    {uploadingFiles ? 'Reading files' : 'Upload files'}
+                  </button>
+                  <input
+                    ref={transcriptFilesRef}
+                    type="file"
+                    accept={LOCAL_TEXT_FILE_ACCEPT}
+                    multiple
+                    hidden
+                    tabIndex={-1}
+                    disabled={busy || uploadingFiles}
+                    data-testid="quick-files"
+                    onChange={handleTranscriptFilesChange}
+                  />
                   <button type="button" className="btn btn-sm" onClick={() => setAddingSource(false)}>Cancel</button>
                 </div>
               </form>

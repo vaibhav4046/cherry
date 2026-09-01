@@ -13,7 +13,7 @@ import { createProofReceipt } from '../../src/cherry/proof/proof-service.ts';
 import { exportWorkspace, importWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
 import { SYNTHETIC_SAMPLE_APPROVER } from '../../src/cherry/skillgraph/sample-state.ts';
-import { exportSkillFile, listLibraryEntries } from '../../src/cherry/library/library-service.ts';
+import { listLibraryEntries } from '../../src/cherry/library/library-service.ts';
 
 /**
  * Generates the shipped importable example workspace from REAL domain
@@ -21,7 +21,7 @@ import { exportSkillFile, listLibraryEntries } from '../../src/cherry/library/li
  *   GENERATE_EXAMPLE=1 npx vitest run tests/cherry/example-workspace.gen.test.ts
  */
 describe('example workspace generator', () => {
-  it('keeps the shipped golden example labelled after an ordinary portable import', async () => {
+  it('strips shipped sample authority on an ordinary portable import', async () => {
     freshDb();
     const raw = readFileSync(resolve(process.cwd(), 'public/examples/example-workspace.json'), 'utf8');
     const imported = unwrap(await importWorkspace(raw));
@@ -30,10 +30,7 @@ describe('example workspace generator', () => {
     const [workspace] = await listWorkspaces();
     expect(workspace!.isExample).not.toBe(true);
     const [entry] = await listLibraryEntries();
-    expect(entry).toMatchObject({ sample: true, installReady: true });
-    const exported = unwrap(await exportSkillFile(entry!.skillId, 'skill-md'));
-    expect(exported.content).toContain('**Sample notice:**');
-    expect(exported.content).toContain('not proof of a live human decision');
+    expect(entry).toMatchObject({ sample: false, installReady: false, approvalHash: null });
   });
 
   it.skipIf(!process.env.GENERATE_EXAMPLE)('generates public/examples/example-workspace.json', async () => {
@@ -135,7 +132,7 @@ describe('example workspace generator', () => {
         provenance: [{ sourceType: 'video-transcript', trust: 'reviewed', description: 'Example lesson transcript, 0:40–1:20' }],
       }),
     );
-    unwrap(await decideMemory(memory.id, 'approved', 'user'));
+    unwrap(await decideMemory(memory.id, 'approved', SYNTHETIC_SAMPLE_APPROVER));
 
     const exported = unwrap(await exportWorkspace(workspace.id));
     mkdirSync('public/examples', { recursive: true });

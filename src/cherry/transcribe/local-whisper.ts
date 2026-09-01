@@ -22,6 +22,30 @@ type ProgressCallback = (progress: TranscribeProgress) => void;
 
 const MODEL_ID = 'Xenova/whisper-tiny.en';
 const TARGET_SAMPLE_RATE = 16000;
+export const MAX_LOCAL_MEDIA_FILE_BYTES = 128 * 1024 * 1024;
+export const MAX_LOCAL_MEDIA_DURATION_SECONDS = 30 * 60;
+
+type ReadableMediaBlob = Pick<Blob, 'size' | 'arrayBuffer'>;
+
+export function inspectLocalMediaBlob(blob: Pick<Blob, 'size'>): { ok: true } | { ok: false; error: string } {
+  if (blob.size === 0) return { ok: false, error: 'That media file is empty. Choose another file.' };
+  if (blob.size > MAX_LOCAL_MEDIA_FILE_BYTES) {
+    return { ok: false, error: 'That media file is larger than 128 MiB. Choose a smaller clip.' };
+  }
+  return { ok: true };
+}
+
+/** Reject known-bad sizes before allocating, then enforce the real byte length. */
+export async function readLocalMediaBytes(blob: ReadableMediaBlob): Promise<ArrayBuffer> {
+  const inspected = inspectLocalMediaBlob(blob);
+  if (!inspected.ok) throw new Error(inspected.error);
+  const bytes = await blob.arrayBuffer();
+  if (bytes.byteLength === 0) throw new Error('That media file is empty. Choose another file.');
+  if (bytes.byteLength > MAX_LOCAL_MEDIA_FILE_BYTES) {
+    throw new Error('That media file is larger than 128 MiB. Choose a smaller clip.');
+  }
+  return bytes;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let transcriberPromise: Promise<any> | null = null;
@@ -64,12 +88,18 @@ async function getTranscriber(onProgress: ProgressCallback) {
 
 /** Decode any audio/video file (or recorded blob) to 16 kHz mono PCM. */
 export async function decodeToMono16k(data: ArrayBuffer): Promise<Float32Array> {
+  if (data.byteLength === 0) throw new Error('No audio data was captured. Try again.');
+  if (data.byteLength > MAX_LOCAL_MEDIA_FILE_BYTES) throw new Error('The captured audio is larger than 128 MiB. Use a shorter clip.');
   const probeContext = new AudioContext();
   let decoded: AudioBuffer;
   try {
     decoded = await probeContext.decodeAudioData(data);
   } finally {
     await probeContext.close();
+  }
+  if (!Number.isFinite(decoded.duration) || decoded.duration <= 0) throw new Error('No readable audio was found in that file.');
+  if (decoded.duration > MAX_LOCAL_MEDIA_DURATION_SECONDS) {
+    throw new Error('That media is longer than 30 minutes. Choose a shorter clip.');
   }
   const offline = new OfflineAudioContext(1, Math.ceil(decoded.duration * TARGET_SAMPLE_RATE), TARGET_SAMPLE_RATE);
   const source = offline.createBufferSource();
@@ -100,7 +130,7 @@ export async function transcribePcm(
 }
 
 export async function transcribeMediaFile(file: File, onProgress: ProgressCallback): Promise<string> {
-  const pcm = await decodeToMono16k(await file.arrayBuffer());
+  const pcm = await decodeToMono16k(await readLocalMediaBytes(file));
   return transcribePcm(pcm, onProgress);
 }
 
@@ -125,15 +155,30 @@ export async function startTabAudioCapture(): Promise<TabCapture> {
   const audioStream = new MediaStream(stream.getAudioTracks());
   const recorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
   const parts: BlobPart[] = [];
+  let capturedBytes = 0;
+  let captureError: Error | null = null;
   recorder.ondataavailable = (event) => {
-    if (event.data.size > 0) parts.push(event.data);
+    if (event.data.size <= 0) return;
+    capturedBytes += event.data.size;
+    if (capturedBytes > MAX_LOCAL_MEDIA_FILE_BYTES) {
+      captureError = new Error('The tab capture reached 128 MiB. Use a shorter clip.');
+      if (recorder.state !== 'inactive') recorder.stop();
+      return;
+    }
+    parts.push(event.data);
   };
-  const result = new Promise<Blob>((resolve) => {
+  const result = new Promise<Blob>((resolve, reject) => {
     recorder.onstop = () => {
+      window.clearTimeout(durationLimit);
       stream.getTracks().forEach((track) => track.stop());
-      resolve(new Blob(parts, { type: 'audio/webm' }));
+      if (captureError) reject(captureError);
+      else resolve(new Blob(parts, { type: 'audio/webm' }));
     };
   });
+  const durationLimit = window.setTimeout(() => {
+    captureError = new Error('The tab capture reached 30 minutes. Start a shorter capture.');
+    if (recorder.state !== 'inactive') recorder.stop();
+  }, MAX_LOCAL_MEDIA_DURATION_SECONDS * 1000);
   stream.getVideoTracks()[0]?.addEventListener('ended', () => {
     if (recorder.state !== 'inactive') recorder.stop();
   });

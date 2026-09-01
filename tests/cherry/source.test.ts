@@ -64,10 +64,17 @@ describe('source inbox domain', () => {
     const workspace = unwrap(await createWorkspace({ name: 'Sources' }));
     const credential = await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Bad', url: 'https://me:secret@example.com/a', permissionAcknowledged: true });
     expect(credential.ok).toBe(false);
-    const privatePage = unwrap(await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Private page', url: 'http://192.168.0.10/page', permissionAcknowledged: true }));
-    const privateFetch = await requestSourceFetch(privatePage.id);
-    expect(privateFetch.ok).toBe(false);
-    if (!privateFetch.ok) expect(privateFetch.error.message).toContain('Private');
+    for (const url of [
+      'http://192.168.0.10/page',
+      'http://[::]/page',
+      'http://[::ffff:127.0.0.1]/page',
+      'http://[fe80::1]/page',
+      'http://[2001:db8::1]/page',
+    ]) {
+      const privatePage = await createSource({ workspaceId: workspace.id, kind: 'article', title: `Private page ${url}`, url, permissionAcknowledged: true });
+      expect(privatePage.ok).toBe(false);
+      if (!privatePage.ok) expect(privatePage.error.message).toContain('Private');
+    }
 
     const linkedIn = unwrap(await createSource({
       workspaceId: workspace.id, kind: 'article', title: 'Exported post', url: 'https://www.linkedin.com/posts/example',
@@ -350,7 +357,7 @@ describe('source inbox domain', () => {
     expect((await getDb().lessons.get(created.lessonId))?.permissionAcknowledgedAt).toBeNull();
   });
 
-  it('preserves exact Takeout provenance on a transcriptless YouTube draft and its proof', async () => {
+  it('preserves local Takeout provenance but resets archive-supplied acquisition claims on import', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Takeout source' }));
     const created = unwrap(await createSource({
       workspaceId: workspace.id,
@@ -383,9 +390,17 @@ describe('source inbox domain', () => {
 
     const exported = unwrap(await exportWorkspace(workspace.id));
     const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
-    expect((await listSources(imported.workspaceId))[0]).toMatchObject({
-      sourceOrigin: 'takeout-import', youtubeChannelId: 'UCSTUDIONORTH12345678901',
+    const importedSource = (await listSources(imported.workspaceId))[0]!;
+    expect(importedSource).toMatchObject({
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
+      fetchStatus: 'not_requested',
+      fetchMethod: null,
+      contentHash: null,
+      permissionAcknowledgedAt: null,
     });
+    expect(importedSource.sourceOrigin).toBeUndefined();
+    expect((await getDb().lessons.get(importedSource.lessonId))?.transcriptSource).toBe('unknown');
+    expect((await listTranscript(importedSource.lessonId)).every((segment) => segment.source === 'unknown')).toBe(true);
   });
 
   it('rejects forged Takeout provenance outside a human-selected transcriptless YouTube URL', async () => {

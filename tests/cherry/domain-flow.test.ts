@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { freshDb } from '../setup.ts';
 import {
   createExampleWorkspace,
@@ -9,7 +9,7 @@ import {
   updateMission,
   getMission,
 } from '../../src/cherry/mission/mission-service.ts';
-import { addEvidence, setEvidenceTrust, listEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import { addEvidence, deleteEvidence, setEvidenceTrust, listEvidence } from '../../src/cherry/evidence/evidence-service.ts';
 import { importTranscript, loadLesson, lessonCoverage, recordObservation, listTranscript, deleteTranscript } from '../../src/cherry/watch/lesson-service.ts';
 import {
   decideSkillGraphApproval,
@@ -19,14 +19,22 @@ import {
   rollbackSkillGraph,
   listSkillGraphVersions,
 } from '../../src/cherry/skillgraph/skillgraph-service.ts';
-import { compileCorrection, decideMemory, listMemories, proposeMemory } from '../../src/cherry/memory/memory-service.ts';
+import { compileCorrection, decideMemory, deleteMemory, listMemories, proposeMemory } from '../../src/cherry/memory/memory-service.ts';
 import { createArtifactSet, writeArtifactFile, listArtifactFiles, deleteArtifactFile } from '../../src/cherry/artifacts/artifact-service.ts';
 import { runVerification, recordRepair } from '../../src/cherry/verify/verification-service.ts';
 import { createProofReceipt } from '../../src/cherry/proof/proof-service.ts';
 import { verifyReceipt } from '../../src/cherry/proof/proof-verifier.ts';
-import { exportWorkspace, importWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
+import {
+  exportWorkspace,
+  importWorkspace,
+  MAX_WORKSPACE_IMPORT_FILE_BYTES,
+  readWorkspaceArchiveFile,
+} from '../../src/cherry/persistence/workspace-archive.ts';
+import { ALL_STORES, getDb } from '../../src/cherry/persistence/cherry-db.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
+import { sha256Canonical, sha256CanonicalExcluding, sha256Text } from '../../src/cherry/core/hash.ts';
+import { createSource } from '../../src/cherry/source/source-service.ts';
 
 async function seedWorkspaceAndMission() {
   const workspace = unwrap(await createWorkspace({ name: 'Test workspace' }));
@@ -44,6 +52,63 @@ async function seedWorkspaceAndMission() {
 describe('workspace and mission flow', () => {
   beforeEach(() => {
     freshDb();
+  });
+
+  it('rejects invalid archive files before reading their bytes', async () => {
+    let reads = 0;
+    const oversized = {
+      name: 'workspace.json',
+      size: MAX_WORKSPACE_IMPORT_FILE_BYTES + 1,
+      arrayBuffer: async () => {
+        reads += 1;
+        return new ArrayBuffer(0);
+      },
+    };
+
+    await expect(readWorkspaceArchiveFile(oversized)).resolves.toEqual({
+      ok: false,
+      error: 'That file is larger than 64 MiB. Choose a smaller Cherry export.',
+    });
+    expect(reads).toBe(0);
+
+    await expect(readWorkspaceArchiveFile({ ...oversized, name: 'workspace.txt', size: 12 })).resolves.toEqual({
+      ok: false,
+      error: 'Choose a Cherry .json export.',
+    });
+    expect(reads).toBe(0);
+
+    await expect(readWorkspaceArchiveFile({ ...oversized, name: 'empty.json', size: 0 })).resolves.toEqual({
+      ok: false,
+      error: 'That Cherry export is empty. Choose another file.',
+    });
+    expect(reads).toBe(0);
+
+    const bytes = new TextEncoder().encode('{"schemaVersion":"1.0.0"}');
+    await expect(readWorkspaceArchiveFile({
+      name: 'workspace.JSON',
+      size: bytes.byteLength,
+      arrayBuffer: async () => {
+        reads += 1;
+        return bytes.buffer;
+      },
+    })).resolves.toEqual({ ok: true, value: '{"schemaVersion":"1.0.0"}' });
+    expect(reads).toBe(1);
+  });
+
+  it('distinguishes archive read failures from invalid UTF-8', async () => {
+    await expect(readWorkspaceArchiveFile({
+      name: 'workspace.json',
+      size: 1,
+      arrayBuffer: async () => { throw new Error('device unavailable'); },
+    })).resolves.toEqual({ ok: false, error: 'That Cherry export could not be read. Choose it again.' });
+    await expect(readWorkspaceArchiveFile({
+      name: 'workspace.json',
+      size: 4,
+      arrayBuffer: async () => Uint8Array.from([0xff, 0xfe, 0xff, 0xfe]).buffer,
+    })).resolves.toEqual({
+      ok: false,
+      error: 'That Cherry export is not valid UTF-8 JSON. Export it again and retry.',
+    });
   });
 
   it('creates workspace and mission with proof events in the ledger', async () => {
@@ -345,6 +410,14 @@ describe('artifacts, verification, repair, proof', () => {
     expect(verification.hashMatches).toBe(true);
     expect(verification.eventsMonotonic).toBe(true);
 
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
+    const importedReceipt = await getDb().receipts.where('workspaceId').equals(imported.workspaceId).first();
+    expect(importedReceipt).toBeUndefined();
+    expect(await getDb().verifications.where('workspaceId').equals(imported.workspaceId).count()).toBe(0);
+    expect(await getDb().runs.where('workspaceId').equals(imported.workspaceId).count()).toBe(0);
+    expect(await getDb().proofEvents.where('workspaceId').equals(imported.workspaceId).count()).toBe(1);
+
     // One-byte tamper flips the verdict.
     const tampered = structuredClone(receipt);
     tampered.assertions[0]!.status = 'passed';
@@ -370,6 +443,20 @@ describe('workspace export/import round trip', () => {
     freshDb();
   });
 
+  async function snapshotDatabase() {
+    const db = getDb();
+    return Object.fromEntries(
+      await Promise.all(
+        ALL_STORES.map(async (storeName) => [storeName, await db.table(storeName).toArray()]),
+      ),
+    );
+  }
+
+  async function recomputeArchiveHash(archive: Record<string, unknown>) {
+    const integrity = archive['integrity'] as Record<string, unknown>;
+    integrity['payloadSha256'] = await sha256CanonicalExcluding(archive, ['integrity']);
+  }
+
   it('round-trips domain state and verifies the payload hash', async () => {
     const { workspace, mission } = await seedWorkspaceAndMission();
     unwrap(await addEvidence({ workspaceId: workspace.id, sourceType: 'user_statement', claim: 'Round trip claim' }));
@@ -386,6 +473,21 @@ describe('workspace export/import round trip', () => {
     expect(importedEvidence.some((record) => record.claim === 'Round trip claim')).toBe(true);
     const importedMission = await getMission(mission.id);
     expect(importedMission?.workspaceId).toBe(workspace.id); // original untouched
+  });
+
+  it('reuses one imported space when the exact same archive is selected repeatedly', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    const raw = JSON.stringify(unwrap(await exportWorkspace(workspace.id)));
+
+    const imports = [];
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      imports.push(unwrap(await importWorkspace(raw)));
+    }
+
+    expect(new Set(imports.map((result) => result.workspaceId)).size).toBe(1);
+    expect(imports[0]?.status).toBe('imported');
+    expect(imports.slice(1).every((result) => result.status === 'already-imported')).toBe(true);
+    expect(await getDb().workspaces.get(imports[0]!.workspaceId)).toBeDefined();
   });
 
   it('does not preserve an archive-supplied example flag during an ordinary import', async () => {
@@ -410,5 +512,354 @@ describe('workspace export/import round trip', () => {
 
     expect((await importWorkspace('not json at all')).ok).toBe(false);
     expect((await importWorkspace('{"schemaVersion":"9.9.9"}')).ok).toBe(false);
+  });
+
+  it('rejects a structurally malformed skill archive with zero writes even when its hash matches', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const graph = unwrap(
+      await draftSkillGraph({
+        workspaceId: workspace.id,
+        missionId: mission.id,
+        name: 'Import safety skill',
+        purpose: 'Keep malformed state out of the library',
+        nodes: [{ kind: 'build', title: 'Validate the archive', goal: 'Reject unsafe rows' }],
+      }),
+    );
+    unwrap(await updateMission(mission.id, { skillGraphId: graph.id }));
+    const archive = structuredClone(unwrap(await exportWorkspace(workspace.id))) as unknown as Record<string, unknown>;
+    const skillGraph = (archive['skillGraphs'] as Array<Record<string, unknown>>)[0]!;
+    delete skillGraph['targets'];
+    await recomputeArchiveHash(archive);
+    const before = await snapshotDatabase();
+
+    const result = await importWorkspace(JSON.stringify(archive));
+
+    expect(result.ok).toBe(false);
+    expect(await snapshotDatabase()).toEqual(before);
+  });
+
+  it('returns a validation result for every malformed archive table and requires current integrity', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const before = await snapshotDatabase();
+    const arrayKeys = [
+      'missions',
+      'missionTasks',
+      'lessons',
+      'transcriptSegments',
+      'observations',
+      'evidence',
+      'skillGraphs',
+      'skillVersions',
+      'memories',
+      'memoryVersions',
+      'approvals',
+      'artifactSets',
+      'artifactFiles',
+      'artifactVersions',
+      'verifications',
+      'runs',
+      'proofEvents',
+      'proofReceipts',
+      'sourceRecords',
+      'channelWatches',
+    ] as const;
+
+    for (const key of arrayKeys) {
+      const malformed = structuredClone(exported) as unknown as Record<string, unknown>;
+      malformed[key] = {};
+      await recomputeArchiveHash(malformed);
+      await expect(importWorkspace(JSON.stringify(malformed))).resolves.toMatchObject({ ok: false });
+      expect(await snapshotDatabase()).toEqual(before);
+    }
+
+    const withoutIntegrity = structuredClone(exported) as unknown as Record<string, unknown>;
+    delete withoutIntegrity['integrity'];
+    await expect(importWorkspace(JSON.stringify(withoutIntegrity))).resolves.toMatchObject({ ok: false });
+    expect(await snapshotDatabase()).toEqual(before);
+  });
+
+  it('removes imported approval and trust state until a person reviews it here', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const evidence = unwrap(await addEvidence({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      sourceType: 'user_statement',
+      claim: 'A claim approved in the source browser',
+    }));
+    unwrap(await setEvidenceTrust(evidence.id, 'approved'));
+    const draftedGraph = unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Imported approval boundary',
+      purpose: 'Prove imports cannot grant execution authority',
+      nodes: [{ kind: 'build', title: 'Check the boundary', goal: 'Require a local review', evidenceIds: [evidence.id] }],
+    }));
+    const graph = unwrap(await reviseSkillGraph(draftedGraph.id, {
+      knowledge: [{ evidenceId: evidence.id, use: 'Authority boundary', trust: 'approved' }],
+    }, 'Attach reviewed evidence'));
+    const request = unwrap(await requestSkillGraphApproval(graph.id, 'Review in the source browser', 'agent'));
+    unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+    const memory = unwrap(await proposeMemory({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      type: 'procedure',
+      title: 'Imported method',
+      content: 'Review external imports locally.',
+      scope: 'mission',
+      provenance: [{ sourceType: 'human', trust: 'approved', description: 'Approved in the source browser' }],
+    }));
+    unwrap(await decideMemory(memory.id, 'approved', 'user'));
+
+    const imported = unwrap(await importWorkspace(JSON.stringify(unwrap(await exportWorkspace(workspace.id)))));
+    const db = getDb();
+    const importedGraph = await db.skillGraphs.where('workspaceId').equals(imported.workspaceId).first();
+    const importedMemory = await db.memories.where('workspaceId').equals(imported.workspaceId).first();
+    const importedEvidence = await db.evidence.where('workspaceId').equals(imported.workspaceId).first();
+    const importedApprovals = await db.approvals.where('workspaceId').equals(imported.workspaceId).toArray();
+    const importedGraphVersions = await db.skillVersions.where('workspaceId').equals(imported.workspaceId).toArray();
+    const importedMemoryVersions = await db.memoryVersions.where('workspaceId').equals(imported.workspaceId).toArray();
+    const importedMission = await db.missions.where('workspaceId').equals(imported.workspaceId).first();
+
+    expect(importedGraph).toMatchObject({ status: 'draft', approvedRevision: null, approvedBy: null, approvedAt: null });
+    expect(importedGraph?.knowledge?.every((reference) => reference.trust === 'untrusted')).toBe(true);
+    expect(importedGraphVersions.every((version) => (
+      version.status === 'draft'
+      && version.actorType === 'system'
+      && version.snapshot.status === 'draft'
+      && version.snapshot.knowledge?.every((reference) => reference.trust === 'untrusted') !== false
+      && version.versionHash === version.snapshot.versionHash
+    ))).toBe(true);
+    expect(importedMemory).toMatchObject({ status: 'proposed', approvedRevision: null, approvedBy: null, approvedAt: null });
+    expect(importedMemory).toMatchObject({ pinned: false, lastUsedAt: null, useCount: 0, runId: null });
+    expect(importedMemory?.provenance.every((source) => source.trust === 'untrusted' && source.sourceType === 'import')).toBe(true);
+    expect(importedMemoryVersions.every((version) => (
+      version.snapshot.approvedRevision === null
+      && version.snapshot.provenance.every((source) => source.trust === 'untrusted' && source.sourceType === 'import')
+    ))).toBe(true);
+    expect(importedEvidence?.trust).toBe('untrusted');
+    expect(importedEvidence).toMatchObject({ provenanceMethod: 'unknown', transferability: 'unknown' });
+    expect(importedEvidence?.history).toEqual([
+      expect.objectContaining({ actorType: 'system', summary: 'Imported as untrusted external evidence' }),
+    ]);
+    expect(importedMission?.state).toBe('DRAFT');
+    expect(importedApprovals).toEqual([]);
+  });
+
+  it('preserves opaque content while remapping references and recomputing graph hashes', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const graph = unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Reference-safe import',
+      purpose: 'Keep user content byte-for-byte',
+      nodes: [{ kind: 'build', title: 'Preserve content', goal: 'Remap identifiers only' }],
+    }));
+    unwrap(await reviseSkillGraph(graph.id, {
+      evaluations: [
+        ...graph.evaluations,
+        {
+          id: 'eval-opaque-config',
+          name: 'Opaque configuration stays exact',
+          type: 'manual',
+          severity: 'info',
+          config: { missionId: mission.id },
+        },
+      ],
+    }, 'Add opaque configuration'));
+    const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Opaque content'));
+    unwrap(await writeArtifactFile(artifactSet.id, 'opaque.txt', mission.id, 'human'));
+
+    const imported = unwrap(await importWorkspace(JSON.stringify(unwrap(await exportWorkspace(workspace.id)))));
+    const db = getDb();
+    const importedFile = await db.artifactFiles.where('workspaceId').equals(imported.workspaceId).first();
+    const importedGraph = await db.skillGraphs.where('workspaceId').equals(imported.workspaceId).first();
+
+    expect(importedFile?.content).toBe(mission.id);
+    expect(importedGraph?.id).not.toBe(graph.id);
+    expect(importedGraph?.missionId).not.toBe(mission.id);
+    expect(importedGraph?.versionHash).toBe(await sha256Canonical({ ...importedGraph, versionHash: undefined }));
+    expect(importedGraph?.evaluations.find((evaluation) => evaluation.id === 'eval-opaque-config')?.config).toEqual({ missionId: mission.id });
+  });
+
+  it('rejects unsafe artifact paths and artifact quotas with zero writes', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Portable files'));
+    unwrap(await writeArtifactFile(artifactSet.id, 'notes.txt', 'bounded content', 'human'));
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const before = await snapshotDatabase();
+
+    const rejectMutation = async (mutate: (archive: Record<string, unknown>) => Promise<void> | void) => {
+      const archive = structuredClone(exported) as unknown as Record<string, unknown>;
+      await mutate(archive);
+      await recomputeArchiveHash(archive);
+      await expect(importWorkspace(JSON.stringify(archive))).resolves.toMatchObject({ ok: false });
+      expect(await snapshotDatabase()).toEqual(before);
+    };
+
+    await rejectMutation((archive) => {
+      (archive['artifactFiles'] as Array<Record<string, unknown>>)[0]!['path'] = '../escape.txt';
+    });
+    await rejectMutation(async (archive) => {
+      const file = (archive['artifactFiles'] as Array<Record<string, unknown>>)[0]!;
+      const content = 'x'.repeat(512 * 1024 + 1);
+      file['content'] = content;
+      file['sizeBytes'] = content.length;
+      file['sha256'] = await sha256Text(content);
+    });
+    await rejectMutation((archive) => {
+      const original = (archive['artifactFiles'] as Array<Record<string, unknown>>)[0]!;
+      archive['artifactFiles'] = Array.from({ length: 201 }, (_, index) => ({
+        ...original,
+        id: index === 0 ? original['id'] : `af-import-overflow-${index}`,
+        path: index === 0 ? original['path'] : `overflow-${index}.txt`,
+      }));
+    });
+  });
+
+  it('rejects malformed nested skill fields even when the archive hash matches', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Nested validation',
+      purpose: 'Reject route-crashing values',
+      nodes: [{ kind: 'build', title: 'Validate', goal: 'Stay renderable' }],
+    }));
+    const malformed = structuredClone(unwrap(await exportWorkspace(workspace.id))) as unknown as Record<string, unknown>;
+    const graph = (malformed['skillGraphs'] as Array<Record<string, unknown>>)[0]!;
+    const node = (graph['nodes'] as Array<Record<string, unknown>>)[0]!;
+    node['kind'] = { boom: true };
+    await recomputeArchiveHash(malformed);
+    const before = await snapshotDatabase();
+
+    await expect(importWorkspace(JSON.stringify(malformed))).resolves.toMatchObject({ ok: false });
+    expect(await snapshotDatabase()).toEqual(before);
+  });
+
+  it('rejects route-crashing schema and foreign memory snapshot fields', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Runtime-safe schema',
+      purpose: 'Keep detail routes renderable',
+      nodes: [{ kind: 'build', title: 'Validate', goal: 'Reject malformed schemas' }],
+    }));
+    unwrap(await proposeMemory({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      type: 'procedure',
+      title: 'Safe memory snapshot',
+      content: 'Keep workspace ownership exact.',
+      scope: 'mission',
+      provenance: [{ sourceType: 'human', trust: 'untrusted', description: 'Local test' }],
+    }));
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const before = await snapshotDatabase();
+
+    const malformedSchema = structuredClone(exported) as unknown as Record<string, unknown>;
+    const graph = (malformedSchema['skillGraphs'] as Array<Record<string, unknown>>)[0]!;
+    (graph['inputSchema'] as Record<string, unknown>)['required'] = {};
+    await recomputeArchiveHash(malformedSchema);
+    await expect(importWorkspace(JSON.stringify(malformedSchema))).resolves.toMatchObject({ ok: false });
+    expect(await snapshotDatabase()).toEqual(before);
+
+    const foreignSnapshot = structuredClone(exported) as unknown as Record<string, unknown>;
+    const memoryVersion = (foreignSnapshot['memoryVersions'] as Array<Record<string, unknown>>)[0]!;
+    (memoryVersion['snapshot'] as Record<string, unknown>)['workspaceId'] = 'ws-foreign';
+    await recomputeArchiveHash(foreignSnapshot);
+    await expect(importWorkspace(JSON.stringify(foreignSnapshot))).resolves.toMatchObject({ ok: false });
+    expect(await snapshotDatabase()).toEqual(before);
+  });
+
+  it('rejects imported source URLs that disguise private networks', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    unwrap(await createSource({
+      workspaceId: workspace.id,
+      kind: 'article',
+      title: 'Public source before tampering',
+      url: 'https://example.com/article',
+      permissionAcknowledged: true,
+    }));
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const before = await snapshotDatabase();
+
+    for (const url of ['http://[::]/', 'http://[::ffff:127.0.0.1]/', 'http://[2001:db8::1]/']) {
+      const archive = structuredClone(exported) as unknown as Record<string, unknown>;
+      (archive['sourceRecords'] as Array<Record<string, unknown>>)[0]!['url'] = url;
+      await recomputeArchiveHash(archive);
+      await expect(importWorkspace(JSON.stringify(archive))).resolves.toMatchObject({ ok: false });
+      expect(await snapshotDatabase()).toEqual(before);
+    }
+  });
+
+  it('imports an archive Cherry can produce after referenced evidence is deleted', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const evidence = unwrap(await addEvidence({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      sourceType: 'user_statement',
+      claim: 'A removable source claim',
+    }));
+    const graph = unwrap(await draftSkillGraph({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      name: 'Historical evidence gap',
+      purpose: 'Keep the honest gap visible',
+      nodes: [{ kind: 'research', title: 'Read evidence', goal: 'Record the source', evidenceIds: [evidence.id] }],
+    }));
+    unwrap(await deleteEvidence(evidence.id));
+
+    const imported = unwrap(await importWorkspace(JSON.stringify(unwrap(await exportWorkspace(workspace.id)))));
+    const importedGraph = await getDb().skillGraphs.where('workspaceId').equals(imported.workspaceId).first();
+    const importedVersion = await getDb().skillVersions.where('workspaceId').equals(imported.workspaceId).first();
+    expect(importedGraph?.nodes[0]?.evidenceIds[0]).not.toBe(evidence.id);
+    expect(importedGraph?.nodes[0]?.evidenceIds[0]).toBe(importedVersion?.snapshot.nodes[0]?.evidenceIds[0]);
+    expect(graph.nodes[0]?.evidenceIds[0]).toBe(evidence.id);
+  });
+
+  it('round-trips deleted memory and artifact histories without cross-workspace aliases', async () => {
+    const { workspace, mission } = await seedWorkspaceAndMission();
+    const memory = unwrap(await proposeMemory({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      type: 'procedure',
+      title: 'Disposable method',
+      content: 'Delete this after recording the history.',
+      scope: 'mission',
+      provenance: [{ sourceType: 'human', trust: 'untrusted', description: 'Local test' }],
+    }));
+    await getDb().missions.update(mission.id, { requiredMemoryIds: [memory.id] });
+    unwrap(await deleteMemory(memory.id));
+    const artifactSet = unwrap(await createArtifactSet(workspace.id, mission.id, 'Deleted file history'));
+    const file = unwrap(await writeArtifactFile(artifactSet.id, 'deleted.txt', 'historical content', 'human'));
+    unwrap(await deleteArtifactFile(artifactSet.id, file.path));
+
+    const imported = unwrap(await importWorkspace(JSON.stringify(unwrap(await exportWorkspace(workspace.id)))));
+    const importedMemoryVersions = await getDb().memoryVersions.where('workspaceId').equals(imported.workspaceId).toArray();
+    const importedArtifactVersions = await getDb().artifactVersions.where('workspaceId').equals(imported.workspaceId).toArray();
+    const importedMission = await getDb().missions.where('workspaceId').equals(imported.workspaceId).first();
+
+    expect(await getDb().memories.where('workspaceId').equals(imported.workspaceId).count()).toBe(0);
+    expect(importedMemoryVersions.some((version) => version.snapshot.status === 'deleted')).toBe(true);
+    expect(new Set(importedMemoryVersions.map((version) => version.memoryId)).has(memory.id)).toBe(false);
+    expect(importedMission?.requiredMemoryIds[0]).toBe(importedMemoryVersions[0]?.memoryId);
+    expect(await getDb().artifactFiles.where('workspaceId').equals(imported.workspaceId).count()).toBe(0);
+    expect(importedArtifactVersions).toHaveLength(1);
+    expect(importedArtifactVersions[0]?.artifactFileId).not.toBe(file.id);
+  });
+
+  it('rolls back every imported row when the atomic proof write fails', async () => {
+    const { workspace } = await seedWorkspaceAndMission();
+    const archive = unwrap(await exportWorkspace(workspace.id));
+    const before = await snapshotDatabase();
+    const proofWrite = vi.spyOn(getDb().proofEvents, 'bulkAdd')
+      .mockResolvedValueOnce('pe-imported' as never)
+      .mockRejectedValueOnce(new Error('quota denied'));
+
+    await expect(importWorkspace(JSON.stringify(archive))).resolves.toMatchObject({ ok: false });
+    expect(await snapshotDatabase()).toEqual(before);
+    proofWrite.mockRestore();
   });
 });

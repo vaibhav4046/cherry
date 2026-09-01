@@ -12,10 +12,10 @@ import { parseTranscript } from '../watch/transcript-parser.ts';
 import type { Lesson, TranscriptSegment, TranscriptSource } from '../watch/watch-model.ts';
 import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceOrigin, SourceRecord } from './source-model.ts';
 import { parseYouTubeChannelId } from './youtube-channel-id.ts';
+import { isPublicNetworkHost } from './public-network-host.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
 const TRACKING_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'mc_cid', 'mc_eid']);
-const PRIVATE_HOST = /^(localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|::1|\[::1\])$/i;
 const humanTranscriptSourceSchema = z.enum(['user_text', 'user_upload', 'creator_authorized_captions', 'local_transcription']);
 const sourceFetchFailureSchema = z.object({
   status: z.enum(['blocked', 'failed']),
@@ -77,7 +77,7 @@ function normalizeUrl(raw: string): Result<string> {
   }
   if (value.protocol !== 'http:' && value.protocol !== 'https:') return invalid('Only http(s) source URLs are supported');
   if (value.username || value.password) return invalid('Source URLs cannot contain credentials');
-  if (PRIVATE_HOST.test(value.hostname) || value.hostname.endsWith('.localhost')) return invalid('Private or localhost URLs are not allowed');
+  if (!isPublicNetworkHost(value.hostname)) return invalid('Private or localhost URLs are not allowed');
   value.hash = '';
   for (const key of [...value.searchParams.keys()]) if (TRACKING_PARAMS.has(key.toLowerCase())) value.searchParams.delete(key);
   value.hostname = value.hostname.toLowerCase();
@@ -100,11 +100,7 @@ function isBlockedFetchDomain(url: string | null): string | null {
 }
 
 function isPrivateHost(host: string): boolean {
-  const value = host.replace(/^\[|\]$/g, '').toLowerCase();
-  if (value === 'localhost' || value.endsWith('.localhost') || value.endsWith('.local') || value === '::1') return true;
-  if (!/^\d+(?:\.\d+){3}$/.test(value)) return value.includes(':') && (value.startsWith('fc') || value.startsWith('fd') || value.startsWith('fe8') || value.startsWith('fe9') || value.startsWith('fea') || value.startsWith('feb'));
-  const octets = value.split('.').map(Number);
-  return octets[0] === 10 || octets[0] === 127 || (octets[0] === 172 && octets[1]! >= 16 && octets[1]! <= 31) || (octets[0] === 192 && octets[1] === 168) || octets[0] === 169 && octets[1] === 254;
+  return !isPublicNetworkHost(host);
 }
 
 function sourceEventPayload(source: SourceRecord): Record<string, string | null> {
