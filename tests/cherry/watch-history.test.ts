@@ -7,8 +7,32 @@ import {
   parseTakeoutWatchHistory,
   rankWatchHistoryCandidates,
 } from '../../src/cherry/source/watch-history.ts';
+import { parseYouTubeChannelId } from '../../src/cherry/source/youtube-channel-id.ts';
 
 const fixture = readFileSync(resolve(process.cwd(), 'tests/fixtures/watch-history.sample.json'), 'utf8');
+
+describe('YouTube channel id parsing', () => {
+  it('accepts only a bare channel id or an exact official id-shaped URL', () => {
+    const channelId = 'UCSTUDIONORTH12345678901';
+    expect(parseYouTubeChannelId(channelId)).toMatchObject({ ok: true, value: { channelId } });
+    expect(parseYouTubeChannelId(`https://www.youtube.com/channel/${channelId}`)).toMatchObject({ ok: true, value: { channelId } });
+    expect(parseYouTubeChannelId(`https://youtube.com/channel/${channelId}/`)).toMatchObject({ ok: true, value: { channelId } });
+  });
+
+  it('rejects handles, lookalikes, credentials, query data, extra paths, and malformed ids', () => {
+    const channelId = 'UCSTUDIONORTH12345678901';
+    const rejected = [
+      '@StudioNorth',
+      'https://www.youtube.com/@StudioNorth',
+      `https://youtube.com.evil.example/channel/${channelId}`,
+      `https://user:secret@www.youtube.com/channel/${channelId}`,
+      `https://www.youtube.com/channel/${channelId}?view=1`,
+      `https://www.youtube.com/channel/${channelId}/videos`,
+      'UC_TOO_SHORT',
+    ];
+    expect(rejected.map((value) => parseYouTubeChannelId(value).ok)).toEqual(rejected.map(() => false));
+  });
+});
 
 describe('YouTube watch-history parsing', () => {
   it('reads the bounded Takeout array, canonicalizes official URLs, and skips malformed rows', () => {
@@ -23,6 +47,7 @@ describe('YouTube watch-history parsing', () => {
       canonicalUrl: 'https://www.youtube.com/watch?v=studioN0001',
       title: 'Practical lighting for small rooms',
       channel: 'Studio North',
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
       watchedAt: '2026-08-30T10:00:00.000Z',
     });
     expect(JSON.stringify(parsed.value)).not.toContain('Unselected Takeout details stay transient');
@@ -47,6 +72,7 @@ describe('YouTube watch-history parsing', () => {
         canonicalUrl: 'https://www.youtube.com/watch?v=workflow001',
         title: 'A careful workflow',
         channel: 'Careful Creator',
+        youtubeChannelId: null,
         watchedAt: '2026-08-01T12:00:00.000Z',
       }],
       skippedRows: 0,
@@ -120,7 +146,7 @@ describe('YouTube watch-history candidate ranking', () => {
       ['repeatVid01', 'Design reliable cards', 'Channel A', '2026-08-03T00:00:00.000Z'],
       ['repeatVid01', 'Design reliable cards', 'Channel A', '2026-08-02T00:00:00.000Z'],
       ['secondVid01', 'Design reliable forms', 'Channel A', '2026-08-01T00:00:00.000Z'],
-    ] as const).map(([videoId, title, channel, watchedAt]) => ({ videoId, title, channel, watchedAt, canonicalUrl: `https://www.youtube.com/watch?v=${videoId}` }));
+    ] as const).map(([videoId, title, channel, watchedAt]) => ({ videoId, title, channel, youtubeChannelId: null, watchedAt, canonicalUrl: `https://www.youtube.com/watch?v=${videoId}` }));
     const ranked = rankWatchHistoryCandidates(rows);
 
     expect(ranked.find((candidate) => candidate.id === 'channel:channel a')?.count).toBe(2);
@@ -149,6 +175,7 @@ describe('YouTube watch-history candidate ranking', () => {
       canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
       title: `Durable evidence workflow ${index + 1}`,
       channel: null,
+      youtubeChannelId: null,
       watchedAt: `2025-01-0${index + 1}T00:00:00.000Z`,
     }));
     const oneOffs = Array.from({ length: 10 }, (_, index) => {
@@ -158,6 +185,7 @@ describe('YouTube watch-history candidate ranking', () => {
         canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
         title: `Unique topic ${index}`,
         channel: null,
+        youtubeChannelId: null,
         watchedAt: `2026-08-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`,
       };
     });

@@ -18,6 +18,17 @@ import { Scheduler } from './lib/scheduler.mjs';
 import { nextRunAt } from './lib/schedule.mjs';
 import { createAdapters } from './lib/adapters.mjs';
 import { saveJsonAtomic } from './lib/store.mjs';
+import {
+  fetchYouTubeChannelFeed,
+  isPublicNetworkAddress,
+  parseYouTubeChannelFeed,
+  validateYouTubeChannelId,
+} from './lib/youtube-rss-watch.mjs';
+import {
+  computeSourceWatchActionHash,
+  createSourceWatchRoutine,
+  sourceWatchJobMatchesRoutine,
+} from './lib/source-watch.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tempDirs = [];
@@ -353,6 +364,272 @@ test("missed runs while stopped: 'skip' drops the backlog, 'run_once_on_reconnec
   }
 });
 
+test('scheduler persists routine definitions and isolates namespace replacement/removal', () => {
+  const dir = tempDir('sched-definitions-');
+  const schedule = { kind: 'interval', everyMinutes: 5, startAt: '2026-01-01T00:00:00.000Z' };
+  const first = new Scheduler({ dataDir: dir, materialise: () => {} });
+  first.setRoutines([{ id: 'ordinary-1', schedule, missedRunPolicy: 'skip' }], 'default');
+  first.upsertRoutine({ id: 'rss-watch:source-1', namespace: 'source-watch', schedule, missedRunPolicy: 'run_once_on_reconnect' });
+
+  const restored = new Scheduler({ dataDir: dir, materialise: () => {} });
+  assert.deepEqual(restored.listRoutines().map((routine) => routine.id).sort(), ['ordinary-1', 'rss-watch:source-1']);
+  restored.setRoutines([{ id: 'ordinary-2', schedule, missedRunPolicy: 'skip' }], 'default');
+  assert.deepEqual(restored.listRoutines('source-watch').map((routine) => routine.id), ['rss-watch:source-1']);
+  assert.equal(restored.removeRoutine('source-watch', 'rss-watch:source-1'), true);
+
+  const afterRemoval = new Scheduler({ dataDir: dir, materialise: () => {} });
+  assert.deepEqual(afterRemoval.listRoutines().map((routine) => routine.id), ['ordinary-2']);
+});
+
+// ---------------- 9. YouTube public RSS watch ----------------
+
+const CHANNEL_ID = 'UCabcdefghijklmnopqrstuv';
+const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+const FEED_FIXTURE = readFileSync(join(here, 'fixtures', 'youtube-channel-feed.xml'), 'utf8');
+
+function feedResponse(body = FEED_FIXTURE, init = {}) {
+  const response = new Response(body, {
+    status: init.status ?? 200,
+    headers: { 'content-type': 'application/atom+xml; charset=utf-8', ...(init.headers ?? {}) },
+  });
+  Object.defineProperty(response, 'url', { value: init.url ?? FEED_URL });
+  return response;
+}
+
+test('YouTube RSS accepts only exact UC plus 22-character channel ids', () => {
+  assert.equal(validateYouTubeChannelId(CHANNEL_ID), true);
+  for (const value of [
+    'abcdefghijklmnopqrstuv',
+    'UCabcdefghijklmnopqrstu',
+    'UCabcdefghijklmnopqrstuvw',
+    'ucabcdefghijklmnopqrstuv',
+    'UCabcdefghijklmnopqrstu!',
+  ]) assert.equal(validateYouTubeChannelId(value), false, value);
+});
+
+test('YouTube RSS DNS guard rejects private and IPv4-mapped private addresses', () => {
+  for (const address of [
+    '127.0.0.1',
+    '10.0.0.1',
+    '169.254.169.254',
+    '192.168.1.1',
+    '::1',
+    'fd00::1',
+    'fe80::1',
+    '::ffff:127.0.0.1',
+    '::ffff:7f00:1',
+  ]) assert.equal(isPublicNetworkAddress(address), false, address);
+  assert.equal(isPublicNetworkAddress('142.250.74.238'), true);
+  assert.equal(isPublicNetworkAddress('2607:f8b0:4004:c08::5b'), true);
+});
+
+test('YouTube RSS parser returns bounded transcriptless entries and a feed hash', () => {
+  const result = parseYouTubeChannelFeed(FEED_FIXTURE, CHANNEL_ID, { now: () => Date.parse('2026-09-01T09:00:00.000Z') });
+  assert.equal(result.schemaVersion, 1);
+  assert.equal(result.channelId, CHANNEL_ID);
+  assert.equal(result.checkedAt, '2026-09-01T09:00:00.000Z');
+  assert.equal(result.channelName, 'Cherry Source Lab');
+  assert.match(result.feedHash, /^[a-f0-9]{64}$/);
+  assert.deepEqual(result.entries, [
+    {
+      videoId: 'AbCdEfGhI12',
+      title: 'Build & ship a reliable workflow',
+      url: 'https://www.youtube.com/watch?v=AbCdEfGhI12',
+      publishedAt: '2026-08-31T08:00:00.000Z',
+    },
+    {
+      videoId: 'ZyXwVuTsR98',
+      title: 'Evidence before automation',
+      url: 'https://www.youtube.com/watch?v=ZyXwVuTsR98',
+      publishedAt: '2026-08-30T09:15:00.000Z',
+    },
+  ]);
+  assert.equal(JSON.stringify(result).includes('description'), false);
+  assert.equal(JSON.stringify(result).includes('transcript'), false);
+
+  const liveResult = parseYouTubeChannelFeed(
+    FEED_FIXTURE.replace('/shorts/ZyXwVuTsR98', '/live/ZyXwVuTsR98'),
+    CHANNEL_ID,
+  );
+  assert.equal(liveResult.entries[1].url, 'https://www.youtube.com/watch?v=ZyXwVuTsR98');
+});
+
+test('YouTube RSS output stays within the browser contract caps', () => {
+  const longChannel = 'C'.repeat(240);
+  const longTitle = 'T'.repeat(340);
+  const bounded = FEED_FIXTURE
+    .replace('Cherry Source Lab', longChannel)
+    .replace('Build &amp; ship a reliable workflow', longTitle);
+  const result = parseYouTubeChannelFeed(bounded, CHANNEL_ID);
+  assert.equal(result.channelName, 'C'.repeat(200));
+  assert.equal(result.entries[0].title, 'T'.repeat(300));
+
+  const entryTemplate = FEED_FIXTURE.match(/ {2}<entry>[\s\S]*?<\/entry>/)?.[0];
+  assert.ok(entryTemplate);
+  const entries = Array.from({ length: 16 }, (_, index) => {
+    const videoId = `VidId${String(index).padStart(6, '0')}`;
+    return entryTemplate
+      .replaceAll('AbCdEfGhI12', videoId)
+      .replace('Build &amp; ship a reliable workflow', `Video ${index}`);
+  }).join('\n');
+  const overCap = FEED_FIXTURE.replace(/ {2}<entry>[\s\S]*?<\/entry>\s* {2}<entry>[\s\S]*?<\/entry>/, entries);
+  assert.throws(() => parseYouTubeChannelFeed(overCap, CHANNEL_ID), /more than 15 entries/);
+});
+
+test('YouTube RSS fetch preflights public DNS and uses the one fixed URL without redirects', async () => {
+  const calls = [];
+  const result = await fetchYouTubeChannelFeed(CHANNEL_ID, {
+    lookup: async (hostname, options) => {
+      calls.push({ kind: 'lookup', hostname, options });
+      return [{ address: '142.250.74.238', family: 4 }];
+    },
+    request: async (url, init) => {
+      calls.push({ kind: 'request', url, init });
+      return feedResponse();
+    },
+    now: () => Date.parse('2026-09-01T09:00:00.000Z'),
+  });
+  assert.equal(result.channelId, CHANNEL_ID);
+  assert.equal(calls[0].hostname, 'www.youtube.com');
+  assert.equal(calls[1].url, FEED_URL);
+  assert.equal(calls[1].init.method, 'GET');
+  assert.equal(calls[1].init.redirect, 'error');
+});
+
+test('YouTube RSS timeout also bounds a stalled DNS preflight', async () => {
+  const guarded = Promise.race([
+    fetchYouTubeChannelFeed(CHANNEL_ID, { lookup: () => new Promise(() => {}), timeoutMs: 10 }),
+    new Promise((resolvePromise, rejectPromise) => setTimeout(() => rejectPromise(new Error('test guard expired')), 100)),
+  ]);
+  await assert.rejects(guarded, /timed out/);
+});
+
+test('YouTube RSS fails closed before fetch on private DNS and after fetch on unsafe responses', async (t) => {
+  let requested = false;
+  await assert.rejects(
+    () => fetchYouTubeChannelFeed(CHANNEL_ID, {
+      lookup: async () => [{ address: '127.0.0.1', family: 4 }],
+      request: async () => { requested = true; return feedResponse(); },
+    }),
+    /public address/,
+  );
+  assert.equal(requested, false);
+
+  const publicLookup = async () => [{ address: '2607:f8b0:4004:c08::5b', family: 6 }];
+  await t.test('final origin mismatch', async () => {
+    await assert.rejects(
+      () => fetchYouTubeChannelFeed(CHANNEL_ID, { lookup: publicLookup, request: async () => feedResponse(FEED_FIXTURE, { url: 'https://example.com/feed.xml' }) }),
+      /final URL/,
+    );
+  });
+  await t.test('wrong content type', async () => {
+    await assert.rejects(
+      () => fetchYouTubeChannelFeed(CHANNEL_ID, { lookup: publicLookup, request: async () => feedResponse(FEED_FIXTURE, { headers: { 'content-type': 'text/html' } }) }),
+      /content type/,
+    );
+  });
+  await t.test('body over configured cap', async () => {
+    await assert.rejects(
+      () => fetchYouTubeChannelFeed(CHANNEL_ID, { lookup: publicLookup, request: async () => feedResponse(FEED_FIXTURE), maxBytes: 100 }),
+      /body limit/,
+    );
+  });
+  await t.test('DTD or entity declaration', () => {
+    assert.throws(
+      () => parseYouTubeChannelFeed(`<?xml version="1.0"?><!DOCTYPE feed [<!ENTITY x "expanded">]><feed>&x;</feed>`, CHANNEL_ID),
+      /DTD|entity declaration/,
+    );
+  });
+  await t.test('malformed XML', () => {
+    assert.throws(() => parseYouTubeChannelFeed(FEED_FIXTURE.replace('</entry>', '</broken>'), CHANNEL_ID), /malformed XML/);
+  });
+  await t.test('channel mismatch', () => {
+    assert.throws(() => parseYouTubeChannelFeed(FEED_FIXTURE, 'UCzyxwvutsrqponmlkjihgfe'), /channel does not match/);
+  });
+});
+
+test('source-watch approval hash uses exactly the cross-layer payload and derives a bounded routine', () => {
+  const definition = {
+    channelId: CHANNEL_ID,
+    revision: 2,
+    schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+    sourceId: 'source-1',
+    workspaceId: 'workspace-1',
+  };
+  const actionHash = computeSourceWatchActionHash(definition);
+  assert.equal(actionHash, sha256Hex(canonicalize(definition)));
+  const routine = createSourceWatchRoutine({ ...definition, actionHash });
+  assert.equal(routine.id, 'rss-watch:source-1');
+  assert.equal(routine.namespace, 'source-watch');
+  assert.equal(routine.missedRunPolicy, 'run_once_on_reconnect');
+  assert.equal(routine.envelope.adapter, 'youtube-rss-watch');
+  assert.deepEqual(JSON.parse(routine.envelope.boundedPrompt), {
+    actionHash,
+    channelId: CHANNEL_ID,
+    sourceId: 'source-1',
+    workspaceId: 'workspace-1',
+  });
+  assert.throws(() => createSourceWatchRoutine({ ...definition, actionHash: '0'.repeat(64) }), /actionHash/);
+});
+
+test('source-watch job matching requires the exact revision, bounded prompt, and immutable envelope hash', () => {
+  const definition = {
+    channelId: CHANNEL_ID,
+    revision: 4,
+    schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+    sourceId: 'source-job-binding-1',
+    workspaceId: 'workspace-job-binding-1',
+  };
+  const routine = createSourceWatchRoutine({ ...definition, actionHash: computeSourceWatchActionHash(definition) });
+  const envelope = {
+    ...routine.envelope,
+    idempotencyKey: 'source-job-binding-key',
+    createdAt: '2026-09-01T09:00:00.000Z',
+  };
+  envelope.actionHash = computeActionHash(envelope);
+  assert.equal(sourceWatchJobMatchesRoutine({ envelope }, routine), true);
+  assert.equal(sourceWatchJobMatchesRoutine({ envelope: { ...envelope, workItemRevision: 3 } }, routine), false);
+  assert.equal(sourceWatchJobMatchesRoutine({ envelope: { ...envelope, boundedPrompt: '{}' } }, routine), false);
+  assert.equal(sourceWatchJobMatchesRoutine({ envelope: { ...envelope, actionHash: '0'.repeat(64) } }, routine), false);
+});
+
+test('youtube-rss-watch adapter binds normalized stdout to the approved watch', async () => {
+  const definition = {
+    channelId: CHANNEL_ID,
+    revision: 1,
+    schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+    sourceId: 'source-adapter-1',
+    workspaceId: 'workspace-adapter-1',
+  };
+  const routine = createSourceWatchRoutine({ ...definition, actionHash: computeSourceWatchActionHash(definition) });
+  const envelope = {
+    ...routine.envelope,
+    idempotencyKey: 'rss-adapter-1',
+    createdAt: '2026-09-01T09:00:00.000Z',
+  };
+  envelope.actionHash = computeActionHash(envelope);
+  const adapters = createAdapters({
+    allowedRoots: [tempDir('rss-adapter-')],
+    allowedExecutables: new Set(),
+    youtubeRssOptions: {
+      lookup: async () => [{ address: '142.250.74.238', family: 4 }],
+      request: async () => feedResponse(),
+      now: () => Date.parse('2026-09-01T09:00:00.000Z'),
+    },
+  });
+  const result = await adapters.run(envelope, { timeoutMs: 10_000 });
+  const stdout = JSON.parse(result.stdout);
+  assert.deepEqual(stdout, result.feed);
+  assert.deepEqual(Object.keys(stdout), [
+    'schemaVersion', 'watchId', 'actionHash', 'channelId', 'checkedAt', 'channelName', 'feedHash', 'entries',
+  ]);
+  assert.equal(stdout.watchId, definition.sourceId);
+  assert.equal(stdout.actionHash, computeSourceWatchActionHash(definition));
+  assert.equal(stdout.entries[0].url, 'https://www.youtube.com/watch?v=AbCdEfGhI12');
+  assert.equal(JSON.stringify(stdout).includes('description'), false);
+  assert.equal(JSON.stringify(stdout).includes('transcript'), false);
+});
+
 // ---------------- 10. adapters ----------------
 
 test('safe-command runs exact argv for a config-allowlisted executable and redacts output', async () => {
@@ -504,8 +781,16 @@ describe('runner v2 HTTP wiring', () => {
     const body = await response.json();
     assert.deepEqual(
       body.v2.adapters.sort(),
-      ['cherry-export', 'cherry-verify', 'claude-cli', 'codex-cli', 'safe-command', 'scrapling-fetch'].sort(),
+      ['cherry-export', 'cherry-verify', 'claude-cli', 'codex-cli', 'safe-command', 'scrapling-fetch', 'youtube-rss-watch'].sort(),
     );
+  });
+
+  test('default CORS accepts only the exact production origin', async () => {
+    const official = await fetch(`${V2_BASE}/status`, { headers: { origin: 'https://cherry-wine.vercel.app' } });
+    assert.equal(official.status, 200);
+    assert.equal(official.headers.get('access-control-allow-origin'), 'https://cherry-wine.vercel.app');
+    const lookalike = await fetch(`${V2_BASE}/status`, { headers: { origin: 'https://sub.cherry-wine.vercel.app' } });
+    assert.equal(lookalike.status, 403);
   });
 
   test('enqueue → execute → events chain verifies over HTTP; duplicates are 409', async () => {
@@ -552,6 +837,34 @@ describe('runner v2 HTTP wiring', () => {
     assert.match((await response.json()).error, /actionHash/);
   });
 
+  test('generic v2 jobs and routines cannot invoke the reserved channel-watch adapter', async () => {
+    const definition = {
+      channelId: CHANNEL_ID,
+      revision: 1,
+      schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+      sourceId: 'source-reserved-1',
+      workspaceId: 'workspace-reserved-1',
+    };
+    const routine = createSourceWatchRoutine({ ...definition, actionHash: computeSourceWatchActionHash(definition) });
+    const envelope = {
+      ...routine.envelope,
+      idempotencyKey: 'reserved-generic-job',
+      createdAt: '2026-09-01T09:00:00.000Z',
+    };
+    envelope.actionHash = computeActionHash(envelope);
+    const jobResponse = await v2api('/v2/jobs', { method: 'POST', body: JSON.stringify({ envelope }) });
+    assert.equal(jobResponse.status, 400);
+    assert.match((await jobResponse.json()).error, /reserved.*channel-watch/i);
+
+    const genericRoutine = { ...routine, id: 'generic-rss-routine', namespace: 'default' };
+    const routineResponse = await v2api('/v2/routines', {
+      method: 'POST',
+      body: JSON.stringify({ routines: [genericRoutine] }),
+    });
+    assert.equal(routineResponse.status, 400);
+    assert.match((await routineResponse.json()).error, /reserved.*channel-watch/i);
+  });
+
   test('routine registration validates schedules and ticks the scheduler', async () => {
     const routine = {
       id: 'rt-1',
@@ -582,5 +895,213 @@ describe('runner v2 HTTP wiring', () => {
       }),
     });
     assert.equal(bad.status, 400);
+  });
+
+  test('channel-watch routes require the current workspace, revision, and approval hash', async () => {
+    const revisionOne = {
+      channelId: CHANNEL_ID,
+      revision: 1,
+      schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+      sourceId: 'source-http-1',
+      workspaceId: 'workspace-http-1',
+    };
+    const tampered = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionOne, actionHash: '0'.repeat(64) }),
+    });
+    assert.equal(tampered.status, 400);
+    assert.match((await tampered.json()).error, /actionHash/);
+
+    const actionHashOne = computeSourceWatchActionHash(revisionOne);
+    const registered = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionOne, actionHash: actionHashOne }),
+    });
+    assert.equal(registered.status, 201);
+    assert.deepEqual(await registered.json(), { routineId: 'rss-watch:source-http-1', actionHash: actionHashOne });
+    const replayed = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionOne, actionHash: actionHashOne }),
+    });
+    assert.equal(replayed.status, 201, 'an exact retry is idempotent');
+    const workspaceTakeover = { ...revisionOne, workspaceId: 'another-workspace', revision: 10 };
+    const refusedTakeover = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...workspaceTakeover, actionHash: computeSourceWatchActionHash(workspaceTakeover) }),
+    });
+    assert.equal(refusedTakeover.status, 409);
+
+    const wrongWorkspace = await v2api(`/v2/channel-watches/source-http-1/jobs?workspaceId=another-workspace&revision=1&actionHash=${actionHashOne}`);
+    assert.equal(wrongWorkspace.status, 409);
+    const refusedCheck = await v2api('/v2/channel-watches/source-http-1/check', {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId: 'workspace-http-1', revision: 2, actionHash: actionHashOne }),
+    });
+    assert.equal(refusedCheck.status, 409);
+
+    const firstCheck = await v2api('/v2/channel-watches/source-http-1/check', {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId: 'workspace-http-1', revision: 1, actionHash: actionHashOne }),
+    });
+    assert.equal(firstCheck.status, 201);
+    const firstJobId = (await firstCheck.json()).jobId;
+
+    const revisionTwo = {
+      ...revisionOne,
+      revision: 2,
+      schedule: { ...revisionOne.schedule, startAt: '2026-09-01T08:01:00.000Z' },
+    };
+    const actionHashTwo = computeSourceWatchActionHash(revisionTwo);
+    const updated = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionTwo, actionHash: actionHashTwo }),
+    });
+    assert.equal(updated.status, 201);
+    let supersededJob;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      supersededJob = (await (await v2api(`/v2/jobs/${firstJobId}`)).json()).job;
+      if (supersededJob.status === 'cancelled') break;
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+    }
+    assert.equal(supersededJob.status, 'cancelled', 'a newer revision aborts work for the prior approval');
+
+    const missingBinding = await v2api('/v2/channel-watches/source-http-1/jobs?workspaceId=workspace-http-1');
+    assert.equal(missingBinding.status, 409);
+    const matching = await v2api(`/v2/channel-watches/source-http-1/jobs?workspaceId=workspace-http-1&revision=2&actionHash=${actionHashTwo}`);
+    assert.equal(matching.status, 200);
+    assert.deepEqual((await matching.json()).jobs, [], 'jobs from revision 1 are hidden from revision 2');
+    const secondCheck = await v2api('/v2/channel-watches/source-http-1/check', {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId: 'workspace-http-1', revision: 2, actionHash: actionHashTwo }),
+    });
+    assert.equal(secondCheck.status, 201);
+    const secondJobId = (await secondCheck.json()).jobId;
+    const thirdCheck = await v2api('/v2/channel-watches/source-http-1/check', {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId: 'workspace-http-1', revision: 2, actionHash: actionHashTwo }),
+    });
+    assert.equal(thirdCheck.status, 201);
+    const thirdJobId = (await thirdCheck.json()).jobId;
+    const currentJobs = await v2api(`/v2/channel-watches/source-http-1/jobs?workspaceId=workspace-http-1&revision=2&actionHash=${actionHashTwo}`);
+    assert.deepEqual((await currentJobs.json()).jobs.map((job) => job.id), [secondJobId, thirdJobId]);
+
+    const stale = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionOne, actionHash: actionHashOne }),
+    });
+    assert.equal(stale.status, 409);
+    const nonMonotonicDefinition = {
+      ...revisionTwo,
+      channelId: 'UCzyxwvutsrqponmlkjihgfe',
+    };
+    const nonMonotonic = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...nonMonotonicDefinition, actionHash: computeSourceWatchActionHash(nonMonotonicDefinition) }),
+    });
+    assert.equal(nonMonotonic.status, 409);
+
+    const wrongDelete = await v2api(`/v2/channel-watches/source-http-1?workspaceId=workspace-http-1&revision=2&actionHash=${actionHashOne}`, { method: 'DELETE' });
+    assert.equal(wrongDelete.status, 409);
+    const removed = await v2api(`/v2/channel-watches/source-http-1?workspaceId=workspace-http-1&revision=2&actionHash=${actionHashTwo}`, { method: 'DELETE' });
+    assert.equal(removed.status, 200);
+    assert.equal((await removed.json()).cancelledJobs, 2);
+    for (const cancelledJobId of [secondJobId, thirdJobId]) {
+      let cancelledJob;
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        cancelledJob = (await (await v2api(`/v2/jobs/${cancelledJobId}`)).json()).job;
+        if (cancelledJob.status === 'cancelled') break;
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+      }
+      assert.equal(cancelledJob.status, 'cancelled');
+    }
+
+    for (const rejectedDefinition of [revisionOne, revisionTwo]) {
+      const rejected = await v2api('/v2/channel-watches', {
+        method: 'POST',
+        body: JSON.stringify({ ...rejectedDefinition, actionHash: computeSourceWatchActionHash(rejectedDefinition) }),
+      });
+      assert.equal(rejected.status, 409);
+    }
+    const revisionThree = { ...revisionTwo, revision: 3 };
+    const actionHashThree = computeSourceWatchActionHash(revisionThree);
+    const resurrected = await v2api('/v2/channel-watches', {
+      method: 'POST',
+      body: JSON.stringify({ ...revisionThree, actionHash: actionHashThree }),
+    });
+    assert.equal(resurrected.status, 201);
+  });
+
+  test('channel-watch deletion tombstones survive runner restart', async () => {
+    const port = 47832;
+    const base = `http://127.0.0.1:${port}`;
+    const token = 'v2-tombstone-token-0123456789';
+    const root = tempDir('cherry-v2-tombstone-');
+    const state = join(root, '.state');
+    const api = (path, options = {}) => fetch(`${base}${path}`, {
+      ...options,
+      headers: { 'content-type': 'application/json', 'x-cherry-pair': token, ...(options.headers ?? {}) },
+    });
+    const start = async () => {
+      const processHandle = spawn(process.execPath, [
+        join(here, 'server.mjs'), '--root', root, '--state', state, '--port', String(port),
+      ], { env: { ...process.env, CHERRY_RUNNER_TOKEN: token }, stdio: ['ignore', 'pipe', 'pipe'] });
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        try {
+          if ((await fetch(`${base}/status`)).ok) return processHandle;
+        } catch {
+          // Keep waiting for the local runner.
+        }
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
+      }
+      processHandle.kill('SIGKILL');
+      throw new Error('tombstone runner did not start');
+    };
+    const stop = async (processHandle) => {
+      if (processHandle.exitCode !== null) return;
+      const exited = new Promise((resolvePromise) => processHandle.once('exit', resolvePromise));
+      processHandle.kill('SIGKILL');
+      await exited;
+    };
+    const baseDefinition = {
+      channelId: CHANNEL_ID,
+      revision: 5,
+      schedule: { kind: 'interval', everyMinutes: 1440, startAt: '2026-09-01T08:00:00.000Z' },
+      sourceId: 'source-restart-1',
+      workspaceId: 'workspace-restart-1',
+    };
+    const actionHashFive = computeSourceWatchActionHash(baseDefinition);
+
+    let processHandle = await start();
+    try {
+      assert.equal((await api('/v2/channel-watches', {
+        method: 'POST', body: JSON.stringify({ ...baseDefinition, actionHash: actionHashFive }),
+      })).status, 201);
+      assert.equal((await api(`/v2/channel-watches/source-restart-1?workspaceId=workspace-restart-1&revision=5&actionHash=${actionHashFive}`, {
+        method: 'DELETE',
+      })).status, 200);
+    } finally {
+      await stop(processHandle);
+    }
+
+    processHandle = await start();
+    try {
+      const replay = await api('/v2/channel-watches', {
+        method: 'POST', body: JSON.stringify({ ...baseDefinition, actionHash: actionHashFive }),
+      });
+      assert.equal(replay.status, 409);
+      const revisionFour = { ...baseDefinition, revision: 4 };
+      const older = await api('/v2/channel-watches', {
+        method: 'POST', body: JSON.stringify({ ...revisionFour, actionHash: computeSourceWatchActionHash(revisionFour) }),
+      });
+      assert.equal(older.status, 409);
+      const revisionSix = { ...baseDefinition, revision: 6 };
+      const actionHashSix = computeSourceWatchActionHash(revisionSix);
+      const newer = await api('/v2/channel-watches', {
+        method: 'POST', body: JSON.stringify({ ...revisionSix, actionHash: actionHashSix }),
+      });
+      assert.equal(newer.status, 201);
+    } finally {
+      await stop(processHandle);
+    }
   });
 });

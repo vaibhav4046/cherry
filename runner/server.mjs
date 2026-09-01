@@ -25,6 +25,15 @@ import { EventsLog } from './lib/events.mjs';
 import { DurableQueue, validateEnvelope } from './lib/queue.mjs';
 import { Scheduler, validateRoutine } from './lib/scheduler.mjs';
 import { createAdapters } from './lib/adapters.mjs';
+import {
+  SOURCE_WATCH_NAMESPACE,
+  SourceWatchTombstoneStore,
+  createSourceWatchRoutine,
+  sourceWatchBindingMatches,
+  sourceWatchJobMatchesRoutine,
+  sourceWatchRoutineId,
+  validateSourceWatchRoutine,
+} from './lib/source-watch.mjs';
 
 const VERSION = '1.0.0';
 const MAX_OUTPUT_BYTES = 256 * 1024;
@@ -43,7 +52,13 @@ function argValues(flag) {
 const allowedOrigins = new Set(
   argValues('--allow-origin').length > 0
     ? argValues('--allow-origin')
-    : ['http://127.0.0.1:4173', 'http://127.0.0.1:5273', 'http://localhost:4173', 'http://localhost:5273'],
+    : [
+        'http://127.0.0.1:4173',
+        'http://127.0.0.1:5273',
+        'http://localhost:4173',
+        'http://localhost:5273',
+        'https://cherry-wine.vercel.app',
+      ],
 );
 const allowedRoots = (argValues('--root').length > 0 ? argValues('--root') : [process.cwd()]).map((root) => resolve(root));
 const allowedExecutables = new Set(argValues('--allow-exec'));
@@ -253,22 +268,71 @@ const v2Events = new EventsLog(join(dataDir, 'events.log'));
 const v2Adapters = createAdapters({ allowedRoots, allowedExecutables });
 const v2Concurrency = Math.min(3, Math.max(1, Number(argValues('--concurrency')[0]) || 1));
 const v2Queue = new DurableQueue({ dataDir, events: v2Events, concurrency: v2Concurrency });
-const v2Executor = (envelope, context) => v2Adapters.run(envelope, context);
+let v2Scheduler;
 
-/** Routines materialise into envelope jobs; idempotencyKey makes each due time exactly-once. */
-function materialiseRoutine(routine, dueIso) {
+const currentSourceWatchForEnvelope = (envelope) => {
+  if (envelope?.adapter !== 'youtube-rss-watch') return null;
+  const routine = v2Scheduler?.getRoutine(SOURCE_WATCH_NAMESPACE, envelope.workItemId);
+  return routine && sourceWatchJobMatchesRoutine({ envelope }, routine) ? routine : null;
+};
+
+const v2Executor = (envelope, context) => {
+  if (envelope.adapter === 'youtube-rss-watch' && !currentSourceWatchForEnvelope(envelope)) {
+    throw new Error('youtube-rss-watch execution is not bound to the current channel watch');
+  }
+  return v2Adapters.run(envelope, context);
+};
+
+function validateRunnerRoutine(routine) {
+  const problems = validateRoutine(routine);
+  if (routine?.namespace === SOURCE_WATCH_NAMESPACE) {
+    problems.push(...validateSourceWatchRoutine(routine));
+  } else if (routine?.envelope?.adapter === 'youtube-rss-watch') {
+    problems.push('youtube-rss-watch is reserved for channel-watch routes');
+  }
+  return problems;
+}
+
+function enqueueRoutineEnvelope(routine, idempotencyKey) {
+  const problems = validateRunnerRoutine(routine);
+  if (problems.length > 0) throw new Error(`routine ${routine?.id ?? '?'} is invalid: ${problems.join('; ')}`);
   const envelope = {
     ...routine.envelope,
     schemaVersion: 1,
-    idempotencyKey: `${routine.id}@${dueIso}`,
+    idempotencyKey,
     createdAt: new Date().toISOString(),
   };
   envelope.actionHash = computeActionHash(envelope);
-  v2Queue.enqueue(envelope);
+  const outcome = v2Queue.enqueue(envelope, { timeoutMs: 15_000 });
+  if (!outcome.ok) return outcome;
   v2Queue.runPending(v2Executor);
+  return outcome;
 }
 
-const v2Scheduler = new Scheduler({ dataDir, materialise: materialiseRoutine });
+/** Routines materialise into envelope jobs; idempotencyKey makes each due time exactly-once. */
+function materialiseRoutine(routine, dueIso) {
+  const binding = routine.namespace === SOURCE_WATCH_NAMESPACE ? `@${routine.watch.actionHash}` : '';
+  return enqueueRoutineEnvelope(routine, `${routine.id}${binding}@${dueIso}`);
+}
+
+v2Scheduler = new Scheduler({ dataDir, materialise: materialiseRoutine, validate: validateRunnerRoutine });
+const sourceWatchTombstones = new SourceWatchTombstoneStore({ dataDir });
+for (const routine of v2Scheduler.listRoutines(SOURCE_WATCH_NAMESPACE)) {
+  if (sourceWatchTombstones.hides(routine)) v2Scheduler.removeRoutine(SOURCE_WATCH_NAMESPACE, routine.id);
+}
+for (const job of v2Queue.list()) {
+  if (job.envelope?.adapter === 'youtube-rss-watch' && !currentSourceWatchForEnvelope(job.envelope)) {
+    v2Queue.cancel(job.id);
+  }
+}
+function cancelJobsForSourceWatch(routine) {
+  const cancellable = v2Queue.list().filter((job) =>
+    ['queued', 'leased', 'running'].includes(job.status)
+    && sourceWatchJobMatchesRoutine(job, routine),
+  );
+  for (const job of cancellable) v2Queue.cancel(job.id);
+  return cancellable.length;
+}
 const v2Timer = setInterval(() => {
   v2Queue.expireLeases();
   v2Queue.runPending(v2Executor);
@@ -301,7 +365,7 @@ function send(response, status, body, origin) {
   if (origin && allowedOrigins.has(origin)) {
     headers['access-control-allow-origin'] = origin;
     headers['access-control-allow-headers'] = 'content-type, x-cherry-pair';
-    headers['access-control-allow-methods'] = 'GET, POST, OPTIONS';
+    headers['access-control-allow-methods'] = 'GET, POST, DELETE, OPTIONS';
   }
   response.writeHead(status, headers);
   response.end(JSON.stringify(body));
@@ -415,6 +479,9 @@ const server = createServer((request, response) => {
       const envelope = body?.envelope;
       const problems = validateEnvelope(envelope);
       if (problems.length > 0) return send(response, 400, { error: problems.join('; ') }, origin);
+      if (envelope.adapter === 'youtube-rss-watch') {
+        return send(response, 400, { error: 'youtube-rss-watch is reserved for channel-watch routes' }, origin);
+      }
       if (!v2Adapters.has(envelope.adapter)) return send(response, 400, { error: `unknown adapter ${envelope.adapter}` }, origin);
       const timeoutMs = Number(body.timeoutMs) > 0 ? Math.min(Number(body.timeoutMs), MAX_TIMEOUT_MS) : undefined;
       const outcome = v2Queue.enqueue(envelope, { timeoutMs });
@@ -445,8 +512,13 @@ const server = createServer((request, response) => {
       if (!routines) return send(response, 400, { error: 'routines must be an array' }, origin);
       for (const routine of routines) {
         const problems = validateRoutine(routine);
+        if (routine?.namespace && routine.namespace !== 'default') {
+          problems.push('the generic routine endpoint accepts only the default namespace');
+        }
         if (routine?.envelope === undefined || typeof routine.envelope !== 'object') {
           problems.push('envelope template is required');
+        } else if (routine.envelope.adapter === 'youtube-rss-watch') {
+          problems.push('youtube-rss-watch is reserved for channel-watch routes');
         } else if (!v2Adapters.has(routine.envelope.adapter)) {
           problems.push(`unknown adapter ${routine.envelope?.adapter}`);
         }
@@ -454,11 +526,109 @@ const server = createServer((request, response) => {
           return send(response, 400, { error: `routine ${routine?.id ?? '?'}: ${problems.join('; ')}` }, origin);
         }
       }
-      v2Scheduler.setRoutines(routines);
+      v2Scheduler.setRoutines(routines, 'default');
       const materialised = v2Scheduler.tick();
       return send(response, 200, { routines: routines.length, materialised }, origin);
     });
     return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v2/channel-watches') {
+    readJsonBody(request, response, origin, (body) => {
+      let routine;
+      try {
+        routine = createSourceWatchRoutine(body);
+        const tombstoneConflict = sourceWatchTombstones.conflict(routine.watch);
+        if (tombstoneConflict) {
+          return send(response, 409, { error: tombstoneConflict }, origin);
+        }
+        const current = v2Scheduler.getRoutine(SOURCE_WATCH_NAMESPACE, routine.id);
+        if (current) {
+          if (current.watch.workspaceId !== routine.watch.workspaceId) {
+            return send(response, 409, { error: 'sourceId belongs to a different workspace' }, origin);
+          }
+          if (routine.watch.revision < current.watch.revision) {
+            return send(response, 409, { error: `revision must not be lower than current revision ${current.watch.revision}` }, origin);
+          }
+          if (routine.watch.revision === current.watch.revision) {
+            if (routine.watch.actionHash !== current.watch.actionHash) {
+              return send(response, 409, { error: 'an existing revision cannot be replaced with a different approval hash' }, origin);
+            }
+            return send(response, 201, { routineId: current.id, actionHash: current.watch.actionHash }, origin);
+          }
+          cancelJobsForSourceWatch(current);
+        }
+        v2Scheduler.upsertRoutine(routine);
+        v2Scheduler.tick();
+      } catch (error) {
+        return send(response, 400, { error: String(error?.message ?? error) }, origin);
+      }
+      return send(response, 201, { routineId: routine.id, actionHash: routine.watch.actionHash }, origin);
+    });
+    return;
+  }
+
+  const channelWatchMatch = /^\/v2\/channel-watches\/([^/]+)(?:\/(check|jobs))?$/.exec(url.pathname);
+  if (channelWatchMatch) {
+    let sourceId;
+    try {
+      sourceId = decodeURIComponent(channelWatchMatch[1]);
+      sourceWatchRoutineId(sourceId);
+    } catch {
+      return send(response, 400, { error: 'invalid sourceId' }, origin);
+    }
+    const action = channelWatchMatch[2] ?? null;
+    const findWatch = (binding) => {
+      const routine = v2Scheduler.getRoutine(SOURCE_WATCH_NAMESPACE, sourceWatchRoutineId(sourceId));
+      if (!routine) return { kind: 'missing', routine: null };
+      if (!sourceWatchBindingMatches(routine, binding)) return { kind: 'conflict', routine: null };
+      return { kind: 'match', routine };
+    };
+    const watchLookupFailure = (lookup) => lookup.kind === 'missing'
+      ? send(response, 404, { error: 'channel watch not found' }, origin)
+      : send(response, 409, { error: 'channel watch binding does not match the current revision' }, origin);
+    const queryBinding = () => {
+      const revisionText = url.searchParams.get('revision');
+      if (!revisionText || !/^[1-9]\d*$/.test(revisionText)) return null;
+      const revision = Number(revisionText);
+      if (!Number.isSafeInteger(revision)) return null;
+      return {
+        workspaceId: url.searchParams.get('workspaceId'),
+        revision,
+        actionHash: url.searchParams.get('actionHash'),
+      };
+    };
+
+    if (request.method === 'GET' && action === 'jobs') {
+      const lookup = findWatch(queryBinding());
+      if (lookup.kind !== 'match') return watchLookupFailure(lookup);
+      const routine = lookup.routine;
+      const filtered = v2Queue.list().filter((job) => sourceWatchJobMatchesRoutine(job, routine));
+      return send(response, 200, { jobs: filtered.slice(-100) }, origin);
+    }
+
+    if (request.method === 'POST' && action === 'check') {
+      readJsonBody(request, response, origin, (body) => {
+        const lookup = findWatch(body);
+        if (lookup.kind !== 'match') return watchLookupFailure(lookup);
+        const routine = lookup.routine;
+        const nonce = randomBytes(8).toString('hex');
+        const outcome = enqueueRoutineEnvelope(routine, `${routine.id}@${routine.watch.actionHash}@manual@${nonce}`);
+        if (!outcome.ok) return send(response, outcome.code === 'duplicate' ? 409 : 400, { error: outcome.reason }, origin);
+        return send(response, 201, { jobId: outcome.jobId }, origin);
+      });
+      return;
+    }
+
+    if (request.method === 'DELETE' && action === null) {
+      const lookup = findWatch(queryBinding());
+      if (lookup.kind !== 'match') return watchLookupFailure(lookup);
+      const routine = lookup.routine;
+      sourceWatchTombstones.record(routine);
+      const cancelledJobs = cancelJobsForSourceWatch(routine);
+      v2Scheduler.removeRoutine(SOURCE_WATCH_NAMESPACE, routine.id);
+      return send(response, 200, { removed: true, routineId: routine.id, cancelledJobs }, origin);
+    }
   }
 
   const jobMatch = /^\/jobs\/([A-Za-z0-9-]+)(\/cancel)?$/.exec(url.pathname);

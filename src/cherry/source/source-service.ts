@@ -11,6 +11,7 @@ import { isYouTubeFamilyHost, parseYouTubeUrl } from '../watch/youtube-url.ts';
 import { parseTranscript } from '../watch/transcript-parser.ts';
 import type { Lesson, TranscriptSegment, TranscriptSource } from '../watch/watch-model.ts';
 import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceOrigin, SourceRecord } from './source-model.ts';
+import { parseYouTubeChannelId } from './youtube-channel-id.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
 const TRACKING_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'mc_cid', 'mc_eid']);
@@ -41,6 +42,7 @@ export interface CreateSourceInput {
   title: string;
   creator?: string;
   url?: string;
+  youtubeChannelId?: string;
   content?: string;
   contentFormat?: SourceContentFormat;
   fetchMethod?: CreateSourceFetchMethod;
@@ -57,10 +59,11 @@ const createSchema = z.object({
   title: z.string().trim().min(1).max(300),
   creator: z.string().trim().max(200).optional(),
   url: z.string().trim().max(2048).optional(),
+  youtubeChannelId: z.string().trim().max(2048).optional(),
   content: z.string().max(MAX_CONTENT).optional(),
   contentFormat: z.enum(['plain', 'markdown', 'json', 'srt', 'vtt']).optional(),
   fetchMethod: z.enum(['user_paste', 'upload', 'local_transcription']).optional(),
-  sourceOrigin: z.enum(['manual', 'takeout-import']).default('manual'),
+  sourceOrigin: z.enum(['manual', 'takeout-import', 'rss-watch']).default('manual'),
   permissionAcknowledged: z.boolean().default(false),
   permissionNote: z.string().trim().max(1000).optional(),
 });
@@ -109,6 +112,7 @@ function sourceEventPayload(source: SourceRecord): Record<string, string | null>
     kind: source.kind,
     lessonId: source.lessonId,
     urlDomain: urlDomain(source.url),
+    youtubeChannelId: source.youtubeChannelId ?? null,
     contentFormat: source.contentFormat,
     contentHash: source.contentHash,
     sourceOrigin: source.sourceOrigin ?? 'manual',
@@ -139,9 +143,16 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) return invalid('Source input is invalid', { issues: parsed.error.issues });
   const data = parsed.data;
+  if (data.sourceOrigin === 'rss-watch') {
+    return invalid('Channel-watch sources are created only from a validated local-runner result');
+  }
   const normalized = data.url ? normalizeUrl(data.url) : ok<string | null>(null);
   if (!normalized.ok) return normalized;
   const url = normalized.value;
+  const parsedChannel = data.youtubeChannelId ? parseYouTubeChannelId(data.youtubeChannelId) : null;
+  if (parsedChannel && !parsedChannel.ok) return parsedChannel as Result<SourceRecord>;
+  if (parsedChannel && data.kind !== 'youtube') return invalid('A YouTube channel ID is valid only on a YouTube source');
+  const youtubeChannelId = parsedChannel?.ok ? parsedChannel.value.channelId : null;
   const content = data.content?.trim() || null;
   if (data.sourceOrigin === 'takeout-import' && (
     actorType !== 'human'
@@ -184,6 +195,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
   const source: SourceRecord = {
     id: newId('src'), workspaceId: data.workspaceId, lessonId: lesson.id, kind: data.kind,
     status: content ? 'ready' : 'saved', title: data.title, creator: data.creator ?? null, url,
+    youtubeChannelId,
     contentFormat: data.contentFormat ?? (content ? 'plain' : null), contentHash,
     fetchStatus: 'not_requested',
     fetchMethod,
@@ -251,10 +263,13 @@ export async function updateSource(sourceId: string, patch: UpdateSourcePatch, a
 
 export async function archiveSource(sourceId: string, actorType: ActorType = 'human'): Promise<Result<SourceRecord>> {
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
-  return withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
+  const now = isoNow();
+  return withWorkspaceTx(current.workspaceId, ['sourceRecords', 'channelWatches'], async (ctx) => {
     const anchor = await ctx.db.sourceRecords.get(sourceId);
     if (!anchor) return notFound('Source', sourceId);
-    const next: SourceRecord = { ...anchor, status: 'archived', updatedAt: isoNow() };
+    const watch = await ctx.db.channelWatches.get(sourceId);
+    if (watch?.enabled) return conflict('Stop watching this channel before archiving its source');
+    const next: SourceRecord = { ...anchor, status: 'archived', updatedAt: now };
     await ctx.db.sourceRecords.put(next);
     ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Source "${next.title}" updated`, payload: sourceEventPayload(next) });
     return ok(next);

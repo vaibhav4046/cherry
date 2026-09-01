@@ -13,6 +13,7 @@ import type { VerificationReport } from '../verify/assertion-model.ts';
 import type { ProofReceipt } from '../proof/proof-model.ts';
 import type { RunRecord } from '../mission/mission-model.ts';
 import type { SourceRecord } from '../source/source-model.ts';
+import type { ChannelWatch } from '../source/channel-watch-model.ts';
 import { CHERRY_DB_MIGRATIONS, CHERRY_DB_VERSION } from './migrations.ts';
 
 export class CherryDatabase extends Dexie {
@@ -44,6 +45,7 @@ export class CherryDatabase extends Dexie {
   executionHosts!: Table<ExecutionHost, string>;
   routines!: Table<Routine, string>;
   sourceRecords!: Table<SourceRecord, string>;
+  channelWatches!: Table<ChannelWatch, string>;
 
   constructor(name = 'cherry') {
     super(name);
@@ -96,4 +98,5 @@ export const ALL_STORES = [
   'receipts',
   'settings',
   'sourceRecords',
+  'channelWatches',
 ] as const;

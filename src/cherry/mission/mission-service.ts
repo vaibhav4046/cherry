@@ -71,8 +71,6 @@ export async function getWorkspace(id: string): Promise<WorkspaceRecord | undefi
 /** Destructive: cascades over every store that belongs to the workspace. */
 export async function deleteWorkspace(id: string): Promise<Result<{ deleted: string }>> {
   const db = getDb();
-  const workspace = await db.workspaces.get(id);
-  if (!workspace) return notFound('Workspace', id);
   const tables = [
     db.workspaces,
     db.missions,
@@ -94,14 +92,23 @@ export async function deleteWorkspace(id: string): Promise<Result<{ deleted: str
     db.proofEvents,
     db.receipts,
     db.sourceRecords,
+    db.channelWatches,
   ];
-  await db.transaction('rw', tables, async () => {
+  return db.transaction('rw', tables, async () => {
+    const workspace = await db.workspaces.get(id);
+    if (!workspace) return notFound('Workspace', id);
+    const enabledWatch = await db.channelWatches
+      .where('workspaceId')
+      .equals(id)
+      .filter((watch) => watch.enabled)
+      .first();
+    if (enabledWatch) return conflict('Stop every channel watch before deleting this workspace');
     await db.workspaces.delete(id);
     for (const table of tables.slice(1)) {
       await table.where('workspaceId').equals(id).delete();
     }
+    return ok({ deleted: id });
   });
-  return ok({ deleted: id });
 }
 
 export async function createMission(

@@ -358,6 +358,7 @@ describe('source inbox domain', () => {
       title: 'Practical lighting',
       creator: 'Studio North',
       url: 'https://www.youtube.com/watch?v=studioN0001',
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
       sourceOrigin: 'takeout-import',
       permissionAcknowledged: true,
       permissionNote: 'Selected from local YouTube history.',
@@ -365,6 +366,7 @@ describe('source inbox domain', () => {
 
     expect(created).toMatchObject({
       kind: 'youtube', status: 'saved', sourceOrigin: 'takeout-import',
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
       fetchMethod: null, contentHash: null, fetchStatus: 'not_requested',
     });
     expect(await listTranscript(created.lessonId)).toEqual([]);
@@ -381,7 +383,9 @@ describe('source inbox domain', () => {
 
     const exported = unwrap(await exportWorkspace(workspace.id));
     const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
-    expect((await listSources(imported.workspaceId))[0]?.sourceOrigin).toBe('takeout-import');
+    expect((await listSources(imported.workspaceId))[0]).toMatchObject({
+      sourceOrigin: 'takeout-import', youtubeChannelId: 'UCSTUDIONORTH12345678901',
+    });
   });
 
   it('rejects forged Takeout provenance outside a human-selected transcriptless YouTube URL', async () => {
@@ -413,6 +417,38 @@ describe('source inbox domain', () => {
     expect(results.every((result) => !result.ok)).toBe(true);
     expect(await listSources(workspace.id)).toEqual([]);
     expect(await getDb().lessons.where('workspaceId').equals(workspace.id).toArray()).toEqual([]);
+  });
+
+  it('rejects forged channel-watch provenance and channel ids on the wrong source kind', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Channel watch boundary' }));
+    const forged = await createSource({
+      workspaceId: workspace.id,
+      kind: 'youtube',
+      title: 'Forged watched source',
+      url: 'https://youtu.be/studioN0002',
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
+      sourceOrigin: 'rss-watch',
+      permissionAcknowledged: true,
+    }, 'runner');
+    const wrongKind = await createSource({
+      workspaceId: workspace.id,
+      kind: 'article',
+      title: 'Not a YouTube source',
+      url: 'https://example.com/article',
+      youtubeChannelId: 'UCSTUDIONORTH12345678901',
+      permissionAcknowledged: true,
+    });
+    const invalidId = await createSource({
+      workspaceId: workspace.id,
+      kind: 'youtube',
+      title: 'Bad channel id',
+      url: 'https://youtu.be/studioN0003',
+      youtubeChannelId: '@StudioNorth',
+      permissionAcknowledged: true,
+    });
+
+    expect([forged, wrongKind, invalidId].every((result) => !result.ok)).toBe(true);
+    expect(await listSources(workspace.id)).toEqual([]);
   });
 
   it('rolls back a content-bearing source when transcript persistence fails', async () => {

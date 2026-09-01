@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="https://www.youtube.com/feeds/videos.xml?channel_id=UCabcdefghijklmnopqrstuv"/>
+  <id>yt:channel:abcdefghijklmnopqrstuv</id>
+  <yt:channelId>abcdefghijklmnopqrstuv</yt:channelId>
+  <title>Cherry Source Lab</title>
+  <author>
+    <name>Cherry Source Lab</name>
+    <uri>https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv</uri>
+  </author>
+  <published>2020-01-01T00:00:00+00:00</published>
+  <entry>
+    <id>yt:video:AbCdEfGhI12</id>
+    <yt:videoId>AbCdEfGhI12</yt:videoId>
+    <yt:channelId>UCabcdefghijklmnopqrstuv</yt:channelId>
+    <title>Build &amp; ship a reliable workflow</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=AbCdEfGhI12"/>
+    <author>
+      <name>Cherry Source Lab</name>
+      <uri>https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv</uri>
+    </author>
+    <published>2026-08-31T08:00:00+00:00</published>
+    <updated>2026-08-31T08:30:00+00:00</updated>
+    <media:group>
+      <media:description>This description is intentionally not returned.</media:description>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:ZyXwVuTsR98</id>
+    <yt:videoId>ZyXwVuTsR98</yt:videoId>
+    <yt:channelId>UCabcdefghijklmnopqrstuv</yt:channelId>
+    <title>Evidence before automation</title>
+    <link rel="alternate" href="https://www.youtube.com/shorts/ZyXwVuTsR98"/>
+    <author><name>Cherry Source Lab</name></author>
+    <published>2026-08-30T09:15:00Z</published>
+  </entry>
+</feed>

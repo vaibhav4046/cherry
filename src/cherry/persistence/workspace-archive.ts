@@ -2,9 +2,15 @@ import { getDb } from './cherry-db.ts';
 import { appendProofEvents } from './transactions.ts';
 import { newId, isValidId } from '../core/ids.ts';
 import { isoNow } from '../core/clock.ts';
-import { sha256CanonicalExcluding } from '../core/hash.ts';
+import { sha256Canonical, sha256CanonicalExcluding } from '../core/hash.ts';
 import { ok, type Result } from '../core/result.ts';
 import { invalid, notFound } from '../core/errors.ts';
+import type { NewProofEvent } from '../core/domain-event.ts';
+import { parseYouTubeChannelId } from '../source/youtube-channel-id.ts';
+import {
+  CHANNEL_WATCH_PROCESSED_JOB_ID_LIMIT,
+  CHANNEL_WATCH_SEEN_VIDEO_ID_LIMIT,
+} from '../source/channel-watch-model.ts';
 
 export const WORKSPACE_EXPORT_VERSION = '1.0.0';
 
@@ -33,6 +39,7 @@ export interface WorkspaceExport {
   proofReceipts: unknown[];
   settings: Record<string, unknown>;
   sourceRecords?: unknown[];
+  channelWatches?: unknown[];
   integrity: {
     canonicalization: 'JCS-RFC8785';
     hashAlgorithm: 'SHA-256';
@@ -77,6 +84,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
     proofReceipts: await load(db.receipts),
     settings: {},
     sourceRecords: await load(db.sourceRecords),
+    channelWatches: await load(db.channelWatches),
     integrity: {
       canonicalization: 'JCS-RFC8785',
       hashAlgorithm: 'SHA-256',
@@ -115,6 +123,7 @@ const ARRAY_LIMITS: Array<[keyof WorkspaceExport, number]> = [
   ['proofEvents', 200000],
   ['proofReceipts', 10000],
   ['sourceRecords', 10000],
+  ['channelWatches', 10000],
 ];
 
 /**
@@ -144,7 +153,7 @@ export async function importWorkspace(
   }
   for (const [key, limit] of ARRAY_LIMITS) {
     const value = parsed[key];
-    if (key === 'sourceRecords' && value === undefined) continue;
+    if ((key === 'sourceRecords' || key === 'channelWatches') && value === undefined) continue;
     if (!Array.isArray(value)) return invalid(`Export field ${String(key)} must be an array`);
     if (value.length > limit) return invalid(`Export field ${String(key)} exceeds the limit of ${limit}`);
   }
@@ -177,7 +186,7 @@ export async function importWorkspace(
   const arrayKeys: Array<keyof WorkspaceExport> = [
     'missions', 'missionTasks', 'lessons', 'transcriptSegments', 'observations', 'evidence',
     'skillGraphs', 'skillVersions', 'memories', 'memoryVersions', 'approvals', 'artifactSets',
-    'artifactFiles', 'artifactVersions', 'verifications', 'runs', 'proofEvents', 'proofReceipts', 'sourceRecords',
+    'artifactFiles', 'artifactVersions', 'verifications', 'runs', 'proofEvents', 'proofReceipts', 'sourceRecords', 'channelWatches',
   ];
   for (const key of arrayKeys) {
     for (const row of (parsed[key] as unknown[]) ?? []) {
@@ -195,6 +204,85 @@ export async function importWorkspace(
   parsed = JSON.parse(serialized) as WorkspaceExport;
   const newWorkspaceId = idMap.get(workspace.id as string)!;
   const remap = (rows: unknown[]): unknown[] => rows;
+  const validIso = (value: unknown): value is string => {
+    if (typeof value !== 'string') return false;
+    const milliseconds = Date.parse(value);
+    return Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value;
+  };
+  const validOptionalIso = (value: unknown): boolean => value === null || validIso(value);
+  const importedSources = new Map<string, Record<string, unknown>>();
+  for (const row of parsed.sourceRecords ?? []) {
+    if (row && typeof row === 'object' && !Array.isArray(row)) {
+      const source = row as Record<string, unknown>;
+      if (typeof source['id'] === 'string') importedSources.set(source['id'], source);
+    }
+  }
+
+  for (const row of parsed.channelWatches ?? []) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return invalid('Export contains an invalid channel watch');
+    const watch = row as Record<string, unknown>;
+    const schedule = watch['schedule'];
+    const scheduleRecord = schedule && typeof schedule === 'object' && !Array.isArray(schedule)
+      ? schedule as Record<string, unknown>
+      : null;
+    const scheduleStartAt = scheduleRecord?.['startAt'];
+    const parsedChannel = typeof watch['channelId'] === 'string' ? parseYouTubeChannelId(watch['channelId']) : null;
+    const seenVideoIds = watch['seenVideoIds'];
+    const processedJobIds = watch['processedRunnerJobIds'];
+    const source = typeof watch['sourceId'] === 'string' ? importedSources.get(watch['sourceId']) : undefined;
+    if (
+      !isValidId(watch['id'])
+      || !isValidId(watch['sourceId'])
+      || watch['id'] !== watch['sourceId']
+      || watch['workspaceId'] !== newWorkspaceId
+      || !parsedChannel?.ok
+      || typeof watch['revision'] !== 'number'
+      || !Number.isInteger(watch['revision'])
+      || watch['revision'] < 1
+      || typeof watch['enabled'] !== 'boolean'
+      || !schedule
+      || typeof schedule !== 'object'
+      || Array.isArray(schedule)
+      || scheduleRecord?.['kind'] !== 'interval'
+      || scheduleRecord['everyMinutes'] !== 1440
+      || typeof scheduleStartAt !== 'string'
+      || !validIso(scheduleStartAt)
+      || !Array.isArray(seenVideoIds)
+      || seenVideoIds.length > CHANNEL_WATCH_SEEN_VIDEO_ID_LIMIT
+      || !seenVideoIds.every((id) => typeof id === 'string' && /^[A-Za-z0-9_-]{11}$/.test(id))
+      || new Set(seenVideoIds).size !== seenVideoIds.length
+      || !Array.isArray(processedJobIds)
+      || processedJobIds.length > CHANNEL_WATCH_PROCESSED_JOB_ID_LIMIT
+      || !processedJobIds.every((id) => typeof id === 'string' && isValidId(id))
+      || new Set(processedJobIds).size !== processedJobIds.length
+      || (watch['lastProcessedRunnerJobId'] !== null && !isValidId(watch['lastProcessedRunnerJobId']))
+      || (processedJobIds.length === 0 ? watch['lastProcessedRunnerJobId'] !== null : watch['lastProcessedRunnerJobId'] !== processedJobIds.at(-1))
+      || (watch['channelName'] !== null && (typeof watch['channelName'] !== 'string' || watch['channelName'].length > 200))
+      || !validOptionalIso(watch['lastAttemptedAt'])
+      || !validOptionalIso(watch['lastCheckedAt'])
+      || !validOptionalIso(watch['disabledAt'])
+      || (watch['lastError'] !== null && (typeof watch['lastError'] !== 'string' || watch['lastError'].length > 1000))
+      || (watch['lastFeedHash'] !== null && (typeof watch['lastFeedHash'] !== 'string' || !/^[a-f0-9]{64}$/.test(watch['lastFeedHash'])))
+      || !validIso(watch['createdAt'])
+      || !validIso(watch['updatedAt'])
+      || (watch['enabled'] === true && watch['disabledAt'] !== null)
+      || !source
+      || source['workspaceId'] !== newWorkspaceId
+      || source['kind'] !== 'youtube'
+      || source['youtubeChannelId'] !== parsedChannel.value.channelId
+      || (watch['enabled'] === true && source['status'] === 'archived')
+    ) {
+      return invalid('Export contains an invalid channel watch');
+    }
+    watch['channelId'] = parsedChannel.value.channelId;
+    watch['actionHash'] = await sha256Canonical({
+      channelId: watch['channelId'],
+      revision: watch['revision'],
+      schedule: watch['schedule'],
+      sourceId: watch['sourceId'],
+      workspaceId: watch['workspaceId'],
+    });
+  }
 
   const db = getDb();
   const now = isoNow();
@@ -230,6 +318,7 @@ export async function importWorkspace(
       db.proofEvents,
       db.receipts,
       db.sourceRecords,
+      db.channelWatches,
     ],
     async () => {
       await db.workspaces.add(importedWorkspace as never);
@@ -252,6 +341,7 @@ export async function importWorkspace(
       await db.proofEvents.bulkAdd(remap(parsed.proofEvents ?? []) as never[]);
       await db.receipts.bulkAdd(remap(parsed.proofReceipts ?? []) as never[]);
       await db.sourceRecords.bulkAdd(remap(parsed.sourceRecords ?? []) as never[]);
+      await db.channelWatches.bulkAdd(remap(parsed.channelWatches ?? []) as never[]);
     },
   );
   } catch (error) {
@@ -261,7 +351,7 @@ export async function importWorkspace(
     );
   }
 
-  await appendProofEvents(newWorkspaceId, [
+  const importEvents: NewProofEvent[] = [
     {
       type: 'workspace.imported',
       actorType: 'human',
@@ -269,7 +359,25 @@ export async function importWorkspace(
       objectId: newWorkspaceId,
       summary: `Workspace imported from export ${parsed.exportId} (hash ${hashVerified ? 'verified' : 'absent'})`,
     },
-  ]);
+  ];
+  for (const row of parsed.channelWatches ?? []) {
+    const watch = row as Record<string, unknown>;
+    importEvents.push({
+      type: 'channel_watch.created',
+      actorType: 'human',
+      objectType: 'channel_watch',
+      objectId: String(watch['id']),
+      summary: `Channel watch restored from import for ${String(watch['channelId'])}`,
+      payload: {
+        channelId: String(watch['channelId']),
+        sourceId: String(watch['sourceId']),
+        revision: Number(watch['revision']),
+        actionHash: String(watch['actionHash']),
+        imported: true,
+      },
+    });
+  }
+  await appendProofEvents(newWorkspaceId, importEvents);
 
   return ok({ workspaceId: newWorkspaceId, name: String(importedWorkspace['name']), hashVerified });
 }

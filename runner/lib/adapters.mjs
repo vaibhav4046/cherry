@@ -10,6 +10,8 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve, join, sep, dirname } from 'node:path';
 import { redact } from './redact.mjs';
+import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
+import { sourceWatchRoutineId } from './source-watch.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
 const MAX_TIMEOUT_MS = 600_000;
@@ -194,6 +196,40 @@ export function createAdapters(config) {
     return { status: 'completed', ...run, providerNote: 'Scrapling extraction is untrusted source material, not verification.' };
   }
 
+  /** Fixed-host public YouTube channel RSS. This returns metadata-only entries;
+   * no captions, descriptions, media, or transcript content is fetched. */
+  async function youtubeRssWatch(envelope, context) {
+    const payload = parsePayload(envelope);
+    if (!validateYouTubeChannelId(payload.channelId)) {
+      throw new Error('youtube-rss-watch requires an exact UC plus 22-character channelId');
+    }
+    if (typeof payload.sourceId !== 'string' || sourceWatchRoutineId(payload.sourceId) !== envelope.workItemId) {
+      throw new Error('youtube-rss-watch sourceId does not match the execution envelope');
+    }
+    if (typeof payload.workspaceId !== 'string' || payload.workspaceId !== envelope.workspaceId) {
+      throw new Error('youtube-rss-watch workspaceId does not match the execution envelope');
+    }
+    if (!/^[a-f0-9]{64}$/.test(payload.actionHash ?? '')) {
+      throw new Error('youtube-rss-watch requires the approved watch actionHash');
+    }
+    const fetched = await fetchYouTubeChannelFeed(payload.channelId, {
+      ...(config.youtubeRssOptions ?? {}),
+      signal: context.signal,
+      timeoutMs: Math.min(context.timeoutMs ?? 10_000, 10_000),
+    });
+    const feed = {
+      schemaVersion: 1,
+      watchId: payload.sourceId,
+      actionHash: payload.actionHash,
+      channelId: fetched.channelId,
+      checkedAt: fetched.checkedAt,
+      channelName: fetched.channelName,
+      feedHash: fetched.feedHash,
+      entries: fetched.entries,
+    };
+    return { status: 'completed', exitCode: 0, stdout: JSON.stringify(feed), stderr: '', feed };
+  }
+
   const adapters = {
     'cherry-verify': cherryVerify,
     'cherry-export': cherryExport,
@@ -201,6 +237,7 @@ export function createAdapters(config) {
     'claude-cli': (envelope, context) => providerCli('claude', envelope, context),
     'safe-command': safeCommand,
     'scrapling-fetch': scraplingFetch,
+    'youtube-rss-watch': youtubeRssWatch,
   };
 
   return {

@@ -11,11 +11,29 @@ import {
   type WatchHistoryCandidate,
   type WatchHistoryParse,
 } from '../../cherry/source/watch-history.ts';
+import {
+  createChannelWatch,
+  disableChannelWatch,
+  listChannelWatches,
+  reconcileChannelWatchRunnerOutcome,
+} from '../../cherry/source/channel-watch-service.ts';
+import type { ChannelWatch, ChannelWatchRunnerOutcome } from '../../cherry/source/channel-watch-model.ts';
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
 import { fetchYouTubeTitle } from '../../cherry/source/youtube-metadata.ts';
-import { pollRunnerJob, runnerStatus, submitRunnerJob } from '../../cherry/runner-client/runner-api.ts';
+import {
+  checkRunnerChannelWatch,
+  listRunnerChannelWatchJobs,
+  pollRunnerJob,
+  pollRunnerV2Job,
+  registerRunnerChannelWatch,
+  runnerStatus,
+  submitRunnerJob,
+  unregisterRunnerChannelWatch,
+  type RunnerStatus,
+  type RunnerV2Job,
+} from '../../cherry/runner-client/runner-api.ts';
 import { Icons } from '../../components/Icons.tsx';
 import { SourceMaterialChoices } from './SourceMaterialChoices.tsx';
 
@@ -59,6 +77,64 @@ function domainOf(url: string | null): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 
+function watchCheckLabel(watch: ChannelWatch): string {
+  if (!watch.lastCheckedAt) return 'Never checked';
+  return `Last checked ${new Date(watch.lastCheckedAt).toLocaleString()}`;
+}
+
+function watchRegistrationKey(watch: ChannelWatch): string {
+  return `${watch.id}:${watch.revision}:${watch.actionHash}`;
+}
+
+function jobMatchesWatch(job: RunnerV2Job, watch: ChannelWatch): boolean {
+  if (job.envelope?.workspaceId !== watch.workspaceId
+    || job.envelope.workItemId !== `rss-watch:${watch.sourceId}`
+    || job.envelope.workItemRevision !== watch.revision
+    || job.envelope.adapter !== 'youtube-rss-watch') return false;
+  try {
+    const payload = JSON.parse(job.envelope.boundedPrompt ?? '') as Record<string, unknown>;
+    return payload['workspaceId'] === watch.workspaceId
+      && payload['sourceId'] === watch.sourceId
+      && payload['channelId'] === watch.channelId
+      && payload['actionHash'] === watch.actionHash;
+  } catch {
+    return false;
+  }
+}
+
+function runnerOutcome(watch: ChannelWatch, job: RunnerV2Job): ChannelWatchRunnerOutcome | null {
+  if (!jobMatchesWatch(job, watch)) return null;
+  if (job.status === 'completed') {
+    try {
+      const payload = JSON.parse(job.result?.stdout ?? '');
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('invalid result');
+      return { ...(payload as Omit<ChannelWatchRunnerOutcome, 'status' | 'jobId'>), status: 'completed', jobId: job.id } as ChannelWatchRunnerOutcome;
+    } catch {
+      return {
+        schemaVersion: 1,
+        status: 'failed',
+        jobId: job.id,
+        watchId: watch.id,
+        actionHash: watch.actionHash,
+        channelId: watch.channelId,
+        error: 'The local runner returned an unreadable channel result.',
+      };
+    }
+  }
+  if (job.status === 'failed' || job.status === 'cancelled') {
+    return {
+      schemaVersion: 1,
+      status: 'failed',
+      jobId: job.id,
+      watchId: watch.id,
+      actionHash: watch.actionHash,
+      channelId: watch.channelId,
+      error: 'The channel check failed and nothing was saved.',
+    };
+  }
+  return null;
+}
+
 export default function Sources() {
   const { activeWorkspace, refresh } = useAppState();
   const location = useLocation();
@@ -73,6 +149,7 @@ export default function Sources() {
     [],
   );
   const [sources, setSources] = useState<SourceRecord[]>([]);
+  const [channelWatches, setChannelWatches] = useState<ChannelWatch[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState(Boolean(ingestDraft));
   const [kind, setKind] = useState<SourceKind>(ingestDraft?.kind ?? 'youtube');
@@ -82,7 +159,12 @@ export default function Sources() {
   const [metadataBusy, setMetadataBusy] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [metadataNotice, setMetadataNotice] = useState<string | null>(null);
-  const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
+  const [runner, setRunner] = useState<RunnerStatus | null>(null);
+  const [watchSource, setWatchSource] = useState<SourceRecord | null>(null);
+  const [watchError, setWatchError] = useState<string | null>(null);
+  const [watchBusyId, setWatchBusyId] = useState<string | null>(null);
+  const [registeredWatchKeys, setRegisteredWatchKeys] = useState<Set<string>>(() => new Set());
+  const [watchFocusSourceId, setWatchFocusSourceId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyCandidates, setHistoryCandidates] = useState<WatchHistoryCandidate[]>([]);
   const [historySummary, setHistorySummary] = useState<string | null>(null);
@@ -95,6 +177,11 @@ export default function Sources() {
   const saveErrorRef = useRef<HTMLParagraphElement | null>(null);
   const metadataRequestIdRef = useRef(0);
   const historyDialogRef = useRef<HTMLDialogElement | null>(null);
+  const watchDialogRef = useRef<HTMLDialogElement | null>(null);
+  const watchChannelIdRef = useRef<HTMLInputElement | null>(null);
+  const watchReturnFocusRef = useRef<HTMLElement | null>(null);
+  const watchErrorRef = useRef<HTMLParagraphElement | null>(null);
+  const watchStateRefs = useRef(new Map<string, HTMLDivElement>());
   const historyFileRef = useRef<HTMLInputElement | null>(null);
   const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
   const historyTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -108,14 +195,19 @@ export default function Sources() {
   }, [bookmarklet]);
 
   async function reload(workspaceId = activeWorkspace?.id) {
-    if (!workspaceId) { setSources([]); return; }
-    setSources(await listSources(workspaceId, { includeArchived: true }));
+    if (!workspaceId) { setSources([]); setChannelWatches([]); return; }
+    const [nextSources, nextWatches] = await Promise.all([
+      listSources(workspaceId, { includeArchived: true }),
+      listChannelWatches(workspaceId),
+    ]);
+    setSources(nextSources);
+    setChannelWatches(nextWatches);
   }
 
   useEffect(() => { void reload(); }, [activeWorkspace?.id]);
   useEffect(() => {
     if (isIngestRoute) return;
-    void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
+    void runnerStatus().then(setRunner);
   }, [isIngestRoute]);
   useEffect(() => {
     if (!ingestDraft) return;
@@ -154,6 +246,44 @@ export default function Sources() {
     }
     return () => { if (frame !== null) window.cancelAnimationFrame(frame); };
   }, [historyOpen]);
+  useEffect(() => {
+    const dialog = watchDialogRef.current;
+    if (!dialog) return;
+    let frame: number | null = null;
+    if (watchSource) {
+      if (!dialog.open) dialog.showModal();
+      frame = window.requestAnimationFrame(() => watchChannelIdRef.current?.focus());
+    } else if (dialog.open) {
+      dialog.close();
+    }
+    return () => { if (frame !== null) window.cancelAnimationFrame(frame); };
+  }, [watchSource]);
+  useEffect(() => {
+    if (!watchFocusSourceId) return;
+    const target = watchStateRefs.current.get(watchFocusSourceId);
+    if (!target) return;
+    target.focus();
+    setWatchFocusSourceId(null);
+  }, [channelWatches, watchFocusSourceId]);
+  const runnerReady = runner?.paired === true && runner.scraplingReady === true;
+  const channelRunnerReady = runner?.paired === true && runner.v2Adapters?.includes('youtube-rss-watch') === true;
+  const watchBySourceId = useMemo(
+    () => new Map(channelWatches.map((watch) => [watch.sourceId, watch])),
+    [channelWatches],
+  );
+  const watchByChannelId = useMemo(
+    () => new Map(channelWatches.map((watch) => [watch.channelId, watch])),
+    [channelWatches],
+  );
+  useEffect(() => {
+    const workspaceId = activeWorkspace?.id;
+    if (!workspaceId || !channelRunnerReady || isIngestRoute) return;
+    let cancelled = false;
+    const sync = () => { if (!cancelled) void syncChannelWatches(workspaceId); };
+    sync();
+    const timer = window.setInterval(sync, 30_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [activeWorkspace?.id, channelRunnerReady, isIngestRoute]);
   const visible = useMemo(() => sources.filter((source) => {
     if (filter === 'archived') return source.status === 'archived';
     if (source.status === 'archived') return false;
@@ -214,6 +344,180 @@ export default function Sources() {
     window.requestAnimationFrame(() => historyTriggerRef.current?.focus());
   }
 
+  function closeWatchDialog(restoreFocus = true) {
+    setWatchSource(null);
+    setWatchError(null);
+    const returnTarget = watchReturnFocusRef.current;
+    watchReturnFocusRef.current = null;
+    if (restoreFocus && returnTarget?.isConnected) window.requestAnimationFrame(() => returnTarget.focus());
+  }
+
+  async function registerWatch(watch: ChannelWatch, reportError = true): Promise<boolean> {
+    const registered = await registerRunnerChannelWatch({
+      channelId: watch.channelId,
+      revision: watch.revision,
+      schedule: watch.schedule,
+      sourceId: watch.sourceId,
+      workspaceId: watch.workspaceId,
+      actionHash: watch.actionHash,
+    });
+    if (!registered.ok) {
+      setRegisteredWatchKeys((current) => {
+        const next = new Set(current);
+        next.delete(watchRegistrationKey(watch));
+        return next;
+      });
+      if (reportError) setError('The runner did not confirm this daily check. Check the runner, then try again.');
+      return false;
+    }
+    setRegisteredWatchKeys((current) => new Set(current).add(watchRegistrationKey(watch)));
+    return true;
+  }
+
+  async function saveChannelWatch(source: SourceRecord, channelId?: string) {
+    if (!channelRunnerReady) {
+      setWatchError(runner?.paired
+        ? 'This runner cannot check channels yet. Update the local runner and try again.'
+        : 'pair the local runner to check channels');
+      return;
+    }
+    setWatchBusyId(source.id); setWatchError(null); setError(null); setNotice(null);
+    const created = await createChannelWatch({ sourceId: source.id, ...(channelId ? { channelId } : {}) });
+    if (!created.ok) {
+      const message = plainSourceError(created.error.message);
+      if (watchSource) {
+        setWatchError(message);
+        window.requestAnimationFrame(() => watchErrorRef.current?.focus());
+      } else setError(message);
+      setWatchBusyId(null);
+      return;
+    }
+    closeWatchDialog(false);
+    await reload();
+    const registered = await registerWatch(created.value);
+    if (registered) setNotice('Watching from now. No older videos were added. The local runner will check daily.');
+    setWatchFocusSourceId(source.id);
+    setWatchBusyId(null);
+  }
+
+  async function beginChannelWatch(source: SourceRecord, trigger: HTMLElement) {
+    watchReturnFocusRef.current = trigger;
+    setWatchError(null);
+    setWatchSource(source);
+  }
+
+  async function submitChannelWatch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!watchSource) return;
+    const channelId = String(new FormData(event.currentTarget).get('channelId') ?? '').trim();
+    await saveChannelWatch(watchSource, channelId);
+  }
+
+  async function reconcileWatchJobs(watch: ChannelWatch): Promise<number> {
+    const jobs = await listRunnerChannelWatchJobs(watch);
+    if (!jobs.ok) return 0;
+    let createdCount = 0;
+    const ordered = [...jobs.value].sort((left, right) => (left.createdAt ?? left.id).localeCompare(right.createdAt ?? right.id));
+    for (const job of ordered) {
+      const outcome = runnerOutcome(watch, job);
+      if (!outcome) continue;
+      const reconciled = await reconcileChannelWatchRunnerOutcome(watch.id, outcome);
+      if (!reconciled.ok) continue;
+      createdCount += reconciled.value.createdSources.length;
+    }
+    return createdCount;
+  }
+
+  async function syncChannelWatches(workspaceId: string) {
+    if (!channelRunnerReady) return;
+    const watches = (await listChannelWatches(workspaceId)).filter((watch) => watch.enabled);
+    let createdCount = 0;
+    for (const watch of watches) {
+      if (!await registerWatch(watch, false)) continue;
+      createdCount += await reconcileWatchJobs(watch);
+    }
+    if (createdCount > 0) setNotice(`${createdCount} new ${createdCount === 1 ? 'source was' : 'sources were'} saved from channel watches.`);
+    if (watches.length > 0) await reload(workspaceId);
+  }
+
+  async function checkChannelNow(watch: ChannelWatch) {
+    setError(null); setNotice(null);
+    if (!runner?.paired) { setNotice('pair the local runner to check channels'); return; }
+    if (!channelRunnerReady) { setError('This runner cannot check channels yet. Update the local runner and try again.'); return; }
+    setWatchBusyId(watch.id);
+    if (!await registerWatch(watch)) { setWatchBusyId(null); return; }
+    const queued = await checkRunnerChannelWatch(watch);
+    if (!queued.ok) {
+      setError('The channel check was not queued. Check the runner, then try again.');
+      setWatchBusyId(null);
+      return;
+    }
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      const polled = await pollRunnerV2Job(queued.value.jobId);
+      if (!polled.ok) {
+        setError('The channel check could not be read. Check the runner, then try again.');
+        setWatchBusyId(null);
+        return;
+      }
+      const outcome = runnerOutcome(watch, polled.value);
+      if (!outcome) continue;
+      const reconciled = await reconcileChannelWatchRunnerOutcome(watch.id, outcome);
+      if (!reconciled.ok) {
+        setError('The channel result did not match this watch, so nothing was saved. Try again.');
+      } else if (outcome.status === 'failed') {
+        setError('The channel check failed and nothing was saved. Check the runner, then try again.');
+      } else {
+        const count = reconciled.value.createdSources.length;
+        setNotice(count > 0 ? `${count} new ${count === 1 ? 'source' : 'sources'} saved.` : 'Channel checked. No new videos.');
+      }
+      await reload();
+      setWatchBusyId(null);
+      return;
+    }
+    setNotice('The check is still running on your computer. Cherry will sync it when it finishes.');
+    setWatchBusyId(null);
+  }
+
+  async function connectChannelWatch(watch: ChannelWatch) {
+    setWatchBusyId(watch.id); setError(null); setNotice(null);
+    const registered = await registerWatch(watch);
+    if (registered) setNotice('Daily channel check connected to this exact watch.');
+    setWatchBusyId(null);
+  }
+
+  async function stopChannelWatch(watch: ChannelWatch): Promise<boolean> {
+    if (!runner?.paired) { setError('Pair the local runner to stop this channel watch.'); return false; }
+    if (!channelRunnerReady) { setError('This runner cannot stop the daily check yet. Update the local runner and try again.'); return false; }
+    setWatchBusyId(watch.id); setError(null); setNotice(null);
+    const removed = await unregisterRunnerChannelWatch(watch);
+    if (!removed.ok && removed.error.code !== 'not_found') {
+      setError('Watching was not stopped. Check the runner, then try again.');
+      setWatchBusyId(null);
+      return false;
+    }
+    if (removed.ok && !removed.value.removed) {
+      setError('The runner did not confirm that watching stopped. Check the runner, then try again.');
+      setWatchBusyId(null);
+      return false;
+    }
+    const disabled = await disableChannelWatch(watch.id, 'human', watch);
+    if (!disabled.ok) {
+      setError(plainSourceError(disabled.error.message));
+      setWatchBusyId(null);
+      return false;
+    }
+    setRegisteredWatchKeys((current) => {
+      const next = new Set(current);
+      next.delete(watchRegistrationKey(watch));
+      return next;
+    });
+    await reload();
+    setNotice('Channel watch stopped. Saved sources remain available.');
+    setWatchBusyId(null);
+    return true;
+  }
+
   function showHistoryCandidates(parsed: WatchHistoryParse) {
     const candidates = rankWatchHistoryCandidates(parsed.entries);
     setHistoryCandidates(candidates);
@@ -262,6 +566,7 @@ export default function Sources() {
         kind: 'youtube',
         title: candidate.representative.title,
         ...(candidate.representative.channel ? { creator: candidate.representative.channel } : {}),
+        ...(candidate.representative.youtubeChannelId ? { youtubeChannelId: candidate.representative.youtubeChannelId } : {}),
         url: candidate.representative.canonicalUrl,
         sourceOrigin: 'takeout-import',
         permissionAcknowledged: true,
@@ -300,7 +605,8 @@ export default function Sources() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     invalidateMetadataLookup();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const title = String(form.get('title') ?? '').trim();
     const url = String(form.get('url') ?? '').trim();
     let content = String(form.get('content') ?? '');
@@ -320,7 +626,7 @@ export default function Sources() {
       if (!created.ok) throw new Error(created.error.message);
       closeSourceDialog(); setNotice('Source saved locally. Review it before turning it into a skill.');
       await reload(workspaceId); await refresh();
-      event.currentTarget.reset();
+      formElement.reset();
       setKind(ingestDraft?.kind ?? 'youtube');
     } catch (thrown) {
       const message = (thrown as Error).message;
@@ -373,6 +679,8 @@ export default function Sources() {
   }
 
   async function archive(source: SourceRecord) {
+    const watch = watchBySourceId.get(source.id);
+    if (watch?.enabled && !await stopChannelWatch(watch)) return;
     setBusy(true); const result = await archiveSource(source.id); if (!result.ok) setError(plainSourceError(result.error.message)); else setNotice('Source archived. It remains recoverable in the Archived filter.'); await reload(); setBusy(false);
   }
 
@@ -450,16 +758,86 @@ export default function Sources() {
             {visible.map((source) => {
               const status = statusLabel(source);
               const needsYouTubeTranscript = source.kind === 'youtube' && source.status !== 'ready' && source.status !== 'archived';
+              const channelWatch = watchBySourceId.get(source.id);
+              const channelAlreadyWatched = source.youtubeChannelId ? watchByChannelId.get(source.youtubeChannelId) : undefined;
+              const watchIsRegistered = channelWatch?.enabled
+                ? registeredWatchKeys.has(watchRegistrationKey(channelWatch))
+                : false;
+              const sourceHeadingId = `source-heading-${source.id}`;
+              const watchSummaryId = `channel-watch-summary-${source.id}`;
+              const canArchiveSource = !channelWatch?.enabled || Boolean(runner?.paired && channelRunnerReady);
               return (
-                <article key={source.id} className="card source-card" data-testid="source-card">
+                <article key={source.id} className="card source-card" data-testid="source-card" aria-labelledby={sourceHeadingId}>
                   <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}><span className="source-kind-icon"><SourceIcon kind={source.kind} /></span><span className={status.className}>{status.text}</span></div>
                   <div className="stack" style={{ gap: 4 }}>
-                    <h3 style={{ margin: 0 }}>{source.title}</h3>
+                    <h3 id={sourceHeadingId} style={{ margin: 0 }}>{source.title}</h3>
                     <p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>
                     {source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}
+                    {source.sourceOrigin === 'rss-watch' ? <p className="label" style={{ margin: 0 }}>From channel watch</p> : null}
                     {source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Saved only here</span>}
                   </div>
                   <p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>
+                  {source.kind === 'youtube' && source.status !== 'archived' ? (
+                    <div
+                      ref={(node) => {
+                        if (node) watchStateRefs.current.set(source.id, node);
+                        else watchStateRefs.current.delete(source.id);
+                      }}
+                      className="stack"
+                      style={{ gap: 6 }}
+                      data-testid="channel-watch-state"
+                      tabIndex={-1}
+                      aria-labelledby={sourceHeadingId}
+                      aria-describedby={watchSummaryId}
+                    >
+                      <span id={watchSummaryId} className="sr-only">
+                        {channelWatch?.enabled
+                          ? `${watchIsRegistered ? 'Daily channel watch connected.' : 'Channel watch saved. Daily check not confirmed.'} ${watchCheckLabel(channelWatch)}.`
+                          : 'Channel watch is not enabled.'}
+                      </span>
+                      {channelWatch?.enabled ? (
+                        <>
+                          <div className="row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                            <span className="sticker">{watchIsRegistered ? 'Channel watch · daily' : 'Watch saved · daily check not confirmed'}</span>
+                            <span className="label">{watchCheckLabel(channelWatch)}</span>
+                          </div>
+                          {channelWatch.lastError ? <p className="field-error" style={{ margin: 0 }}>The last check failed and nothing was saved. Check the runner, then try again.</p> : null}
+                          {runner === null ? (
+                            <span className="label">Checking the local runner</span>
+                          ) : runner.paired ? (
+                            channelRunnerReady ? (
+                              <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                                {watchIsRegistered ? (
+                                  <button type="button" className="btn btn-sm" aria-label={`Check ${source.title} channel now`} disabled={watchBusyId === channelWatch.id} onClick={() => void checkChannelNow(channelWatch)}>{watchBusyId === channelWatch.id ? 'Checking' : 'Check now'}</button>
+                                ) : (
+                                  <button type="button" className="btn btn-sm" aria-label={`Connect ${source.title} daily channel check`} disabled={watchBusyId === channelWatch.id} onClick={() => void connectChannelWatch(channelWatch)}>{watchBusyId === channelWatch.id ? 'Connecting' : 'Connect daily check'}</button>
+                                )}
+                                <button type="button" className="btn btn-sm" aria-label={`Stop watching ${source.title}`} disabled={watchBusyId === channelWatch.id} onClick={() => void stopChannelWatch(channelWatch)}>Stop watching</button>
+                              </div>
+                            ) : <p className="label" style={{ margin: 0 }}>This runner cannot check or stop channels yet. Update the local runner before archiving this source.</p>
+                          ) : (
+                            <div className="row" style={{ gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                              <span className="label">Pair the local runner to check or stop this channel before archiving it.</span>
+                              <Link className="link-quiet" to="/studio/settings/connections">Pair runner</Link>
+                            </div>
+                          )}
+                        </>
+                      ) : channelAlreadyWatched && channelAlreadyWatched.sourceId !== source.id ? (
+                        <span className="label">{channelAlreadyWatched.enabled ? 'This channel is already watched from another saved source.' : 'This channel was watched from another saved source. Restart it there.'}</span>
+                      ) : runner === null ? (
+                        <span className="label">Checking the local runner</span>
+                      ) : !runner.paired ? (
+                        <div className="row" style={{ gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                          <span className="label">pair the local runner to check channels</span>
+                          <Link className="link-quiet" to="/studio/settings/connections">Pair runner</Link>
+                        </div>
+                      ) : !channelRunnerReady ? (
+                        <span className="label">This runner cannot check channels yet. Update the local runner and try again.</span>
+                      ) : (
+                        <button type="button" className="btn btn-sm" style={{ alignSelf: 'flex-start' }} aria-label={`Watch ${source.title} channel`} disabled={watchBusyId === source.id} onClick={(event) => void beginChannelWatch(source, event.currentTarget)}>{watchBusyId === source.id ? 'Saving watch' : 'Watch this channel'}</button>
+                      )}
+                    </div>
+                  ) : null}
                   {source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{plainSourceError(source.fetchError)}</p> : null}
                   {needsYouTubeTranscript ? (
                     <SourceMaterialChoices
@@ -473,7 +851,7 @@ export default function Sources() {
                       <Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Review source</Link>
                       {!needsYouTubeTranscript ? <button type="button" className="btn btn-sm" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button> : null}
                       {source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}
-                      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button>
+                      {canArchiveSource ? <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button> : null}
                     </> : <span className="label">Recoverable archive</span>}
                   </div>
                 </article>
@@ -526,6 +904,42 @@ export default function Sources() {
             </div>
           ) : null}
         </div>
+      </dialog>
+
+      <dialog ref={watchDialogRef} className="sheet source-dialog" aria-labelledby="watch-channel-title" aria-describedby="watch-channel-disclosure watch-channel-boundary" onCancel={(event) => { event.preventDefault(); closeWatchDialog(); }} onClick={(event) => { if (event.target === event.currentTarget) closeWatchDialog(); }}>
+        <form key={watchSource?.id ?? 'channel-watch'} className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void submitChannelWatch(event)} aria-describedby={watchError ? 'watch-channel-error' : undefined}>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="label">Public YouTube feed</span>
+              <h2 id="watch-channel-title" className="subhead" style={{ margin: 0 }}>Watch this channel</h2>
+            </div>
+            <button type="button" className="btn btn-sm" onClick={() => closeWatchDialog()} aria-label="Close channel watch dialog">{Icons.close(16)}</button>
+          </div>
+          <p id="watch-channel-disclosure" style={{ margin: 0 }}>Your paired local runner checks this channel's public YouTube feed daily. New videos are saved here without transcripts.</p>
+          <p id="watch-channel-boundary" className="label" style={{ margin: 0 }}>Nothing is transcribed or approved automatically. Checks run only while your paired runner is on.</p>
+          <div className="field">
+            <label htmlFor="watch-channel-id">YouTube channel ID or official channel URL</label>
+            <input
+              id="watch-channel-id"
+              ref={watchChannelIdRef}
+              name="channelId"
+              className="input"
+              required
+              maxLength={2048}
+              autoComplete="off"
+              defaultValue={watchSource?.youtubeChannelId ?? ''}
+              readOnly={Boolean(watchSource?.youtubeChannelId)}
+              aria-describedby="watch-channel-helper"
+              placeholder="UC… or https://www.youtube.com/channel/UC…"
+            />
+            <small id="watch-channel-helper">Channel handles are not supported. Use the ID from the official channel URL. It starts with UC.</small>
+          </div>
+          {watchError ? <p ref={watchErrorRef} id="watch-channel-error" className="field-error" role="alert" tabIndex={-1} style={{ margin: 0 }}>{watchError}</p> : null}
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn" onClick={() => closeWatchDialog()}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={watchBusyId !== null}>{watchBusyId ? 'Saving watch' : 'Save watch'}</button>
+          </div>
+        </form>
       </dialog>
 
       <dialog ref={sourceDialogRef} className="sheet source-dialog" aria-labelledby="save-source-title" onCancel={(event) => { event.preventDefault(); closeSourceDialog(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSourceDialog(); }} style={{ maxHeight: 'calc(100dvh - var(--sp-4) * 2)', overflowY: 'auto', overscrollBehavior: 'contain' }}>

@@ -54,6 +54,12 @@ export const CHERRY_DB_MIGRATIONS: CherryMigration[] = [
       sourceRecords: 'id, workspaceId, lessonId, kind, status, updatedAt',
     },
   },
+  {
+    version: 4,
+    stores: {
+      channelWatches: 'id, workspaceId, sourceId, channelId, &[workspaceId+channelId], enabled, updatedAt',
+    },
+  },
 ];
 
 export const CHERRY_DB_VERSION = CHERRY_DB_MIGRATIONS[CHERRY_DB_MIGRATIONS.length - 1]!.version;

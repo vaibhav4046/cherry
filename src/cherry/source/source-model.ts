@@ -3,7 +3,7 @@ export type SourceStatus = 'saved' | 'ready' | 'archived';
 export type SourceContentFormat = 'plain' | 'markdown' | 'json' | 'srt' | 'vtt';
 export type SourceFetchStatus = 'not_requested' | 'queued' | 'fetched' | 'blocked' | 'failed';
 export type SourceFetchMethod = 'user_paste' | 'upload' | 'local_transcription' | 'scrapling_fetch';
-export type SourceOrigin = 'manual' | 'takeout-import';
+export type SourceOrigin = 'manual' | 'takeout-import' | 'rss-watch';
 
 export interface SourceRecord {
   id: string;
@@ -14,6 +14,8 @@ export interface SourceRecord {
   title: string;
   creator: string | null;
   url: string | null;
+  /** Exact ID only; handles are never resolved or stored as channel identity. */
+  youtubeChannelId?: string | null;
   contentFormat: SourceContentFormat | null;
   contentHash: string | null;
   fetchStatus: SourceFetchStatus;

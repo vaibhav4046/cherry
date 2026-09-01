@@ -1,6 +1,7 @@
 import { invalid } from '../core/errors.ts';
 import { ok, type Result } from '../core/result.ts';
 import { parseYouTubeUrl } from '../watch/youtube-url.ts';
+import { parseYouTubeChannelId } from './youtube-channel-id.ts';
 
 export const MAX_WATCH_HISTORY_CHARACTERS = 16 * 1024 * 1024;
 export const MAX_WATCH_HISTORY_FILE_BYTES = 16 * 1024 * 1024;
@@ -15,6 +16,7 @@ export interface WatchHistoryEntry {
   canonicalUrl: string;
   title: string;
   channel: string | null;
+  youtubeChannelId: string | null;
   watchedAt: string | null;
 }
 
@@ -80,6 +82,19 @@ function channelFromRow(row: UnknownRecord): string | null {
   return boundedString(row['channelName'], 200) ?? boundedString(row['channel'], 200);
 }
 
+function youtubeChannelIdFromRow(row: UnknownRecord): string | null {
+  const subtitles = row['subtitles'];
+  if (!Array.isArray(subtitles)) return null;
+  for (const subtitle of subtitles) {
+    if (!isRecord(subtitle)) continue;
+    const rawUrl = boundedString(subtitle['url'], 2048);
+    if (!rawUrl) continue;
+    const parsed = parseYouTubeChannelId(rawUrl);
+    if (parsed.ok) return parsed.value.channelId;
+  }
+  return null;
+}
+
 function watchedAtFromRow(row: UnknownRecord): string | null {
   const raw = boundedString(row['time'], 100)
     ?? boundedString(row['watchedAt'], 100)
@@ -105,6 +120,7 @@ function entryFromRow(value: unknown): WatchHistoryEntry | null {
     canonicalUrl: parsed.value.canonicalUrl,
     title,
     channel: channelFromRow(value),
+    youtubeChannelId: youtubeChannelIdFromRow(value),
     watchedAt: watchedAtFromRow(value),
   };
 }
@@ -171,6 +187,7 @@ export function parsePastedYouTubeUrls(raw: string): WatchHistoryParse {
       canonicalUrl: parsed.value.canonicalUrl,
       title: `YouTube video ${parsed.value.videoId}`,
       channel: null,
+      youtubeChannelId: null,
       watchedAt: null,
     });
   }
