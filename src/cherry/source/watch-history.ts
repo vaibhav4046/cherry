@@ -21,6 +21,7 @@ export interface WatchHistoryEntry {
 export interface WatchHistoryParse {
   entries: WatchHistoryEntry[];
   skippedRows: number;
+  truncated?: boolean;
 }
 
 export interface WatchHistoryCandidate {
@@ -38,7 +39,7 @@ type UnknownRecord = Record<string, unknown>;
 const STOPWORDS = new Set([
   'about', 'after', 'again', 'also', 'and', 'are', 'before', 'build', 'for', 'from',
   'how', 'into', 'its', 'part', 'that', 'the', 'their', 'this', 'through', 'use',
-  'using', 'video', 'what', 'when', 'where', 'with', 'you', 'your',
+  'using', 'video', 'what', 'when', 'where', 'with', 'you', 'your', 'youtube',
 ]);
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -136,7 +137,7 @@ export function parseTakeoutWatchHistory(raw: string): Result<WatchHistoryParse>
 }
 
 export function parsePastedYouTubeUrls(raw: string): WatchHistoryParse {
-  if (raw.length > MAX_WATCH_HISTORY_CHARACTERS) return { entries: [], skippedRows: 1 };
+  if (raw.length > MAX_WATCH_HISTORY_CHARACTERS) return { entries: [], skippedRows: 1, truncated: true };
   const entries: WatchHistoryEntry[] = [];
   const seen = new Set<string>();
   const lines: string[] = [];
@@ -173,7 +174,7 @@ export function parsePastedYouTubeUrls(raw: string): WatchHistoryParse {
       watchedAt: null,
     });
   }
-  return { entries, skippedRows };
+  return { entries, skippedRows, ...(overflowed ? { truncated: true } : {}) };
 }
 
 function milliseconds(value: string | null): number | null {

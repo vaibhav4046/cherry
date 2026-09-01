@@ -153,7 +153,7 @@ export default function Sources() {
   function showHistoryCandidates(parsed: WatchHistoryParse) {
     const candidates = rankWatchHistoryCandidates(parsed.entries);
     setHistoryCandidates(candidates);
-    setHistorySummary(`${parsed.entries.length} usable ${parsed.entries.length === 1 ? 'entry' : 'entries'} · ${parsed.skippedRows} skipped`);
+    setHistorySummary(`${parsed.entries.length} usable ${parsed.entries.length === 1 ? 'entry' : 'entries'} · ${parsed.skippedRows}${parsed.truncated ? '+' : ''} skipped`);
     setHistoryPermission(false);
     setHistoryError(candidates.length ? null : 'No usable YouTube entries were found. Choose a valid Takeout JSON file or paste official YouTube links.');
   }

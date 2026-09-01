@@ -89,6 +89,7 @@ describe('YouTube watch-history parsing', () => {
 
     expect(parsed.entries).toEqual([]);
     expect(parsed.skippedRows).toBe(20_001);
+    expect(parsed.truncated).toBe(true);
   });
 });
 
@@ -128,12 +129,17 @@ describe('YouTube watch-history candidate ranking', () => {
   });
 
   it('returns stable individual candidates for pasted URLs without inventing metadata', () => {
-    const parsed = parsePastedYouTubeUrls('https://youtu.be/pastedVid02\nhttps://youtu.be/pastedVid01');
+    const parsed = parsePastedYouTubeUrls([
+      'https://youtu.be/pastedVid03',
+      'https://youtu.be/pastedVid02',
+      'https://youtu.be/pastedVid01',
+    ].join('\n'));
     const first = rankWatchHistoryCandidates(parsed.entries);
     const second = rankWatchHistoryCandidates([...parsed.entries].reverse());
 
     expect(second).toEqual(first);
-    expect(first).toHaveLength(2);
+    expect(first).toHaveLength(3);
+    expect(first.every((candidate) => candidate.kind === 'video')).toBe(true);
     expect(first[0]).toMatchObject({ kind: 'video', reason: 'From the URL list you pasted.' });
   });
 
