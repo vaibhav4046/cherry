@@ -350,6 +350,71 @@ describe('source inbox domain', () => {
     expect((await getDb().lessons.get(created.lessonId))?.permissionAcknowledgedAt).toBeNull();
   });
 
+  it('preserves exact Takeout provenance on a transcriptless YouTube draft and its proof', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Takeout source' }));
+    const created = unwrap(await createSource({
+      workspaceId: workspace.id,
+      kind: 'youtube',
+      title: 'Practical lighting',
+      creator: 'Studio North',
+      url: 'https://www.youtube.com/watch?v=studioN0001',
+      sourceOrigin: 'takeout-import',
+      permissionAcknowledged: true,
+      permissionNote: 'Selected from local YouTube history.',
+    }));
+
+    expect(created).toMatchObject({
+      kind: 'youtube', status: 'saved', sourceOrigin: 'takeout-import',
+      fetchMethod: null, contentHash: null, fetchStatus: 'not_requested',
+    });
+    expect(await listTranscript(created.lessonId)).toEqual([]);
+    const saved = (await listProofEvents(workspace.id)).find((event) => event.type === 'source.saved');
+    expect(saved?.payload).toMatchObject({ sourceOrigin: 'takeout-import', urlDomain: 'www.youtube.com' });
+    expect(JSON.stringify(saved)).not.toContain('Selected from local YouTube history.');
+
+    const withTranscript = unwrap(await importSourceTranscript(
+      created.id,
+      '0:05 Shape one small pool of light.',
+      'user_text',
+    )).source;
+    expect(withTranscript.sourceOrigin).toBe('takeout-import');
+
+    const exported = unwrap(await exportWorkspace(workspace.id));
+    const imported = unwrap(await importWorkspace(JSON.stringify(exported)));
+    expect((await listSources(imported.workspaceId))[0]?.sourceOrigin).toBe('takeout-import');
+  });
+
+  it('rejects forged Takeout provenance outside a human-selected transcriptless YouTube URL', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Takeout boundary' }));
+    const attempts = [
+      createSource({
+        workspaceId: workspace.id, kind: 'article', title: 'Article', url: 'https://example.com/article',
+        sourceOrigin: 'takeout-import', permissionAcknowledged: true,
+      }),
+      createSource({
+        workspaceId: workspace.id, kind: 'youtube', title: 'With content', url: 'https://youtu.be/studioN0001',
+        content: '0:05 This content was not part of Takeout.', sourceOrigin: 'takeout-import', permissionAcknowledged: true,
+      }),
+      createSource({
+        workspaceId: workspace.id, kind: 'youtube', title: 'Agent claim', url: 'https://youtu.be/studioN0002',
+        sourceOrigin: 'takeout-import', permissionAcknowledged: true,
+      }, 'agent'),
+      createSource({
+        workspaceId: workspace.id, kind: 'youtube', title: 'Forged acquisition', url: 'https://youtu.be/studioN0003',
+        sourceOrigin: 'takeout-import', fetchMethod: 'local_transcription', permissionAcknowledged: true,
+      }),
+      createSource({
+        workspaceId: workspace.id, kind: 'youtube', title: 'Forged format', url: 'https://youtu.be/studioN0004',
+        sourceOrigin: 'takeout-import', contentFormat: 'plain', permissionAcknowledged: true,
+      }),
+    ];
+
+    const results = await Promise.all(attempts);
+    expect(results.every((result) => !result.ok)).toBe(true);
+    expect(await listSources(workspace.id)).toEqual([]);
+    expect(await getDb().lessons.where('workspaceId').equals(workspace.id).toArray()).toEqual([]);
+  });
+
   it('rolls back a content-bearing source when transcript persistence fails', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Atomic source creation' }));
     const proofBefore = await listProofEvents(workspace.id);

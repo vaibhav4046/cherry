@@ -10,7 +10,7 @@ import { sha256Text } from '../core/hash.ts';
 import { isYouTubeFamilyHost, parseYouTubeUrl } from '../watch/youtube-url.ts';
 import { parseTranscript } from '../watch/transcript-parser.ts';
 import type { Lesson, TranscriptSegment, TranscriptSource } from '../watch/watch-model.ts';
-import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceRecord } from './source-model.ts';
+import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceOrigin, SourceRecord } from './source-model.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
 const TRACKING_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'mc_cid', 'mc_eid']);
@@ -44,6 +44,7 @@ export interface CreateSourceInput {
   content?: string;
   contentFormat?: SourceContentFormat;
   fetchMethod?: CreateSourceFetchMethod;
+  sourceOrigin?: SourceOrigin;
   permissionAcknowledged?: boolean;
   permissionNote?: string;
 }
@@ -59,6 +60,7 @@ const createSchema = z.object({
   content: z.string().max(MAX_CONTENT).optional(),
   contentFormat: z.enum(['plain', 'markdown', 'json', 'srt', 'vtt']).optional(),
   fetchMethod: z.enum(['user_paste', 'upload', 'local_transcription']).optional(),
+  sourceOrigin: z.enum(['manual', 'takeout-import']).default('manual'),
   permissionAcknowledged: z.boolean().default(false),
   permissionNote: z.string().trim().max(1000).optional(),
 });
@@ -103,7 +105,14 @@ function isPrivateHost(host: string): boolean {
 }
 
 function sourceEventPayload(source: SourceRecord): Record<string, string | null> {
-  return { kind: source.kind, lessonId: source.lessonId, urlDomain: urlDomain(source.url), contentFormat: source.contentFormat, contentHash: source.contentHash };
+  return {
+    kind: source.kind,
+    lessonId: source.lessonId,
+    urlDomain: urlDomain(source.url),
+    contentFormat: source.contentFormat,
+    contentHash: source.contentHash,
+    sourceOrigin: source.sourceOrigin ?? 'manual',
+  };
 }
 
 function transcriptSourceForFetchMethod(fetchMethod: CreateSourceFetchMethod | undefined): TranscriptSource {
@@ -134,6 +143,15 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
   if (!normalized.ok) return normalized;
   const url = normalized.value;
   const content = data.content?.trim() || null;
+  if (data.sourceOrigin === 'takeout-import' && (
+    actorType !== 'human'
+    || data.kind !== 'youtube'
+    || content !== null
+    || data.fetchMethod !== undefined
+    || data.contentFormat !== undefined
+  )) {
+    return invalid('YouTube history provenance is only valid for a transcriptless source selected by a person');
+  }
   if ((data.kind === 'youtube' || data.kind === 'article' || data.kind === 'file') && !data.permissionAcknowledged) {
     return invalid('Acknowledge that you are permitted to use this source before saving it', { field: 'permissionAcknowledged' });
   }
@@ -170,6 +188,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
     fetchStatus: 'not_requested',
     fetchMethod,
     fetchedAt: null, fetchError: null,
+    sourceOrigin: data.sourceOrigin,
     permissionAcknowledgedAt: data.permissionAcknowledged ? now : null,
     permissionNote: data.permissionNote ?? null, createdAt: now, updatedAt: now,
   };

@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createWorkspace } from '../../cherry/mission/mission-service.ts';
 import { bookmarkletHref, bookmarkletOrigin, ingestDraftFromSearch } from '../../cherry/source/ingest.ts';
+import {
+  MAX_WATCH_HISTORY_FILE_BYTES,
+  parsePastedYouTubeUrls,
+  parseTakeoutWatchHistory,
+  rankWatchHistoryCandidates,
+  type WatchHistoryCandidate,
+  type WatchHistoryParse,
+} from '../../cherry/source/watch-history.ts';
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
@@ -61,7 +69,15 @@ export default function Sources() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyCandidates, setHistoryCandidates] = useState<WatchHistoryCandidate[]>([]);
+  const [historySummary, setHistorySummary] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyPermission, setHistoryPermission] = useState(false);
+  const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const historyFileRef = useRef<HTMLInputElement | null>(null);
+  const historyPasteFormRef = useRef<HTMLFormElement | null>(null);
   const permissionRef = useRef<HTMLInputElement | null>(null);
   const installBookmarklet = useCallback((node: HTMLAnchorElement | null) => {
     // React sanitizes javascript: values in JSX. Install the deterministic,
@@ -97,6 +113,92 @@ export default function Sources() {
     return true;
   }), [filter, sources]);
 
+  async function workspaceIdForSave(): Promise<string> {
+    if (activeWorkspace?.id) return activeWorkspace.id;
+    const workspace = await createWorkspace({ name: 'My skills' });
+    if (!workspace.ok) throw new Error(workspace.error.message);
+    return workspace.value.id;
+  }
+
+  function clearHistoryImport() {
+    setHistoryCandidates([]);
+    setHistorySummary(null);
+    setHistoryError(null);
+    setHistoryPermission(false);
+    setSavingCandidateId(null);
+    if (historyFileRef.current) historyFileRef.current.value = '';
+    historyPasteFormRef.current?.reset();
+  }
+
+  function closeHistoryImport() {
+    setHistoryOpen(false);
+    clearHistoryImport();
+  }
+
+  function showHistoryCandidates(parsed: WatchHistoryParse) {
+    const candidates = rankWatchHistoryCandidates(parsed.entries);
+    setHistoryCandidates(candidates);
+    setHistorySummary(`${parsed.entries.length} usable ${parsed.entries.length === 1 ? 'entry' : 'entries'} · ${parsed.skippedRows} skipped`);
+    setHistoryPermission(false);
+    setHistoryError(candidates.length ? null : 'No usable YouTube entries were found. Choose a valid Takeout JSON file or paste official YouTube links.');
+  }
+
+  async function readHistoryFile(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    setHistoryCandidates([]); setHistorySummary(null); setHistoryPermission(false); setHistoryError(null);
+    historyPasteFormRef.current?.reset();
+    if (!file) return;
+    if (file.size > MAX_WATCH_HISTORY_FILE_BYTES) {
+      setHistoryError('The history file is larger than 16 MiB. Export a smaller date range and try again.');
+      input.value = '';
+      return;
+    }
+    try {
+      const parsed = parseTakeoutWatchHistory(await file.text());
+      input.value = '';
+      if (!parsed.ok) { setHistoryError(`${parsed.error.message}. Choose a valid Takeout JSON file and try again.`); return; }
+      showHistoryCandidates(parsed.value);
+    } catch {
+      input.value = '';
+      setHistoryError('The history file could not be read. Choose the JSON file again.');
+    }
+  }
+
+  function reviewPastedUrls(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const raw = String(form.get('historyUrls') ?? '');
+    if (!raw.trim()) { setHistoryCandidates([]); setHistorySummary(null); setHistoryError('Paste at least one official YouTube URL.'); return; }
+    showHistoryCandidates(parsePastedYouTubeUrls(raw));
+  }
+
+  async function saveHistoryCandidate(candidate: WatchHistoryCandidate) {
+    if (!historyPermission || savingCandidateId) return;
+    setSavingCandidateId(candidate.id); setHistoryError(null); setError(null); setNotice(null);
+    try {
+      const workspaceId = await workspaceIdForSave();
+      const created = await createSource({
+        workspaceId,
+        kind: 'youtube',
+        title: candidate.representative.title,
+        ...(candidate.representative.channel ? { creator: candidate.representative.channel } : {}),
+        url: candidate.representative.canonicalUrl,
+        sourceOrigin: 'takeout-import',
+        permissionAcknowledged: true,
+        permissionNote: 'Selected from local YouTube history.',
+      });
+      if (!created.ok) throw new Error(created.error.message);
+      closeHistoryImport();
+      setNotice('Source saved locally. Add a transcript when you are ready to create the skill.');
+      await reload(workspaceId); await refresh();
+    } catch (thrown) {
+      const message = (thrown as Error).message;
+      setHistoryError(message.includes('already exists') ? 'This source is already in your inbox. Choose another suggestion.' : message);
+      setSavingCandidateId(null);
+    }
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -107,12 +209,7 @@ export default function Sources() {
     if (file && kind === 'file') content = await file.text();
     setBusy(true); setError(null); setNotice(null);
     try {
-      let workspaceId = activeWorkspace?.id;
-      if (!workspaceId) {
-        const workspace = await createWorkspace({ name: 'My skills' });
-        if (!workspace.ok) throw new Error(workspace.error.message);
-        workspaceId = workspace.value.id;
-      }
+      const workspaceId = await workspaceIdForSave();
       const created = await createSource({
         workspaceId, kind, title: title || (file?.name ?? KIND_COPY[kind].label),
         ...(String(form.get('creator') ?? '').trim() ? { creator: String(form.get('creator')).trim() } : {}),
@@ -207,6 +304,18 @@ export default function Sources() {
         </section>
       ) : null}
 
+      {!isIngestRoute ? (
+        <section className="card stack" aria-labelledby="history-heading">
+          <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
+            <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+              <h2 id="history-heading" className="subhead" style={{ margin: 0 }}>Find patterns in your YouTube history</h2>
+              <p style={{ margin: 0 }}>Choose your Takeout file locally. Cherry suggests source links, and you decide which one to save.</p>
+            </div>
+            <button type="button" className="btn" onClick={() => { clearHistoryImport(); setOpen(false); setHistoryOpen(true); }}>Import YouTube history</button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="card stack" aria-labelledby="source-controls-heading">
         <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
           <h2 id="source-controls-heading" className="subhead" style={{ margin: 0 }}>Your materials</h2>
@@ -214,10 +323,53 @@ export default function Sources() {
             {([['all', 'All'], ['needs', 'Needs transcript'], ['ready', 'Ready for skill'], ['archived', 'Archived']] as const).map(([value, label]) => <button key={value} type="button" className={`btn btn-sm ${filter === value ? 'btn-primary' : ''}`} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
           </div>
         </div>
-        {visible.length === 0 ? <div className="empty-state" style={{ padding: 'var(--sp-8) var(--sp-4)' }}><SourceIcon kind="article" size={30} /><h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3><p>Choose a source, paste what you are permitted to use, and Cherry will preserve its provenance.</p><div className="row"><button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div></div> : <div className="source-grid">{visible.map((source) => { const status = statusLabel(source); return <article key={source.id} className="card source-card" data-testid="source-card"><div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}><span className="source-kind-icon"><SourceIcon kind={source.kind} /></span><span className={status.className}>{status.text}</span></div><div className="stack" style={{ gap: 4 }}><h3 style={{ margin: 0 }}>{source.title}</h3><p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>{source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Private to this workspace</span>}</div><p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>{source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{source.fetchError}</p> : null}<div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{source.status !== 'archived' ? <><Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Open lesson</Link><button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button>{source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}<button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button></> : <span className="label">Recoverable archive</span>}</div></article>; })}</div>}
+        {visible.length === 0 ? <div className="empty-state" style={{ padding: 'var(--sp-8) var(--sp-4)' }}><SourceIcon kind="article" size={30} /><h3 className="subhead" style={{ margin: 0 }}>Nothing here yet</h3><p>Choose a source, paste what you are permitted to use, and Cherry will preserve where it came from.</p><div className="row"><button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>Save a source</button><Link to="/studio/quick" className="btn">Open Quick Skill</Link></div></div> : <div className="source-grid">{visible.map((source) => { const status = statusLabel(source); return <article key={source.id} className="card source-card" data-testid="source-card"><div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}><span className="source-kind-icon"><SourceIcon kind={source.kind} /></span><span className={status.className}>{status.text}</span></div><div className="stack" style={{ gap: 4 }}><h3 style={{ margin: 0 }}>{source.title}</h3><p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>{source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}{source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Private to this workspace</span>}</div><p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>{source.fetchError ? <p className="field-error" style={{ margin: 0 }}>{source.fetchError}</p> : null}<div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{source.status !== 'archived' ? <><Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Open lesson</Link><button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button>{source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}<button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button></> : <span className="label">Recoverable archive</span>}</div></article>; })}</div>}
       </section>
 
       <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>A deliberate trust boundary</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A URL is metadata until you click a permitted fetch, and any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof ledger</Link></div></section>
+
+      <dialog open={historyOpen} className="sheet source-dialog" aria-labelledby="history-import-title" onClick={(event) => { if (event.target === event.currentTarget) closeHistoryImport(); }}>
+        <div className="stack" style={{ gap: 'var(--sp-4)' }}>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="label">Local suggestions</span>
+              <h2 id="history-import-title" className="subhead" style={{ margin: 0 }}>Import your YouTube history</h2>
+              <p style={{ margin: 0 }}>Nothing uploads anywhere.</p>
+            </div>
+            <button type="button" className="btn btn-sm" onClick={closeHistoryImport} aria-label="Close YouTube history import">{Icons.close(16)}</button>
+          </div>
+          <p style={{ margin: 0 }}>Choose the JSON file from Google Takeout. Cherry reads up to 16 MiB in this tab and keeps only the source you choose.</p>
+          <label className="field"><span>YouTube Takeout JSON</span><input ref={historyFileRef} type="file" accept=".json,application/json" onChange={(event) => void readHistoryFile(event)} /></label>
+          <div className="row" aria-hidden="true" style={{ gap: 'var(--sp-3)', alignItems: 'center' }}><span style={{ flex: 1, borderTop: '1px solid var(--color-pebble)' }} /><span className="label">or</span><span style={{ flex: 1, borderTop: '1px solid var(--color-pebble)' }} /></div>
+          <form ref={historyPasteFormRef} className="stack" style={{ gap: 'var(--sp-3)' }} onSubmit={reviewPastedUrls}>
+            <label className="field"><span>Or paste YouTube URLs</span><textarea className="textarea" name="historyUrls" rows={4} maxLength={MAX_WATCH_HISTORY_FILE_BYTES} placeholder="One official YouTube URL per line" /></label>
+            <div className="row" style={{ justifyContent: 'flex-end' }}><button type="submit" className="btn btn-sm">Review URLs</button></div>
+          </form>
+          {historyError ? <p className="field-error" role="alert">{historyError}</p> : null}
+          {historySummary ? <p className="label" role="status" style={{ margin: 0 }}>{historySummary}</p> : null}
+          {historyCandidates.length ? (
+            <div className="stack" style={{ gap: 'var(--sp-3)' }}>
+              <label className="check-row"><input type="checkbox" checked={historyPermission} onChange={(event) => setHistoryPermission(event.currentTarget.checked)} /><span>I have permission to save source links I choose. Cherry records this acknowledgement; it does not verify ownership.</span></label>
+              {!historyPermission ? <p className="label" style={{ margin: 0 }}>Confirm permission before saving a source.</p> : null}
+              <div className="stack" style={{ gap: 'var(--sp-3)', maxHeight: 'min(45vh, 520px)', overflowY: 'auto' }}>
+                {historyCandidates.map((candidate) => (
+                  <article key={candidate.id} className="card stack" data-testid="watch-history-candidate" style={{ gap: 'var(--sp-2)' }}>
+                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
+                      <div className="stack" style={{ gap: 4, minWidth: 0 }}>
+                        <span className="label">{candidate.kind === 'channel' ? 'Channel pattern' : candidate.kind === 'keyword' ? 'Topic pattern' : 'Source suggestion'}</span>
+                        <h3 className="subhead" style={{ margin: 0, overflowWrap: 'anywhere' }}>{candidate.label}</h3>
+                        <p style={{ margin: 0 }}>{candidate.reason}</p>
+                        <p className="label" style={{ margin: 0, overflowWrap: 'anywhere' }}>Source: {candidate.representative.title}</p>
+                      </div>
+                      <button type="button" className="btn btn-sm" disabled={!historyPermission || savingCandidateId !== null} onClick={() => void saveHistoryCandidate(candidate)}>{savingCandidateId === candidate.id ? 'Saving…' : `Save ${candidate.label} source`}</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </dialog>
 
       <dialog open={open} className="sheet source-dialog" aria-labelledby="save-source-title" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
         <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)}>
