@@ -218,29 +218,30 @@ export async function importSourceTranscript(
   const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
   const parsed = parseTranscript(content, fileName);
   if (!parsed.ok) return parsed as Result<{ source: SourceRecord; segmentCount: number; totalSegments: number }>;
-  const db = getDb(); const lesson = await db.lessons.get(current.lessonId);
-  if (!lesson) return notFound('Lesson', current.lessonId);
-  const existing = mode === 'append' ? await db.transcriptSegments.where('lessonId').equals(lesson.id).toArray() : [];
-  const existingEnd = existing.reduce((max, segment) => Math.max(max, segment.endSeconds), 0);
-  const firstStart = parsed.value.segments[0]?.startSeconds ?? 0;
-  const offset = mode === 'append' && firstStart < existingEnd ? existingEnd + 2 : 0;
+  const contentHash = await sha256Text(content.trim());
   const now = isoNow();
-  const segments: TranscriptSegment[] = parsed.value.segments.map((segment) => ({ id: newId('seg'), workspaceId: lesson.workspaceId, lessonId: lesson.id, index: existing.length + segment.index, startSeconds: segment.startSeconds + offset, endSeconds: segment.endSeconds + offset, text: segment.text, source: transcriptSource }));
-  const nextLesson: Lesson = { ...lesson, transcriptSource, transcriptImportedAt: now, revision: lesson.revision + 1, updatedAt: now };
-  // A SourceRecord represents one selected source. On append, retain its prior
-  // hash/method rather than falsely relabelling it as the newest chunk.
-  const nextSource: SourceRecord = mode === 'append' && current.contentHash
-    ? { ...current, updatedAt: now }
-    : { ...current, status: 'ready', contentFormat: parsed.value.format, contentHash: await sha256Text(content.trim()), fetchMethod: transcriptSource === 'user_upload' ? 'upload' : transcriptSource === 'local_transcription' ? 'local_transcription' : 'user_paste', fetchStatus: 'not_requested', fetchError: null, updatedAt: now };
+  let outcome: { source: SourceRecord; segmentCount: number; totalSegments: number } | null = null;
   await withWorkspaceTx(current.workspaceId, ['sourceRecords', 'lessons', 'transcriptSegments'], async (ctx) => {
+    const anchor = await ctx.db.sourceRecords.get(sourceId); if (!anchor) throw new Error('Source disappeared while importing transcript');
+    const lesson = await ctx.db.lessons.get(anchor.lessonId); if (!lesson) throw new Error('Lesson disappeared while importing transcript');
+    const existing = mode === 'append' ? await ctx.db.transcriptSegments.where('lessonId').equals(lesson.id).toArray() : [];
+    const existingEnd = existing.reduce((max, segment) => Math.max(max, segment.endSeconds), 0);
+    const firstStart = parsed.value.segments[0]?.startSeconds ?? 0;
+    const offset = mode === 'append' && firstStart < existingEnd ? existingEnd + 2 : 0;
+    const segments: TranscriptSegment[] = parsed.value.segments.map((segment) => ({ id: newId('seg'), workspaceId: lesson.workspaceId, lessonId: lesson.id, index: existing.length + segment.index, startSeconds: segment.startSeconds + offset, endSeconds: segment.endSeconds + offset, text: segment.text, source: transcriptSource }));
+    const nextLesson: Lesson = { ...lesson, transcriptSource, transcriptImportedAt: now, revision: lesson.revision + 1, updatedAt: now };
+    const nextSource: SourceRecord = { ...anchor, status: 'ready', contentFormat: parsed.value.format, contentHash, fetchMethod: transcriptSource === 'user_upload' ? 'upload' : transcriptSource === 'local_transcription' ? 'local_transcription' : 'user_paste', fetchStatus: 'not_requested', fetchError: null, updatedAt: now };
     if (mode === 'replace') await ctx.db.transcriptSegments.where('lessonId').equals(lesson.id).delete();
     await ctx.db.transcriptSegments.bulkAdd(segments);
     await ctx.db.lessons.put(nextLesson);
-    await ctx.db.sourceRecords.put(nextSource);
-    ctx.emit({ type: 'lesson.transcript_imported', actorType, objectType: 'lesson', objectId: lesson.id, summary: `Transcript ${mode === 'append' ? 'source added' : 'imported'} (${segments.length} segments, source: ${transcriptSource})`, payload: { segmentCount: segments.length, source: transcriptSource, format: parsed.value.format, mode } });
-    ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Transcript saved for "${nextSource.title}"`, payload: sourceEventPayload(nextSource) });
+    if (mode === 'replace') {
+      await ctx.db.sourceRecords.put(nextSource);
+      ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Transcript saved for "${nextSource.title}"`, payload: sourceEventPayload(nextSource) });
+    }
+    ctx.emit({ type: 'lesson.transcript_imported', actorType, objectType: 'lesson', objectId: lesson.id, summary: `Transcript ${mode === 'append' ? 'source added' : 'imported'} (${segments.length} segments, source: ${transcriptSource})`, payload: { segmentCount: segments.length, source: transcriptSource, format: parsed.value.format, contentHash, sourceId, acquisition: transcriptSource, mode } });
+    outcome = { source: mode === 'append' ? anchor : nextSource, segmentCount: segments.length, totalSegments: existing.length + segments.length };
   });
-  return ok({ source: nextSource, segmentCount: segments.length, totalSegments: existing.length + segments.length });
+  return ok(outcome!);
 }
 
 export async function failSourceFetch(sourceId: string, reason: string, actorType: ActorType = 'runner'): Promise<Result<SourceRecord>> {

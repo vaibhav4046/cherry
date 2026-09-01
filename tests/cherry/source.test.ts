@@ -142,6 +142,17 @@ describe('source inbox domain', () => {
     expect(unwrap(await importSourceTranscript(local.id, '0:05 Create the local method.', 'local_transcription')).source.fetchMethod).toBe('local_transcription');
   });
 
+  it('preserves anchor source metadata and records appended acquisition metadata', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Append metadata' }));
+    const source = unwrap(await createSource({ workspaceId: workspace.id, kind: 'article', title: 'Article', url: 'https://example.com/article', permissionAcknowledged: true }));
+    const initial = unwrap(await importSourceTranscript(source.id, '0:05 Create the first method.', 'user_text')).source;
+    const appendedText = '0:40 Check the uploaded method.';
+    const appended = unwrap(await importSourceTranscript(source.id, appendedText, 'user_upload', 'notes.txt', 'human', 'append'));
+    expect(appended.source).toEqual(initial);
+    const event = (await listProofEvents(workspace.id)).filter((item) => item.type === 'lesson.transcript_imported').at(-1);
+    expect(event?.payload).toMatchObject({ sourceId: source.id, acquisition: 'user_upload', format: 'plain', contentHash: await sha256Text(appendedText), mode: 'append' });
+  });
+
   it('exports and imports source records with their lesson references remapped', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Portable sources' }));
     const original = unwrap(await createSource({
