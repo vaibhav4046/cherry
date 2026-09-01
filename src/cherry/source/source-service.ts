@@ -231,7 +231,15 @@ export async function updateSource(sourceId: string, patch: UpdateSourcePatch, a
 }
 
 export async function archiveSource(sourceId: string, actorType: ActorType = 'human'): Promise<Result<SourceRecord>> {
-  return updateSource(sourceId, { status: 'archived' }, actorType);
+  const current = await getSource(sourceId); if (!current) return notFound('Source', sourceId);
+  return withWorkspaceTx(current.workspaceId, ['sourceRecords'], async (ctx) => {
+    const anchor = await ctx.db.sourceRecords.get(sourceId);
+    if (!anchor) return notFound('Source', sourceId);
+    const next: SourceRecord = { ...anchor, status: 'archived', updatedAt: isoNow() };
+    await ctx.db.sourceRecords.put(next);
+    ctx.emit({ type: 'source.updated', actorType, objectType: 'source', objectId: sourceId, summary: `Source "${next.title}" updated`, payload: sourceEventPayload(next) });
+    return ok(next);
+  });
 }
 
 export async function requestSourceFetch(sourceId: string, actorType: ActorType = 'human'): Promise<Result<SourceRecord>> {

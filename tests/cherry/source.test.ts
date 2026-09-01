@@ -180,6 +180,49 @@ describe('source inbox domain', () => {
     expect(await getDb().sourceRecords.get(source.id)).toEqual(fetched);
   });
 
+  it('archives the authoritative fetched record when completion wins the inverse race', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Completion before archive' }));
+    const source = unwrap(await createSource({
+      workspaceId: workspace.id, kind: 'article', title: 'Completed then archived', url: 'https://example.com/completed-then-archived', permissionAcknowledged: true,
+    }));
+    const queued = unwrap(await requestSourceFetch(source.id));
+    const markdown = '# Finished first\n\nPreserve this completed fetch when archiving.';
+    const contentHash = await sha256Text(markdown);
+    const fetched = unwrap(await completeSourceFetch(source.id, { markdown, contentHash }));
+    const lessonAfterCompletion = await getDb().lessons.get(source.lessonId);
+    const transcriptAfterCompletion = await listTranscript(source.lessonId);
+    const proofAfterCompletion = await listProofEvents(workspace.id);
+    const staleRead = vi.spyOn(getDb().sourceRecords, 'get').mockResolvedValueOnce(queued);
+
+    let archived: Awaited<ReturnType<typeof archiveSource>>;
+    try {
+      archived = await archiveSource(source.id);
+    } finally {
+      staleRead.mockRestore();
+    }
+
+    expect(archived).toMatchObject({
+      ok: true,
+      value: {
+        status: 'archived', fetchStatus: 'fetched', fetchMethod: 'scrapling_fetch', contentHash,
+        fetchedAt: fetched.fetchedAt, lessonId: source.lessonId,
+      },
+    });
+    if (!archived.ok) return;
+    expect(await getDb().sourceRecords.get(source.id)).toEqual(archived.value);
+    expect(await getDb().lessons.get(source.lessonId)).toEqual(lessonAfterCompletion);
+    expect(fetched.fetchedAt).not.toBeNull();
+    expect(lessonAfterCompletion?.transcriptImportedAt).toBe(fetched.fetchedAt);
+    expect(await listTranscript(source.lessonId)).toEqual(transcriptAfterCompletion);
+    expect(transcriptAfterCompletion).toHaveLength(2);
+    expect(proofAfterCompletion.slice(-2).map((event) => event.type)).toEqual(['lesson.transcript_imported', 'source.fetch_completed']);
+    const proofAfterArchive = await listProofEvents(workspace.id);
+    expect(proofAfterArchive.slice(0, -1)).toEqual(proofAfterCompletion);
+    expect(proofAfterArchive.at(-1)).toMatchObject({
+      type: 'source.updated', objectId: source.id, payload: { contentHash, lessonId: source.lessonId },
+    });
+  });
+
   it('does not complete a queued fetch after its source is archived', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Archived fetch completion' }));
     const source = unwrap(await createSource({
