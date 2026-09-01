@@ -336,6 +336,20 @@ describe('source inbox domain', () => {
     expect((await listTranscript(created.value.lessonId))[0]?.source).toBe('local_transcription');
   });
 
+  it('does not record a permission assertion for a private note', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Private notes' }));
+    const created = unwrap(await createSource({
+      workspaceId: workspace.id,
+      kind: 'note',
+      title: 'Review loop',
+      content: 'Check the evidence.',
+      contentFormat: 'plain',
+    }));
+
+    expect(created.permissionAcknowledgedAt).toBeNull();
+    expect((await getDb().lessons.get(created.lessonId))?.permissionAcknowledgedAt).toBeNull();
+  });
+
   it('rolls back a content-bearing source when transcript persistence fails', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Atomic source creation' }));
     const proofBefore = await listProofEvents(workspace.id);

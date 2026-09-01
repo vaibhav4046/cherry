@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { createWorkspace } from '../../cherry/mission/mission-service.ts';
+import { bookmarkletHref, bookmarkletOrigin, ingestDraftFromSearch } from '../../cherry/source/ingest.ts';
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
@@ -41,24 +42,54 @@ function domainOf(url: string | null): string | null {
 
 export default function Sources() {
   const { activeWorkspace, refresh } = useAppState();
+  const location = useLocation();
   const navigate = useNavigate();
+  const isIngestRoute = location.pathname === '/ingest';
+  const ingestDraft = useMemo(
+    () => ingestDraftFromSearch(isIngestRoute ? location.search : ''),
+    [isIngestRoute, location.search],
+  );
+  const bookmarklet = useMemo(
+    () => bookmarkletHref(bookmarkletOrigin(window.location.origin)),
+    [],
+  );
   const [sources, setSources] = useState<SourceRecord[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
-  const [open, setOpen] = useState(false);
-  const [kind, setKind] = useState<SourceKind>('youtube');
+  const [open, setOpen] = useState(Boolean(ingestDraft));
+  const [kind, setKind] = useState<SourceKind>(ingestDraft?.kind ?? 'youtube');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [runnerReady, setRunnerReady] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const permissionRef = useRef<HTMLInputElement | null>(null);
+  const bookmarkletRef = useRef<HTMLAnchorElement | null>(null);
 
-  async function reload() {
-    if (!activeWorkspace) { setSources([]); return; }
-    setSources(await listSources(activeWorkspace.id, { includeArchived: true }));
+  async function reload(workspaceId = activeWorkspace?.id) {
+    if (!workspaceId) { setSources([]); return; }
+    setSources(await listSources(workspaceId, { includeArchived: true }));
   }
 
   useEffect(() => { void reload(); }, [activeWorkspace?.id]);
-  useEffect(() => { void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true)); }, []);
+  useEffect(() => {
+    if (isIngestRoute) return;
+    void runnerStatus().then((status) => setRunnerReady(status.paired && status.scraplingReady === true));
+  }, [isIngestRoute]);
+  useEffect(() => {
+    if (!ingestDraft) return;
+    setKind(ingestDraft.kind);
+    setOpen(true);
+  }, [ingestDraft]);
+  useEffect(() => {
+    if (!open || !ingestDraft?.requiresPermission) return;
+    const frame = window.requestAnimationFrame(() => permissionRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [ingestDraft, open]);
+  useEffect(() => {
+    // React blocks javascript: values passed through JSX. This exact local-only
+    // helper is deliberately installed as a DOM attribute for drag-to-bookmarks.
+    bookmarkletRef.current?.setAttribute('href', bookmarklet);
+  }, [bookmarklet]);
 
   const visible = useMemo(() => sources.filter((source) => {
     if (filter === 'archived') return source.status === 'archived';
@@ -80,7 +111,7 @@ export default function Sources() {
     try {
       let workspaceId = activeWorkspace?.id;
       if (!workspaceId) {
-        const workspace = await createWorkspace({ name: 'My Cherry sources' });
+        const workspace = await createWorkspace({ name: 'My skills' });
         if (!workspace.ok) throw new Error(workspace.error.message);
         workspaceId = workspace.value.id;
       }
@@ -94,9 +125,9 @@ export default function Sources() {
       });
       if (!created.ok) throw new Error(created.error.message);
       setOpen(false); setNotice('Source saved locally. Review it before turning it into a skill.');
-      await reload(); await refresh();
+      await reload(workspaceId); await refresh();
       event.currentTarget.reset();
-      setKind('youtube');
+      setKind(ingestDraft?.kind ?? 'youtube');
     } catch (thrown) {
       const message = (thrown as Error).message;
       setError(message);
@@ -165,6 +196,19 @@ export default function Sources() {
       {error ? <p className="field-error" role="alert">{error}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
 
+      {!isIngestRoute ? (
+        <section className="card stack" aria-labelledby="bookmarklet-heading">
+          <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
+            <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+              <h2 id="bookmarklet-heading" className="subhead" style={{ margin: 0 }}>Save from any page</h2>
+              <p style={{ margin: 0 }}>Works on any page you're viewing. Cherry only receives the address and title you send it.</p>
+              <p className="label" style={{ margin: 0 }}>A browser extension is not part of this sprint.</p>
+            </div>
+            <a ref={bookmarkletRef} className="btn" draggable>Save to Cherry</a>
+          </div>
+        </section>
+      ) : null}
+
       <section className="card stack" aria-labelledby="source-controls-heading">
         <div className="row" style={{ justifyContent: 'space-between', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
           <h2 id="source-controls-heading" className="subhead" style={{ margin: 0 }}>Your materials</h2>
@@ -178,14 +222,14 @@ export default function Sources() {
       <section className="card source-boundary stack" aria-labelledby="boundary-heading"><h2 id="boundary-heading" className="subhead" style={{ margin: 0 }}>A deliberate trust boundary</h2><p style={{ margin: 0 }}>Cherry never watches every video, scrapes LinkedIn, downloads YouTube captions, or runs a background crawler. A URL is metadata until you click a permitted fetch, and any fetched page still needs your review before it can become an approved skill.</p><div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><Link className="btn btn-sm" to="/studio/settings/connections">Check local runner</Link><Link className="btn btn-sm" to="/studio/proof">View proof ledger</Link></div></section>
 
       <dialog open={open} className="sheet source-dialog" aria-labelledby="save-source-title" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-        <form method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)}>
+        <form key={isIngestRoute ? location.search : 'manual-source'} method="dialog" className="stack" style={{ gap: 'var(--sp-4)' }} onSubmit={(event) => void save(event)}>
           <div className="row" style={{ justifyContent: 'space-between' }}><div><span className="label">New material</span><h2 id="save-source-title" className="subhead" style={{ margin: 0 }}>Save a source</h2></div><button type="button" className="btn btn-sm" onClick={() => setOpen(false)} aria-label="Close save source dialog">{Icons.close(16)}</button></div>
           <fieldset className="source-kind-grid"><legend className="label">Choose the source type</legend>{(Object.keys(KIND_COPY) as SourceKind[]).map((candidate) => <button key={candidate} type="button" className={`source-kind-option ${kind === candidate ? 'is-selected' : ''}`} aria-pressed={kind === candidate} onClick={() => setKind(candidate)}><SourceIcon kind={candidate} size={24} /><strong>{KIND_COPY[candidate].label}</strong><span>{KIND_COPY[candidate].detail}</span></button>)}</fieldset>
-          <label className="field"><span>Title</span><input name="title" className="input" required maxLength={300} placeholder="What should your agents learn?" /></label>
-          <div className="row" style={{ gap: 'var(--sp-3)' }}><label className="field" style={{ flex: 1 }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label><label className="field" style={{ flex: 1 }}><span>URL <small>(metadata only)</small></span><input name="url" className="input" type="url" maxLength={2048} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} /></label></div>
-          {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" accept=".txt,.md,.json,.srt,.vtt,text/plain,text/markdown,application/json" /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
-          <label className="check-row"><input type="checkbox" name="permission" required={kind !== 'note'} /><span>I have permission to use this material, or it is my own note. Cherry records this acknowledgement; it does not verify ownership.</span></label>
-          <label className="field"><span>Permission note <small>(optional)</small></span><input name="permissionNote" className="input" maxLength={1000} placeholder="e.g. my export, public license, or team permission" /></label>
+          <label className="field"><span>Title</span><input name="title" className="input" required maxLength={300} defaultValue={ingestDraft?.title ?? ''} placeholder="What should your agents learn?" /></label>
+          <div className="row" style={{ gap: 'var(--sp-3)' }}><label className="field" style={{ flex: 1 }}><span>Creator <small>(optional)</small></span><input name="creator" className="input" maxLength={200} placeholder="Name or publication" /></label><label className="field" style={{ flex: 1 }}><span>URL <small>(metadata only)</small></span><input name="url" className="input" type="url" maxLength={2048} defaultValue={ingestDraft?.url ?? ''} placeholder={kind === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://example.com/article'} /></label></div>
+          {kind === 'file' ? <label className="field"><span>Text file</span><input ref={fileRef} name="file" type="file" accept=".txt,.md,.json,.srt,.vtt,text/plain,text/markdown,application/json" /></label> : <label className="field"><span>{kind === 'youtube' ? 'Transcript (optional)' : kind === 'note' ? 'Note' : 'Body or permitted export (optional)'}</span><textarea name="content" className="textarea" rows={6} maxLength={2 * 1024 * 1024} defaultValue={ingestDraft?.text ?? ''} placeholder={kind === 'youtube' ? 'Paste the transcript from the official player…' : 'Paste or write the material you are permitted to use…'} /></label>}
+          {kind !== 'note' ? <label className="check-row"><input ref={permissionRef} type="checkbox" name="permission" required /><span>I have permission to use this material. Cherry records this acknowledgement; it does not verify ownership.</span></label> : null}
+          {kind !== 'note' ? <label className="field"><span>Permission note <small>(optional)</small></span><input name="permissionNote" className="input" maxLength={1000} placeholder="e.g. my export, public license, or team permission" /></label> : null}
           <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save locally'}</button></div>
         </form>
       </dialog>

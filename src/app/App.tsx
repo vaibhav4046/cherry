@@ -46,6 +46,9 @@ export function App() {
         <Route path="/showcase" element={<Showcase />} />
         <Route path="/compatibility" element={<Compatibility />} />
         <Route path="/connect" element={<Connect />} />
+        <Route path="/ingest" element={<StudioLayout />}>
+          <Route index element={<Sources />} />
+        </Route>
         <Route path="/studio" element={<StudioLayout />}>
           <Route index element={<CommandCenter />} />
           <Route path="onboarding" element={<Onboarding />} />

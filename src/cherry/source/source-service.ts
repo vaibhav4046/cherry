@@ -157,7 +157,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
     videoId: parsedYouTube?.ok ? parsedYouTube.value.videoId : null,
     canonicalUrl: parsedYouTube?.ok ? parsedYouTube.value.canonicalUrl : null,
     creator: data.creator ?? null, kind: data.kind === 'youtube' ? 'youtube' : 'manual', durationSeconds: null,
-    permissionAcknowledgedAt: data.permissionAcknowledged || data.kind === 'note' ? now : null,
+    permissionAcknowledgedAt: data.permissionAcknowledged ? now : null,
     coverageCriteria: [], lastPositionSeconds: 0,
     transcriptSource: content ? transcriptSource : null, transcriptImportedAt: content ? now : null,
     revision: content ? 2 : 1, createdAt: now, updatedAt: now,
@@ -170,7 +170,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
     fetchStatus: 'not_requested',
     fetchMethod,
     fetchedAt: null, fetchError: null,
-    permissionAcknowledgedAt: data.permissionAcknowledged || data.kind === 'note' ? now : null,
+    permissionAcknowledgedAt: data.permissionAcknowledged ? now : null,
     permissionNote: data.permissionNote ?? null, createdAt: now, updatedAt: now,
   };
   const segments: TranscriptSegment[] = parsedContent?.ok ? parsedContent.value.segments.map((segment) => ({
