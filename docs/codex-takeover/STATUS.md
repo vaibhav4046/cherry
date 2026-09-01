@@ -38,3 +38,5 @@ Updated: 2026-08-30 (phase 2 complete) · main @ ff07b8f · live: getcherry.verc
 
 2026-09-01 00:20 claude PACK PUBLISHED — master directive + tickets T1-T7 in docs/codex-takeover/; production restored (blank-page incident closed at c450b50); Codex lane: start T1
 2026-09-01 00:25 claude WINE IDENTITY DEPLOYED — 6ac8acb live (dpl_4XrzghKZH4), render-verified; landing/nav/CTAs now cherry wine; incident fix c450b50 also live
+2026-09-01 01:05 codex  T1 DONE 991255b — typecheck, lint, unit, runner, build, focused e2e green
+2026-09-01 01:05 claude SPRINT 2 PUBLISHED — 08_SPRINT2_ULTIMATUM.md adds T8-T14 (starter library, uncut demo recording, live Codex MCP self-validation, UI inspection sweep, perf/meta, add-anything menu, judge card); brand icons colorized in Claude lane

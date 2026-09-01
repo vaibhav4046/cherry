@@ -11,9 +11,19 @@ const paths: Record<Brand, string> = {
   youtube: 'M21.6 7.2a2.8 2.8 0 0 0-2-2C17.8 4.7 12 4.7 12 4.7s-5.8 0-7.6.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 1.9 12a29 29 0 0 0 .5 4.8 2.8 2.8 0 0 0 2 2c1.8.5 7.6.5 7.6.5s5.8 0 7.6-.5a2.8 2.8 0 0 0 2-2 29 29 0 0 0 .5-4.8 29 29 0 0 0-.5-4.8ZM10 15.4V8.6l6 3.4-6 3.4Z',
 };
 
-export function BrandIcon({ brand, size = 22, ...props }: { brand: Brand; size?: number } & Omit<SVGProps<SVGSVGElement>, 'aria-label'>) {
+/** Primary brand colors so the marks read as themselves, not as monochrome glyphs. */
+const colors: Record<Brand, string> = {
+  slack: '#4a154b',
+  teams: '#6264a7',
+  discord: '#5865f2',
+  telegram: '#26a5e4',
+  github: '#24292f',
+  youtube: '#ff0000',
+};
+
+export function BrandIcon({ brand, size = 22, colored = true, ...props }: { brand: Brand; size?: number; colored?: boolean } & Omit<SVGProps<SVGSVGElement>, 'aria-label'>) {
   const labels: Record<Brand, string> = { slack: 'Slack', teams: 'Microsoft Teams', discord: 'Discord', telegram: 'Telegram', github: 'GitHub', youtube: 'YouTube' };
-  return <svg {...props} width={size} height={size} viewBox="0 0 24 24" role="img" aria-label={`${labels[brand]} icon`} fill="currentColor" focusable="false"><path d={paths[brand]} /></svg>;
+  return <svg {...props} width={size} height={size} viewBox="0 0 24 24" role="img" aria-label={`${labels[brand]} icon`} fill={colored ? colors[brand] : 'currentColor'} focusable="false"><path d={paths[brand]} /></svg>;
 }
 
 export function BrandMark({ brand, className }: { brand: Brand; className?: string }) {
