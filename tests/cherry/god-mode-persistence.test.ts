@@ -53,15 +53,15 @@ async function seedGodModeWorkspace() {
   return { workspace, mission, plan: projected, workItemId, report };
 }
 
-describe('Dexie migration v5', () => {
+describe('Dexie migration v6', () => {
   beforeEach(() => {
     freshDb();
   });
 
   it('adds the mission plan and evaluation report stores', () => {
-    expect(CHERRY_DB_VERSION).toBe(5);
-    expect(schemaVersion()).toBe(5);
-    const latest = CHERRY_DB_MIGRATIONS.find((migration) => migration.version === 5)!;
+    expect(CHERRY_DB_VERSION).toBe(6);
+    expect(schemaVersion()).toBe(6);
+    const latest = CHERRY_DB_MIGRATIONS.find((migration) => migration.version === 6)!;
     expect(latest.stores).toEqual({
       missionPlans: 'id, workspaceId, missionId, status, updatedAt',
       evaluationReports: 'id, workspaceId, missionId, workItemId, createdAt',
@@ -73,7 +73,7 @@ describe('Dexie migration v5', () => {
     }
   });
 
-  it('opens an existing v4 database without losing data', async () => {
+  it('opens an existing pre-god-mode database without losing data', async () => {
     const name = `cherry-migrate-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     const legacy = new Dexie(name);
     for (const migration of CHERRY_DB_MIGRATIONS.filter((candidate) => candidate.version <= 4)) {
@@ -89,7 +89,7 @@ describe('Dexie migration v5', () => {
     const upgraded = new CherryDatabase(name);
     setDb(upgraded);
     await upgraded.open();
-    expect(upgraded.verno).toBe(5);
+    expect(upgraded.verno).toBe(6);
     expect(upgraded.tables.map((table) => table.name)).toEqual(expect.arrayContaining(['missionPlans', 'evaluationReports', 'routines', 'channelWatches']));
     expect(await upgraded.workspaces.get('ws-legacy')).toMatchObject({ name: 'Legacy' });
     expect(await upgraded.routines.get('rt-legacy')).toMatchObject({ name: 'Legacy routine', enabled: false });
