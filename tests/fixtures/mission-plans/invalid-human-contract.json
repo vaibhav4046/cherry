@@ -1,0 +1,6 @@
+{
+  "id":"plan-bad-human","workspaceId":"ws-fixture","missionId":"ms-fixture","templateId":null,"outcome":"Validate exact human node shape","constraints":[],"status":"draft","revision":1,"contentHash":"","approvalId":null,"nodeWorkItemIds":{},"createdAt":"2026-09-02T12:00:00.000Z","updatedAt":"2026-09-02T12:00:00.000Z",
+  "nodes":[{
+    "id":"approval","missionId":"ms-fixture","title":"Approve","objective":"Decide","definitionOfDone":["A person decides"],"dependencyIds":[],"kind":"human_decision","preferredAgentProfileId":null,"preferredHostKinds":["codex-cli"],"requiredCapabilities":["repository_read"],"riskLevel":"high","verificationPlan":[{"id":"human","kind":"human","required":false,"path":"outside.txt","description":"person decides"}],"contextRefs":[],"maxAttempts":2,"timeoutMs":60000,"sandbox":"directory"
+  }]
+}

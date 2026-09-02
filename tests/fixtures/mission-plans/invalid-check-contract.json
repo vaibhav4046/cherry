@@ -1,0 +1,37 @@
+{
+  "id": "plan-bad-check-shape",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Validate check shapes",
+  "constraints": [],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [{
+    "id": "a",
+    "missionId": "ms-fixture",
+    "title": "Bad checks",
+    "objective": "Exercise exact check shapes",
+    "definitionOfDone": ["Malformed checks are refused"],
+    "dependencyIds": [],
+    "kind": "agent",
+    "preferredAgentProfileId": null,
+    "preferredHostKinds": [],
+    "requiredCapabilities": ["repository_read"],
+    "riskLevel": "low",
+    "verificationPlan": [
+      {"id":"valid","kind":"file","required":true,"path":"out/a.txt","description":"a exists"},
+      {"id":"duplicate","kind":"file_contains","required":false,"path":"out/a.txt","description":"missing contains"},
+      {"id":"duplicate","kind":"hash","required":"yes","path":"out/a.txt","expectedSha256":"short","argv":["node","--test"],"description":"bad duplicate hash"}
+    ],
+    "contextRefs": [],
+    "maxAttempts": 1,
+    "timeoutMs": 60000,
+    "sandbox": "directory"
+  }]
+}

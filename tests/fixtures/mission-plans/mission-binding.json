@@ -1,0 +1,33 @@
+{
+  "id": "plan-bad-binding",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Validate mission binding",
+  "constraints": [],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [{
+    "id": "a",
+    "missionId": "ms-other",
+    "title": "Foreign node",
+    "objective": "Exercise mission binding",
+    "definitionOfDone": ["The foreign node is refused"],
+    "dependencyIds": [],
+    "kind": "agent",
+    "preferredAgentProfileId": null,
+    "preferredHostKinds": [],
+    "requiredCapabilities": ["repository_read"],
+    "riskLevel": "low",
+    "verificationPlan": [{"id":"a-check","kind":"file","required":true,"path":"out/a.txt","description":"a exists"}],
+    "contextRefs": [],
+    "maxAttempts": 1,
+    "timeoutMs": 60000,
+    "sandbox": "directory"
+  }]
+}

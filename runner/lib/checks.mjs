@@ -149,6 +149,7 @@ async function runOne(spec, root, options) {
 /** Summarise EvaluationCheck records: required not passed -> failed; required blocked only -> blocked. */
 export function summariseChecks(checks, requiredIds) {
   const required = new Set(requiredIds);
+  if (required.size === 0) return 'failed';
   let blocked = false;
   for (const check of checks) {
     if (!required.has(check.id)) continue;

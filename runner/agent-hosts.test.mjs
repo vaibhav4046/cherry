@@ -444,6 +444,17 @@ test('a required failure fails the report, a required block yields blocked, and 
   assert.equal(aborted.status, 'failed');
 });
 
+test('an optional-only verification plan can never pass', async () => {
+  const root = tempDir('checks-optional-only-');
+  writeFileSync(join(root, 'present.txt'), 'present');
+  const report = await runChecks([
+    { id: 'optional', kind: 'file', required: false, path: 'present.txt', description: 'optional evidence' },
+  ], root);
+  assert.equal(report.checks[0].status, 'passed');
+  assert.equal(report.status, 'failed');
+  assert.deepEqual(report.requiredIds, []);
+});
+
 // ---------------- adapters ----------------
 
 function envelopeFor(overrides = {}) {

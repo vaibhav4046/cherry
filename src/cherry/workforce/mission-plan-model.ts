@@ -146,6 +146,9 @@ export type PlanProblemCode =
   | 'unknown_capability'
   | 'forbidden_capability'
   | 'bad_check'
+  | 'bad_node'
+  | 'no_required_check'
+  | 'multiple_worktree_parents'
   | 'injection_marker'
   | 'workspace_mismatch';
 
@@ -232,21 +235,36 @@ function validateCheck(check: VerificationCheckSpec): string | null {
   if (typeof check.id !== 'string' || check.id.trim().length === 0) return 'check id is required';
   if (!VERIFICATION_CHECK_KINDS.includes(check.kind)) return `check ${check.id} has an unknown kind`;
   if (typeof check.required !== 'boolean') return `check ${check.id} must state whether it is required`;
+  if (typeof check.description !== 'string' || check.description.trim().length === 0) return `check ${check.id} needs a description`;
+  const unexpected = (allowed: readonly string[]): string | null => {
+    const base = new Set(['id', 'kind', 'required', 'description', ...allowed]);
+    return Object.keys(check).find((key) => !base.has(key)) ?? null;
+  };
   switch (check.kind) {
     case 'command':
       if (!Array.isArray(check.argv) || check.argv.length === 0 || check.argv.some((part) => typeof part !== 'string' || part.length === 0)) {
         return `command check ${check.id} needs a non-empty argv`;
       }
       if (check.expectExitCode !== undefined && !Number.isInteger(check.expectExitCode)) return `command check ${check.id} has a non-integer exit code`;
+      if (unexpected(['argv', 'expectExitCode'])) return `command check ${check.id} carries fields for another check kind`;
       return null;
     case 'file':
-    case 'file_contains':
-    case 'hash':
       if (typeof check.path !== 'string' || check.path.trim().length === 0) return `${check.kind} check ${check.id} needs a path`;
-      if (check.kind === 'file_contains' && (typeof check.contains !== 'string' || check.contains.length === 0)) return `file_contains check ${check.id} needs text to look for`;
-      if (check.kind === 'hash' && (typeof check.expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(check.expectedSha256))) return `hash check ${check.id} needs a sha256 digest`;
+      if (unexpected(['path'])) return `file check ${check.id} carries fields for another check kind`;
+      return null;
+    case 'file_contains':
+      if (typeof check.path !== 'string' || check.path.trim().length === 0) return `file_contains check ${check.id} needs a path`;
+      if (typeof check.contains !== 'string' || check.contains.length === 0) return `file_contains check ${check.id} needs text to look for`;
+      if (unexpected(['path', 'contains'])) return `file_contains check ${check.id} carries fields for another check kind`;
+      return null;
+    case 'hash':
+      if (typeof check.path !== 'string' || check.path.trim().length === 0) return `hash check ${check.id} needs a path`;
+      if (typeof check.expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(check.expectedSha256)) return `hash check ${check.id} needs a sha256 digest`;
+      if (unexpected(['path', 'expectedSha256'])) return `hash check ${check.id} carries fields for another check kind`;
       return null;
     case 'human':
+      if (check.required !== true) return `human check ${check.id} must be required`;
+      if (unexpected([])) return `human check ${check.id} carries executable fields`;
       return null;
   }
 }
@@ -336,6 +354,17 @@ export function validateMissionPlan(plan: MissionPlan): PlanProblem[] {
 
   for (const node of nodes) {
     if (node.missionId !== plan.missionId) push('workspace_mismatch', node.id, `Node "${node.id}" belongs to another mission.`);
+    if (!PLAN_NODE_KINDS.includes(node.kind)
+      || !PLAN_RISKS.includes(node.riskLevel)
+      || !SANDBOX_PROVIDERS.includes(node.sandbox)
+      || !Array.isArray(node.preferredHostKinds)
+      || node.preferredHostKinds.some((kind) => !EXECUTION_HOST_KINDS.includes(kind))
+      || new Set(node.preferredHostKinds).size !== node.preferredHostKinds.length
+      || !Array.isArray(node.requiredCapabilities)
+      || node.requiredCapabilities.some((capability) => typeof capability !== 'string')
+      || new Set(node.requiredCapabilities).size !== node.requiredCapabilities.length) {
+      push('bad_node', node.id, `Node "${node.id}" has an invalid kind, risk, sandbox, host, or capability shape.`);
+    }
     for (const dependency of stringsOf(node.dependencyIds)) {
       if (dependency === node.id) push('self_dependency', node.id, `Node "${node.id}" depends on itself.`);
       else if (!ids.has(dependency)) push('missing_dependency', node.id, `Node "${node.id}" depends on unknown node "${dependency}".`);
@@ -352,10 +381,18 @@ export function validateMissionPlan(plan: MissionPlan): PlanProblem[] {
       else if (checkIds.has(check.id)) push('bad_check', node.id, `Node "${node.id}": check id "${check.id}" is duplicated.`);
       checkIds.add(check.id);
     }
+    if (node.kind !== 'human_decision' && checks.length > 0 && !checks.some((check) => check?.required === true)) {
+      push('no_required_check', node.id, `Node "${node.id}" needs at least one required verification check.`);
+    }
     if (node.kind === 'human_decision') {
       if (checks.length > 0 && (checks.length !== 1 || checks[0]!.kind !== 'human')) push('bad_check', node.id, `Node "${node.id}" is a human decision and carries exactly one human check.`);
+      if (node.sandbox !== 'none' || node.preferredHostKinds.length !== 0 || node.requiredCapabilities.length !== 1 || node.requiredCapabilities[0] !== 'human_approval') {
+        push('bad_node', node.id, `Node "${node.id}" is a human decision and must use sandbox none, no automatic host, and only human_approval.`);
+      }
     } else if (checks.some((check) => check.kind === 'human')) {
       push('bad_check', node.id, `Node "${node.id}" is not a human decision and cannot carry a human check.`);
+    } else if (node.sandbox === 'none') {
+      push('bad_node', node.id, `Node "${node.id}" is executable and cannot use sandbox none.`);
     }
     if (!Number.isInteger(node.timeoutMs) || node.timeoutMs < PLAN_LIMITS.minTimeoutMs || node.timeoutMs > PLAN_LIMITS.maxTimeoutMs) {
       push('timeout_range', node.id, `Node "${node.id}" timeout must be between ${PLAN_LIMITS.minTimeoutMs} and ${PLAN_LIMITS.maxTimeoutMs} ms.`);
@@ -373,6 +410,12 @@ export function validateMissionPlan(plan: MissionPlan): PlanProblem[] {
   }
 
   const graph = indexGraph(plan);
+  for (const node of graph.byId.values()) {
+    const worktreeParents = (graph.edges.get(node.id) ?? []).filter((dependencyId) => graph.byId.get(dependencyId)?.sandbox === 'git-worktree');
+    if (node.sandbox === 'git-worktree' && worktreeParents.length > 1) {
+      push('multiple_worktree_parents', node.id, `Node "${node.id}" has multiple worktree parents and no merge contract.`);
+    }
+  }
   const children = new Map<string, number>();
   for (const deps of graph.edges.values()) {
     for (const dependency of deps) children.set(dependency, (children.get(dependency) ?? 0) + 1);

@@ -116,6 +116,43 @@
       "expectedProblemCodes": [
         "depth"
       ]
+    },
+    {
+      "file": "invalid-node-contract.json",
+      "expectedProblemCodes": [
+        "bad_node"
+      ]
+    },
+    {
+      "file": "mission-binding.json",
+      "expectedProblemCodes": [
+        "workspace_mismatch"
+      ]
+    },
+    {
+      "file": "invalid-check-contract.json",
+      "expectedProblemCodes": [
+        "bad_check"
+      ]
+    },
+    {
+      "file": "no-required-check.json",
+      "expectedProblemCodes": [
+        "no_required_check"
+      ]
+    },
+    {
+      "file": "invalid-human-contract.json",
+      "expectedProblemCodes": [
+        "bad_check",
+        "bad_node"
+      ]
+    },
+    {
+      "file": "multiple-worktree-parents.json",
+      "expectedProblemCodes": [
+        "multiple_worktree_parents"
+      ]
     }
   ]
 }
