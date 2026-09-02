@@ -14,14 +14,15 @@
  * Missions persist to <dataDir>/missions.json.
  */
 import { createHash, randomBytes } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { loadJson, saveJsonAtomic } from './store.mjs';
 import { computeActionHash } from './canonical.mjs';
 import { validateEnvelope } from './queue.mjs';
 import { redact } from './redact.mjs';
 import { parseCheckSpec, runChecks } from './checks.mjs';
 import { buildTaskText, hostKindOf } from './agent-hosts.mjs';
+import { createPhysicalPathGuard } from './physical-path-guard.mjs';
 import {
   PLAN_LIMITS,
   computeBlockedNodeIds,
@@ -80,18 +81,6 @@ function fileTargetsFor(planNode) {
     targets.push({ path: parsed.path, contains: typeof parsed.contains === 'string' ? parsed.contains : null });
   }
   return targets;
-}
-
-/** Resolve `relative` inside `root`; null when it would escape the root. */
-function insideRoot(root, relative) {
-  if (typeof root !== 'string' || typeof relative !== 'string' || relative.length === 0) return null;
-  const base = resolve(root);
-  const target = resolve(join(base, relative));
-  return target === base || target.startsWith(base + sep) ? target : null;
-}
-
-function sha256File(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
 /** The evaluation record of a human_decision node: its human check decided by a person, nothing executed. */
@@ -176,6 +165,7 @@ export class MissionExecutor {
     this.queue = queue;
     this.events = events;
     this.sandboxes = sandboxes;
+    this.pathGuard = createPhysicalPathGuard(sandboxes.allowedRoots);
     this.dataDir = dataDir;
     this.hosts = hosts;
     this.adapters = adapters;
@@ -511,8 +501,7 @@ export class MissionExecutor {
   /** Empty per-mission source for directory sandboxes that name no repository; lives inside the approved root. */
   scratchRootFor(mission) {
     const root = join(this.sandboxes.allowedRoots[0], SCRATCH_DIR_NAME, safeSegment(mission.id));
-    mkdirSync(root, { recursive: true });
-    return root;
+    return this.pathGuard.ensureDirectory(root, { root: this.sandboxes.allowedRoots[0] });
   }
 
   artifactsDirFor(mission) {
@@ -526,13 +515,19 @@ export class MissionExecutor {
     const payload = parsePayload(mission.envelopes[node.id]?.boundedPrompt ?? '') ?? {};
     const declared = [...new Set([...(Array.isArray(payload.outputs) ? payload.outputs.map(String) : []), ...fileTargetsFor(planNode).map((target) => target.path)])];
     const artifacts = [];
+    const artifactRoot = this.pathGuard.ensureDirectory(this.artifactsDirFor(mission), { root: this.sandboxes.allowedRoots[0] });
     for (const relative of declared) {
-      const source = insideRoot(root, relative);
-      if (!source || !existsSync(source) || !statSync(source).isFile()) continue;
-      const destination = join(this.artifactsDirFor(mission), safeSegment(node.id), relative);
-      mkdirSync(dirname(destination), { recursive: true });
-      copyFileSync(source, destination);
-      artifacts.push({ path: relative, bytes: statSync(source).size, sha256: sha256File(source) });
+      let source;
+      try {
+        source = this.pathGuard.inside(root, relative, { mustExist: true, type: 'file' });
+      } catch (error) {
+        if (error?.code === 'missing_path') continue;
+        throw error;
+      }
+      const bytes = statSync(source).size;
+      const sha256 = createHash('sha256').update(this.pathGuard.readInside(root, relative)).digest('hex');
+      this.pathGuard.copy(root, relative, artifactRoot, join(safeSegment(node.id), relative));
+      artifacts.push({ path: relative, bytes, sha256 });
     }
     node.artifacts = artifacts;
     if (artifacts.length > 0) this.emit(mission, node.id, 'artifacts_collected');
@@ -542,14 +537,16 @@ export class MissionExecutor {
   /** Place every direct dependency's artifacts into a fresh sandbox at the same relative paths. */
   materializeDependencies(mission, node, planNode) {
     const inputs = [];
+    const artifactRoot = this.pathGuard.ensureDirectory(this.artifactsDirFor(mission), { root: this.sandboxes.allowedRoots[0] });
+    const destinationRoot = this.pathGuard.assertPath(node.sandbox?.root, { mustExist: true, type: 'directory' });
     for (const dependencyId of Array.isArray(planNode?.dependencyIds) ? planNode.dependencyIds : []) {
       const dependency = mission.nodes[dependencyId];
       for (const artifact of Array.isArray(dependency?.artifacts) ? dependency.artifacts : []) {
-        const source = join(this.artifactsDirFor(mission), safeSegment(dependencyId), artifact.path);
-        const destination = insideRoot(node.sandbox?.root, artifact.path);
-        if (!destination || !existsSync(source) || existsSync(destination)) continue;
-        mkdirSync(dirname(destination), { recursive: true });
-        copyFileSync(source, destination);
+        const sourceRelative = join(safeSegment(dependencyId), artifact.path);
+        const source = this.pathGuard.inside(artifactRoot, sourceRelative, { mustExist: true, type: 'file' });
+        const destination = this.pathGuard.inside(destinationRoot, artifact.path);
+        if (existsSync(destination)) continue;
+        this.pathGuard.copy(artifactRoot, sourceRelative, destinationRoot, artifact.path);
         inputs.push({ from: dependencyId, path: artifact.path, sha256: artifact.sha256 });
       }
     }

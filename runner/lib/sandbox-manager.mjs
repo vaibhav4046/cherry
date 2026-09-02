@@ -16,10 +16,11 @@
  * Leases persist to <dataDir>/sandboxes.json.
  */
 import { randomBytes } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, rmSync, statSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { existsSync, statSync } from 'node:fs';
+import { join, resolve, sep } from 'node:path';
 import { loadJson, saveJsonAtomic } from './store.mjs';
 import { runProcess } from './adapters.mjs';
+import { createPhysicalPathGuard } from './physical-path-guard.mjs';
 
 export const SANDBOX_DIR_NAME = '.cherry-sandboxes';
 const SAFE_ID = /^[A-Za-z0-9._-]{1,60}$/;
@@ -47,8 +48,8 @@ function isWithin(candidate, root) {
   return target === base || target.startsWith(base + sep);
 }
 
-function refuse(code, reason) {
-  return { ok: false, code, reason };
+function refuse(code, reason, extra = {}) {
+  return { ok: false, code, reason, ...extra };
 }
 
 async function defaultExec(gitArgs, cwd) {
@@ -79,6 +80,7 @@ export class SandboxManager {
     if (!Array.isArray(allowedRoots) || allowedRoots.length === 0) throw new Error('SandboxManager requires allowedRoots');
     this.file = join(dataDir, 'sandboxes.json');
     this.allowedRoots = allowedRoots.map((root) => resolve(root));
+    this.pathGuard = createPhysicalPathGuard(this.allowedRoots);
     this.now = now;
     this.exec = exec;
     this.leaseTtlMs = leaseTtlMs;
@@ -128,19 +130,10 @@ export class SandboxManager {
 
   /** The approved root that contains `source`, or null. */
   approvedRootFor(source) {
-    return this.allowedRoots.find((root) => isWithin(source, root)) ?? null;
-  }
-
-  /** Any symbolic link (or junction) between the approved root and the source refuses the root. */
-  hasSymlinkedSegment(source, approvedRoot) {
-    let cursor = resolve(source);
-    const stop = comparablePath(approvedRoot);
-    for (;;) {
-      if (lstatSync(cursor).isSymbolicLink()) return true;
-      if (comparablePath(cursor) === stop) return false;
-      const parent = dirname(cursor);
-      if (parent === cursor) return false;
-      cursor = parent;
+    try {
+      return this.pathGuard.approvedRootFor(source);
+    } catch {
+      return null;
     }
   }
 
@@ -159,13 +152,24 @@ export class SandboxManager {
     const source = resolve(sourceRoot);
     const approvedRoot = this.approvedRootFor(source);
     if (!approvedRoot) return refuse('outside_root', `sourceRoot ${source} is outside the approved roots`);
-    if (!existsSync(source) || !statSync(source).isDirectory()) return refuse('missing_root', `sourceRoot ${source} is not a directory`);
-    if (this.hasSymlinkedSegment(source, approvedRoot)) return refuse('symlinked_root', `sourceRoot ${source} passes through a symbolic link`);
+    try {
+      this.pathGuard.assertPath(source, { root: approvedRoot, mustExist: true, type: 'directory', scanTree: provider === 'git-worktree' });
+    } catch (error) {
+      if (error?.code === 'symlinked_path') return refuse('symlinked_root', `sourceRoot ${source} passes through a symbolic link or junction`);
+      return refuse('missing_root', `sourceRoot ${source} is not a safe existing directory: ${String(error?.message ?? error)}`);
+    }
 
     const root = join(approvedRoot, SANDBOX_DIR_NAME, safeMissionId, safeWorkItemId);
     const holder = this.leases.find((lease) => ACTIVE_STATUSES.has(lease.status) && comparablePath(lease.root) === comparablePath(root));
     if (holder) return refuse('path_in_use', `${root} is held by lease ${holder.id} (${holder.status})`);
     if (existsSync(root)) return refuse('path_exists', `${root} already exists; clean it up under ${SANDBOX_DIR_NAME} before reusing the ids`);
+    try {
+      this.pathGuard.assertPath(root, { root: approvedRoot });
+      this.pathGuard.ensureDirectory(join(approvedRoot, SANDBOX_DIR_NAME, safeMissionId), { root: approvedRoot });
+      this.pathGuard.assertPath(root, { root: approvedRoot });
+    } catch (error) {
+      return refuse(error?.code ?? 'unsafe_path', String(error?.message ?? error));
+    }
 
     let branchName = null;
     let baseCommit = null;
@@ -185,9 +189,19 @@ export class SandboxManager {
       if (existing.exitCode === 0) return refuse('branch_exists', `branch ${branchName} already exists and belongs to another lease`);
       const added = await this.git(['worktree', 'add', '-b', branchName, root, baseCommit], source);
       if (added.exitCode !== 0) return refuse('git_failed', `git worktree add failed: ${added.stderr.trim()}`);
+      try {
+        this.pathGuard.assertPath(root, { root: approvedRoot, mustExist: true, type: 'directory', scanTree: true });
+      } catch (error) {
+        await this.git(['worktree', 'remove', root], source);
+        return refuse(error?.code ?? 'unsafe_path', String(error?.message ?? error));
+      }
     } else {
       baseCommit = await this.gitOutput(['rev-parse', 'HEAD'], source);
-      mkdirSync(root, { recursive: true });
+      try {
+        this.pathGuard.ensureDirectory(root, { root: approvedRoot });
+      } catch (error) {
+        return refuse(error?.code ?? 'unsafe_path', String(error?.message ?? error));
+      }
     }
 
     const createdAt = this.iso();
@@ -238,6 +252,11 @@ export class SandboxManager {
       const lease = this.get(leaseId);
       if (!lease) return refuse('not_found', `no lease ${leaseId}`);
       if (lease.provider !== 'git-worktree') return refuse('unsupported_provider', 'only git-worktree leases can commit');
+      try {
+        this.pathGuard.assertPath(lease.root, { root: lease.approvedRoot, mustExist: true, type: 'directory', scanTree: true });
+      } catch (error) {
+        return refuse(error?.code ?? 'unsafe_path', String(error?.message ?? error));
+      }
       const head = () => this.gitOutput(['rev-parse', 'HEAD'], lease.root);
       const status = await this.git(['status', '--porcelain'], lease.root);
       if (status.exitCode !== 0) return refuse('git_failed', `git status failed: ${status.stderr.trim()}`);
@@ -267,7 +286,23 @@ export class SandboxManager {
     if (lease.status === 'failed' || lease.retain) {
       lease.retainReason = lease.status === 'failed' ? 'the node failed; the sandbox is kept for inspection' : 'retain was requested';
       lease.status = 'retained';
-    } else if (lease.provider === 'git-worktree') {
+    } else {
+      try {
+        this.pathGuard.assertPath(lease.root, {
+          root: join(lease.approvedRoot, SANDBOX_DIR_NAME),
+          mustExist: true,
+          type: 'directory',
+          scanTree: true,
+        });
+      } catch (error) {
+        lease.status = 'retained';
+        lease.retainReason = `unsafe cleanup refused: ${String(error?.message ?? error)}`;
+        lease.releasedAt = this.iso();
+        lease.updatedAt = lease.releasedAt;
+        this.save();
+        return refuse(error?.code ?? 'unsafe_path', lease.retainReason, { lease });
+      }
+      if (lease.provider === 'git-worktree') {
       const removed = await this.git(['worktree', 'remove', lease.root], lease.sourceRoot);
       if (removed.exitCode === 0) {
         lease.status = 'released';
@@ -275,17 +310,18 @@ export class SandboxManager {
         lease.status = 'retained';
         lease.retainReason = `git kept the worktree: ${removed.stderr.trim() || removed.stdout.trim() || 'unknown reason'}`;
       }
-    } else if (isWithin(lease.root, join(lease.approvedRoot, SANDBOX_DIR_NAME))) {
-      try {
-        rmSync(lease.root, { recursive: true });
+      } else if (isWithin(lease.root, join(lease.approvedRoot, SANDBOX_DIR_NAME))) {
+        try {
+          this.pathGuard.removeTree(lease.root, { root: join(lease.approvedRoot, SANDBOX_DIR_NAME) });
         lease.status = 'released';
       } catch (error) {
         lease.status = 'retained';
         lease.retainReason = `the directory could not be removed: ${String(error?.message ?? error)}`;
       }
-    } else {
-      lease.status = 'retained';
-      lease.retainReason = `${lease.root} is outside ${SANDBOX_DIR_NAME}; nothing was deleted`;
+      } else {
+        lease.status = 'retained';
+        lease.retainReason = `${lease.root} is outside ${SANDBOX_DIR_NAME}; nothing was deleted`;
+      }
     }
     lease.releasedAt = this.iso();
     lease.updatedAt = lease.releasedAt;

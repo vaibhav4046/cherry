@@ -11,10 +11,10 @@
  * verification.
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { join, resolve } from 'node:path';
 import { buildChildEnv } from './process-policy.mjs';
 import { redact } from './redact.mjs';
+import { createPhysicalPathGuard } from './physical-path-guard.mjs';
 
 export const MAX_OUTPUT_BYTES = 256 * 1024;
 const MAX_TIMEOUT_MS = 1_800_000;
@@ -333,23 +333,14 @@ export function buildTaskText(payload, { failedChecks = [] } = {}) {
   return lines.join('\n').trim() + '\n';
 }
 
-function containedPath(root, relative) {
-  const base = resolve(root);
-  const target = resolve(join(base, String(relative)));
-  if (target !== base && !target.startsWith(base + sep)) throw new Error(`mock script path escapes the sandbox root: ${relative}`);
-  return target;
-}
-
-function writeInside(root, relative, content) {
-  const target = containedPath(root, relative);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, content);
+function writeInside(guard, root, relative, content) {
+  guard.writeInside(root, String(relative), content);
   return relative;
 }
 
-function writeTaskFiles(root, text, contextText) {
-  writeInside(root, join('.cherry', 'TASK.md'), text);
-  if (typeof contextText === 'string' && contextText.length > 0) writeInside(root, join('.cherry', 'CONTEXT.md'), contextText);
+function writeTaskFiles(guard, root, text, contextText) {
+  writeInside(guard, root, join('.cherry', 'TASK.md'), text);
+  if (typeof contextText === 'string' && contextText.length > 0) writeInside(guard, root, join('.cherry', 'CONTEXT.md'), contextText);
   return text.length > INLINE_TASK_LIMIT ? TASK_POINTER_PROMPT : text;
 }
 
@@ -382,11 +373,11 @@ function mockWriteFiles(task, nodeId, attempt) {
   return files;
 }
 
-async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailFirst = new Set(), mockDelayMs = 0 }) {
+async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailFirst = new Set(), mockDelayMs = 0, guard }) {
   const step = mockStepFor(task, attempt, mockFailFirst);
   const files = Object.entries(step.writeFiles ?? {});
-  for (const [relative] of files) containedPath(root, relative);
-  const wrote = files.map(([relative, content]) => writeInside(root, relative, String(content)));
+  for (const [relative] of files) guard.inside(root, relative);
+  const wrote = files.map(([relative, content]) => writeInside(guard, root, relative, String(content)));
   const sleepMs = Number.isFinite(step.sleepMs) ? Math.max(0, step.sleepMs) : Math.max(0, Number(mockDelayMs) || 0);
   const bounded = Math.min(sleepMs, timeoutMs);
   const slept = bounded > 0 ? await sleep(bounded, signal) : 'done';
@@ -402,9 +393,9 @@ async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailF
   };
 }
 
-function artifactPath(root, attempt, stream, content) {
+function artifactPath(guard, root, attempt, stream, content) {
   const relative = join('.cherry', `attempt-${attempt}.${stream}.txt`);
-  writeInside(root, relative, content);
+  writeInside(guard, root, relative, content);
   return relative;
 }
 
@@ -437,13 +428,19 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
   if (!descriptor) return fail(`unknown host ${hostId}`);
   if (typeof sandbox?.root !== 'string' || sandbox.root.length === 0) return fail('a sandbox root is required');
   const root = resolve(sandbox.root);
+  let guard;
+  try {
+    guard = createPhysicalPathGuard([root]);
+  } catch (error) {
+    return fail(`unsafe sandbox path: ${String(error?.message ?? error)}`);
+  }
   const text = String(task?.text ?? '');
   if (text.trim().length === 0) return fail('task text is required');
   const attempt = Number.isInteger(task?.attempt) && task.attempt > 0 ? task.attempt : 1;
 
   let prompt;
   try {
-    prompt = writeTaskFiles(root, text, task?.contextText);
+    prompt = writeTaskFiles(guard, root, text, task?.contextText);
   } catch (error) {
     return fail(`could not write the task files: ${String(error?.message ?? error)}`);
   }
@@ -458,7 +455,7 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
       '',
       text,
     ].join('\n');
-    writeInside(root, join('.cherry', 'HANDOFF.md'), handoff);
+    writeInside(guard, root, join('.cherry', 'HANDOFF.md'), handoff);
     return { ...base, status: 'needs_human', reason: 'a person has to do this task; see .cherry/HANDOFF.md', wallClockMs: now() - startedAt };
   }
 
@@ -468,7 +465,7 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
   if (hostId === 'mock') {
     if (!context.allowMockHost) return fail('the mock host is not enabled (start the runner with --allow-mock-host)');
     try {
-      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs, mockFailFirst: new Set(context.mockFailFirst ?? []), mockDelayMs: context.mockDelayMs ?? 0 });
+      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs, mockFailFirst: new Set(context.mockFailFirst ?? []), mockDelayMs: context.mockDelayMs ?? 0, guard });
     } catch (error) {
       return fail(String(error?.message ?? error));
     }
@@ -487,8 +484,8 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
     run = await runCaptured(command, argv, { cwd: root, timeoutMs, signal: context.signal });
   }
 
-  const stdoutArtifact = artifactPath(root, attempt, 'stdout', run.stdout);
-  const stderrArtifact = artifactPath(root, attempt, 'stderr', run.stderr);
+  const stdoutArtifact = artifactPath(guard, root, attempt, 'stdout', run.stdout);
+  const stderrArtifact = artifactPath(guard, root, attempt, 'stderr', run.stderr);
   let reason = null;
   if (run.timedOut) reason = `timed out after ${timeoutMs}ms`;
   else if (run.aborted) reason = `aborted: ${context.signal?.reason?.message ?? 'cancelled'}`;

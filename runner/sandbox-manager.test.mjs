@@ -6,7 +6,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { SandboxManager, safeSandboxId } from './lib/sandbox-manager.mjs';
@@ -169,6 +169,17 @@ test('source roots outside the approved roots and symlinked roots are refused', 
   }
 });
 
+test('allocation refuses a junction at .cherry-sandboxes and never writes through it', async () => {
+  const { root, repo } = makeRepo('sb-destination-link-');
+  const outside = tempDir('sb-destination-outside-');
+  symlinkSync(outside, join(root, '.cherry-sandboxes'), 'junction');
+  const manager = makeManager(root);
+  const outcome = await manager.allocate({ missionId: 'ms-1', workItemId: 'wi-1', provider: 'directory', sourceRoot: repo });
+  assert.equal(outcome.ok, false, JSON.stringify(outcome));
+  assert.equal(outcome.code, 'symlinked_path');
+  assert.equal(existsSync(join(outside, 'ms-1')), false, 'allocation did not escape through the junction');
+});
+
 test('dirty tracked files in the source repository refuse a worktree; untracked files are fine', async () => {
   const { root, repo } = makeRepo();
   const manager = makeManager(root);
@@ -229,6 +240,23 @@ test('release of a ready lease removes the worktree without --force and releases
   assert.equal(kept.ok, true);
   assert.equal(kept.lease.status, 'retained', 'git refuses to remove a dirty worktree and the runner never forces it');
   assert.ok(existsSync(join(dirtyWorktree.lease.root, 'work.txt')));
+});
+
+test('directory cleanup refuses a lease root replaced by a junction and preserves the outside target', async () => {
+  const { root, repo } = makeRepo('sb-cleanup-link-');
+  const outside = tempDir('sb-cleanup-outside-');
+  const sentinel = join(outside, 'keep.txt');
+  writeFileSync(sentinel, 'keep');
+  const manager = makeManager(root);
+  const outcome = await manager.allocate({ missionId: 'ms-1', workItemId: 'wi-1', provider: 'directory', sourceRoot: repo });
+  assert.equal(outcome.ok, true, JSON.stringify(outcome));
+  rmSync(outcome.lease.root, { recursive: true });
+  symlinkSync(outside, outcome.lease.root, 'junction');
+
+  const released = await manager.release(outcome.lease.id, { reason: 'succeeded' });
+  assert.equal(released.ok, false, JSON.stringify(released));
+  assert.equal(released.code, 'symlinked_path');
+  assert.equal(readFileSync(sentinel, 'utf8'), 'keep');
 });
 
 test('cleanup is refused while the lease is active', async () => {

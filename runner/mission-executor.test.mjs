@@ -7,7 +7,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -348,7 +348,7 @@ test('a second executor over the same dataDir finishes a mission that was mid-ru
   await harness.executor.tick();
   await harness.queue.whenIdle();
   const beforeCrash = harness.executor.get(missionRunId);
-  assert.equal(beforeCrash.nodes.a.status, 'running', 'the provider finished but nothing reconciled it before the crash');
+  assert.equal(beforeCrash.nodes.a.status, 'running', `the provider finished but nothing reconciled it before the crash; runner error: ${beforeCrash.lastError ?? 'none'}`);
   assert.equal(harness.queue.getJob(beforeCrash.nodes.a.currentJobId).status, 'completed');
 
   const reopened = harness.reopen();
@@ -384,7 +384,7 @@ test('cancel propagates to running jobs and marks the remaining nodes cancelled'
   const missionRunId = await registerAndStart(harness, plan, { a: writes('a', { sleepMs: 5000 }) });
   await harness.executor.tick();
   for (let attempt = 0; attempt < 100 && indexOfEvent(eventsOf(harness, missionRunId), 'a', 'node_started') < 0; attempt += 1) await sleep(20);
-  assert.ok(indexOfEvent(eventsOf(harness, missionRunId), 'a', 'node_started') >= 0, 'node a started');
+  assert.ok(indexOfEvent(eventsOf(harness, missionRunId), 'a', 'node_started') >= 0, `node a started; runner error: ${harness.executor.get(missionRunId).lastError ?? 'none'}`);
   const startedAt = Date.now();
   const cancelled = harness.executor.cancel(missionRunId);
   assert.equal(cancelled.ok, true);
@@ -518,6 +518,35 @@ test('a dependant receives the artifacts its dependencies produced, at the same 
   assert.equal(readFileSync(join(mission.nodes.b.sandbox.root, 'out', 'a.txt'), 'utf8'), 'a');
   const events = eventsOf(harness, missionRunId);
   assert.ok(indexOfEvent(events, 'a', 'artifacts_collected') < indexOfEvent(events, 'b', 'artifacts_materialized'));
+});
+
+test('artifact collection and materialisation refuse junctions instead of copying outside a sandbox', () => {
+  const harness = makeHarness();
+  const plan = makePlan([planNode('a'), planNode('b', { deps: ['a'] })]);
+  const registered = harness.executor.register({ plan, envelopes: harness.envelopes(plan) });
+  assert.equal(registered.ok, true, JSON.stringify(registered));
+  const mission = harness.executor.get(registered.missionRunId);
+
+  const collectionRoot = join(harness.root, 'collection-root');
+  const collectionOutside = tempDir('collection-outside-');
+  mkdirSync(collectionRoot);
+  writeFileSync(join(collectionOutside, 'a.txt'), 'outside');
+  symlinkSync(collectionOutside, join(collectionRoot, 'out'), 'junction');
+  mission.nodes.a.sandbox = { root: collectionRoot };
+  assert.throws(() => harness.executor.collectArtifacts(mission, mission.nodes.a, plan.nodes[0]), /symbolic link|junction|link segment/i);
+  assert.equal(existsSync(join(harness.executor.artifactsDirFor(mission), 'a', 'out', 'a.txt')), false);
+
+  const stored = join(harness.executor.artifactsDirFor(mission), 'a', 'out', 'a.txt');
+  mkdirSync(dirname(stored), { recursive: true });
+  writeFileSync(stored, 'trusted artifact');
+  mission.nodes.a.artifacts = [{ path: 'out/a.txt', bytes: 16, sha256: sha256Hex('trusted artifact') }];
+  const materialRoot = join(harness.root, 'material-root');
+  const materialOutside = tempDir('material-outside-');
+  mkdirSync(materialRoot);
+  symlinkSync(materialOutside, join(materialRoot, 'out'), 'junction');
+  mission.nodes.b.sandbox = { root: materialRoot };
+  assert.throws(() => harness.executor.materializeDependencies(mission, mission.nodes.b, plan.nodes[1]), /symbolic link|junction|link segment/i);
+  assert.equal(existsSync(join(materialOutside, 'a.txt')), false);
 });
 
 test('a worktree dependant starts from the committed result of its worktree dependency; the source branch stays untouched', async () => {

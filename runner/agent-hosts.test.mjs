@@ -7,7 +7,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -384,6 +384,29 @@ test('command checks require runner and envelope authorization and accept only d
     assert.equal(check.status, 'failed', `${check.id}: ${check.detail}`);
     assert.match(check.detail, /refus|data-only|workspace|option|target/i);
   }
+});
+
+test('verification reads and task writes refuse in-sandbox junctions', async () => {
+  const readRoot = tempDir('checks-link-root-');
+  const readOutside = tempDir('checks-link-outside-');
+  writeFileSync(join(readOutside, 'secret.txt'), 'outside secret');
+  symlinkSync(readOutside, join(readRoot, 'out'), 'junction');
+  const report = await runChecks([
+    { id: 'linked-file', kind: 'file', required: true, path: 'out/secret.txt', description: 'must not follow links' },
+    { id: 'linked-contains', kind: 'file_contains', required: true, path: 'out/secret.txt', contains: 'outside', description: 'must not read links' },
+  ], readRoot);
+  for (const check of report.checks) {
+    assert.equal(check.status, 'failed');
+    assert.match(check.detail, /symbolic link|junction|link segment/i);
+  }
+
+  const writeRoot = tempDir('task-link-root-');
+  const writeOutside = tempDir('task-link-outside-');
+  symlinkSync(writeOutside, join(writeRoot, '.cherry'), 'junction');
+  const result = await runHostTask('mock', { text: 'bounded task', attempt: 1 }, { root: writeRoot }, { allowMockHost: true });
+  assert.equal(result.status, 'failed');
+  assert.match(result.reason, /symbolic link|junction|link segment/i);
+  assert.equal(existsSync(join(writeOutside, 'TASK.md')), false);
 });
 
 test('a required failure fails the report, a required block yields blocked, and refusals are failures', async () => {

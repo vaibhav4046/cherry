@@ -12,11 +12,12 @@
  * which yields 'blocked'. Blocked never counts as passed.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, statSync } from 'node:fs';
-import { isAbsolute, join, normalize, resolve, sep } from 'node:path';
+import { statSync } from 'node:fs';
+import { isAbsolute, normalize, resolve, sep } from 'node:path';
 import { redact } from './redact.mjs';
 import { isPythonExecutable } from './process-policy.mjs';
 import { runCaptured } from './agent-hosts.mjs';
+import { createPhysicalPathGuard } from './physical-path-guard.mjs';
 
 const CHECK_KINDS = new Set(['command', 'file', 'file_contains', 'hash', 'human']);
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -35,20 +36,12 @@ export function parseCheckSpec(spec) {
   return spec && typeof spec === 'object' ? spec : null;
 }
 
-function containedPath(root, relative) {
-  if (typeof relative !== 'string' || relative.length === 0) throw new Error('path is required');
-  const base = resolve(root);
-  const target = resolve(join(base, relative));
-  if (target !== base && !target.startsWith(base + sep)) throw new Error(`path escapes the sandbox root: ${relative}`);
-  return target;
-}
-
-function readContained(root, relative) {
-  const target = containedPath(root, relative);
+function readContained(guard, root, relative) {
+  const target = guard.inside(root, relative, { mustExist: true, type: 'file' });
   const stats = statSync(target);
   if (!stats.isFile()) throw new Error(`${relative} is not a file`);
   if (stats.size > MAX_FILE_BYTES) throw new Error(`${relative} is larger than ${MAX_FILE_BYTES} bytes`);
-  return readFileSync(target);
+  return guard.readInside(root, relative);
 }
 
 function tail(text) {
@@ -71,7 +64,7 @@ function safeNodeTestArgv(argv) {
   });
 }
 
-async function runCommandCheck(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal }) {
+async function runCommandCheck(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal, guard }) {
   const argv = Array.isArray(spec.argv) ? spec.argv.map(String) : [];
   if (argv.length === 0) return { status: 'failed', detail: 'command checks need a non-empty argv', evidenceRefs: [] };
   const [executable, ...rest] = argv;
@@ -87,6 +80,7 @@ async function runCommandCheck(spec, root, { allowedExecutables, authorizedExecu
     if (!safeNodeTestArgv(rest)) {
       return { status: 'failed', detail: 'refusing Node command check: only data-only "node --test [relative-workspace-target ...]" is allowed', evidenceRefs: [] };
     }
+    for (const relative of rest.slice(1)) guard.inside(root, relative, { mustExist: true });
   } else if (isPythonExecutable(executable)) {
     return { status: 'failed', detail: 'Python is reserved for the fixed Scrapling worker and is not allowlisted for checks', evidenceRefs: [] };
   } else if (!allowedExecutables.has(executable)) {
@@ -106,8 +100,8 @@ async function runCommandCheck(spec, root, { allowedExecutables, authorizedExecu
   return { status: run.exitCode === expected ? 'passed' : 'failed', detail, evidenceRefs };
 }
 
-function runFileCheck(spec, root) {
-  const target = containedPath(root, spec.path);
+function runFileCheck(spec, root, guard) {
+  const target = guard.inside(root, spec.path, { mustExist: true, type: 'file' });
   const evidenceRefs = [`file:${spec.path}`];
   let stats;
   try {
@@ -119,19 +113,19 @@ function runFileCheck(spec, root) {
   return { status: 'passed', detail: `file exists (${stats.size} bytes)`, evidenceRefs };
 }
 
-function runContainsCheck(spec, root) {
+function runContainsCheck(spec, root, guard) {
   if (typeof spec.contains !== 'string' || spec.contains.length === 0) {
     return { status: 'failed', detail: 'file_contains checks need a non-empty contains string', evidenceRefs: [] };
   }
-  const text = readContained(root, spec.path).toString('utf8');
+  const text = readContained(guard, root, spec.path).toString('utf8');
   const found = text.includes(spec.contains);
   return { status: found ? 'passed' : 'failed', detail: found ? 'expected text found' : 'expected text not found', evidenceRefs: [`file:${spec.path}`] };
 }
 
-function runHashCheck(spec, root) {
+function runHashCheck(spec, root, guard) {
   const expected = String(spec.expectedSha256 ?? '').toLowerCase();
   if (!/^[a-f0-9]{64}$/.test(expected)) return { status: 'failed', detail: 'hash checks need a 64 character expectedSha256', evidenceRefs: [] };
-  const actual = createHash('sha256').update(readContained(root, spec.path)).digest('hex');
+  const actual = createHash('sha256').update(readContained(guard, root, spec.path)).digest('hex');
   return {
     status: actual === expected ? 'passed' : 'failed',
     detail: actual === expected ? 'sha256 matches' : `sha256 mismatch: got ${actual}`,
@@ -144,9 +138,9 @@ async function runOne(spec, root, options) {
   if (spec.kind === 'human') return { status: 'blocked', detail: 'requires a person', evidenceRefs: [] };
   try {
     if (spec.kind === 'command') return await runCommandCheck(spec, root, options);
-    if (spec.kind === 'file') return runFileCheck(spec, root);
-    if (spec.kind === 'file_contains') return runContainsCheck(spec, root);
-    return runHashCheck(spec, root);
+    if (spec.kind === 'file') return runFileCheck(spec, root, options.guard);
+    if (spec.kind === 'file_contains') return runContainsCheck(spec, root, options.guard);
+    return runHashCheck(spec, root, options.guard);
   } catch (error) {
     return { status: 'failed', detail: redact(String(error?.message ?? error)), evidenceRefs: [] };
   }
@@ -173,6 +167,7 @@ export function summariseChecks(checks, requiredIds) {
  */
 export async function runChecks(specs, sandboxRoot, { allowedExecutables = new Set(), authorizedExecutables = new Set(), timeoutMs = DEFAULT_TIMEOUT_MS, signal, now = () => Date.now() } = {}) {
   const root = resolve(sandboxRoot);
+  const guard = createPhysicalPathGuard([root]);
   const startedAt = new Date(now()).toISOString();
   const checks = [];
   const requiredIds = [];
@@ -191,7 +186,7 @@ export async function runChecks(specs, sandboxRoot, { allowedExecutables = new S
       checks.push({ id, name, status: 'not_run', evidenceRefs: [], detail: 'cancelled before this check ran' });
       continue;
     }
-    const outcome = await runOne(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal });
+    const outcome = await runOne(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal, guard });
     checks.push({ id, name, ...outcome });
   }
   return { status: summariseChecks(checks, requiredIds), checks, requiredIds, startedAt, finishedAt: new Date(now()).toISOString(), sandboxRoot: root };
