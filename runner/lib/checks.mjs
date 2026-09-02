@@ -13,7 +13,7 @@
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, statSync } from 'node:fs';
-import { join, resolve, sep } from 'node:path';
+import { isAbsolute, join, normalize, resolve, sep } from 'node:path';
 import { redact } from './redact.mjs';
 import { isPythonExecutable } from './process-policy.mjs';
 import { runCaptured } from './agent-hosts.mjs';
@@ -56,17 +56,45 @@ function tail(text) {
   return clean.length > MAX_DETAIL_CHARS ? clean.slice(-MAX_DETAIL_CHARS) : clean;
 }
 
-async function runCommandCheck(spec, root, { allowedExecutables, timeoutMs, signal }) {
+function executableAuthorized(allowed, executable, command) {
+  return allowed.has(executable) || allowed.has(command);
+}
+
+/** Node checks intentionally support only its data-only test runner surface. */
+function safeNodeTestArgv(argv) {
+  if (argv[0] !== '--test') return false;
+  return argv.slice(1).every((argument) => {
+    if (typeof argument !== 'string' || argument.length === 0 || argument.startsWith('-') || isAbsolute(argument)) return false;
+    const normalized = normalize(argument);
+    if (normalized === '..' || normalized.startsWith(`..${sep}`)) return false;
+    return !normalized.split(/[\\/]/).includes('..');
+  });
+}
+
+async function runCommandCheck(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal }) {
   const argv = Array.isArray(spec.argv) ? spec.argv.map(String) : [];
   if (argv.length === 0) return { status: 'failed', detail: 'command checks need a non-empty argv', evidenceRefs: [] };
   const [executable, ...rest] = argv;
   let command = executable;
   if (executable === 'node') {
     command = process.execPath;
+    if (!executableAuthorized(allowedExecutables, executable, command)) {
+      return { status: 'failed', detail: 'node is not allowlisted in the runner config for command checks', evidenceRefs: [] };
+    }
+    if (!executableAuthorized(authorizedExecutables, executable, command)) {
+      return { status: 'failed', detail: 'node is not authorized by the execution envelope and approved plan', evidenceRefs: [] };
+    }
+    if (!safeNodeTestArgv(rest)) {
+      return { status: 'failed', detail: 'refusing Node command check: only data-only "node --test [relative-workspace-target ...]" is allowed', evidenceRefs: [] };
+    }
   } else if (isPythonExecutable(executable)) {
     return { status: 'failed', detail: 'Python is reserved for the fixed Scrapling worker and is not allowlisted for checks', evidenceRefs: [] };
   } else if (!allowedExecutables.has(executable)) {
     return { status: 'failed', detail: `executable "${executable}" is not allowlisted for checks (start the runner with --allow-exec ${executable})`, evidenceRefs: [] };
+  } else if (!authorizedExecutables.has(executable)) {
+    return { status: 'failed', detail: `executable "${executable}" is not authorized by the execution envelope and approved plan`, evidenceRefs: [] };
+  } else {
+    return { status: 'failed', detail: `refusing command check executable "${executable}": no data-only grammar is defined`, evidenceRefs: [] };
   }
   const expected = Number.isInteger(spec.expectExitCode) ? spec.expectExitCode : 0;
   const run = await runCaptured(command, rest, { cwd: root, timeoutMs, signal });
@@ -143,7 +171,7 @@ export function summariseChecks(checks, requiredIds) {
  * Run every spec in order inside sandboxRoot. Returns an evaluation report
  * { status, checks, requiredIds, startedAt, finishedAt, sandboxRoot }.
  */
-export async function runChecks(specs, sandboxRoot, { allowedExecutables = new Set(), timeoutMs = DEFAULT_TIMEOUT_MS, signal, now = () => Date.now() } = {}) {
+export async function runChecks(specs, sandboxRoot, { allowedExecutables = new Set(), authorizedExecutables = new Set(), timeoutMs = DEFAULT_TIMEOUT_MS, signal, now = () => Date.now() } = {}) {
   const root = resolve(sandboxRoot);
   const startedAt = new Date(now()).toISOString();
   const checks = [];
@@ -163,7 +191,7 @@ export async function runChecks(specs, sandboxRoot, { allowedExecutables = new S
       checks.push({ id, name, status: 'not_run', evidenceRefs: [], detail: 'cancelled before this check ran' });
       continue;
     }
-    const outcome = await runOne(spec, root, { allowedExecutables, timeoutMs, signal });
+    const outcome = await runOne(spec, root, { allowedExecutables, authorizedExecutables, timeoutMs, signal });
     checks.push({ id, name, ...outcome });
   }
   return { status: summariseChecks(checks, requiredIds), checks, requiredIds, startedAt, finishedAt: new Date(now()).toISOString(), sandboxRoot: root };

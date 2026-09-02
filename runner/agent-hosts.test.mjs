@@ -70,8 +70,9 @@ test('probeHosts reports fake codex and claude with versions and observed flags,
   assert.deepEqual(byId.codex.details.flags, { '--sandbox': true, '-C': true, '--cd': true, '--skip-git-repo-check': true, '--output-last-message': true, '--json': true });
   assert.equal(byId.codex.authenticated, null, 'a version probe cannot prove login');
 
-  assert.equal(byId.claude.available, true);
-  assert.equal(byId.claude.status, 'shipped_tested');
+  assert.equal(byId.claude.available, false, 'Claude is detected but is not an automatically runnable contained host');
+  assert.equal(byId.claude.status, 'experimental');
+  assert.match(byId.claude.details.reason, /containment|manual/i);
   assert.deepEqual(byId.claude.details.flags, { '-p': true, '--output-format': true, '--permission-mode': false, '--add-dir': false, '--max-turns': false });
 
   for (const hostId of ['kilo', 'kimi', 'ollama', 'omniroute', 'openai-compatible']) {
@@ -123,9 +124,10 @@ test('codex argv is built only from flags observed in the probe and never carrie
   assert.deepEqual(echoedArgv(partial.result), ['exec', '--sandbox', 'workspace-write', '--cd', partial.root, 'Do the task']);
 
   const none = await runFake('codex', 'none', 'Do the task');
-  assert.deepEqual(echoedArgv(none.result), ['exec', 'Do the task']);
+  assert.equal(none.result.status, 'failed');
+  assert.match(none.result.reason, /sandbox.*workspace-write/i);
 
-  for (const { result } of [all, partial, none]) {
+  for (const { result } of [all, partial]) {
     assert.equal(hasDangerFlag(echoedArgv(result)), false);
     assert.equal(hasDangerFlag(result.argv), false);
   }
@@ -133,14 +135,11 @@ test('codex argv is built only from flags observed in the probe and never carrie
   assert.throws(() => buildHostArgv('codex', flags, { root: all.root, prompt: 'x --dangerously-skip-permissions' }), /danger/);
 });
 
-test('claude argv uses -p, --output-format json and --permission-mode acceptEdits only when observed', async () => {
+test('claude is probe-only until an equivalent containment boundary is enforceable', async () => {
   const all = await runFake('claude', 'all', 'Write the brief');
-  assert.deepEqual(echoedArgv(all.result), ['-p', 'Write the brief', '--output-format', 'json', '--permission-mode', 'acceptEdits']);
-  const partial = await runFake('claude', 'partial', 'Write the brief');
-  assert.deepEqual(echoedArgv(partial.result), ['-p', 'Write the brief', '--output-format', 'json']);
-  const none = await runFake('claude', 'none', 'Write the brief');
-  assert.deepEqual(echoedArgv(none.result), ['-p', 'Write the brief']);
-  for (const { result } of [all, partial, none]) assert.equal(hasDangerFlag(echoedArgv(result)), false);
+  assert.equal(all.result.status, 'failed');
+  assert.match(all.result.reason, /probe only|containment|manual/i);
+  assert.throws(() => buildHostArgv('claude', { '-p': true }, { root: all.root, prompt: 'Write the brief' }), /probe only|containment|manual/i);
 });
 
 // ---------------- process discipline ----------------
@@ -178,32 +177,32 @@ test('cancellation through an AbortSignal fails the run', async () => {
 });
 
 test('exit codes map to completed or failed, never verified', async () => {
-  const failed = await runFake('claude', 'all', 'break [[exit:2]] [[stderr:boom]]');
+  const failed = await runFake('codex', 'all', 'break [[exit:2]] [[stderr:boom]]');
   assert.equal(failed.result.status, 'failed');
   assert.equal(failed.result.exitCode, 2);
   assert.match(failed.result.stderr, /boom/);
-  const ok = await runFake('claude', 'all', 'fine');
+  const ok = await runFake('codex', 'all', 'fine');
   assert.equal(ok.result.status, 'completed');
   assert.equal(ok.result.exitCode, 0);
   for (const { result } of [ok, failed]) {
     assert.notEqual(result.status, 'verified');
     assert.equal(result.note, 'Provider completion is not verification.');
-    assert.equal(result.providerVersion, 'fake-claude 9.9.9');
+    assert.equal(result.providerVersion, 'fake-codex 9.9.9');
     assert.equal(typeof result.wallClockMs, 'number');
-    assert.equal(result.hostId, 'claude');
+    assert.equal(result.hostId, 'codex');
   }
 });
 
 test('task text is always written to .cherry/TASK.md and long tasks are referenced from the prompt', async () => {
-  const short = await runFake('codex', 'none', 'short task [[write:out/short.txt=ok]]', { task: { contextText: 'context body' } });
+  const short = await runFake('codex', 'all', 'short task [[write:out/short.txt=ok]]', { task: { contextText: 'context body' } });
   assert.equal(readFileSync(join(short.root, '.cherry', 'TASK.md'), 'utf8'), 'short task [[write:out/short.txt=ok]]');
   assert.equal(readFileSync(join(short.root, '.cherry', 'CONTEXT.md'), 'utf8'), 'context body');
-  assert.deepEqual(echoedArgv(short.result), ['exec', 'short task [[write:out/short.txt=ok]]']);
+  assert.deepEqual(echoedArgv(short.result), ['exec', '--sandbox', 'workspace-write', '-C', short.root, '--skip-git-repo-check', '--output-last-message', join(short.root, '.cherry', 'LAST.md'), 'short task [[write:out/short.txt=ok]]']);
   assert.equal(readFileSync(join(short.root, 'out', 'short.txt'), 'utf8'), 'ok');
 
   const longText = 'x'.repeat(6001) + ' [[write:out/long.txt=done]]';
-  const long = await runFake('codex', 'none', longText);
-  assert.deepEqual(echoedArgv(long.result), ['exec', 'Read .cherry/TASK.md and follow it. Context, if any, is in .cherry/CONTEXT.md.']);
+  const long = await runFake('codex', 'all', longText);
+  assert.deepEqual(echoedArgv(long.result), ['exec', '--sandbox', 'workspace-write', '-C', long.root, '--skip-git-repo-check', '--output-last-message', join(long.root, '.cherry', 'LAST.md'), 'Read .cherry/TASK.md and follow it. Context, if any, is in .cherry/CONTEXT.md.']);
   assert.equal(readFileSync(join(long.root, '.cherry', 'TASK.md'), 'utf8'), longText);
   assert.equal(readFileSync(join(long.root, 'out', 'long.txt'), 'utf8'), 'done', 'the fake host followed the task file');
 });
@@ -329,10 +328,9 @@ test('runChecks passes and fails every check kind deterministically', async () =
   const root = tempDir('checks-');
   mkdirSync(join(root, 'out'));
   writeFileSync(join(root, 'out', 'a.txt'), 'alpha beta');
+  writeFileSync(join(root, 'pass.test.mjs'), "import assert from 'node:assert/strict'; import { test } from 'node:test'; test('pass', () => assert.equal(1, 1));\n");
   const specs = [
-    { id: 'cmd-ok', kind: 'command', required: true, argv: ['node', '-e', 'process.exit(0)'], description: 'exits 0' },
-    { id: 'cmd-code', kind: 'command', required: true, argv: ['node', '-e', 'process.exit(3)'], expectExitCode: 3, description: 'exits 3' },
-    { id: 'cmd-bad', kind: 'command', required: false, argv: ['node', '-e', 'console.error("nope");process.exit(1)'], description: 'exits 1' },
+    { id: 'cmd-ok', kind: 'command', required: true, argv: ['node', '--test', 'pass.test.mjs'], description: 'tests pass' },
     { id: 'file-ok', kind: 'file', required: true, path: 'out/a.txt', description: 'exists' },
     { id: 'file-missing', kind: 'file', required: false, path: 'out/missing.txt', description: 'missing' },
     { id: 'contains-ok', kind: 'file_contains', required: true, path: 'out/a.txt', contains: 'beta', description: 'contains beta' },
@@ -342,19 +340,49 @@ test('runChecks passes and fails every check kind deterministically', async () =
     { id: 'human', kind: 'human', required: false, description: 'a person looks' },
     JSON.stringify({ id: 'json-spec', kind: 'file', required: true, path: 'out/a.txt', description: 'JSON encoded spec' }),
   ];
-  const report = await runChecks(specs, root, { timeoutMs: 10_000 });
+  const report = await runChecks(specs, root, { timeoutMs: 10_000, allowedExecutables: new Set([process.execPath]), authorizedExecutables: new Set(['node']) });
   const statuses = Object.fromEntries(report.checks.map((check) => [check.id, check.status]));
   assert.deepEqual(statuses, {
-    'cmd-ok': 'passed', 'cmd-code': 'passed', 'cmd-bad': 'failed', 'file-ok': 'passed', 'file-missing': 'failed',
+    'cmd-ok': 'passed', 'file-ok': 'passed', 'file-missing': 'failed',
     'contains-ok': 'passed', 'contains-bad': 'failed', 'hash-ok': 'passed', 'hash-bad': 'failed', human: 'blocked', 'json-spec': 'passed',
   });
   assert.equal(report.status, 'passed', 'optional failures and blocks do not fail the report');
-  assert.match(report.checks.find((check) => check.id === 'cmd-bad').detail, /nope/);
   assert.match(report.checks.find((check) => check.id === 'human').detail, /requires a person/);
-  assert.deepEqual(report.requiredIds, ['cmd-ok', 'cmd-code', 'file-ok', 'contains-ok', 'hash-ok', 'json-spec']);
+  assert.deepEqual(report.requiredIds, ['cmd-ok', 'file-ok', 'contains-ok', 'hash-ok', 'json-spec']);
   for (const check of report.checks) {
     assert.ok(Array.isArray(check.evidenceRefs));
     assert.equal(typeof check.name, 'string');
+  }
+});
+
+test('command checks require runner and envelope authorization and accept only data-only workspace targets', async () => {
+  const root = tempDir('checks-command-policy-');
+  writeFileSync(join(root, 'pass.test.mjs'), "import { test } from 'node:test'; test('pass', () => {});\n");
+  const outside = join(tempDir('checks-outside-'), 'outside.mjs');
+  writeFileSync(outside, 'process.exit(0);\n');
+  const safe = { id: 'safe', kind: 'command', required: true, argv: ['node', '--test', 'pass.test.mjs'], description: 'bounded test' };
+
+  const configMissing = await runChecks([safe], root, { authorizedExecutables: new Set(['node']) });
+  assert.match(configMissing.checks[0].detail, /runner config|not allowlisted/i);
+  const envelopeMissing = await runChecks([safe], root, { allowedExecutables: new Set([process.execPath]) });
+  assert.match(envelopeMissing.checks[0].detail, /envelope|approved plan/i);
+
+  const rejectedArgv = [
+    ['node', '-e', 'process.exit(0)'],
+    ['node', '--eval', 'process.exit(0)'],
+    ['node', '--loader', './loader.mjs', '--test', 'pass.test.mjs'],
+    ['node', '--import=./loader.mjs', '--test', 'pass.test.mjs'],
+    ['node', outside],
+    ['node', '..\\outside.mjs'],
+  ];
+  const report = await runChecks([
+    safe,
+    ...rejectedArgv.map((argv, index) => ({ id: `reject-${index}`, kind: 'command', required: false, argv, description: 'unsafe argv' })),
+  ], root, { allowedExecutables: new Set([process.execPath]), authorizedExecutables: new Set(['node']) });
+  assert.equal(report.checks[0].status, 'passed');
+  for (const check of report.checks.slice(1)) {
+    assert.equal(check.status, 'failed', `${check.id}: ${check.detail}`);
+    assert.match(check.detail, /refus|data-only|workspace|option|target/i);
   }
 });
 
@@ -376,8 +404,7 @@ test('a required failure fails the report, a required block yields blocked, and 
     { id: 'shell', kind: 'command', required: true, argv: ['powershell', '-c', 'whoami'], description: 'not allowlisted' },
     { id: 'python', kind: 'command', required: true, argv: ['python', '-c', 'print(1)'], description: 'reserved' },
     { id: 'unknown', kind: 'telepathy', required: true, description: 'unknown kind' },
-    { id: 'allowed', kind: 'command', required: true, argv: [process.execPath, '-e', 'process.exit(0)'], description: 'allowlisted' },
-  ], root, { allowedExecutables: new Set([process.execPath]) });
+  ], root, { allowedExecutables: new Set([process.execPath]), authorizedExecutables: new Set() });
   const byId = Object.fromEntries(refused.checks.map((check) => [check.id, check]));
   assert.equal(byId.escape.status, 'failed');
   assert.match(byId.escape.detail, /escapes/);
@@ -385,7 +412,6 @@ test('a required failure fails the report, a required block yields blocked, and 
   assert.match(byId.shell.detail, /not allowlisted/);
   assert.equal(byId.python.status, 'failed');
   assert.equal(byId.unknown.status, 'failed');
-  assert.equal(byId.allowed.status, 'passed');
   assert.equal(refused.status, 'failed');
 
   const controller = new AbortController();

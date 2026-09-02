@@ -38,8 +38,8 @@ const CLAUDE_FLAGS = ['-p', '--output-format', '--permission-mode', '--add-dir',
 const CLI_CAPABILITIES = ['repository_read', 'repository_write', 'command_execution', 'artifact_write'];
 
 export const HOST_DESCRIPTORS = [
-  { hostId: 'codex', kind: 'codex-cli', executable: 'codex', probe: 'cli', helpArgv: ['exec', '--help'], flags: CODEX_FLAGS, modes: ['exec'], boundary: 'process', capabilities: CLI_CAPABILITIES, runnable: true, foundStatus: 'shipped_tested' },
-  { hostId: 'claude', kind: 'claude-cli', executable: 'claude', probe: 'cli', helpArgv: ['--help'], flags: CLAUDE_FLAGS, modes: ['print'], boundary: 'process', capabilities: CLI_CAPABILITIES, runnable: true, foundStatus: 'shipped_tested' },
+  { hostId: 'codex', kind: 'codex-cli', executable: 'codex', probe: 'cli', helpArgv: ['exec', '--help'], flags: CODEX_FLAGS, requiredFlags: ['--sandbox'], modes: ['exec'], boundary: 'process', capabilities: CLI_CAPABILITIES, runnable: true, foundStatus: 'shipped_tested' },
+  { hostId: 'claude', kind: 'claude-cli', executable: 'claude', probe: 'cli', helpArgv: ['--help'], flags: CLAUDE_FLAGS, modes: ['print'], boundary: 'unknown', capabilities: CLI_CAPABILITIES, runnable: false, detectionOnly: true, foundStatus: 'experimental' },
   { hostId: 'kilo', kind: 'kilo-cli', executable: 'kilo', probe: 'cli', helpArgv: null, flags: [], modes: [], boundary: 'process', capabilities: [], runnable: false, foundStatus: 'experimental' },
   { hostId: 'kimi', kind: 'kimi-cli', executable: 'kimi', probe: 'cli', helpArgv: null, flags: [], modes: [], boundary: 'process', capabilities: [], runnable: false, foundStatus: 'experimental' },
   { hostId: 'ollama', kind: 'ollama', executable: null, probe: 'http', path: '/api/tags', modes: [], boundary: 'unknown', capabilities: [], runnable: false, foundStatus: 'experimental' },
@@ -210,6 +210,15 @@ async function probeCli(descriptor, command, now, timeoutMs) {
     if (help.exitCode !== 0) details.helpReason = help.spawnError ?? `help probe exited with code ${help.exitCode}`;
     details.flags = Object.fromEntries(descriptor.flags.map((flag) => [flag, helpListsFlag(helpText, flag)]));
   }
+  const missingRequired = (descriptor.requiredFlags ?? []).filter((flag) => !details.flags?.[flag]);
+  if (missingRequired.length > 0) {
+    details.reason = `required containment flag not observed: ${missingRequired.join(', ')}; Codex needs --sandbox workspace-write`;
+    return probeRecord(descriptor, now, { executable, available: false, version: firstLine(version.stdout || version.stderr), details, status: 'experimental' });
+  }
+  if (descriptor.detectionOnly) {
+    details.reason = 'detected for information only; no equivalent automatic containment boundary is enforced, so use a manual handoff';
+    return probeRecord(descriptor, now, { executable, available: false, version: firstLine(version.stdout || version.stderr), details, status: descriptor.foundStatus });
+  }
   return probeRecord(descriptor, now, {
     executable,
     available: true,
@@ -291,17 +300,16 @@ export function buildHostArgv(hostId, flags, { root, prompt }) {
   const present = (flag) => Boolean(flags?.[flag]);
   const argv = [];
   if (hostId === 'codex') {
+    if (!present('--sandbox')) throw new Error('Codex cannot run: the probe did not observe the required --sandbox workspace-write support');
     argv.push('exec');
-    if (present('--sandbox')) argv.push('--sandbox', 'workspace-write');
+    argv.push('--sandbox', 'workspace-write');
     if (present('-C')) argv.push('-C', root);
     else if (present('--cd')) argv.push('--cd', root);
     if (present('--skip-git-repo-check')) argv.push('--skip-git-repo-check');
     if (present('--output-last-message')) argv.push('--output-last-message', join(root, '.cherry', 'LAST.md'));
     argv.push(prompt);
   } else if (hostId === 'claude') {
-    argv.push('-p', prompt);
-    if (present('--output-format')) argv.push('--output-format', 'json');
-    if (present('--permission-mode')) argv.push('--permission-mode', 'acceptEdits');
+    throw new Error('Claude is probe only: Cherry cannot enforce an equivalent automatic containment boundary; use a manual handoff');
   } else {
     throw new Error(`${hostId} has no argv builder`);
   }

@@ -441,6 +441,7 @@ export class MissionExecutor {
       const root = node.sandbox?.root ?? this.workingDirectoryFor(mission, node);
       report = await runChecks(planNode.verificationPlan, root, {
         allowedExecutables: this.allowedExecutables,
+        authorizedExecutables: new Set(mission.envelopes[node.id]?.allowedExecutables ?? []),
         timeoutMs: planNode.timeoutMs,
         signal: controller.signal,
         now: this.now,

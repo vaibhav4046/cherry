@@ -13,7 +13,7 @@ import { redact } from './redact.mjs';
 import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
 import { sourceWatchRoutineId } from './source-watch.mjs';
 import { buildChildEnv, isPythonExecutable } from './process-policy.mjs';
-import { buildTaskText, createAgentHosts, hostIdForKind } from './agent-hosts.mjs';
+import { buildHostArgv, buildTaskText, createAgentHosts, hostIdForKind } from './agent-hosts.mjs';
 import { runChecks } from './checks.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
@@ -22,7 +22,7 @@ const MAX_EXPORT_FILES = 2000;
 const PROVIDER_NOTE = 'Provider CLI completion is not verification. Run cherry-verify afterwards.';
 const CHECK_NOTE = 'Deterministic checks decide; a provider never verifies its own work.';
 /** Agent hosts tried for a task with no host preference, in order. */
-const DEFAULT_AGENT_HOST_IDS = ['codex', 'claude'];
+const DEFAULT_AGENT_HOST_IDS = ['codex'];
 
 /** Shell-free process runner with timeout + abort-signal support. */
 export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal, stdinText } = {}) {
@@ -156,6 +156,7 @@ export function createAdapters(config) {
 
   /** Provider CLIs spawn ONLY when allowed by BOTH the envelope and config. */
   async function providerCli(binary, envelope, context) {
+    if (binary === 'claude') throw new Error('Claude is probe only because Cherry cannot enforce an equivalent automatic containment boundary; use a manual handoff');
     if (!Array.isArray(envelope.allowedExecutables) || !envelope.allowedExecutables.includes(binary)) {
       throw new Error(`${binary} is not allowed by the execution envelope`);
     }
@@ -172,7 +173,9 @@ export function createAdapters(config) {
     } catch {
       providerVersion = null;
     }
-    const cliArgv = binary === 'codex' ? ['exec', prompt] : ['-p', prompt];
+    const probe = (await hosts.probe({ force: true })).find((candidate) => candidate.hostId === 'codex');
+    if (!probe?.available) throw new Error(`Codex is unavailable for contained execution: ${probe?.details?.reason ?? 'required --sandbox support was not observed'}`);
+    const cliArgv = buildHostArgv('codex', probe.details?.flags ?? {}, { root: cwd, prompt });
     const run = await runProcess(binary, cliArgv, cwd, context);
     return {
       // NEVER 'verified' — verification only comes from cherry-verify.
@@ -305,7 +308,7 @@ export function createAdapters(config) {
   /** cherry-check: run the envelope verificationPlan inside workingDirectory. */
   async function cherryCheck(envelope, context) {
     const cwd = requireWorkingDirectory(envelope);
-    const report = await runChecks(envelope.verificationPlan, cwd, { allowedExecutables, timeoutMs: context.timeoutMs, signal: context.signal });
+    const report = await runChecks(envelope.verificationPlan, cwd, { allowedExecutables, authorizedExecutables: new Set(envelope.allowedExecutables ?? []), timeoutMs: context.timeoutMs, signal: context.signal });
     const passed = report.status === 'passed';
     return { status: passed ? 'completed' : 'failed', exitCode: passed ? 0 : 1, stdout: JSON.stringify(report), stderr: '', report, providerNote: CHECK_NOTE };
   }
