@@ -38,6 +38,7 @@ async function seedGodModeWorkspace() {
     workspaceId: workspace.id,
     missionId: mission.id,
     workItemId,
+    workerRunId: 'job-seeded',
     nodeId: node.id,
     planRevision: projected.revision,
     attempt: 1,

@@ -182,6 +182,8 @@ export interface EvaluationReport {
   workspaceId: string;
   missionId: string;
   workItemId: string;
+  /** The runner job that produced the artifacts under evaluation, when known. */
+  workerRunId: string | null;
   nodeId: string;
   planRevision: number;
   attempt: number;
@@ -194,7 +196,7 @@ export interface EvaluationReport {
 }
 
 export const EVALUATION_REPORT_HASH_FIELDS = [
-  'id', 'workspaceId', 'missionId', 'workItemId', 'nodeId', 'planRevision', 'attempt', 'status', 'checks', 'summary', 'evaluatorKind', 'createdAt',
+  'id', 'workspaceId', 'missionId', 'workItemId', 'workerRunId', 'nodeId', 'planRevision', 'attempt', 'status', 'checks', 'summary', 'evaluatorKind', 'createdAt',
 ] as const;
 
 export async function computeEvaluationReportHash(report: EvaluationReport): Promise<string> {

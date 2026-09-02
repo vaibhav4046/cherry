@@ -56,6 +56,7 @@ async function reportFor(plan: MissionPlan, node: MissionPlanNode, workItemId: s
     workspaceId: plan.workspaceId,
     missionId: plan.missionId,
     workItemId,
+    workerRunId: 'job-1',
     nodeId: node.id,
     planRevision: plan.revision,
     attempt: 1,

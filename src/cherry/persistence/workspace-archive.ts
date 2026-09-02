@@ -1096,6 +1096,7 @@ function validEvaluationReportShape(row: ArchiveRow): boolean {
   const checks = row['checks'];
   return isValidId(row['missionId'])
     && isValidId(row['workItemId'])
+    && (row['workerRunId'] === null || typeof row['workerRunId'] === 'string')
     && hasString(row, 'nodeId')
     && Number.isInteger(row['planRevision'])
     && Number(row['planRevision']) >= 1
