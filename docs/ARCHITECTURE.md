@@ -42,11 +42,12 @@ services, so an agent can never do something the UI would refuse (AGENTS.md cont
 
 ## Routes (src/app/App.tsx)
 
-`/` (Landing) · `/compatibility` · `/studio` (Command Center) with children:
-`onboarding`, `quick` (Quick Skill), `inbox`, `work/:workItemId`, `crew`, `routines`,
-`routines/:routineId`, `missions/new`, `missions/:missionId`, `watch/:lessonId`, `memory`,
-`skills`, `skills/:skillId`, `artifacts/:artifactSetId`, `runs`, `proof[/:receiptId]`,
-`agent` (Agent View / MCP inspector), `settings/connections`. Unknown paths redirect to `/`.
+`/` (Landing) · `/showcase` · `/connect` · `/compatibility` · `/ingest` · `/studio` (Command
+Center) with children: `onboarding`, `quick` (Quick Skill), `sources`, `creators`, `inbox`,
+`work/:workItemId`, `crew`, `routines`, `routines/:routineId`, `missions/new`,
+`missions/:missionId`, `watch/:lessonId`, `memory`, `skills`, `skills/:skillId`,
+`artifacts/:artifactSetId`, `runs`, `proof[/:receiptId]`, `agent` (Agent View / MCP inspector),
+`settings/connections`. Unknown paths render the 404 view with its own metadata.
 Landing links "Try the guided example" to `/studio?demo=1`.
 
 ## Golden journey data flow
@@ -82,13 +83,14 @@ Every step above writes its ProofEvent inside the same IndexedDB transaction
 Registration: `src/cherry/webmcp/registration-manager.ts` feature-detects
 `document.modelContext.registerTool`, registers with AbortController lifecycle, and
 re-registers (reporting retired tools) on both mission-state and route-surface changes
-(D-015). Aperture cap: ≤ 5 state/surface tools + 3 globals (third global per D-014).
+(D-015). Aperture cap: ≤ 5 state/surface tools + 7 globals (the library reads joined the
+original three on 2026-08-31; nothing has been added since).
 Tool definitions: `tool-definitions.ts` (mission-state tools) and `workforce-tools.ts`
 (surface tools). All names below are read from those files' `TOOL_STATE_TABLE`,
 `TOOL_SURFACE_TABLE`, and `GLOBAL_TOOLS`.
 
 **Global (always registered):** `read_cherry_context`, `list_cherry_capabilities`,
-`introduce_agent`.
+`get_cherry_status`, `introduce_agent`, `list_skills`, `recommend_skills`, `get_skill`.
 
 **By mission state** (`TOOL_STATE_TABLE`):
 
@@ -112,6 +114,7 @@ Also defined in `tool-definitions.ts` for the learning flow: `control_lesson_pla
 | crew (`/studio/crew`) | `list_agent_profiles`, `propose_agent_profile`, `assign_agent_role`, `read_agent_context`, `propose_handoff` |
 | routines (`/studio/routines`) | `list_routines`, `draft_routine`, `set_routine_schedule`, `run_routine_now`, `pause_routine` |
 | run (`/studio/runs`) | `read_run_status`, `record_run_checkpoint`, `record_task_result`, `request_human_action`, `request_verification` |
+| sources (`/studio/sources`, `/studio/creators`) | `list_sources` (rows carry the skill proposal), `save_source`, `request_source_fetch`, `archive_source`, `prepare_source_for_skill` |
 
 Agents can request but never grant: approvals, trust promotion, and memory activation are
 human-only code paths; `transitionWorkItem` refuses SUCCEEDED for agent actors (D-016).

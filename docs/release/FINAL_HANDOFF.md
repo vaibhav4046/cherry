@@ -48,7 +48,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | T16 | Real-usage proof runs with screenshots | **PARTIAL** | none | Marked IN_PROGRESS, never closed. No `PROOF_LOG.md` exists. 30 tracked screenshots exist in `docs/release/screenshots/` from earlier passes. |
 | T17 | Codify the harness | VERIFIED | `6c03e41` Codex lane, `163e391` owner lane | Layered AGENTS contract, `npm run gates` / `verify:all`; `docs/HARNESS.md` written and cross-linked from README |
 | T18 | Contribution-ready, star-ready repository | VERIFIED | `6c03e41` Codex lane, `7b3b64a` owner lane | `CONTRIBUTING.md`, issue and PR templates, README overhaul, `docs/GOOD_FIRST_ISSUES.md` (10 scoped issues), fresh light landing capture `docs/media/cherry-landing.png` |
-| T19 | Final technical report | **NOT DONE** | none | No `TECHNICAL_REPORT.md`. The material exists across `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this handoff, but was never assembled into one report. |
+| T19 | Final technical report | DONE (afternoon) | follow-up to `c8e2181` | `docs/release/TECHNICAL_REPORT.md`, assembled in the afternoon amendment from existing evidence. Was NOT DONE at the morning signature. |
 | T20 | Launch kit | **NOT DONE** | none | Stretch ticket, never started. |
 
 ### Sprint 4 (10_SPRINT4_BREAKER.md)
@@ -72,7 +72,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 |---|---|---|---|---|
 | T26 | The Creators watch engine at `/studio/creators` | VERIFIED | `84fea70` | Follow a creator, paired-runner daily feed check, deterministic skill proposals with honest readiness, human-only set-aside, Dexie v5, archive v1.2.0, `list_sources` rows (no new tool), Command Center card, inline Sources line, labelled synthetic sample creator in the starter library. Unit 406, `e2e/cherry/creators.spec.ts`, `docs/release/screenshots/creators/`, `CHERRY_RELEASE_EVIDENCE.md` creators_watch_engine, compatibility row. Built on Claude Code's snapshot after its session stopped. |
 | T28 | Creators story in public copy | **PARTIAL** | `84fea70` | Landing step 01 sentence and the compatibility row shipped; the showcase "Source" chapter does not mention Creators. |
-| T19 | Technical report | **NOT DONE** | none | Unchanged from the morning: the material exists across `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this document. |
+| T19 | Technical report | DONE | follow-up to `c8e2181` | `docs/release/TECHNICAL_REPORT.md`: architecture, engine, WebMCP surface, serving paths, security boundaries, harness and gate counts, what is not proven, evidence index. Assembled from existing evidence; under 200 lines. |
 | T29 | Self-loop on shipped work | **PARTIAL** | `84fea70`, `e81dbc3` | The Creators and judge-card specs each ran green twice in a row; the wider three-times loop did not run. |
 
 ---
@@ -166,6 +166,7 @@ Everything a judge or a contributor can open and check for themselves.
 
 | Evidence | Path | What it shows |
 |---|---|---|
+| Technical report | `docs/release/TECHNICAL_REPORT.md` | One document: architecture, engine, WebMCP surface, serving paths, boundaries, gates, what is not proven |
 | Harness architecture | `docs/HARNESS.md` | The two harnesses (product harness, verification harness), layer by layer, with the precise YouTube boundary |
 | Architecture | `docs/ARCHITECTURE.md` | Domain layer, WebMCP layer, runner, persistence |
 | Release evidence | `docs/release/CHERRY_RELEASE_EVIDENCE.md` | Per-claim evidence with the test or capture behind it |
@@ -186,7 +187,8 @@ Everything a judge or a contributor can open and check for themselves.
 | Contribution guide | `CONTRIBUTING.md` | Gates, lanes, claim discipline, four worked extension outlines |
 
 **Not in the index because they were never produced:** `PROOF_LOG.md`, `BREAKER_LOG.md`,
-`TRIBUNAL_LOG.md`, `TECHNICAL_REPORT.md`. Sections 1 and 2 say what stands in for each.
+`TRIBUNAL_LOG.md`. Sections 1 and 2 say what stands in for each. `TECHNICAL_REPORT.md` was
+added in the afternoon amendment.
 
 ---
 
@@ -268,7 +270,6 @@ A submitted entry that is 90 percent polished beats a perfect one that missed th
 | Item | State | What finishing it takes |
 |---|---|---|
 | **GitHub push** | **Resolved.** Pushed to `origin/main` at `b6b7d11` and verified public. | Nothing. This was the last blocking item and it is closed. |
-| T19, the technical report | Not assembled. | The content exists in `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this handoff. Devpost does not ask for a separate report, so this is a post-submission tidy. |
 | T20 launch kit, T23 landing self-demo | Not started. | Both are post-submission polish. |
 | Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by Claude Cowork. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch `claude/takeover` can be deleted after the hackathon. |
 | `.gitattributes` line-ending normalisation | Deferred. | Nine tracked files carry CRLF; normalising them mid-flight would have conflicted with the takeover branch. Add `* text=auto eol=lf` after submission and renormalise in one commit, keeping the hash-verified example archives byte-identical. |
