@@ -13,11 +13,16 @@ import { redact } from './redact.mjs';
 import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
 import { sourceWatchRoutineId } from './source-watch.mjs';
 import { buildChildEnv, isPythonExecutable } from './process-policy.mjs';
+import { buildTaskText, createAgentHosts } from './agent-hosts.mjs';
+import { runChecks } from './checks.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
 const MAX_TIMEOUT_MS = 600_000;
 const MAX_EXPORT_FILES = 2000;
 const PROVIDER_NOTE = 'Provider CLI completion is not verification. Run cherry-verify afterwards.';
+const CHECK_NOTE = 'Deterministic checks decide; a provider never verifies its own work.';
+/** Agent hosts that can take a mission task, in preference order. */
+const AGENT_HOST_IDS = ['codex', 'claude'];
 
 /** Shell-free process runner with timeout + abort-signal support. */
 export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal, stdinText } = {}) {
@@ -74,11 +79,18 @@ export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal,
 }
 
 /**
- * Build the registry. config: { allowedRoots: absolute paths, allowedExecutables: Set }.
+ * Build the registry. config: { allowedRoots: absolute paths, allowedExecutables: Set,
+ * allowMockHost?, hosts? (an agent-hosts instance), hostCommands?, hostEndpoints?, searchPath? }.
  */
 export function createAdapters(config) {
   const allowedRoots = config.allowedRoots.map((root) => resolve(root));
   const allowedExecutables = config.allowedExecutables;
+  const hosts = config.hosts ?? createAgentHosts({
+    commands: config.hostCommands ?? {},
+    endpoints: config.hostEndpoints ?? {},
+    allowMockHost: Boolean(config.allowMockHost),
+    searchPath: config.searchPath,
+  });
 
   function withinRoots(candidate) {
     const resolved = resolve(candidate);
@@ -235,6 +247,66 @@ export function createAdapters(config) {
     return { status: 'completed', exitCode: 0, stdout: JSON.stringify(feed), stderr: '', feed };
   }
 
+  /** Task for a host from the node payload; the mission executor may pass its own (repairs). */
+  function hostTask(payload, context) {
+    return context.task ?? {
+      text: buildTaskText(payload),
+      attempt: Number.isInteger(context.attempt) ? context.attempt : 1,
+      contextText: typeof payload.contextText === 'string' ? payload.contextText : null,
+      mock: payload.mock ?? null,
+    };
+  }
+
+  /** agent-host: run the node task on the first available codex/claude host
+   *  allowed by BOTH the envelope and the config, exactly like providerCli. */
+  async function agentHost(envelope, context) {
+    const payload = parsePayload(envelope);
+    const cwd = requireWorkingDirectory(envelope);
+    const probes = await hosts.probe();
+    const wanted = Array.isArray(payload.hostKinds) && payload.hostKinds.length > 0
+      ? payload.hostKinds
+      : (typeof envelope.executionHostId === 'string' && envelope.executionHostId !== 'any' ? [envelope.executionHostId] : null);
+    const byKind = AGENT_HOST_IDS
+      .map((hostId) => probes.find((probe) => probe.hostId === hostId))
+      .filter((probe) => probe && (!wanted || wanted.includes(probe.kind) || wanted.includes(probe.hostId)));
+    if (byKind.length === 0) throw new Error(`no agent host matches ${JSON.stringify(wanted)}`);
+    const envelopeAllowed = byKind.filter((probe) => Array.isArray(envelope.allowedExecutables) && envelope.allowedExecutables.includes(probe.hostId));
+    if (envelopeAllowed.length === 0) throw new Error(`${byKind.map((probe) => probe.hostId).join(', ')} is not allowed by the execution envelope`);
+    const configAllowed = envelopeAllowed.filter((probe) => allowedExecutables.has(probe.hostId));
+    if (configAllowed.length === 0) {
+      throw new Error(`${envelopeAllowed.map((probe) => probe.hostId).join(', ')} is not in the runner config allowlist (start with --allow-exec <name>)`);
+    }
+    const chosen = configAllowed.find((probe) => probe.available);
+    if (!chosen) {
+      const reasons = configAllowed.map((probe) => `${probe.hostId}: ${probe.details?.reason ?? 'unavailable'}`).join('; ');
+      throw new Error(`no agent host is available for this task (${reasons})`);
+    }
+    const result = await hosts.run(chosen.hostId, hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
+    // NEVER 'verified': the mission executor evaluates the sandbox afterwards.
+    return { ...result, providerNote: PROVIDER_NOTE };
+  }
+
+  /** cherry-check: run the envelope verificationPlan inside workingDirectory. */
+  async function cherryCheck(envelope, context) {
+    const cwd = requireWorkingDirectory(envelope);
+    const report = await runChecks(envelope.verificationPlan, cwd, { allowedExecutables, timeoutMs: context.timeoutMs, signal: context.signal });
+    const passed = report.status === 'passed';
+    return { status: passed ? 'completed' : 'failed', exitCode: passed ? 0 : 1, stdout: JSON.stringify(report), stderr: '', report, providerNote: CHECK_NOTE };
+  }
+
+  /** mock-host: scripted host for tests; registered only with --allow-mock-host. */
+  async function mockHost(envelope, context) {
+    const payload = parsePayload(envelope);
+    const cwd = requireWorkingDirectory(envelope);
+    return hosts.run('mock', hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
+  }
+
+  const missionAdapters = {
+    'agent-host': agentHost,
+    'cherry-check': cherryCheck,
+    ...(config.allowMockHost ? { 'mock-host': mockHost } : {}),
+  };
+
   const adapters = {
     'cherry-verify': cherryVerify,
     'cherry-export': cherryExport,
@@ -245,11 +317,16 @@ export function createAdapters(config) {
     'youtube-rss-watch': youtubeRssWatch,
   };
 
+  const registry = { ...adapters, ...missionAdapters };
+
   return {
+    /** General-purpose adapters exposed to /v2/jobs; mission adapters are listed separately. */
     names: Object.keys(adapters),
-    has: (name) => Object.prototype.hasOwnProperty.call(adapters, name),
+    missionAdapterNames: Object.keys(missionAdapters),
+    hosts,
+    has: (name) => Object.prototype.hasOwnProperty.call(registry, name),
     async run(envelope, context = {}) {
-      const adapter = adapters[envelope.adapter];
+      const adapter = registry[envelope.adapter];
       if (!adapter) throw new Error(`unknown adapter ${envelope.adapter}`);
       return adapter(envelope, context);
     },

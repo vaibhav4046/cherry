@@ -227,3 +227,4 @@ test('output redaction removes secret-shaped strings', async () => {
 // test:runner script lists explicit files and cannot be changed here.
 await import('./v2.test.mjs');
 await import('./sandbox-manager.test.mjs');
+await import('./agent-hosts.test.mjs');
