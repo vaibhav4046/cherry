@@ -170,7 +170,8 @@ export function Landing() {
             <h2>Learn from the source</h2>
             <p>
               Every step is drawn from timestamped evidence — what was said, what was shown, and when.
-              Anything from outside starts untrusted until you promote it.
+              Anything from outside starts untrusted until you promote it. Follow a creator and
+              Cherry proposes a skill from each new upload; you add the transcript, you approve.
             </p>
           </div>
           <div>

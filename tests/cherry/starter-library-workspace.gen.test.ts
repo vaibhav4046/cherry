@@ -20,6 +20,8 @@ import type { SkillGraph } from '../../src/cherry/skillgraph/skillgraph-model.ts
 import type { Lesson } from '../../src/cherry/watch/watch-model.ts';
 
 const FIXTURE_PATH = resolve(process.cwd(), 'public/examples/starter-library-workspace.json');
+const SAMPLE_CREATOR = 'Sample Creator (synthetic)';
+const SAMPLE_CHANNEL_ID = 'UCsampleCreatorCherry001';
 
 function timestampSeconds(timestamp: string): number {
   const parts = timestamp.split(':').map(Number);
@@ -71,9 +73,23 @@ describe('shipped starter library workspace', () => {
     expect(raw).not.toContain('"actorType": "human"');
     expect(archivedGraphs.length).toBeGreaterThanOrEqual(8);
     expect(archivedGraphs.length).toBeLessThanOrEqual(10);
-    expect(archive.transcriptSegments).toEqual([]);
-    expect(archive.channelWatches).toEqual([]);
-    expect(archivedLessons.every((lesson) => lesson.transcriptSource === null && lesson.transcriptImportedAt === null)).toBe(true);
+    // The eight curated skills carry no transcript. The only transcript in the archive belongs to
+    // the synthetic sample creator's anchor upload, and the only channel watch is that creator's
+    // labelled sample watch, which was never registered with a runner and is stopped on reset.
+    const sampleSources = (archive.sourceRecords as Array<Record<string, unknown>>).filter((source) => source['creator'] === SAMPLE_CREATOR);
+    expect(sampleSources).toHaveLength(2);
+    expect(sampleSources.map((source) => source['sourceOrigin']).sort()).toEqual(['manual', 'rss-watch']);
+    expect(sampleSources.every((source) => source['youtubeChannelId'] === SAMPLE_CHANNEL_ID && /sampleVid0[12]$/.test(String(source['url'])))).toBe(true);
+    const sampleLessonIds = new Set(sampleSources.map((source) => source['lessonId']));
+    expect((archive.transcriptSegments as Array<Record<string, unknown>>).every((segment) => sampleLessonIds.has(segment['lessonId']))).toBe(true);
+    expect((archive.transcriptSegments as unknown[]).length).toBeGreaterThan(0);
+    expect(archive.channelWatches).toHaveLength(1);
+    expect((archive.channelWatches as Array<Record<string, unknown>>)[0]).toMatchObject({ channelId: SAMPLE_CHANNEL_ID, channelName: SAMPLE_CREATOR, enabled: true });
+    expect(archivedLessons.filter((lesson) => !sampleLessonIds.has(lesson.id)).every((lesson) => lesson.transcriptSource === null && lesson.transcriptImportedAt === null)).toBe(true);
+    const proposals = (archive as unknown as { skillProposals: Array<Record<string, unknown>> }).skillProposals;
+    expect(proposals.filter((proposal) => proposal['readiness'] === 'approved')).toHaveLength(archivedGraphs.length);
+    expect(proposals.filter((proposal) => proposal['readiness'] === 'draft-ready')).toHaveLength(1);
+    expect(proposals.filter((proposal) => proposal['readiness'] === 'needs-transcript')).toHaveLength(1);
     expect(archivedEvidence.length).toBeGreaterThan(archivedGraphs.length);
     expect(archivedEvidence.every((evidence) => (
       evidence.sourceType === 'video'
@@ -139,10 +155,11 @@ describe('shipped starter library workspace', () => {
       && typeof approval.contentHash === 'string'
     ))).toBe(true);
     expect(evidence).toHaveLength(archivedEvidence.length);
-    expect(sources).toHaveLength(entries.length);
-    expect(lessons).toHaveLength(entries.length);
+    expect(sources).toHaveLength(entries.length + 2);
+    expect(lessons).toHaveLength(entries.length + 2);
     expect(missions).toHaveLength(entries.length);
-    expect(sources.every((source) => (
+    expect(sources.filter((source) => source.creator === SAMPLE_CREATOR)).toHaveLength(2);
+    expect(sources.filter((source) => source.creator !== SAMPLE_CREATOR).every((source) => (
       source.kind === 'youtube'
       && source.sourceOrigin === 'manual'
       && source.contentHash === null
@@ -155,7 +172,8 @@ describe('shipped starter library workspace', () => {
       && lessons.some((lesson) => lesson.id === mission.lessonId && lesson.missionId === mission.id)
       && graphs.some((graph) => graph.id === mission.skillGraphId && graph.missionId === mission.id)
     ))).toBe(true);
-    const importedTranscripts = (await Promise.all(lessons.map((lesson) => listTranscript(lesson.id)))).flat();
+    const skillLessons = lessons.filter((lesson) => !sources.some((source) => source.creator === SAMPLE_CREATOR && source.lessonId === lesson.id));
+    const importedTranscripts = (await Promise.all(skillLessons.map((lesson) => listTranscript(lesson.id)))).flat();
     expect(importedTranscripts).toEqual([]);
     for (const graph of graphs) {
       const versions = await listSkillGraphVersions(graph.id);

@@ -15,6 +15,8 @@ import type { MissionState } from '../../cherry/mission/mission-model.ts';
 import { CherryMascot } from '../../components/CherryMascot.tsx';
 import { AddToCherry } from './AddToCherry.tsx';
 import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
+import { listChannelWatches } from '../../cherry/source/channel-watch-service.ts';
+import { listProposals } from '../../cherry/source/proposal-service.ts';
 
 function approvalObjectLabel(objectType: ApprovalRecord['objectType']): string {
   if (objectType === 'skillgraph') return 'skill';
@@ -78,6 +80,8 @@ export default function CommandCenter() {
   const [memoryInboxCount, setMemoryInboxCount] = useState(0);
   const [attentionRuns, setAttentionRuns] = useState(0);
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
+  const [creatorsFollowed, setCreatorsFollowed] = useState(0);
+  const [proposalsWaiting, setProposalsWaiting] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -87,12 +91,14 @@ export default function CommandCenter() {
     let cancelled = false;
     (async () => {
       if (!activeWorkspace) return;
-      const [loadedEvents, loadedApprovals, inbox, runs, runnerState] = await Promise.all([
+      const [loadedEvents, loadedApprovals, inbox, runs, runnerState, watches, proposals] = await Promise.all([
         listProofEvents(activeWorkspace.id, 12),
         listApprovals(activeWorkspace.id),
         listMemories(activeWorkspace.id, { status: 'proposed' }),
         listRuns(activeWorkspace.id),
         runnerStatus(),
+        listChannelWatches(activeWorkspace.id),
+        listProposals(activeWorkspace.id),
       ]);
       if (cancelled) return;
       setEvents(loadedEvents.reverse());
@@ -100,6 +106,8 @@ export default function CommandCenter() {
       setMemoryInboxCount(inbox.length);
       setAttentionRuns(runs.filter((run) => run.status === 'failed' || run.status === 'waiting_for_runner').length);
       setRunner(runnerState);
+      setCreatorsFollowed(watches.filter((watch) => watch.enabled).length);
+      setProposalsWaiting(proposals.filter((proposal) => proposal.readiness === 'needs-transcript' || proposal.readiness === 'draft-ready').length);
     })();
     return () => {
       cancelled = true;
@@ -383,6 +391,16 @@ export default function CommandCenter() {
               : `${memoryInboxCount} proposed ${memoryInboxCount === 1 ? 'memory' : 'memories'} awaiting your decision.`}
           </p>
           <Link to="/studio/memory" className="btn btn-sm">Open memory</Link>
+        </section>
+
+        <section className="card stack" aria-labelledby="creators-heading" data-testid="creators-card">
+          <h2 id="creators-heading" className="subhead">Creators</h2>
+          <p>
+            {creatorsFollowed === 0 && proposalsWaiting === 0
+              ? 'No creators followed yet. Follow one and Cherry proposes a skill from each new upload.'
+              : `${creatorsFollowed} followed · ${proposalsWaiting} ${proposalsWaiting === 1 ? 'proposal' : 'proposals'} waiting for you.`}
+          </p>
+          <Link to="/studio/creators" className="btn btn-sm">Open Creators</Link>
         </section>
 
         <section className="card stack" aria-labelledby="runner-heading">

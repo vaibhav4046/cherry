@@ -222,7 +222,23 @@ describe('WebMCP tool aperture', () => {
     expect(manager.activeNamesFor('onboarding', 'sources')).toEqual([...GLOBAL_TOOLS, ...TOOL_SURFACE_TABLE.sources]);
     const saved = parseResult(await manager.executeLocal('save_source', { kind: 'note', title: 'Agent note', content: 'A human-supplied note', permissionAcknowledged: false }));
     expect(saved.status).toBe('ready');
-    expect(parseResult(await manager.executeLocal('list_sources', {}))).toHaveLength(1);
+    const listed = parseResult(await manager.executeLocal('list_sources', {})) as unknown as Array<Record<string, unknown>>;
+    expect(listed).toHaveLength(1);
+    // Notes carry no skill proposal; the field is present and null.
+    expect(listed[0]).toMatchObject({ title: 'Agent note', proposal: null });
+
+    // A YouTube save carries the deterministic proposal on the same row; still five tools, still seven globals.
+    parseResult(await manager.executeLocal('save_source', { kind: 'youtube', title: 'Write subject lines people open', url: 'https://www.youtube.com/watch?v=subjectVid1', permissionAcknowledged: true }));
+    const withProposal = (parseResult(await manager.executeLocal('list_sources', {})) as unknown as Array<Record<string, unknown>>)
+      .find((row) => row['kind'] === 'youtube');
+    expect(withProposal?.['proposal']).toEqual({
+      readiness: 'needs-transcript',
+      name: 'Write subject lines people open skill',
+      teaches: 'How to write subject lines people open.',
+    });
+    expect(manager.activeNamesFor('onboarding', 'sources')).toEqual([...GLOBAL_TOOLS, ...TOOL_SURFACE_TABLE.sources]);
+    expect(GLOBAL_TOOLS).toHaveLength(7);
+    expect(TOOL_SURFACE_TABLE.sources).toHaveLength(5);
   });
 
   it('source fetch stays local, queued, and fail-closed at the active workspace boundary', async () => {

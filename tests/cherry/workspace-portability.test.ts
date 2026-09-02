@@ -109,7 +109,7 @@ describe('whole-workspace portability', () => {
     const seeded = await seedPortableWorkforce();
     const exported = unwrap(await exportWorkspace(seeded.workspace.id));
 
-    expect(exported.schemaVersion).toBe('1.1.0');
+    expect(exported.schemaVersion).toBe('1.2.0');
     for (const key of ['agentProfiles', 'crews', 'workItems', 'workMessages', 'handoffs', 'executionHosts', 'routines'] as const) {
       expect(exported[key]!.length).toBeGreaterThan(0);
     }

@@ -74,6 +74,13 @@ const META_ROUTES: RouteObject[] = [
         ),
       },
       {
+        path: 'creators',
+        handle: meta(
+          `Creators · ${SITE}`,
+          'What is new from the creators you follow, and the skills Cherry proposes from it.',
+        ),
+      },
+      {
         path: 'inbox',
         handle: meta(`Work inbox · ${SITE}`, 'Work items, owners, and honest state transitions.'),
       },

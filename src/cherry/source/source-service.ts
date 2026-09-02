@@ -13,6 +13,7 @@ import type { Lesson, TranscriptSegment, TranscriptSource } from '../watch/watch
 import type { SourceContentFormat, SourceFetchMethod, SourceKind, SourceOrigin, SourceRecord } from './source-model.ts';
 import { parseYouTubeChannelId } from './youtube-channel-id.ts';
 import { isPublicNetworkHost } from './public-network-host.ts';
+import { createProposalInTx } from './proposal-service.ts';
 
 const MAX_CONTENT = 2 * 1024 * 1024;
 const TRACKING_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'mc_cid', 'mc_eid']);
@@ -205,7 +206,7 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
     startSeconds: segment.startSeconds, endSeconds: segment.endSeconds, text: segment.text, source: transcriptSource,
   })) : [];
 
-  await withWorkspaceTx(data.workspaceId, ['lessons', 'sourceRecords', 'transcriptSegments'], async (ctx) => {
+  await withWorkspaceTx(data.workspaceId, ['lessons', 'sourceRecords', 'transcriptSegments', 'skillProposals'], async (ctx) => {
     await ctx.db.lessons.add(lesson);
     await ctx.db.sourceRecords.add(source);
     if (segments.length > 0) await ctx.db.transcriptSegments.bulkAdd(segments);
@@ -222,6 +223,9 @@ export async function createSource(input: CreateSourceInput, actorType: ActorTyp
         payload: { segmentCount: segments.length, source: transcriptSource, format: parsedContent.value.format, contentHash, sourceId: source.id, acquisition: transcriptSource, mode: 'replace' },
       });
     }
+    // A YouTube save is a creator upload Cherry can propose a skill from, in
+    // the same ledger entry. Notes, articles, and files carry no proposal.
+    await createProposalInTx(ctx, source, lesson, { segments, now });
   });
   return ok(source);
 }

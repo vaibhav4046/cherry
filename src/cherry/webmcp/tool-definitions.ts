@@ -56,6 +56,7 @@ import { exportWorkspace } from '../persistence/workspace-archive.ts';
 import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../library/library-service.ts';
 import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
+import { listProposals, syncProposals } from '../source/proposal-service.ts';
 import { isSyntheticSampleGraph, SYNTHETIC_SAMPLE_NOTICE } from '../skillgraph/sample-state.ts';
 
 /**
@@ -319,7 +320,15 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     execute: guarded(z.object({ includeArchived: z.boolean().optional() }), async (input) => {
       const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId;
       const rows = await listSources(workspaceId, { includeArchived: input.includeArchived === true });
-      return toolText(rows.slice(0, 50).map((source) => ({ id: source.id, lessonId: source.lessonId, kind: source.kind, status: source.status, title: source.title, creator: source.creator, url: source.url, fetchStatus: source.fetchStatus, updatedAt: source.updatedAt })));
+      // Proposals ride along on the existing rows; no new tool is registered for them.
+      const proposals = new Map((await listProposals(workspaceId)).map((proposal) => [proposal.sourceId, proposal]));
+      return toolText(rows.slice(0, 50).map((source) => {
+        const proposal = proposals.get(source.id);
+        return {
+          id: source.id, lessonId: source.lessonId, kind: source.kind, status: source.status, title: source.title, creator: source.creator, url: source.url, fetchStatus: source.fetchStatus, updatedAt: source.updatedAt,
+          proposal: proposal ? { readiness: proposal.readiness, name: proposal.name, teaches: proposal.teaches } : null,
+        };
+      }));
     }),
   });
   define({
@@ -982,6 +991,9 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     zodSchema: importTranscriptSchema,
     execute: guarded(importTranscriptSchema, async (input) => {
       const result = await importTranscript(input.lessonId, input.text, 'user_text', undefined, 'agent', input.mode ?? 'replace');
+      // A transcript changes what Cherry can propose for this source's upload.
+      const workspaceId = requireWorkspace(context);
+      if (result.ok && typeof workspaceId === 'string') await syncProposals(workspaceId);
       return fromResult(result, (imported) => ({
         lessonId: input.lessonId,
         addedSegments: imported.segmentCount,
@@ -1017,6 +1029,9 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
           await transitionMission(missionId, 'PLANNING', 'agent', 'Quick skill generated from lesson');
         }
       }
+      // The upload's proposal now points at a real draft.
+      const workspaceId = requireWorkspace(context);
+      if (typeof workspaceId === 'string') await syncProposals(workspaceId);
       return toolText({
         skillGraphId: result.value.graph.id,
         name: result.value.graph.name,

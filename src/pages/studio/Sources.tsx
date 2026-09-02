@@ -18,6 +18,8 @@ import {
   reconcileChannelWatchRunnerOutcome,
 } from '../../cherry/source/channel-watch-service.ts';
 import type { ChannelWatch, ChannelWatchRunnerOutcome } from '../../cherry/source/channel-watch-model.ts';
+import type { ProposalReadiness, SkillProposal } from '../../cherry/source/proposal-model.ts';
+import { syncProposals } from '../../cherry/source/proposal-service.ts';
 import { archiveSource, completeSourceFetch, createSource, failSourceFetch, interpretSourceFetchOutcome, listSources, requestSourceFetch } from '../../cherry/source/source-service.ts';
 import type { SourceFetchFailure } from '../../cherry/source/source-service.ts';
 import type { SourceContentFormat, SourceKind, SourceRecord } from '../../cherry/source/source-model.ts';
@@ -78,6 +80,14 @@ function domainOf(url: string | null): string | null {
   if (!url) return null;
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
+
+const PROPOSAL_READINESS_LABEL: Record<ProposalReadiness, string> = {
+  'needs-transcript': 'needs transcript',
+  'draft-ready': 'ready to draft',
+  drafted: 'draft saved',
+  approved: 'approved',
+  dismissed: 'set aside',
+};
 
 function watchCheckLabel(watch: ChannelWatch): string {
   if (!watch.lastCheckedAt) return 'Never checked';
@@ -157,6 +167,7 @@ export default function Sources() {
   );
   const [sources, setSources] = useState<SourceRecord[]>([]);
   const [channelWatches, setChannelWatches] = useState<ChannelWatch[]>([]);
+  const [proposals, setProposals] = useState<SkillProposal[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState(Boolean(ingestDraft));
   const [kind, setKind] = useState<SourceKind>(ingestDraft?.kind ?? 'youtube');
@@ -205,13 +216,20 @@ export default function Sources() {
   }, [bookmarklet]);
 
   async function reload(workspaceId = activeWorkspace?.id) {
-    if (!workspaceId) { setSources([]); setChannelWatches([]); return; }
-    const [nextSources, nextWatches] = await Promise.all([
+    if (!workspaceId) { setSources([]); setChannelWatches([]); setProposals([]); return; }
+    // Proposals are re-derived from persisted facts on every load; nothing is asserted.
+    const [nextSources, nextWatches, nextProposals] = await Promise.all([
       listSources(workspaceId, { includeArchived: true }),
       listChannelWatches(workspaceId),
+      syncProposals(workspaceId),
     ]);
     setSources(nextSources);
     setChannelWatches(nextWatches);
+    setProposals(nextProposals);
+  }
+
+  function proposalFor(sourceId: string): SkillProposal | undefined {
+    return proposals.find((proposal) => proposal.sourceId === sourceId);
   }
 
   useEffect(() => { void reload(); }, [activeWorkspace?.id]);
@@ -851,6 +869,11 @@ export default function Sources() {
                     <p className="label" style={{ margin: 0 }}>{KIND_COPY[source.kind].label}{source.creator ? ` · ${source.creator}` : ''}</p>
                     {source.sourceOrigin === 'takeout-import' ? <p className="label" style={{ margin: 0 }}>From YouTube history</p> : null}
                     {source.sourceOrigin === 'rss-watch' ? <p className="label" style={{ margin: 0 }}>From channel watch</p> : null}
+                    {proposalFor(source.id) ? (
+                      <p className="label" style={{ margin: 0, textTransform: 'none', letterSpacing: 0 }} data-testid="source-proposal">
+                        Cherry proposes: {proposalFor(source.id)!.name} · {PROPOSAL_READINESS_LABEL[proposalFor(source.id)!.readiness]} · <Link className="link-quiet" to="/studio/creators">Creators</Link>
+                      </p>
+                    ) : null}
                     {source.url ? <a className="link-quiet" href={source.url} target="_blank" rel="noreferrer" style={{ overflowWrap: 'anywhere' }}>{domainOf(source.url)}</a> : <span className="label">Saved only here</span>}
                   </div>
                   <p className="source-card-meta">{source.contentHash ? 'Content hashed' : 'No content yet'} · updated {new Date(source.updatedAt).toLocaleDateString()}</p>

@@ -146,6 +146,27 @@ lesson without permission acknowledgement (domain-flow test). The player is a vi
 caption/media endpoint is called anywhere (grep: no `timedtext`, no `googlevideo`, no Data API).
 Transcript/manual fallback is the path the golden journey itself uses. **PASSED**
 
+## creators_watch_engine
+
+- **What is proven.** `src/cherry/source/proposal-service.ts` derives a skill proposal deterministically
+  from a creator upload: the title, an optional capped plain-text description, and the transcript a
+  person supplied or transcribed on-device. Readiness is computed from persisted facts (transcript
+  present, draft exists, exact-revision approval matches) and never asserted; only a person can set a
+  proposal aside. New uploads from a paired-runner daily feed check land as sources with proposals in
+  the same ledger entry (`channel-watch-service.ts`), as do manual YouTube saves. Proposals persist in
+  Dexie v5, round-trip through workspace archive v1.2.0 with schema validation, and ride on the
+  existing WebMCP `list_sources` rows without a new tool (the global count stays 7).
+  Unit: `tests/cherry/proposal-service.test.ts`, `webmcp.test.ts`, `workspace-portability.test.ts`,
+  `example-workspace-loader.test.ts`. Browser: `e2e/cherry/creators.spec.ts` drives the empty state,
+  the labelled sample creator, Add transcript changing a row from Needs transcript to Ready to draft,
+  Not useful persisting across reload, mobile overflow, axe, the Command Center card, and Reset demo
+  removing the sample creator while a person's own watched workspace still refuses deletion.
+- **What is not proven.** No live check of a real creator's channel feed was captured in this
+  repository; the daily check is covered by the runner's own tests only. The shipped sample creator
+  is synthetic and labelled SAMPLE DATA. Cherry never downloads a video or captions and never calls a
+  model; a proposal without a transcript carries only a title-derived name and sentence.
+- **Screenshots.** `docs/release/screenshots/creators/` (empty, sample, draft-ready; 1440 and 390 wide).
+
 ## schema_validation
 
 ```

@@ -13,9 +13,13 @@ import {
 } from '../../src/cherry/mission/mission-service.ts';
 import { importShippedExampleWorkspace } from '../../src/cherry/persistence/workspace-archive.ts';
 import { ALL_STORES, getDb } from '../../src/cherry/persistence/cherry-db.ts';
+import { createChannelWatch, listChannelWatches } from '../../src/cherry/source/channel-watch-service.ts';
+import { createSource } from '../../src/cherry/source/source-service.ts';
+import { deleteWorkspace } from '../../src/cherry/mission/mission-service.ts';
 import { sha256CanonicalExcluding } from '../../src/cherry/core/hash.ts';
 
 const goldenFixture = readFileSync(resolve(process.cwd(), 'public/examples/example-workspace.json'), 'utf8');
+const starterFixture = readFileSync(resolve(process.cwd(), 'public/examples/starter-library-workspace.json'), 'utf8');
 
 describe('labelled example workspace loader', () => {
   beforeEach(() => {
@@ -144,5 +148,35 @@ describe('labelled example workspace loader', () => {
         message: 'The labelled example could not be loaded (503). Try again.',
       },
     });
+  });
+
+  it('resets the starter library even though it ships a sample channel watch, and still protects a real watched workspace', async () => {
+    const starter = await loadExampleWorkspace('starter-library', async () => ({ ok: true, status: 200, text: async () => starterFixture }));
+    expect(starter.ok).toBe(true);
+    if (!starter.ok) return;
+    const sampleWatches = await listChannelWatches(starter.value.workspaceId);
+    expect(sampleWatches.filter((watch) => watch.enabled)).toHaveLength(1);
+
+    // A person's own workspace with a live channel watch must still refuse deletion.
+    const own = await createWorkspace({ name: 'Mine' });
+    expect(own.ok).toBe(true);
+    if (!own.ok) return;
+    const anchor = await createSource({
+      workspaceId: own.value.id, kind: 'youtube', title: 'Anchor', creator: 'Me',
+      url: 'https://www.youtube.com/watch?v=anchorVid09', youtubeChannelId: 'UCownChannelIdentifier01', permissionAcknowledged: true,
+    });
+    expect(anchor.ok).toBe(true);
+    if (!anchor.ok) return;
+    expect((await createChannelWatch({ sourceId: anchor.value.id })).ok).toBe(true);
+    const refused = await deleteWorkspace(own.value.id);
+    expect(refused.ok).toBe(false);
+
+    const reset = await resetExampleWorkspaces();
+    expect(reset.ok).toBe(true);
+    if (!reset.ok) return;
+    expect(reset.value.deleted).toBe(1);
+    const remaining = await listWorkspaces();
+    expect(remaining.map((workspace) => workspace.name)).toEqual(['Mine']);
+    expect((await listChannelWatches(own.value.id)).filter((watch) => watch.enabled)).toHaveLength(1);
   });
 });

@@ -2,7 +2,7 @@
 
 Every beat below is a real interaction on https://cherry-wine.vercel.app — no staging, no cuts that
 hide state. Record at 1440×900+, normal browser profile (or incognito for the true fresh-user shot).
-Total ≈ 2:50, leaving buffer.
+Total ≈ 2:55, leaving buffer.
 
 > **Alternate opening (added 2026-08-31):** if you prefer to lead with the judge route, open
 > https://cherry-wine.vercel.app/showcase in incognito instead of the landing — it starts from a
@@ -47,7 +47,7 @@ Click **Recompute hashes** → "Receipt verifies".
 
 > "SHA-256 over canonical JSON, recomputed live. Change one byte anywhere and this turns red."
 
-## 1:25–2:05 — The WebMCP story (Agent View)
+## 1:25–1:55 — The WebMCP story (Agent View)
 
 Walkthrough lands on **Agent View**.
 
@@ -62,7 +62,22 @@ to `read_cherry_context` — the call appears in the log. Then the money shot: a
 `recommend_skills` for a task you just taught — it gets your approved skill back, pinned to the
 revision and approval hash, and can pull the install file with `get_skill`.)
 
-## 2:05–2:35 — Take it anywhere
+## 1:55–2:15 — Creators (the watch engine)
+
+**Creators** (`/studio/creators`). With the sample library loaded, point at the followed creator
+(marked SAMPLE DATA) and the two rows under **New from your creators**: one **Ready to draft**, one
+**Needs transcript**.
+
+> "This is the part I built Cherry for. Follow a creator once. The paired runner checks the
+> channel's public feed every day, and every new upload shows up here with a proposed skill:
+> a name, what it teaches, and once I add the transcript, the candidate steps. Cherry never
+> downloads the video and never calls a model. I add the transcript, I approve, and the skill
+> lands in the library every agent reads."
+
+Click **Draft the skill** on the ready row to show it opening in Quick Skill with the source
+already selected, then come back.
+
+## 2:15–2:40 — Take it anywhere
 
 **Skill Library** (`/studio/skills`) → search, point at the install-ready sticker and the approval
 hash chip → open the skill → **Download SKILL.md**, **Copy AGENTS.md (Codex)**, **Compile skill
@@ -75,7 +90,7 @@ bundle**. Then flash `/connect` and its Codex `config.toml` block.
 > themselves, hash-pinned to the exact revision I approved. Your data, your browser, your skills —
 > in every agent."
 
-## 2:35–2:50 — Close
+## 2:40–2:55 — Close
 
 Back to landing, scroll to the **Teach once. Every agent gets better.** band.
 

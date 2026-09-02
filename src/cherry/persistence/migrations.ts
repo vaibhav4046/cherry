@@ -60,6 +60,12 @@ export const CHERRY_DB_MIGRATIONS: CherryMigration[] = [
       channelWatches: 'id, workspaceId, sourceId, channelId, &[workspaceId+channelId], enabled, updatedAt',
     },
   },
+  {
+    version: 5,
+    stores: {
+      skillProposals: 'id, workspaceId, sourceId, [workspaceId+readiness], publishedAt, updatedAt',
+    },
+  },
 ];
 
 export const CHERRY_DB_VERSION = CHERRY_DB_MIGRATIONS[CHERRY_DB_MIGRATIONS.length - 1]!.version;

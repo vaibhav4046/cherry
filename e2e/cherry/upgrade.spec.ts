@@ -37,6 +37,11 @@ test.describe('landing upgrade', () => {
     await expect(authRow.getByText('Shipped')).toBeVisible();
     const libraryRow = rows.locator('.card', { hasText: 'Skill Library + global library tools' });
     await expect(libraryRow.getByText('Validated')).toBeVisible();
+    // The Creators engine is labelled by what is tested, and says what is not captured.
+    const creatorsRow = rows.locator('.card', { hasText: 'Creators watch engine' });
+    await expect(creatorsRow.getByText('Validated')).toBeVisible();
+    await expect(creatorsRow).toContainText('never downloads a video or captions');
+    await expect(creatorsRow).toContainText('was not captured');
   });
 });
 

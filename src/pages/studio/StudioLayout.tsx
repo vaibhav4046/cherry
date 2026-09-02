@@ -19,6 +19,7 @@ const NAV_PRIMARY: NavItem[] = [
   { to: '/studio', label: 'Command', end: true, icon: Icons.command, title: 'Overview' },
   { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick, hint: 'add a source' },
   { to: '/studio/sources', label: 'Sources', end: false, icon: Icons.watch },
+  { to: '/studio/creators', label: 'Creators', end: false, icon: Icons.pin },
   { to: '/studio/skills', label: 'Skills', end: false, icon: Icons.skills },
   { to: '/studio/runs', label: 'Runs', end: false, icon: Icons.runs },
   { to: '/studio/proof', label: 'Proof', end: false, icon: Icons.proof },
@@ -83,7 +84,7 @@ export function StudioLayout() {
           ? ('routines' as const)
             : path.startsWith('/studio/runs')
             ? ('run' as const)
-            : path.startsWith('/studio/sources')
+            : path.startsWith('/studio/sources') || path.startsWith('/studio/creators')
               ? ('sources' as const)
             : ('default' as const);
     setToolSurface(surface);

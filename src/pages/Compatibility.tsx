@@ -55,6 +55,11 @@ const ROWS: Row[] = [
     evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. State-specific tools stay bounded to 5; 7 always-on tools remain available.',
   },
   {
+    surface: 'Creators watch engine (follow a creator, proposed skills)',
+    status: 'validated',
+    evidence: 'A human follows a channel; the paired runner checks its public feed daily; every new upload arrives as a source with a deterministic skill proposal (title, one-sentence "teaches", candidate steps once a transcript exists) that only a person can dismiss, and that follows the exact-revision approval of the draft it becomes. Unit-tested proposal lifecycle, migration, and archive round-trip; Playwright drives empty state, the labelled sample creator, transcript-changes-readiness, set-aside persistence, mobile overflow, axe, and reset. Cherry never downloads a video or captions and never calls a model; a live real-channel feed check was not captured in this repository, so the daily check itself stays proven only by runner tests.',
+  },
+  {
     surface: 'Agent Skills bundle export (SKILL.md + targets)',
     status: 'validated',
     evidence: 'Unit tests: frontmatter name matches directory, < 500 lines, full required tree, every MANIFEST hash recomputes, embedded receipt hash recomputable, unapproved graphs refuse to compile, traversal archives rejected.',

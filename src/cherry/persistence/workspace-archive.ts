@@ -26,11 +26,25 @@ import {
   CHANNEL_WATCH_SEEN_VIDEO_ID_LIMIT,
 } from '../source/channel-watch-model.ts';
 import { computeChannelWatchActionHash } from '../source/channel-watch-service.ts';
+import {
+  MAX_PROPOSAL_NAME_CHARS,
+  MAX_PROPOSAL_STEP_CHARS,
+  MAX_PROPOSAL_STEPS,
+  MAX_PROPOSAL_TEACHES_CHARS,
+  PROPOSAL_READINESS,
+} from '../source/proposal-model.ts';
 import { RUNTIME_CAPABILITIES, validateSchedule, type ScheduleSpec } from '../workforce/workforce-model.ts';
 
 export const LEGACY_WORKSPACE_EXPORT_VERSION = '1.0.0';
-export const WORKSPACE_EXPORT_VERSION = '1.1.0';
-type WorkspaceExportVersion = typeof LEGACY_WORKSPACE_EXPORT_VERSION | typeof WORKSPACE_EXPORT_VERSION;
+/** 1.1.0 archives predate skill proposals; they import with that table absent. */
+export const PREVIOUS_WORKSPACE_EXPORT_VERSION = '1.1.0';
+export const WORKSPACE_EXPORT_VERSION = '1.2.0';
+type WorkspaceExportVersion =
+  | typeof LEGACY_WORKSPACE_EXPORT_VERSION
+  | typeof PREVIOUS_WORKSPACE_EXPORT_VERSION
+  | typeof WORKSPACE_EXPORT_VERSION;
+/** Tables that share their primary id with their source row (1:1 extensions). */
+const SOURCE_KEYED_TABLES = new Set<keyof WorkspaceExport>(['channelWatches', 'skillProposals']);
 
 export interface WorkspaceExport {
   schemaVersion: WorkspaceExportVersion;
@@ -58,6 +72,7 @@ export interface WorkspaceExport {
   settings: Record<string, unknown>;
   sourceRecords?: unknown[];
   channelWatches?: unknown[];
+  skillProposals?: unknown[];
   agentProfiles?: unknown[];
   crews?: unknown[];
   workItems?: unknown[];
@@ -82,7 +97,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
     db.observations, db.evidence, db.skillGraphs, db.skillVersions, db.memories,
     db.memoryVersions, db.approvals, db.artifactSets, db.artifactFiles, db.artifactVersions,
     db.verifications, db.runs, db.proofEvents, db.receipts, db.sourceRecords,
-    db.channelWatches, db.agentProfiles, db.crews, db.workItems, db.workMessages,
+    db.channelWatches, db.skillProposals, db.agentProfiles, db.crews, db.workItems, db.workMessages,
     db.handoffs, db.executionHosts, db.routines,
   ], async (): Promise<WorkspaceExport | null> => {
     const workspace = await db.workspaces.get(workspaceId);
@@ -115,6 +130,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
       settings: {},
       sourceRecords: await load(db.sourceRecords),
       channelWatches: await load(db.channelWatches),
+      skillProposals: await load(db.skillProposals),
       agentProfiles: await load(db.agentProfiles),
       crews: await load(db.crews),
       workItems: await load(db.workItems),
@@ -215,6 +231,7 @@ const ARRAY_LIMITS: Array<[keyof WorkspaceExport, number]> = [
   ['proofReceipts', 10000],
   ['sourceRecords', 10000],
   ['channelWatches', 10000],
+  ['skillProposals', 10000],
   ['agentProfiles', 1000],
   ['crews', 1000],
   ['workItems', 100000],
@@ -1016,6 +1033,21 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
       && (row['lastFeedHash'] === null || typeof row['lastFeedHash'] === 'string' && /^[a-f0-9]{64}$/.test(row['lastFeedHash']))
       && typeof row['actionHash'] === 'string'
       && /^[a-f0-9]{64}$/.test(row['actionHash']);
+    case 'skillProposals': return isValidId(row['sourceId'])
+      && row['id'] === row['sourceId']
+      && (row['creatorName'] === null || typeof row['creatorName'] === 'string' && row['creatorName'].length <= 200)
+      && typeof row['sourceTitle'] === 'string' && row['sourceTitle'].trim().length > 0 && row['sourceTitle'].length <= 300
+      && isIsoDate(row['publishedAt'])
+      && typeof row['name'] === 'string' && row['name'].trim().length > 0 && row['name'].length <= MAX_PROPOSAL_NAME_CHARS
+      && typeof row['teaches'] === 'string' && row['teaches'].trim().length > 0 && row['teaches'].length <= MAX_PROPOSAL_TEACHES_CHARS
+      && Array.isArray(row['candidateSteps'])
+      && row['candidateSteps'].length <= MAX_PROPOSAL_STEPS
+      && row['candidateSteps'].every((step) => typeof step === 'string' && step.length > 0 && step.length <= MAX_PROPOSAL_STEP_CHARS)
+      && isOneOf(row['readiness'], PROPOSAL_READINESS)
+      && (row['missionId'] === null || isValidId(row['missionId']))
+      && (row['skillGraphId'] === null || isValidId(row['skillGraphId']))
+      && isIsoDate(row['createdAt'])
+      && isIsoDate(row['updatedAt']);
     default: return true;
   }
 }
@@ -1105,7 +1137,11 @@ const REQUIRED_UPDATED_AT_ROWS = new Set<keyof WorkspaceExport>([
 function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
   if (!isRecord(value)) return invalid('Export root must be an object');
   const schemaVersion = value['schemaVersion'];
-  if (schemaVersion !== WORKSPACE_EXPORT_VERSION && schemaVersion !== LEGACY_WORKSPACE_EXPORT_VERSION) {
+  if (
+    schemaVersion !== WORKSPACE_EXPORT_VERSION
+    && schemaVersion !== PREVIOUS_WORKSPACE_EXPORT_VERSION
+    && schemaVersion !== LEGACY_WORKSPACE_EXPORT_VERSION
+  ) {
     return invalid(`Unsupported export version ${String(value['schemaVersion'])}`);
   }
   const allowedRootFields = new Set<string>([
@@ -1146,13 +1182,21 @@ function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
 
   const workspaceId = workspace['id'];
   const allRecordIds = new Set<string>();
-  const legacyOptionalArrays = new Set<keyof WorkspaceExport>([
-    'sourceRecords', 'channelWatches', 'agentProfiles', 'crews', 'workItems',
-    'workMessages', 'handoffs', 'executionHosts', 'routines',
-  ]);
+  // Tables that did not exist when an older archive version was written may be
+  // absent from it; every newer table is required for the version that added it.
+  const optionalArrays = new Set<keyof WorkspaceExport>(
+    schemaVersion === LEGACY_WORKSPACE_EXPORT_VERSION
+      ? [
+        'sourceRecords', 'channelWatches', 'agentProfiles', 'crews', 'workItems',
+        'workMessages', 'handoffs', 'executionHosts', 'routines', 'skillProposals',
+      ]
+      : schemaVersion === PREVIOUS_WORKSPACE_EXPORT_VERSION
+        ? ['skillProposals']
+        : [],
+  );
   for (const [key, limit] of ARRAY_LIMITS) {
     const rows = value[key];
-    if (schemaVersion === LEGACY_WORKSPACE_EXPORT_VERSION && legacyOptionalArrays.has(key) && rows === undefined) continue;
+    if (optionalArrays.has(key) && rows === undefined) continue;
     if (!Array.isArray(rows)) return invalid(`Export field ${String(key)} must be an array`);
     if (rows.length > limit) return invalid(`Export field ${String(key)} exceeds the limit of ${limit}`);
     const primaryKey = key === 'proofReceipts' ? 'receiptId' : 'id';
@@ -1162,9 +1206,9 @@ function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
       const id = row[primaryKey];
       if (!isValidId(id)) return invalid(`Export field ${String(key)} contains an invalid ${primaryKey}`);
       if (ids.has(id)) return invalid(`Export field ${String(key)} contains duplicate id ${id}`);
-      if (key !== 'channelWatches' && allRecordIds.has(id)) return invalid(`Export contains a duplicate record id ${id}`);
+      if (!SOURCE_KEYED_TABLES.has(key) && allRecordIds.has(id)) return invalid(`Export contains a duplicate record id ${id}`);
       ids.add(id);
-      if (key !== 'channelWatches') allRecordIds.add(id);
+      if (!SOURCE_KEYED_TABLES.has(key)) allRecordIds.add(id);
       if (row['workspaceId'] !== workspaceId) {
         return invalid(`Export field ${String(key)} contains a row from another workspace`);
       }
@@ -1386,6 +1430,11 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
   for (const watch of archiveRows(archive, 'channelWatches')) {
     if (!requiredRef(watch, 'sourceId', sources)) return invalid('Export contains a dangling channel-watch reference');
   }
+  for (const proposal of archiveRows(archive, 'skillProposals')) {
+    if (!requiredRef(proposal, 'sourceId', sources)) return invalid('Export contains a dangling skill-proposal reference');
+    if (proposal['missionId'] !== null && !missions.has(String(proposal['missionId']))) return invalid('Export contains a dangling skill-proposal reference');
+    if (proposal['skillGraphId'] !== null && !skillGraphs.has(String(proposal['skillGraphId']))) return invalid('Export contains a dangling skill-proposal reference');
+  }
   for (const profile of archiveRows(archive, 'agentProfiles')) {
     if (
       !optionalHostRef(profile, 'executionHostId')
@@ -1549,7 +1598,7 @@ const SHIPPED_EXAMPLE_IDENTITIES: Record<ShippedExampleKind, {
     descriptionMarker: 'Shipped labelled example workspace',
   },
   'starter-library': {
-    payloadSha256: '7388560a0b9f3ef7d1caf2f82bd713cf1b614f3915a7a88c3e819a6da5862d9d',
+    payloadSha256: '0edec554fdf756007a8c799b729757cc3e2d271893c5fd6f541cb3e895c4e86d',
     workspaceName: 'EXAMPLE — Creator skills starter library',
     descriptionMarker: 'starter-library-v1',
   },
@@ -1783,6 +1832,10 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
   }
   for (const row of mapped.sourceRecords ?? [] as ArchiveRow[]) { mapBase(row as ArchiveRow, 'source'); mapField(row as ArchiveRow, 'lessonId', 'lesson'); }
   for (const row of mapped.channelWatches ?? [] as ArchiveRow[]) { mapBase(row as ArchiveRow, 'source'); mapField(row as ArchiveRow, 'sourceId', 'source'); }
+  for (const row of mapped.skillProposals ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'source'); mapField(row as ArchiveRow, 'sourceId', 'source');
+    mapField(row as ArchiveRow, 'missionId', 'mission'); mapField(row as ArchiveRow, 'skillGraphId', 'skillGraph');
+  }
   for (const row of mapped.agentProfiles ?? [] as ArchiveRow[]) {
     mapBase(row as ArchiveRow, 'agentProfile'); mapField(row as ArchiveRow, 'executionHostId', 'executionHost'); mapArray(row as ArchiveRow, 'skillGraphIds', 'skillGraph');
   }
@@ -1825,6 +1878,14 @@ async function normalizeImportedAuthorityAndHashes(
   preserveLabelledExampleState: boolean,
 ): Promise<void> {
   const importedAt = isoNow();
+  // Imported approvals are reset below, so a proposal cannot stay "approved"
+  // in an ordinary import; it falls back to the drafted skill it points at.
+  for (const row of (archive.skillProposals ?? []) as ArchiveRow[]) {
+    if (!preserveLabelledExampleState && row['readiness'] === 'approved') {
+      row['readiness'] = 'drafted';
+      row['updatedAt'] = importedAt;
+    }
+  }
   for (const row of archive.skillGraphs as ArchiveRow[]) {
     if (!preserveLabelledExampleState) {
       row['status'] = 'draft';
@@ -2085,8 +2146,9 @@ async function importWorkspaceWithPolicy(
     ['proofEvents', 'proofEvent'],
     ['proofReceipts', 'receipt', 'receiptId'],
     ['sourceRecords', 'source'],
-    // A channel watch intentionally shares its primary id with its source.
+    // A channel watch and a skill proposal intentionally share their primary id with their source.
     ['channelWatches', 'source'],
+    ['skillProposals', 'source'],
     ['agentProfiles', 'agentProfile'],
     ['crews', 'crew'],
     ['workItems', 'workItem'],
@@ -2204,6 +2266,27 @@ async function importWorkspaceWithPolicy(
     });
   }
 
+  const importedMissionIds = new Set((parsed.missions as ArchiveRow[]).map((mission) => String(mission['id'])));
+  const importedGraphIds = new Set((parsed.skillGraphs as ArchiveRow[]).map((graph) => String(graph['id'])));
+  for (const row of parsed.skillProposals ?? []) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return invalid('Export contains an invalid skill proposal');
+    const proposal = row as Record<string, unknown>;
+    const source = typeof proposal['sourceId'] === 'string' ? importedSources.get(proposal['sourceId']) : undefined;
+    if (
+      !isValidId(proposal['id'])
+      || proposal['id'] !== proposal['sourceId']
+      || proposal['workspaceId'] !== newWorkspaceId
+      || !validArchiveRow('skillProposals', proposal)
+      || !source
+      || source['workspaceId'] !== newWorkspaceId
+      || source['kind'] !== 'youtube'
+      || (proposal['missionId'] !== null && !importedMissionIds.has(String(proposal['missionId'])))
+      || (proposal['skillGraphId'] !== null && !importedGraphIds.has(String(proposal['skillGraphId'])))
+    ) {
+      return invalid('Export contains an invalid skill proposal');
+    }
+  }
+
   const now = isoNow();
   const { isExample: _archiveExampleFlag, ...portableWorkspace } = parsed.workspace as Record<string, unknown>;
   const importedWorkspace = {
@@ -2271,6 +2354,7 @@ async function importWorkspaceWithPolicy(
       'receipts',
       'sourceRecords',
       'channelWatches',
+      'skillProposals',
       'agentProfiles',
       'crews',
       'workItems',
@@ -2301,6 +2385,7 @@ async function importWorkspaceWithPolicy(
       await ctx.db.receipts.bulkAdd(remap(parsed.proofReceipts ?? []) as never[]);
       await ctx.db.sourceRecords.bulkAdd(remap(parsed.sourceRecords ?? []) as never[]);
       await ctx.db.channelWatches.bulkAdd(remap(parsed.channelWatches ?? []) as never[]);
+      await ctx.db.skillProposals.bulkAdd(remap(parsed.skillProposals ?? []) as never[]);
       await ctx.db.agentProfiles.bulkAdd(remap(parsed.agentProfiles ?? []) as never[]);
       await ctx.db.crews.bulkAdd(remap(parsed.crews ?? []) as never[]);
       await ctx.db.workItems.bulkAdd(remap(parsed.workItems ?? []) as never[]);

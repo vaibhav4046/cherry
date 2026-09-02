@@ -20,6 +20,7 @@ import {
   CHANNEL_WATCH_SEEN_VIDEO_ID_LIMIT,
 } from './channel-watch-model.ts';
 import type { SourceRecord } from './source-model.ts';
+import { createProposalInTx } from './proposal-service.ts';
 import { parseYouTubeChannelId } from './youtube-channel-id.ts';
 
 const MAX_FEED_ENTRIES = 15;
@@ -387,7 +388,7 @@ export async function reconcileChannelWatchRunnerOutcome(
   }
 
   const mutationNow = isoNow();
-  return withWorkspaceTx(current.workspaceId, ['channelWatches', 'sourceRecords', 'lessons'], async (ctx) => {
+  return withWorkspaceTx(current.workspaceId, ['channelWatches', 'sourceRecords', 'lessons', 'skillProposals'], async (ctx) => {
     const watch = await ctx.db.channelWatches.get(watchId);
     if (!watch) return notFound('Channel watch', watchId);
     if (!watch.enabled) return conflict('This channel watch is stopped');
@@ -408,6 +409,7 @@ export async function reconcileChannelWatchRunnerOutcome(
     const seenBefore = new Set(watch.seenVideoIds);
     const lessons: Lesson[] = [];
     const sources: SourceRecord[] = [];
+    const publishedAts: string[] = [];
     let skippedBeforeWatch = 0;
     let duplicateCount = 0;
 
@@ -466,11 +468,16 @@ export async function reconcileChannelWatchRunnerOutcome(
       };
       lessons.push(lesson);
       sources.push(source);
+      publishedAts.push(entry.publishedAt);
       existingVideoIds.add(entry.videoId);
     }
 
     if (lessons.length > 0) await ctx.db.lessons.bulkAdd(lessons);
     if (sources.length > 0) await ctx.db.sourceRecords.bulkAdd(sources);
+    // Each new upload gets a needs-transcript proposal in the same ledger entry.
+    for (const [index, source] of sources.entries()) {
+      await createProposalInTx(ctx, source, lessons[index], { publishedAt: publishedAts[index], now: mutationNow });
+    }
     const isLatestAttempt = !watch.lastAttemptedAt || Date.parse(outcome.checkedAt) >= Date.parse(watch.lastAttemptedAt);
     const next: ChannelWatch = {
       ...watch,

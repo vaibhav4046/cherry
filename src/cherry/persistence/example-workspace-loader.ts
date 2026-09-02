@@ -1,5 +1,6 @@
 import { fail, ok, type Result } from '../core/result.ts';
 import { deleteWorkspace, listWorkspaces } from '../mission/mission-service.ts';
+import { disableChannelWatch, listChannelWatches } from '../source/channel-watch-service.ts';
 import { importShippedExampleWorkspace } from './workspace-archive.ts';
 
 export type ExampleWorkspaceKind = 'golden-loop' | 'starter-library';
@@ -110,6 +111,14 @@ export async function resetExampleWorkspaces(): Promise<Result<{ deleted: number
   });
   let deleted = 0;
   for (const workspace of examples) {
+    // A shipped example's channel watch is labelled sample state that was never
+    // registered with a runner, so it is stopped here as the person's own
+    // reset action; a real workspace still refuses deletion while a watch runs.
+    for (const watch of await listChannelWatches(workspace.id)) {
+      if (!watch.enabled) continue;
+      const stopped = await disableChannelWatch(watch.id, 'human', watch);
+      if (!stopped.ok) return stopped;
+    }
     const result = await deleteWorkspace(workspace.id);
     if (!result.ok) return result;
     deleted += 1;
