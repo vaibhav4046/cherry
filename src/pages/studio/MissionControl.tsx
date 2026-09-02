@@ -107,35 +107,46 @@ export default function MissionControl() {
 
     try {
       let workspaceId = activeWorkspace?.id ?? null;
-      if (!workspaceId) {
-        const workspace = await createWorkspace({ name: 'My Cherry' });
-        if (!workspace.ok) {
-          setError(workspace.error.message);
-          return;
-        }
-        workspaceId = workspace.value.id;
-        createdWorkspaceId = workspaceId;
-      }
+      let missionResult: Awaited<ReturnType<typeof createMission>>;
 
-      const result = await createMission({
-        workspaceId,
-        outcome: trimmedOutcome,
-        ...(templateId ? { templateId } : {}),
-        repositoryRoot: repositoryRoot.trim() || null,
-        constraints: constraints.split('\n').map((line) => line.trim()).filter(Boolean),
-      });
-      if (!result.ok) {
-        await failWithCompensation(result.error.message);
+      try {
+        if (!workspaceId) {
+          const workspace = await createWorkspace({ name: 'My Cherry' });
+          if (!workspace.ok) {
+            setError(workspace.error.message);
+            return;
+          }
+          workspaceId = workspace.value.id;
+          createdWorkspaceId = workspaceId;
+        }
+
+        missionResult = await createMission({
+          workspaceId,
+          outcome: trimmedOutcome,
+          ...(templateId ? { templateId } : {}),
+          repositoryRoot: repositoryRoot.trim() || null,
+          constraints: constraints.split('\n').map((line) => line.trim()).filter(Boolean),
+        });
+      } catch {
+        await failWithCompensation('Cherry could not save that mission.');
         return;
       }
 
-      if (createdWorkspaceId) setActiveWorkspace(workspaceId);
-      setActiveMission(result.value.mission.id);
-      await refresh();
-      if (searchParams.get('outcome')) setSearchParams({}, { replace: true });
-      navigate(`/studio/control/${result.value.mission.id}`);
-    } catch {
-      await failWithCompensation('Cherry could not save that mission.');
+      if (!missionResult.ok) {
+        await failWithCompensation(missionResult.error.message);
+        return;
+      }
+      const savedMissionId = missionResult.value.mission.id;
+
+      try {
+        if (createdWorkspaceId) setActiveWorkspace(workspaceId);
+        setActiveMission(savedMissionId);
+        await refresh();
+        if (searchParams.get('outcome')) setSearchParams({}, { replace: true });
+        navigate(`/studio/control/${savedMissionId}`);
+      } catch {
+        setError('The mission was saved, but Cherry could not refresh Mission Control or open it. Your outcome is still here—reload to continue.');
+      }
     } finally {
       setBusy(false);
     }

@@ -6,7 +6,7 @@ import MissionControl from '../../src/pages/studio/MissionControl.tsx';
 import MissionControlDetail from '../../src/pages/studio/MissionControlDetail.tsx';
 import { LiveStartGate } from '../../src/components/studio/mission-control/LiveStartGate.tsx';
 import { unwrap } from '../../src/cherry/core/result.ts';
-import { createWorkspace, listWorkspaces } from '../../src/cherry/mission/mission-service.ts';
+import { createWorkspace, listMissions, listWorkspaces } from '../../src/cherry/mission/mission-service.ts';
 import { createMission, listMissionCards } from '../../src/cherry/workforce/mission-control-service.ts';
 import { listMissionPlans } from '../../src/cherry/workforce/mission-plan-service.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
@@ -24,6 +24,21 @@ const missionApi = vi.hoisted(() => ({
 const workspaceApi = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
+
+const appStateApi = vi.hoisted(() => ({
+  refresh: null as null | (() => Promise<void>),
+}));
+
+vi.mock('../../src/app/AppState.tsx', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/app/AppState.tsx')>();
+  return {
+    ...actual,
+    useAppState: () => {
+      const state = actual.useAppState();
+      return appStateApi.refresh === null ? state : { ...state, refresh: appStateApi.refresh };
+    },
+  };
+});
 
 vi.mock('../../src/cherry/runner-client/runner-api.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/cherry/runner-client/runner-api.ts')>();
@@ -119,6 +134,7 @@ describe('Mission Control first run', () => {
   beforeEach(async () => {
     freshDb();
     localStorage.clear();
+    appStateApi.refresh = null;
     await resetServiceDoubles();
     runnerApi.status.mockReset().mockResolvedValue({ reachable: false, paired: false });
     runnerApi.hosts.mockReset().mockResolvedValue({
@@ -207,6 +223,42 @@ describe('Mission Control first run', () => {
     expect(await listWorkspaces()).toHaveLength(1);
     expect(localStorage.getItem('cherry.activeWorkspaceId')).toBeNull();
     expect(localStorage.getItem('cherry.activeMissionId')).toBeNull();
+  });
+
+  it('preserves a saved first mission when the post-save AppState refresh fails', async () => {
+    const outcome = 'Research this market and produce an evidence-backed launch brief.';
+    let rejectRefresh = (_reason: Error) => {};
+    const refreshFailure = new Promise<void>((_resolve, reject) => {
+      rejectRefresh = reject;
+    });
+    const rejectedRefresh = vi.fn().mockReturnValue(refreshFailure);
+    appStateApi.refresh = rejectedRefresh;
+    renderControl();
+
+    const input = await screen.findByTestId('outcome-input');
+    fireEvent.change(input, { target: { value: outcome } });
+    fireEvent.submit(screen.getByTestId('outcome-composer'));
+    await waitFor(() => expect(rejectedRefresh).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      rejectRefresh(new Error('AppState refresh failed'));
+      await Promise.resolve();
+    });
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(/mission was saved.*refresh.*reload/i);
+    expect((input as HTMLTextAreaElement).value).toBe(outcome);
+    const workspaces = await listWorkspaces();
+    expect(workspaces).toHaveLength(1);
+    const workspace = workspaces[0]!;
+    const missions = await listMissions(workspace.id);
+    expect(missions).toHaveLength(1);
+    expect(await listMissionPlans(workspace.id)).toHaveLength(1);
+    expect(await listMissionCards(workspace.id)).toHaveLength(1);
+    expect((await listProofEvents(workspace.id, 100)).some((event) => event.type === 'mission.plan_created')).toBe(true);
+    expect(workspaceApi.remove).not.toHaveBeenCalled();
+    expect(localStorage.getItem('cherry.activeWorkspaceId')).toBe(workspace.id);
+    expect(localStorage.getItem('cherry.activeMissionId')).toBe(missions[0]!.id);
+    await waitFor(() => expect(screen.getByTestId('plan-mission').getAttribute('aria-busy')).toBe('false'));
+    expect(screen.queryByTestId('detail-route')).toBeNull();
   });
 
   it('keeps execution controls collapsed and opens the recorded replay without a runner', async () => {

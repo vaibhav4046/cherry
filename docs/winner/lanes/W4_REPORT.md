@@ -227,3 +227,50 @@ The first Playwright attempt was invalid because `reuseExistingServer` attached 
 - No new visual asset, dependency, gradient, animation, or design-system rule was added.
 - Concern: if compensating `deleteWorkspace` itself fails, partial state necessarily remains; the UI now reports that truthfully and retains the outcome, but does not attempt an unsafe lower-level cleanup.
 - Concern: no live runner credentials were used. Disconnect, host capability/freshness, rejection, cleanup, and timer behavior are verified through deterministic boundary doubles; W0 should verify the integrated W3 replay anchor and perform final release verification.
+
+## Fix round 2 — preserve a successfully saved mission when UI synchronization fails
+
+### Status and exact files
+
+Status: **DONE**. This round changes only:
+
+- `src/pages/studio/MissionControl.tsx`
+- `tests/cherry/mission-control-first-run.test.tsx`
+- `docs/winner/lanes/W4_REPORT.md`
+
+No service, persistence, runtime, runner, workforce, policy, package, W1, W3, or other report file changed.
+
+### RED evidence
+
+Command:
+
+```text
+npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx -t "preserves a saved first mission when the post-save AppState refresh fails"
+```
+
+The unrestricted RED run exited 1 with **1 failed / 14 skipped**. The real workspace, mission, plan, and proof records were created successfully; the injected AppState `refresh()` then rejected. The old handler incorrectly entered compensation, deleted the persisted `My Cherry` workspace, and rendered `Cherry could not save that mission. The unfinished My Cherry space was removed...` instead of acknowledging that the mission had already been saved.
+
+### Implementation and recovery boundary
+
+- Workspace and mission creation now occupy their own guarded phase. A workspace created by this submit is eligible for compensating `deleteWorkspace` only when `createMission` throws before returning success or returns a failure result.
+- Once `createMission` returns success, its mission id crosses an explicit success boundary. Selection, AppState refresh, query cleanup, and navigation run in a separate error boundary that never invokes rollback.
+- If post-save synchronization fails, the retained alert says: `The mission was saved, but Cherry could not refresh Mission Control or open it. Your outcome is still here—reload to continue.` The textarea remains populated for recovery.
+- The regression uses real domain services for workspace, mission, plan, and transactional proof persistence. Only the UI-facing AppState refresh boundary is deterministically rejected. It proves one persisted workspace, mission, plan, mission card, and `mission.plan_created` proof event remain; `deleteWorkspace` is never called; stored active ids point to those retained records; and navigation does not falsely claim success.
+
+### GREEN evidence
+
+- Isolated regression rerun — **1/1 passed** (14 skipped). A first green run exposed a React `act(...)` timing warning; the test was changed to hold and reject the refresh promise inside `act`, after which the same run passed without that warning.
+- `npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx tests/cherry/mission-control.test.tsx` — **18/18 passed**.
+- `npx.cmd playwright test e2e/cherry/final-winner-control.spec.ts --project=desktop` — **4/4 passed**: fresh IndexedDB mission creation, recoverable storage error, runner-free replay, and 390×844 keyboard/reduced-motion/axe/overflow acceptance.
+- `npm.cmd run gates` — passed: typecheck; lint; Vitest **60 passed / 1 skipped files, 554 passed / 2 skipped tests**; runner/MCP **131 passed / 0 failed**.
+- `git diff --check` — passed before this append and is rerun after staging.
+
+The known Browserslist/Tailwind notices and third-party Privy PURE-annotation/chunk-size build warnings remain unchanged. Playwright/gates regenerated `docs/release/e2e-results.json` and `tsconfig.tsbuildinfo`; both were restored to the accepted commit before staging.
+
+### Self-review and remaining concerns
+
+- The mutation check is direct: moving post-success refresh back inside the compensation catch makes the new test fail by deleting the records and calling `deleteWorkspace`.
+- Existing mission-creation failure and thrown-after-partial-persistence regressions remain green, so rollback still cleans only the workspace created by the failing submit.
+- Existing active workspaces remain ineligible for compensation. The page still uses only public services and AppState APIs; no lower-level IndexedDB write was added.
+- No visual layout, runner readiness, replay, or live-start behavior changed in this round.
+- Concern: after a post-save UI synchronization failure, the user must reload Mission Control to resynchronize the in-memory shell with the already durable records. The UI states this plainly and does not retry automatically or risk deleting valid state.
