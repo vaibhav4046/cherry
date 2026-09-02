@@ -121,7 +121,7 @@ export async function createOutcomeMission(input: CreateOutcomeMissionInput): Pr
     status: 'validated',
   };
   const problems = validateMissionPlan(plan);
-  if (problems.length > 0) return err('validation', 'The mission template produced an invalid plan.', { problems });
+  if (problems.length > 0) return err('validation', `The mission template produced an invalid plan: ${problems.map((problem) => problem.message).join('; ')}`, { problems });
   plan.contentHash = await computePlanContentHash(plan);
 
   await withWorkspaceTx(input.workspaceId, ['missionPlans'], async (ctx) => {
@@ -353,7 +353,11 @@ export interface NodeEnvelopeOptions {
 
 async function buildEnvelope(plan: MissionPlan, node: MissionPlanNode, workItem: WorkItem, hosts: readonly ExecutionHost[], options: NodeEnvelopeOptions): Promise<ExecutionEnvelope> {
   const rankedKinds = [...new Set(rankHosts(hosts, node).map((host) => host.kind))];
-  const hostKinds = node.preferredHostKinds.length > 0 ? [...node.preferredHostKinds] : rankedKinds;
+  // Preferred kinds lead when a host of that kind can actually run here; every other usable host follows
+  // as a fallback, so a rehearsal or a machine with one signed-in CLI still runs the node and the
+  // runner records which host did the work. With no usable host the preference stands and the runner refuses honestly.
+  const preferredUsable = node.preferredHostKinds.filter((kind) => rankedKinds.includes(kind));
+  const hostKinds = [...new Set([...(preferredUsable.length > 0 ? preferredUsable : node.preferredHostKinds), ...rankedKinds])];
   const allowedExecutables = node.kind === 'verify' ? ['node'] : executablesForKinds(hostKinds);
   const sourceRoot = options.sourceRoot !== undefined ? options.sourceRoot : repositoryRootFromNode(node);
   const context = options.contexts?.[node.id] ?? null;

@@ -273,6 +273,38 @@ test('the mock host writes the expected outputs when no script is given and hono
   assert.equal(existsSync(join(root, '..', 'escaped-output.txt')), false);
 });
 
+test('the mock host writes the plan file targets with the text each file_contains check needs', async () => {
+  const hosts = createAgentHosts({ allowMockHost: true, searchPath: false });
+  const { root } = sandbox();
+  const fileTargets = [
+    { path: 'artifacts/priorities.md', contains: '## Priorities' },
+    { path: 'artifacts/priorities.md', contains: '## Risks' },
+    { path: 'out/a.txt', contains: null },
+    { path: '', contains: 'ignored' },
+  ];
+  const result = await hosts.run('mock', { text: 'prioritise', attempt: 2, nodeId: 'prioritise', outputs: ['out/a.txt'], fileTargets }, { root }, { timeoutMs: 5000 });
+  assert.equal(result.status, 'completed');
+  const priorities = readFileSync(join(root, 'artifacts', 'priorities.md'), 'utf8');
+  assert.ok(priorities.startsWith('written by the mock host for prioritise attempt 2\n'));
+  assert.ok(priorities.includes('## Priorities') && priorities.includes('## Risks'), 'both headings are present');
+  assert.equal(readFileSync(join(root, 'out', 'a.txt'), 'utf8'), 'written by the mock host for prioritise attempt 2\n');
+  const escapeRoot = sandbox().root;
+  const escape = await hosts.run('mock', { text: 'escape', attempt: 1, nodeId: 'x', fileTargets: [{ path: '../outside.md', contains: 'nope' }] }, { root: escapeRoot }, { timeoutMs: 5000 });
+  assert.equal(escape.status, 'failed');
+  assert.match(escape.reason, /escapes/);
+  assert.equal(existsSync(join(escapeRoot, '..', 'outside.md')), false);
+});
+
+test('the mock host holds each attempt for --mock-delay-ms so rehearsals can show parallel work', async () => {
+  const hosts = createAgentHosts({ allowMockHost: true, searchPath: false, mockDelayMs: 120 });
+  const { root } = sandbox();
+  const startedAt = Date.now();
+  const result = await hosts.run('mock', { text: 'slow', attempt: 1, nodeId: 'slow', outputs: ['out/slow.txt'] }, { root }, { timeoutMs: 5000 });
+  assert.equal(result.status, 'completed');
+  assert.ok(Date.now() - startedAt >= 100, 'the attempt waited for the configured delay');
+  assert.equal(readFileSync(join(root, 'out', 'slow.txt'), 'utf8'), 'written by the mock host for slow attempt 1' + String.fromCharCode(10));
+});
+
 test('agent-host maps browser host kinds to hosts: local-runner is the mock, manual hands off', async () => {
   const root = tempDir('ad-kinds-');
   const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set(), allowMockHost: true, searchPath: false });

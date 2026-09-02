@@ -27,8 +27,8 @@ const META_ROUTES: RouteObject[] = [
   {
     path: '/',
     handle: meta(
-      'Cherry Wine · Turn lessons into skills every agent can run',
-      'Teach a workflow once. Cherry turns it into an approved, verified skill and serves it to ChatGPT, Codex, Claude, and any agent you connect. Free, open source, no API key.',
+      'Cherry · One task. An entire AI team.',
+      'Cherry turns Codex, Claude, Kimi and local models into teammates with tools, memory and isolated workspaces. They work in parallel and return with verified results. Open source, local-first.',
     ),
   },
   {
@@ -55,6 +55,14 @@ const META_ROUTES: RouteObject[] = [
     handle: STUDIO_META,
     children: [
       { index: true, handle: STUDIO_META },
+      {
+        path: 'control',
+        handle: meta(`Missions · ${SITE}`, 'Give Cherry an outcome. It plans the team, runs the work on your paired runner, checks the result, and returns when your decision is needed.'),
+      },
+      {
+        path: 'control/:missionId',
+        handle: meta(`Mission · ${SITE}`, 'The team, its workspaces, the checks that passed or failed, and what needs you.'),
+      },
       {
         path: 'onboarding',
         handle: meta(`Start · ${SITE}`, 'Create your space and choose what Cherry should help your agents learn.'),

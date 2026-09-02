@@ -54,6 +54,17 @@ describe('rankHosts', () => {
   });
 });
 
+describe('rankHosts fallback tiers', () => {
+  it('never lets a manual handoff outrank a host that can do the work when nothing else distinguishes them', () => {
+    const noPreference = { ...research, preferredHostKinds: [] as ExecutionHost['kind'][] };
+    const manual = host('ho-manual', 'manual', 'A person', runner.capabilities);
+    expect(rankHosts([manual, runner], noPreference, {}).map((candidate) => candidate.id)).toEqual(['ho-runner', 'ho-manual']);
+    expect(rankHosts([runner, manual], noPreference, {}).map((candidate) => candidate.id)).toEqual(['ho-runner', 'ho-manual']);
+    expect(rankHosts([manual], noPreference, {}).map((candidate) => candidate.id)).toEqual(['ho-manual']);
+    expect(rankHosts([manual, codex], { ...noPreference, preferredHostKinds: ['manual'] }, {}).map((candidate) => candidate.id)).toEqual(['ho-manual', 'ho-codex']);
+  });
+});
+
 describe('hostBoundary', () => {
   it('labels the boundary honestly for every host kind', () => {
     expect(hostBoundary('codex-cli', 'git-worktree')).toBe('worktree-process');

@@ -71,6 +71,8 @@ const allowedExecutables = new Set(argValues('--allow-exec'));
 const allowMockHost = args.includes('--allow-mock-host');
 /** --mock-fail-first <nodeId> (repeatable): the mock host writes nothing on that node's first attempt. */
 const mockFailFirst = argValues('--mock-fail-first');
+/** --mock-delay-ms <n>: the mock host holds each attempt for n ms so parallel work is visible in rehearsals. */
+const mockDelayMs = Math.max(0, Number(argValues('--mock-delay-ms')[0] ?? '0') || 0);
 const hostCommands = {};
 const hostEndpoints = { ollama: 'http://127.0.0.1:11434', omniroute: 'http://127.0.0.1:20128' };
 for (const spec of argValues('--host-command')) {
@@ -79,7 +81,8 @@ for (const spec of argValues('--host-command')) {
   const name = spec.slice(0, separator);
   const value = spec.slice(separator + 1);
   if (/^https?:\/\//.test(value)) hostEndpoints[name] = value;
-  else hostCommands[name] = value;
+  // "name=node,C:\path\to\cli.js" spawns an interpreter plus fixed leading args (Windows cannot spawn .cmd shims without a shell).
+  else hostCommands[name] = value.includes(',') ? value.split(',').map((part) => part.trim()).filter(Boolean) : value;
 }
 const stateDir = resolve(argValues('--state')[0] ?? join(process.cwd(), '.cherry-runner'));
 mkdirSync(stateDir, { recursive: true });
@@ -304,7 +307,7 @@ async function pump() {
 
 // ---------------- Runner v2: durable queue, events, scheduler ----------------
 const v2Events = new EventsLog(join(dataDir, 'events.log'));
-const v2Hosts = createAgentHosts({ commands: hostCommands, endpoints: hostEndpoints, allowMockHost, mockFailFirst });
+const v2Hosts = createAgentHosts({ commands: hostCommands, endpoints: hostEndpoints, allowMockHost, mockFailFirst, mockDelayMs });
 const v2Adapters = createAdapters({ allowedRoots, allowedExecutables, allowMockHost, hosts: v2Hosts });
 const v2Concurrency = Math.min(3, Math.max(1, Number(argValues('--concurrency')[0]) || 1));
 const v2Queue = new DurableQueue({ dataDir, events: v2Events, concurrency: v2Concurrency });
@@ -779,4 +782,6 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log('');
   console.log(`PAIRING TOKEN (enter this in Cherry Studio → Connections):`);
   console.log(`  ${pairToken}`);
+  // Warm the host probe so the first /v2/hosts answers from cache instead of spending seconds on CLI checks.
+  v2Hosts.probe().catch(() => {});
 });

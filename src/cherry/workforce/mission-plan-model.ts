@@ -484,9 +484,10 @@ export function derivePlanStatus(plan: MissionPlan, statuses: Readonly<Record<st
   const derived = Object.values(deriveNodeRunStatuses(plan, statuses));
   if (derived.length > 0 && derived.every((status) => status === 'succeeded')) return 'succeeded';
   if (derived.includes('waiting_for_human')) return 'waiting_for_human';
-  if (derived.includes('cancelled')) return 'cancelled';
   const active = derived.some((status) => status === 'running' || status === 'ready' || status === 'verifying');
+  // A failed node whose dependants were cancelled because of it is a failed mission, not a cancelled one.
   if (derived.includes('failed') && !active) return 'failed';
+  if (derived.includes('cancelled')) return 'cancelled';
   if (derived.includes('verifying')) return 'verifying';
   if (derived.some((status) => status === 'running' || status === 'ready')) return 'running';
   return plan.status;

@@ -307,7 +307,10 @@ describe('mission templates', () => {
     const noRepo = instantiateTemplate('release-mission', { workspaceId: 'ws-1', missionId: 'ms-1', outcome: 'Ship it', constraints: [], repositoryRoot: null });
     const noRepoVerify = noRepo.nodes.find((node) => node.id === 'independent-verification')!;
     expect(noRepoVerify.verificationPlan.every((check) => check.kind !== 'command')).toBe(true);
-    expect(noRepoVerify.verificationPlan.some((check) => check.path === 'artifacts/verification-report.md')).toBe(true);
+    // A verify node never writes files, so without a repository it is exactly its artifact checks.
+    expect(noRepoVerify.verificationPlan.length).toBeGreaterThan(0);
+    expect(noRepoVerify.verificationPlan.every((check) => check.kind === 'file' && check.path?.startsWith('artifacts/') || check.path?.startsWith('content/'))).toBe(true);
+    expect(noRepo.nodes.find((node) => node.id === 'developer-fix')!.sandbox).toBe('directory');
   });
 
   it('the creator pipeline fans out drafts and ends in a human publish decision', () => {

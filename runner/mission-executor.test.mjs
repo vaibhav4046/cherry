@@ -6,8 +6,8 @@
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -422,6 +422,11 @@ test('a human decision parks the mission until decide records the approval', asy
   const mission = await settle(harness, missionRunId);
   assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
   assert.deepEqual(mission.nodes.h.decision, { decision: 'approved', approvalId: 'ap-1', contentHash: plan.contentHash, at: mission.nodes.h.decision.at });
+  // The decision is the node's evaluation, so a mirror never has to mark a decided node succeeded without a report.
+  assert.equal(mission.nodes.h.evaluation.status, 'passed');
+  assert.deepEqual(mission.nodes.h.evaluation.checks.map((check) => [check.id, check.status]), [['h-human', 'passed']]);
+  assert.match(mission.nodes.h.evaluation.checks[0].detail, /approved by a person \(approval ap-1\)/);
+  assert.deepEqual(mission.nodes.h.evaluation.requiredIds, ['h-human']);
   const events = eventsOf(harness, missionRunId);
   assert.equal(countEvents(events, 'h', 'node_waiting_for_human'), 1);
   assert.ok(indexOfEvent(events, 'h', 'node_succeeded') < indexOfEvent(events, 'b', 'node_started'));
@@ -436,6 +441,8 @@ test('a human decision parks the mission until decide records the approval', asy
   const failed = await settle(rejecting, rejectId);
   assert.equal(failed.status, 'failed');
   assert.deepEqual(nodeStatuses(failed), { h: 'failed', b: 'blocked' });
+  assert.equal(failed.nodes.h.evaluation.status, 'failed');
+  assert.deepEqual(failed.nodes.h.evaluation.checks.map((check) => [check.id, check.status, check.detail]), [['h-human', 'failed', 'rejected by a person']]);
 });
 
 test('a browser-style agent-host envelope with hostKinds local-runner runs on the mock host without a script', async () => {
@@ -451,7 +458,7 @@ test('a browser-style agent-host envelope with hostKinds local-runner runs on th
   assert.equal(readFileSync(join(mission.nodes.a.sandbox.root, 'out', 'a.txt'), 'utf8'), 'written by the mock host for a attempt 1\n');
   assert.deepEqual(mission.nodes.a.host, { hostId: 'mock', kind: 'mock', version: 'mock' });
   assert.equal(mission.nodes.a.attempts, 1);
-  assert.deepEqual(Object.keys(mission.nodes.a.sandbox).sort(), ['baseCommit', 'boundary', 'branchName', 'id', 'provider', 'root', 'status']);
+  assert.deepEqual(Object.keys(mission.nodes.a.sandbox).sort(), ['baseCommit', 'basedOn', 'boundary', 'branchName', 'headCommit', 'id', 'provider', 'root', 'status']);
   assert.equal(mission.nodes.a.evaluation.status, 'passed');
   assert.equal(mission.nodes.b.status, 'succeeded');
 });
@@ -469,6 +476,78 @@ test('a sandbox provider without a sourceRoot fails the node with a clear reason
   assert.match(mission.nodes.a.lastError, /git-worktree sandbox but its envelope names no sourceRoot/);
   assert.equal(mission.nodes.a.sandbox, null);
   assert.equal(mission.nodes.a.attempts, 0);
+});
+
+test('a directory sandbox without a sourceRoot gets an empty scratch root inside the approved root and still succeeds', async () => {
+  const harness = makeHarness();
+  const plan = makePlan([planNode('a', { sandbox: 'directory' })]);
+  const envelopes = { a: envelopeFor(plan, plan.nodes[0], { sourceRoot: null, mock: writes('a') }) };
+  const registered = harness.executor.register({ plan, envelopes });
+  assert.equal(registered.ok, true, JSON.stringify(registered));
+  harness.executor.start(registered.missionRunId);
+  const mission = await settle(harness, registered.missionRunId);
+  assert.equal(mission.status, 'succeeded', JSON.stringify(mission.nodes.a));
+  assert.equal(mission.nodes.a.sandbox.provider, 'directory');
+  assert.equal(mission.nodes.a.sandbox.boundary, 'process');
+  assert.match(mission.nodes.a.sandbox.root, /\.cherry-sandboxes/);
+  const lease = harness.sandboxes.list().find((entry) => entry.id === mission.nodes.a.sandbox.id);
+  assert.ok(lease, 'the lease is recorded');
+  assert.match(lease.sourceRoot, /\.cherry-scratch/);
+  assert.ok(lease.sourceRoot.startsWith(harness.root), 'the scratch root stays inside the approved root');
+});
+
+test('a dependant receives the artifacts its dependencies produced, at the same relative paths', async () => {
+  const harness = makeHarness();
+  const plan = makePlan([
+    planNode('a'),
+    planNode('b', {
+      deps: ['a'],
+      checks: [
+        { id: 'b-own', kind: 'file', required: true, path: 'out/b.txt', description: 'b output exists' },
+        { id: 'b-sees-a', kind: 'file_contains', required: true, path: 'out/a.txt', contains: 'a', description: 'the dependency output is visible to b' },
+      ],
+    }),
+  ]);
+  const missionRunId = await registerAndStart(harness, plan, {});
+  const mission = await settle(harness, missionRunId);
+  assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
+  assert.deepEqual(mission.nodes.a.artifacts.map((artifact) => artifact.path), ['out/a.txt']);
+  assert.equal(mission.nodes.a.artifacts[0].sha256.length, 64);
+  assert.deepEqual(mission.nodes.b.inputs.map((input) => [input.from, input.path]), [['a', 'out/a.txt']]);
+  assert.notEqual(mission.nodes.a.sandbox.root, mission.nodes.b.sandbox.root);
+  assert.equal(readFileSync(join(mission.nodes.b.sandbox.root, 'out', 'a.txt'), 'utf8'), 'a');
+  const events = eventsOf(harness, missionRunId);
+  assert.ok(indexOfEvent(events, 'a', 'artifacts_collected') < indexOfEvent(events, 'b', 'artifacts_materialized'));
+});
+
+test('a worktree dependant starts from the committed result of its worktree dependency; the source branch stays untouched', async () => {
+  const harness = makeHarness();
+  const repo = join(harness.root, 'repo');
+  mkdirSync(repo);
+  const git = (args, options = {}) => execFileSync('git', ['-c', 'user.email=t@cherry.local', '-c', 'user.name=t', ...args], { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'], ...options }).toString().trim();
+  writeFileSync(join(repo, 'README.md'), 'fixture' + String.fromCharCode(10));
+  git(['init', '-q']);
+  git(['add', '.']);
+  git(['commit', '-q', '-m', 'base']);
+  const base = git(['rev-parse', 'HEAD']);
+  const plan = makePlan([
+    planNode('a', { sandbox: 'git-worktree' }),
+    planNode('b', { deps: ['a'], sandbox: 'git-worktree', checks: [{ id: 'b-sees-a', kind: 'file', required: true, path: 'out/a.txt', description: 'the dependency result is in the worktree' }] }),
+  ]);
+  const envelopes = Object.fromEntries(plan.nodes.map((node) => [node.id, envelopeFor(plan, node, { mock: writes(node.id), sourceRoot: repo })]));
+  const registered = harness.executor.register({ plan, envelopes });
+  assert.equal(registered.ok, true, JSON.stringify(registered));
+  harness.executor.start(registered.missionRunId);
+  const mission = await settle(harness, registered.missionRunId);
+  assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
+  assert.ok(mission.nodes.a.sandbox.headCommit, 'a committed its result on its sandbox branch');
+  assert.notEqual(mission.nodes.a.sandbox.headCommit, base);
+  assert.equal(mission.nodes.b.sandbox.baseCommit, mission.nodes.a.sandbox.headCommit);
+  assert.equal(mission.nodes.b.sandbox.basedOn, 'a');
+  assert.notEqual(mission.nodes.b.sandbox.branchName, mission.nodes.a.sandbox.branchName);
+  assert.equal(git(['rev-parse', 'HEAD']), base, 'the source branch is untouched');
+  const events = eventsOf(harness, registered.missionRunId);
+  assert.ok(indexOfEvent(events, 'a', 'sandbox_committed') >= 0);
 });
 
 test('registration refuses stale hashes, foreign workspaces and bad envelopes, and is idempotent otherwise', async () => {

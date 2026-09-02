@@ -356,16 +356,30 @@ function mockStepFor(task, attempt, mockFailFirst) {
   if (attempts) return attempts[attempt - 1] ?? attempts[attempts.length - 1] ?? {};
   const nodeId = typeof task.nodeId === 'string' && task.nodeId.length > 0 ? task.nodeId : 'node';
   if (attempt === 1 && mockFailFirst.has(nodeId)) return { writeFiles: {}, exitCode: 0 };
-  const outputs = Array.isArray(task.outputs) ? task.outputs.map(String) : [];
-  return { writeFiles: Object.fromEntries(outputs.map((relative) => [relative, `written by the mock host for ${nodeId} attempt ${attempt}\n`])), exitCode: 0 };
+  return { writeFiles: mockWriteFiles(task, nodeId, attempt), exitCode: 0 };
 }
 
-async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailFirst = new Set() }) {
+/** Outputs plus the plan's own file targets; file_contains text goes under a heading so the check can find it. */
+function mockWriteFiles(task, nodeId, attempt) {
+  const stamp = `written by the mock host for ${nodeId} attempt ${attempt}\n`;
+  const files = {};
+  for (const relative of Array.isArray(task.outputs) ? task.outputs.map(String) : []) files[relative] = stamp;
+  for (const target of Array.isArray(task.fileTargets) ? task.fileTargets : []) {
+    if (typeof target?.path !== 'string' || target.path.length === 0) continue;
+    const base = files[target.path] ?? stamp;
+    files[target.path] = typeof target.contains === 'string' && target.contains.length > 0 && !base.includes(target.contains)
+      ? `${base}\n${target.contains}\n\nMock content for ${nodeId}.\n`
+      : base;
+  }
+  return files;
+}
+
+async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailFirst = new Set(), mockDelayMs = 0 }) {
   const step = mockStepFor(task, attempt, mockFailFirst);
   const files = Object.entries(step.writeFiles ?? {});
   for (const [relative] of files) containedPath(root, relative);
   const wrote = files.map(([relative, content]) => writeInside(root, relative, String(content)));
-  const sleepMs = Number.isFinite(step.sleepMs) ? Math.max(0, step.sleepMs) : 0;
+  const sleepMs = Number.isFinite(step.sleepMs) ? Math.max(0, step.sleepMs) : Math.max(0, Number(mockDelayMs) || 0);
   const bounded = Math.min(sleepMs, timeoutMs);
   const slept = bounded > 0 ? await sleep(bounded, signal) : 'done';
   const exitCode = Number.isInteger(step.exitCode) ? step.exitCode : 0;
@@ -446,7 +460,7 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
   if (hostId === 'mock') {
     if (!context.allowMockHost) return fail('the mock host is not enabled (start the runner with --allow-mock-host)');
     try {
-      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs, mockFailFirst: new Set(context.mockFailFirst ?? []) });
+      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs, mockFailFirst: new Set(context.mockFailFirst ?? []), mockDelayMs: context.mockDelayMs ?? 0 });
     } catch (error) {
       return fail(String(error?.message ?? error));
     }
@@ -526,6 +540,7 @@ export function createAgentHosts(config = {}) {
         probe: context.probe ?? probes.find((probe) => probe.hostId === hostId) ?? null,
         allowMockHost: Boolean(config.allowMockHost),
         mockFailFirst: Array.isArray(config.mockFailFirst) ? config.mockFailFirst : [],
+        mockDelayMs: Math.max(0, Number(config.mockDelayMs) || 0),
         now,
       });
     },

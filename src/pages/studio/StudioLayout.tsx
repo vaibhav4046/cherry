@@ -16,7 +16,8 @@ interface NavItem {
 }
 
 const NAV_PRIMARY: NavItem[] = [
-  { to: '/studio', label: 'Command', end: true, icon: Icons.command, title: 'Overview' },
+  { to: '/studio', label: 'Home', end: true, icon: Icons.command, title: 'Overview' },
+  { to: '/studio/control', label: 'Missions', end: false, icon: Icons.agent, title: 'Missions' },
   { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick, hint: 'add a source' },
   { to: '/studio/sources', label: 'Sources', end: false, icon: Icons.watch },
   { to: '/studio/creators', label: 'Creators', end: false, icon: Icons.pin },
@@ -76,7 +77,9 @@ export function StudioLayout() {
   useEffect(() => {
     const path = location.pathname;
     const surface =
-      path.startsWith('/studio/inbox') || path.startsWith('/studio/work')
+      path.startsWith('/studio/control')
+        ? ('control' as const)
+      : path.startsWith('/studio/inbox') || path.startsWith('/studio/work')
         ? ('inbox' as const)
         : path.startsWith('/studio/crew')
           ? ('crew' as const)

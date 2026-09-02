@@ -46,8 +46,26 @@ export function rankHosts(hosts: readonly ExecutionHost[], node: MissionPlanNode
     .filter((host) => host.status === 'available' && hostSatisfies(host, node.requiredCapabilities))
     .sort((a, b) => preferenceRank(a) - preferenceRank(b)
       || passRate(b) - passRate(a)
+      || fallbackRank(a.kind) - fallbackRank(b.kind)
       || a.name.localeCompare(b.name)
       || a.id.localeCompare(b.id));
+}
+
+/**
+ * With no preference and no history, hosts that run the work on this machine share one tier and the
+ * name decides; hand-offs through another surface come next; a person's manual handoff is always last.
+ */
+const KIND_FALLBACK_RANK: Readonly<Record<ExecutionHostKind, number>> = {
+  'codex-cli': 0,
+  'claude-cli': 0,
+  'local-runner': 0,
+  'attached-webmcp': 1,
+  'codex-automation-export': 1,
+  manual: 2,
+};
+
+function fallbackRank(kind: ExecutionHostKind): number {
+  return KIND_FALLBACK_RANK[kind] ?? 1;
 }
 
 // ---------------- Boundaries ----------------

@@ -13,13 +13,14 @@
  * `${missionRunId}:${nodeId}` so parallel overlap is provable from the log.
  * Missions persist to <dataDir>/missions.json.
  */
-import { randomBytes } from 'node:crypto';
-import { join } from 'node:path';
+import { createHash, randomBytes } from 'node:crypto';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
 import { loadJson, saveJsonAtomic } from './store.mjs';
 import { computeActionHash } from './canonical.mjs';
 import { validateEnvelope } from './queue.mjs';
 import { redact } from './redact.mjs';
-import { runChecks } from './checks.mjs';
+import { parseCheckSpec, runChecks } from './checks.mjs';
 import { buildTaskText, hostKindOf } from './agent-hosts.mjs';
 import {
   PLAN_LIMITS,
@@ -34,6 +35,8 @@ const ACTIVE_MISSION_STATUSES = new Set(['running', 'verifying', 'waiting_for_hu
 const TERMINAL_MISSION_STATUSES = new Set(['succeeded', 'failed', 'cancelled']);
 const IN_FLIGHT_NODE_STATUSES = new Set(['ready', 'running', 'verifying']);
 const SANDBOX_PROVIDERS = new Set(['directory', 'git-worktree']);
+const SCRATCH_DIR_NAME = '.cherry-scratch';
+const safeSegment = (value) => String(value ?? '').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 60) || 'mission';
 /** Accepted decision spellings, normalised to the browser vocabulary. */
 const DECISIONS = { approve: 'approved', approved: 'approved', reject: 'rejected', rejected: 'rejected' };
 const FINISHED_NODE_STATUSES = new Set(['succeeded', 'failed', 'blocked', 'cancelled']);
@@ -63,6 +66,56 @@ function parsePayload(text) {
   }
 }
 
+/**
+ * The files a node's own verification plan expects, with the text a
+ * file_contains check looks for. Hosts receive them as plain data; only the
+ * test-only mock host acts on them, real hosts read the bounded prompt.
+ */
+function fileTargetsFor(planNode) {
+  const targets = [];
+  for (const spec of Array.isArray(planNode?.verificationPlan) ? planNode.verificationPlan : []) {
+    const parsed = parseCheckSpec(spec);
+    if (!parsed || typeof parsed.path !== 'string' || parsed.path.length === 0) continue;
+    if (parsed.kind !== 'file' && parsed.kind !== 'file_contains') continue;
+    targets.push({ path: parsed.path, contains: typeof parsed.contains === 'string' ? parsed.contains : null });
+  }
+  return targets;
+}
+
+/** Resolve `relative` inside `root`; null when it would escape the root. */
+function insideRoot(root, relative) {
+  if (typeof root !== 'string' || typeof relative !== 'string' || relative.length === 0) return null;
+  const base = resolve(root);
+  const target = resolve(join(base, relative));
+  return target === base || target.startsWith(base + sep) ? target : null;
+}
+
+function sha256File(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+/** The evaluation record of a human_decision node: its human check decided by a person, nothing executed. */
+function humanEvaluation(planNode, decision) {
+  const approved = decision?.decision === 'approved';
+  const checks = [];
+  for (const spec of Array.isArray(planNode?.verificationPlan) ? planNode.verificationPlan : []) {
+    const parsed = parseCheckSpec(spec);
+    if (!parsed || typeof parsed.id !== 'string') continue;
+    if (parsed.kind === 'human') {
+      checks.push({
+        id: parsed.id,
+        name: typeof parsed.description === 'string' ? parsed.description : 'A person decides',
+        status: approved ? 'passed' : 'failed',
+        evidenceRefs: [],
+        detail: approved ? `approved by a person (approval ${decision.approvalId ?? 'unknown'})` : 'rejected by a person',
+      });
+    } else {
+      checks.push({ id: parsed.id, name: typeof parsed.description === 'string' ? parsed.description : parsed.id, status: 'not_run', evidenceRefs: [], detail: 'not run: this node is decided by a person' });
+    }
+  }
+  return { status: approved ? 'passed' : 'failed', checks, requiredIds: checks.filter((check) => check.status !== 'not_run').map((check) => check.id), error: null };
+}
+
 function newNode(planNode, at) {
   return {
     id: planNode.id,
@@ -70,6 +123,8 @@ function newNode(planNode, at) {
     status: 'pending',
     attempts: 0,
     repairs: 0,
+    artifacts: [],
+    inputs: [],
     jobIds: [],
     currentJobId: null,
     sandboxLeaseId: null,
@@ -121,6 +176,7 @@ export class MissionExecutor {
     this.queue = queue;
     this.events = events;
     this.sandboxes = sandboxes;
+    this.dataDir = dataDir;
     this.hosts = hosts;
     this.adapters = adapters;
     this.now = now;
@@ -297,6 +353,9 @@ export class MissionExecutor {
     if (!normalised) return refuse('bad_decision', 'decision must be approved or rejected');
     if (normalised === 'approved' && !nonEmpty(approvalId)) return refuse('approval_required', 'an approval id is required to approve');
     node.decision = { decision: normalised, approvalId: nonEmpty(approvalId) ? approvalId : null, contentHash, at: this.iso() };
+    // A person's decision is this node's evaluation: the human check passes or fails by that decision,
+    // so the browser mirror gets a real report and never marks a decided node succeeded without one.
+    node.evaluation = humanEvaluation(this.planNodeOf(mission, nodeId), node.decision);
     if (normalised === 'approved') {
       this.transition(mission, node, 'succeeded');
       void this.releaseSandbox(mission, node, 'succeeded');
@@ -395,6 +454,14 @@ export class MissionExecutor {
     node.evaluation = report;
     if (report.status === 'passed') {
       node.failedChecks = [];
+      if (node.sandbox?.provider === 'git-worktree' && node.sandboxLeaseId) {
+        const committed = await this.sandboxes.commitAll(node.sandboxLeaseId, `cherry: ${node.id} attempt ${node.attempts}`);
+        if (committed.ok) {
+          node.sandbox.headCommit = committed.commit;
+          if (committed.committed) this.emit(mission, node.id, 'sandbox_committed');
+        }
+      }
+      this.collectArtifacts(mission, node, planNode);
       this.transition(mission, node, 'succeeded');
       await this.releaseSandbox(mission, node, 'succeeded');
     } else if (report.status === 'blocked') {
@@ -440,6 +507,65 @@ export class MissionExecutor {
     this.save();
   }
 
+  /** Empty per-mission source for directory sandboxes that name no repository; lives inside the approved root. */
+  scratchRootFor(mission) {
+    const root = join(this.sandboxes.allowedRoots[0], SCRATCH_DIR_NAME, safeSegment(mission.id));
+    mkdirSync(root, { recursive: true });
+    return root;
+  }
+
+  artifactsDirFor(mission) {
+    return join(this.dataDir, 'artifacts', safeSegment(mission.id));
+  }
+
+  /** Copy a succeeded node's declared outputs into the mission artifact store so dependants can read them. */
+  collectArtifacts(mission, node, planNode) {
+    const root = node.sandbox?.root ?? this.workingDirectoryFor(mission, node);
+    if (!root) return [];
+    const payload = parsePayload(mission.envelopes[node.id]?.boundedPrompt ?? '') ?? {};
+    const declared = [...new Set([...(Array.isArray(payload.outputs) ? payload.outputs.map(String) : []), ...fileTargetsFor(planNode).map((target) => target.path)])];
+    const artifacts = [];
+    for (const relative of declared) {
+      const source = insideRoot(root, relative);
+      if (!source || !existsSync(source) || !statSync(source).isFile()) continue;
+      const destination = join(this.artifactsDirFor(mission), safeSegment(node.id), relative);
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(source, destination);
+      artifacts.push({ path: relative, bytes: statSync(source).size, sha256: sha256File(source) });
+    }
+    node.artifacts = artifacts;
+    if (artifacts.length > 0) this.emit(mission, node.id, 'artifacts_collected');
+    return artifacts;
+  }
+
+  /** Place every direct dependency's artifacts into a fresh sandbox at the same relative paths. */
+  materializeDependencies(mission, node, planNode) {
+    const inputs = [];
+    for (const dependencyId of Array.isArray(planNode?.dependencyIds) ? planNode.dependencyIds : []) {
+      const dependency = mission.nodes[dependencyId];
+      for (const artifact of Array.isArray(dependency?.artifacts) ? dependency.artifacts : []) {
+        const source = join(this.artifactsDirFor(mission), safeSegment(dependencyId), artifact.path);
+        const destination = insideRoot(node.sandbox?.root, artifact.path);
+        if (!destination || !existsSync(source) || existsSync(destination)) continue;
+        mkdirSync(dirname(destination), { recursive: true });
+        copyFileSync(source, destination);
+        inputs.push({ from: dependencyId, path: artifact.path, sha256: artifact.sha256 });
+      }
+    }
+    node.inputs = inputs;
+    if (inputs.length > 0) this.emit(mission, node.id, 'artifacts_materialized');
+  }
+
+  /** The committed head of the last worktree dependency, so a dependant worktree starts from its result. */
+  inheritedBaseFor(mission, planNode) {
+    let inherited = null;
+    for (const dependencyId of Array.isArray(planNode?.dependencyIds) ? planNode.dependencyIds : []) {
+      const dependency = mission.nodes[dependencyId];
+      if (dependency?.sandbox?.provider === 'git-worktree' && nonEmpty(dependency.sandbox.headCommit)) inherited = { nodeId: dependencyId, commit: dependency.sandbox.headCommit };
+    }
+    return inherited;
+  }
+
   workingDirectoryFor(mission, node) {
     const payload = parsePayload(mission.envelopes[node.id]?.boundedPrompt ?? '') ?? {};
     return typeof payload.sandbox?.sourceRoot === 'string' ? payload.sandbox.sourceRoot : null;
@@ -449,19 +575,26 @@ export class MissionExecutor {
     const template = mission.envelopes[node.id];
     const payload = parsePayload(template.boundedPrompt) ?? {};
     const provider = payload.sandbox?.provider ?? planNode.sandbox;
-    if (SANDBOX_PROVIDERS.has(provider) && !nonEmpty(payload.sandbox?.sourceRoot)) {
-      await this.failNode(mission, node, `the node asks for a ${provider} sandbox but its envelope names no sourceRoot`);
-      return;
+    let sourceRoot = nonEmpty(payload.sandbox?.sourceRoot) ? payload.sandbox.sourceRoot : null;
+    if (SANDBOX_PROVIDERS.has(provider) && !sourceRoot) {
+      if (provider !== 'directory') {
+        await this.failNode(mission, node, `the node asks for a ${provider} sandbox but its envelope names no sourceRoot`);
+        return;
+      }
+      // Work that names no repository still gets its own empty directory: a scratch root per mission
+      // run under the first approved root, so every node writes inside a leased sandbox.
+      sourceRoot = this.scratchRootFor(mission);
     }
     if (!node.sandboxLeaseId && SANDBOX_PROVIDERS.has(provider)) {
       // The sandbox path is keyed by the mission run id, so a re-registered or
       // re-run plan never collides with a retained sandbox of an earlier run.
+      const inherited = provider === 'git-worktree' && !nonEmpty(payload.sandbox?.baseRef) ? this.inheritedBaseFor(mission, planNode) : null;
       const outcome = await this.sandboxes.allocate({
         missionId: mission.id,
         workItemId: template.workItemId,
         provider,
-        sourceRoot: payload.sandbox?.sourceRoot,
-        baseRef: payload.sandbox?.baseRef ?? null,
+        sourceRoot,
+        baseRef: payload.sandbox?.baseRef ?? inherited?.commit ?? null,
         writable: true,
         retain: true,
       });
@@ -471,8 +604,9 @@ export class MissionExecutor {
       }
       const { lease } = outcome;
       node.sandboxLeaseId = lease.id;
-      node.sandbox = { id: lease.id, root: lease.root, provider: lease.provider, boundary: lease.boundary, branchName: lease.branchName, baseCommit: lease.baseCommit, status: lease.status };
+      node.sandbox = { id: lease.id, root: lease.root, provider: lease.provider, boundary: lease.boundary, branchName: lease.branchName, baseCommit: lease.baseCommit, basedOn: inherited?.nodeId ?? null, headCommit: null, status: lease.status };
       this.emit(mission, node.id, 'sandbox_leased');
+      this.materializeDependencies(mission, node, planNode);
     }
     const workingDirectory = node.sandbox?.root ?? this.workingDirectoryFor(mission, node);
     if (!workingDirectory) {
@@ -564,6 +698,7 @@ export class MissionExecutor {
       mock: payload.mock ?? null,
       nodeId: node.id,
       outputs: Array.isArray(payload.outputs) ? payload.outputs.map(String) : [],
+      fileTargets: fileTargetsFor(this.planNodeOf(mission, node.id)),
     };
     let result;
     try {

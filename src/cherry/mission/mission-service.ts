@@ -117,6 +117,8 @@ export async function deleteWorkspace(id: string): Promise<Result<{ deleted: str
     db.handoffs,
     db.executionHosts,
     db.routines,
+    db.missionPlans,
+    db.evaluationReports,
   ];
   return db.transaction('rw', tables, async () => {
     const workspace = await db.workspaces.get(id);

@@ -29,13 +29,13 @@ export const MISSION_TEMPLATES: readonly MissionTemplate[] = [
     id: 'repository-audit',
     name: 'Repository audit',
     description: 'Inventory a repository, audit its dependencies and code quality, verify the report, then hand the findings to a person.',
-    keywords: ['audit', 'review', 'security', 'lint', 'dependenc', 'vulnerab', 'codebase', 'code quality'],
+    keywords: ['audit', 'repositor', 'repo ', 'defect', 'fix', 'bug', 'security', 'lint', 'dependenc', 'vulnerab', 'codebase', 'code quality'],
   },
   {
     id: 'release-mission',
     name: 'Release mission',
     description: 'Research and audit in parallel, prioritise, fix inside an isolated worktree, draft release notes, verify independently, then ask before publishing.',
-    keywords: ['release', 'ship', 'launch', 'deploy', 'fix', 'bug', 'failing test', 'regression'],
+    keywords: ['release', 'ship', 'launch content', 'deploy', 'competitor', 'failing test', 'regression', 'onboarding'],
   },
   {
     id: 'research-brief',
@@ -47,11 +47,11 @@ export const MISSION_TEMPLATES: readonly MissionTemplate[] = [
     id: 'creator-draft',
     name: 'Own my creator pipeline',
     description: 'Collect project updates, pick an angle, draft a LinkedIn post and a YouTube outline in parallel, fact-check, review the voice, then ask before anything is published.',
-    keywords: ['creator', 'linkedin', 'youtube', 'content', 'newsletter', 'audience', 'post', 'pipeline', 'video'],
+    keywords: ['creator', 'linkedin', 'youtube', 'newsletter', 'audience', 'content pipeline', 'social post', 'video'],
   },
 ];
 
-const MATCH_PRIORITY: readonly MissionTemplateId[] = ['creator-draft', 'release-mission', 'repository-audit'];
+const MATCH_PRIORITY: readonly MissionTemplateId[] = ['creator-draft', 'release-mission', 'repository-audit', 'research-brief'];
 
 export function isMissionTemplateId(value: string): value is MissionTemplateId {
   return MISSION_TEMPLATES.some((template) => template.id === value);
@@ -102,11 +102,13 @@ function commandCheck(id: string, argv: string[], description: string): Verifica
   return { id, kind: 'command', required: true, argv, expectExitCode: 0, description };
 }
 
-/** The checks every verify node runs: the repository tests when a root exists, otherwise a written report. */
+/**
+ * The checks every verify node runs on top of its own: the repository tests when a root exists.
+ * Without a repository the verify node has nothing to execute, so it is exactly its artifact checks;
+ * a verify node never writes files, so it must not demand a report of its own.
+ */
 function verifyChecks(repositoryRoot: string | null): VerificationCheckSpec[] {
-  return repositoryRoot
-    ? [commandCheck('tests', ['node', '--test'], 'The repository test suite passes inside the sandbox')]
-    : [fileCheck('verification-report', 'artifacts/verification-report.md', 'A verification report was written')];
+  return repositoryRoot ? [commandCheck('tests', ['node', '--test'], 'The repository test suite passes inside the sandbox')] : [];
 }
 
 function agentNode(seed: NodeSeed): NodeSeed {
@@ -238,7 +240,8 @@ function releaseMissionNodes(repositoryRoot: string | null): NodeSeed[] {
       requiredCapabilities: ['repository_read', 'repository_write', 'command_execution', 'artifact_write'],
       riskLevel: 'medium',
       timeoutMs: DEVELOPER_TIMEOUT_MS,
-      sandbox: 'git-worktree',
+      // A worktree needs a repository; without one the fix still runs in its own directory sandbox.
+      sandbox: repositoryRoot ? 'git-worktree' : 'directory',
       verificationPlan: [fileCheck('fix-summary', 'artifacts/fix-summary.md', 'Fix summary written')],
     }),
     agentNode({

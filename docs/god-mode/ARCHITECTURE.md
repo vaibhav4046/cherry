@@ -178,8 +178,9 @@ voice-review -> request-publish-approval (human_decision). Outputs under `conten
 
 ### 3.3 `mission-plan-service.ts` (persistence, ProofEvents in the same transaction)
 
-Dexie migration version 5 adds `missionPlans: 'id, workspaceId, missionId, status, updatedAt'` and
-`evaluationReports: 'id, workspaceId, missionId, workItemId, createdAt'`. Workspace archive export and
+Dexie migration version 6 adds `missionPlans: 'id, workspaceId, missionId, status, updatedAt'` and
+`evaluationReports: 'id, workspaceId, missionId, workItemId, createdAt'` (version 5 is the Creators
+feature's `skillProposals`, which landed on main during this work). Workspace archive export and
 import carry both tables (follow the `channelWatches` precedent: schema, remap, dedupe, tamper
 rejection). New ProofEvent types: `mission.plan_created`, `mission.plan_revised`,
 `mission.plan_approved`, `mission.plan_started`, `mission.plan_status`, `mission.node_updated`,
@@ -381,3 +382,27 @@ must agree on every fixture.
 `09_CLAIM_MATRIX` -> `CLAIMS_MATRIX.md`; `10_POST_HACKATHON_ROADMAP` -> `ROADMAP.md`. The
 `src/cherry/orchestration/` directory from the first directive is not created: the existing
 `src/cherry/workforce/` module owns these responsibilities (second directive, section 9).
+
+## Additions made while integrating (2026-09-02)
+
+- **Scratch roots.** A node whose sandbox provider is `directory` and whose envelope names no
+  `sourceRoot` gets `<approved root>/.cherry-scratch/<mission run>/` as its source, so every node,
+  repository or not, works inside a leased sandbox. A `git-worktree` node still needs a repository.
+- **Artifact hand-off.** When a node passes its checks, the runner copies the files its envelope
+  declared (`outputs` plus every `file` / `file_contains` check path) into
+  `<runner data dir>/artifacts/<mission run>/<node>/`, records `{path, bytes, sha256}` on the node,
+  and materialises those files into each direct dependant's fresh sandbox at the same relative
+  paths before the dependant starts (`node.inputs` names where each file came from). Paths are
+  resolved inside the sandbox root and refused otherwise.
+- **Worktree chaining.** A passed node in a `git-worktree` sandbox has its result committed on
+  its own sandbox branch (`cherry/mission/<run>/<work item>`, runner logs under `.cherry`
+  excluded); a dependant `git-worktree` node whose envelope names no `baseRef` starts from the
+  last such dependency's committed head (`sandbox.basedOn`, `sandbox.headCommit`). The source
+  branch is never checked out, merged or reset.
+- **Host kinds in envelopes.** The browser lists a node's preferred host kinds first when a host
+  of that kind is usable, then every other usable host, so a rehearsal or a machine with one
+  signed-in CLI still runs the node and the runner records which host did the work. With no
+  usable host the preference stands and the runner refuses honestly.
+- **Rehearsal host.** `--mock-delay-ms <n>` holds each mock attempt so parallel work is visible
+  in a rehearsal; the mock writes each plan file target with the text its `file_contains` check
+  expects. Both are test-only and require `--allow-mock-host`.

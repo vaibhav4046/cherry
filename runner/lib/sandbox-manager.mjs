@@ -229,6 +229,31 @@ export class SandboxManager {
     return { ok: true, lease };
   }
 
+  /**
+   * Commit everything a worker left in a worktree lease onto the lease's own branch
+   * (runner logs under .cherry stay out). The source branch is never touched.
+   */
+  commitAll(leaseId, message) {
+    return this.serial(async () => {
+      const lease = this.get(leaseId);
+      if (!lease) return refuse('not_found', `no lease ${leaseId}`);
+      if (lease.provider !== 'git-worktree') return refuse('unsupported_provider', 'only git-worktree leases can commit');
+      const head = () => this.gitOutput(['rev-parse', 'HEAD'], lease.root);
+      const status = await this.git(['status', '--porcelain'], lease.root);
+      if (status.exitCode !== 0) return refuse('git_failed', `git status failed: ${status.stderr.trim()}`);
+      if (status.stdout.trim().length === 0) return { ok: true, committed: false, commit: await head() };
+      const added = await this.git(['add', '-A', '--', '.', ':!.cherry'], lease.root);
+      if (added.exitCode !== 0) return refuse('git_failed', `git add failed: ${added.stderr.trim()}`);
+      const staged = await this.git(['diff', '--cached', '--quiet'], lease.root);
+      if (staged.exitCode === 0) return { ok: true, committed: false, commit: await head() };
+      const committed = await this.git(['-c', 'user.email=runner@cherry.local', '-c', 'user.name=Cherry Runner', 'commit', '-q', '-m', String(message ?? 'cherry: worker result').slice(0, 200)], lease.root);
+      if (committed.exitCode !== 0) return refuse('git_failed', `git commit failed: ${committed.stderr.trim()}`);
+      lease.updatedAt = this.iso();
+      this.save();
+      return { ok: true, committed: true, commit: await head() };
+    });
+  }
+
   release(leaseId, options) {
     return this.serial(() => this.releaseLocked(leaseId, options ?? {}));
   }
