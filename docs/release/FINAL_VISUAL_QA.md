@@ -206,12 +206,18 @@ Recorded, not patched:
    sticker.
 7. **e2e regression on main: `library-actions.spec.ts:17`.** Two raw-text Quick Skills are both titled
    "Pasted notes" (`src/pages/studio/QuickSkill.tsx:432`), so the test's card filter by skill name
-   matches 2 cards instead of 1. Either the title should carry a distinguishing suffix or the test
-   should select by id.
+   matches 2 cards instead of 1. Addressed on main after this branch was cut: `163e391` names skills
+   from content instead of the source label (see the update below).
 8. **e2e regression on main: `memory-routine.spec.ts:97`.** After seeding runs the test expects the
    "Runner paired" sticker (`src/pages/studio/Runs.tsx:86`), which never appears; most likely a
    consequence of the runner boundary change (`15de518`). Needs a product decision on what Runs shows
-   without a paired runner.
-9. **e2e stale copy: `t11-misc-copy.spec.ts:90`.** The test expects "Sandboxed · no network · no access
-   to Cherry data", which `f36e026` (inert static previews) removed from `Artifacts.tsx`. Update the
-   assertion to the new preview label.
+   without a paired runner. Still open on `origin/main` @ `f761615`.
+9. **e2e stale copy: `t11-misc-copy.spec.ts:90`.** The test expected "Sandboxed · no network · no access
+   to Cherry data", which `f36e026` (inert static previews) removed from `Artifacts.tsx`. Addressed on
+   main by `163e391`, which points the assertion at the new "Static · no scripts …" label.
+
+## Update after the branch was pushed
+
+`origin/main` moved from `c4a0af1` to `f761615` (four commits) while this lane ran. None of them touch
+a file in this lane; `git merge-tree --write-tree origin/main claude/final-visual-qa` reports a clean
+merge. Of the three main regressions above, `163e391` addresses 7 and 9; 8 remains.
