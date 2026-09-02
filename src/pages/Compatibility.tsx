@@ -30,6 +30,11 @@ const ROWS: Row[] = [
     evidence: 'Work items run a strict state machine (no shortcut to success), the five-agent starter crew is editable, and routine schedules are DST-aware with exact-revision approval. Covered by the workforce and routine unit suites and a Playwright journey.',
   },
   {
+    surface: 'Mission Control: outcome to validated graph to parallel workers to independent checks (paired local runner)',
+    status: 'validated',
+    evidence: 'A plan is validated (acyclic, bounded, every task with a definition of done and a real check) and hashed; the paired runner leases one sandbox per task (directory or git worktree, boundary stated as process or worktree-process, never a VM), runs up to three tasks at once, hands finished artifacts to dependants, and only its own checks or a person move a task to succeeded. Covered by the mission plan, orchestrator and evaluation unit suites, the runner executor suite, a browser-to-real-runner integration test and the Mission Control Playwright journey. Real Codex CLI execution captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md (two worktrees, measured overlap); Claude Code execution not captured on this machine (sign-in required).',
+  },
+  {
     surface: 'Manual golden journey (no AI provider)',
     status: 'validated',
     evidence: 'Playwright e2e walks workspace → lesson → transcript → evidence → SkillGraph → exact-revision approval → artifact → honest fail → repair → pass → receipt → hash recompute → export → import → reload, in the e2e suite of this repository.',
