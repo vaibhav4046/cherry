@@ -206,6 +206,6 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     await page.getByTestId('showcase-reset-demo').click();
     await expect(page.getByText(/Reset: removed 2 demo workspace\(s\)/)).toBeVisible();
     await expect(page.getByText('Fresh session — no workspace exists in this browser yet.')).toBeVisible();
-    await expect(page.getByTestId('showcase-judge-script')).toContainText('Judge script');
+    await expect(page.getByTestId('showcase-judge-card')).toContainText('Judging Cherry? The 90-second path');
   });
 });

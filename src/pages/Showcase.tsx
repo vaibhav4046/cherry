@@ -38,6 +38,8 @@ interface Chapter {
   to: number;
 }
 
+const JUDGE_CARD_KEY = 'cherry.showcase.judgeCard.dismissed';
+
 /** Four quiet chapters over the twelve steps: Source, Shape, Prove, Carry. */
 const CHAPTERS: Chapter[] = [
   { name: 'Source', from: 0, to: 2 },
@@ -87,6 +89,17 @@ export function Showcase() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
+  // The judge path is a per-browser convenience: dismissal is remembered locally and never synced.
+  const [judgeCardDismissed, setJudgeCardDismissed] = useState<boolean>(() => {
+    try { return window.localStorage.getItem(JUDGE_CARD_KEY) === '1'; } catch { return false; }
+  });
+  function setJudgeCard(dismissed: boolean) {
+    setJudgeCardDismissed(dismissed);
+    try {
+      if (dismissed) window.localStorage.setItem(JUDGE_CARD_KEY, '1');
+      else window.localStorage.removeItem(JUDGE_CARD_KEY);
+    } catch { /* storage unavailable: the choice lasts for this page only */ }
+  }
 
   const loadAll = useCallback(async () => {
     if (!activeWorkspace) {
@@ -534,21 +547,44 @@ export function Showcase() {
               </section>
             ) : null}
 
-            <details className="card" data-testid="showcase-judge-script">
-              <summary className="subhead" style={{ cursor: 'pointer' }}>Judge script — the whole path in two minutes</summary>
-              <ol className="stack" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', paddingLeft: '1.2em' }}>
-                <li><strong>Start fresh</strong> — a blank workspace; every chapter starts as to-do.</li>
-                <li><strong>Load labelled sample</strong> — imports the hash-verified example (clearly badged as such) if you want the finished journey instead of driving it yourself.</li>
-                <li>Driving it yourself: create the mission, open the lesson, paste a transcript, and watch <strong>timestamped evidence</strong> land — everything external starts untrusted.</li>
-                <li>Generate the skill draft, then <strong>approve the exact revision</strong> — the one button no agent can press.</li>
-                <li>Run verification: the demo artifact <strong>fails honestly</strong> (heading hierarchy), gets repaired, and passes.</li>
-                <li><strong>Export</strong> the bundle + receipt — recompute the hash yourself; a one-byte edit breaks it.</li>
-                <li>The host panel shows live tools when a compatible host is attached — and says so honestly when one is not.</li>
-              </ol>
-            </details>
           </aside>
 
           <div className="stack showcase-canvas" style={{ gap: 'var(--sp-5)' }}>
+            {judgeCardDismissed ? (
+              <p style={{ margin: 0 }}>
+                <button type="button" className="link-quiet" onClick={() => setJudgeCard(false)} data-testid="showcase-judge-card-restore">
+                  Show the judge path
+                </button>
+              </p>
+            ) : (
+              <section className="card stack" aria-labelledby="judge-card-heading" data-testid="showcase-judge-card" style={{ gap: 'var(--sp-3)' }}>
+                <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--sp-3)' }}>
+                  <h2 id="judge-card-heading" className="subhead" style={{ margin: 0 }}>Judging Cherry? The 90-second path</h2>
+                  <button type="button" className="btn btn-sm" onClick={() => setJudgeCard(true)} data-testid="showcase-judge-card-dismiss">Dismiss</button>
+                </div>
+                <ol className="stack" style={{ gap: 'var(--sp-2)', margin: 0, paddingLeft: '1.2em' }}>
+                  <li>
+                    <button type="button" className="link-quiet" onClick={() => void loadStarterLibrary()} disabled={busy} data-testid="judge-step-library">Load the sample library</button>
+                    {' '}for eight approved creator skills and one followed creator, all labelled sample.
+                  </li>
+                  <li>
+                    <Link to="/studio/creators" className="link-quiet" data-testid="judge-step-creators">Open Creators</Link>
+                    {' '}to see the skill Cherry proposed from a new upload, and the one still waiting for its transcript.
+                  </li>
+                  <li>
+                    <Link to="/studio/quick" className="link-quiet" data-testid="judge-step-approve">Draft and approve one skill</Link>
+                    {' '}to meet the human gate: approval binds to the exact revision you read, and no agent can press it.
+                  </li>
+                  <li>
+                    <Link to="/studio/proof" className="link-quiet" data-testid="judge-step-proof">Open Proof and recompute</Link>
+                    {' '}the hash yourself; change one byte anywhere and it turns red.
+                  </li>
+                </ol>
+                <p className="label" style={{ margin: 0 }}>
+                  The host panel on the left shows live tools when a compatible agent is attached, and says so plainly when one is not.
+                </p>
+              </section>
+            )}
             <ol className="showcase-rail" aria-label="Run progress">
               {milestones.map((milestone) => (
                 <li
@@ -610,7 +646,13 @@ export function Showcase() {
               {data.events.length === 0 ? (
                 <p className="label" style={{ margin: 0 }}>No events yet — every mutation will land here with its actor.</p>
               ) : (
-                <div className="stack" style={{ gap: 'var(--sp-1)', maxHeight: 280, overflowY: 'auto' }}>
+                <div
+                  className="stack"
+                  style={{ gap: 'var(--sp-1)', maxHeight: 280, overflowY: 'auto' }}
+                  role="region"
+                  aria-label="Event timeline entries"
+                  tabIndex={0}
+                >
                   {data.events.map((event) => (
                     <div key={event.id} className="event-row">
                       <span className="mono">#{event.sequence}</span>{' '}

@@ -234,6 +234,9 @@ a { color: var(--color-accent); }
 .trust-line { color: #5f6368; opacity: 1; }
 .link-quiet { color: var(--color-accent); font-weight: 600; text-decoration: none; }
 .link-quiet:hover { color: var(--color-accent-deep); }
+/* A button that reads as a quiet link (judge path steps): no chrome, same type, same tap target. */
+button.link-quiet { background: transparent; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+button.link-quiet:disabled { color: var(--color-ash); cursor: default; }
 .home-three { border-top: 1px solid rgba(29, 29, 31, 0.09); }
 .home-three h2 { font-family: var(--font-sf-pro-display); font-size: 21px; font-weight: 600; }
 .home-three p { color: var(--color-graphite); }
