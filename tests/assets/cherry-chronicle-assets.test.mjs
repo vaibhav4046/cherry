@@ -156,3 +156,20 @@ test('the verifier rejects visible text embedded in Chronicle artwork', async (t
   assert.notEqual(result.status, 0);
   assert.match(`${result.stdout}\n${result.stderr}`, /visible text is forbidden/i);
 });
+
+test('the verifier rejects a normalized file path reused across source and variant declarations', async (t) => {
+  const fixture = await writeFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+
+  const desktop = fixture.manifest.artifacts[0].variants.desktop;
+  await unlink(join(fixture.assetRoot, desktop.file));
+  fixture.manifest.artifacts[0].variants.desktop = {
+    ...fixture.manifest.sources[0].derivative,
+    file: 'sources//source.png',
+  };
+  await writeFile(fixture.manifestPath, `${JSON.stringify(fixture.manifest, null, 2)}\n`);
+
+  const result = runVerifier(fixture.manifestPath);
+  assert.notEqual(result.status, 0);
+  assert.match(`${result.stdout}\n${result.stderr}`, /duplicate declared file path/i);
+});

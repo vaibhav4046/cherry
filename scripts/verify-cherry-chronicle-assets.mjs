@@ -126,9 +126,16 @@ function dimensionsFor(buffer, file) {
   return null;
 }
 
-async function verifyFile({ assetRoot, entry, label, expectedDimensions, maxBytes, errors }) {
+async function verifyFile({ assetRoot, entry, label, expectedDimensions, maxBytes, declaredFiles, errors }) {
   const filePath = safeAssetPath(assetRoot, entry?.file, `${label}.file`, errors);
   if (!filePath) return null;
+  const normalizedFilePath = resolve(filePath);
+  const firstDeclaration = declaredFiles.get(normalizedFilePath);
+  if (firstDeclaration) {
+    errors.push(`${label}.file: duplicate declared file path ${entry.file}; first declared by ${firstDeclaration}`);
+  } else {
+    declaredFiles.set(normalizedFilePath, `${label}.file`);
+  }
   let buffer;
   try {
     buffer = await readFile(filePath);
@@ -223,7 +230,7 @@ export async function verifyChronicleAssets(manifestPath = defaultManifest) {
   if (manifest?.constraints?.artifactCount !== manifest?.artifacts?.length) errors.push('constraints.artifactCount must equal the artifact count');
 
   const sourceById = new Map();
-  const declaredFiles = new Set();
+  const declaredFiles = new Map();
   for (const [index, source] of (manifest.sources ?? []).entries()) {
     const label = `source[${index}]`;
     requireString(errors, source.id, `${label}.id`);
@@ -237,8 +244,7 @@ export async function verifyChronicleAssets(manifestPath = defaultManifest) {
     requireHttps(errors, source?.rights?.url, `${label}.rights.url`);
     requireString(errors, source?.rights?.basis, `${label}.rights.basis`);
     if (!/public domain|cc0/i.test(source?.rights?.status ?? '')) errors.push(`${label}.rights.status must establish public-domain status`);
-    const verified = await verifyFile({ assetRoot, entry: source.derivative, label: `${label}.derivative`, errors });
-    if (verified) declaredFiles.add(resolve(verified.filePath));
+    await verifyFile({ assetRoot, entry: source.derivative, label: `${label}.derivative`, declaredFiles, errors });
   }
 
   const artifactIds = new Set();
@@ -261,11 +267,11 @@ export async function verifyChronicleAssets(manifestPath = defaultManifest) {
         label: `${label}.${variant}`,
         expectedDimensions: constraint,
         maxBytes: constraint?.maxBytes,
+        declaredFiles,
         errors,
       });
       if (verified) {
         variantCount += 1;
-        declaredFiles.add(resolve(verified.filePath));
         await verifySvgSources({ artifact, variant, ...verified, sourceById, assetRoot, errors });
       }
     }
@@ -276,7 +282,7 @@ export async function verifyChronicleAssets(manifestPath = defaultManifest) {
   for (const file of actualFiles) {
     if (!declaredFiles.has(file)) errors.push(`unmanifested shipped file: ${relative(assetRoot, file).split(sep).join('/')}`);
   }
-  for (const file of declaredFiles) {
+  for (const file of declaredFiles.keys()) {
     try {
       if (!(await stat(file)).isFile()) errors.push(`manifest entry is not a regular file: ${relative(assetRoot, file)}`);
     } catch {
