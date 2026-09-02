@@ -24,16 +24,18 @@ const CODEX_CLI = `codex mcp add cherry -- node <path-to-cherry>/runner/mcp/serv
 const CLAUDE_MCP = `claude mcp add cherry -- node <path-to-cherry>/runner/mcp/server.mjs \\
   --workspace <path>/cherry-workspace-export.json --bundles <path>/skill-bundles`;
 
-function CopyBlock({ label, text, testId }: { label: string; text: string; testId: string }) {
+function CopyBlock({ label, name, text, testId }: { label: string; name: string; text: string; testId: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="stack" style={{ gap: 'var(--sp-2)' }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <span className="label">{label}</span>
+        {/* Two Copy buttons share this page; the name tells them apart for screen readers. */}
         <button
           type="button"
           className="btn"
           data-testid={testId}
+          aria-label={`${copied ? 'Copied' : 'Copy'} ${name}`}
           onClick={() => {
             navigator.clipboard
               .writeText(text)
@@ -47,7 +49,10 @@ function CopyBlock({ label, text, testId }: { label: string; text: string; testI
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre className="mono" style={{ margin: 0, padding: 'var(--sp-3)', overflowX: 'auto', fontSize: 13 }}>
+      <span className="sr-only" role="status">{copied ? `${name} copied to the clipboard` : ''}</span>
+      {/* Wrapped, not scrolled: every character stays visible on a phone and no
+          keyboard-unreachable scroll region is created. Copy sends the exact text. */}
+      <pre className="mono" style={{ margin: 0, padding: 'var(--sp-3)', fontSize: 13, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
         {text}
       </pre>
     </div>
@@ -60,7 +65,7 @@ interface HostCard {
   status: Status;
   statusNote: string;
   steps: string[];
-  block?: { label: string; text: string };
+  block?: { label: string; name: string; text: string };
 }
 
 const HOSTS: HostCard[] = [
@@ -90,14 +95,15 @@ const HOSTS: HostCard[] = [
   {
     id: 'codex',
     title: 'Codex CLI / IDE (MCP bridge)',
-    status: 'shipped',
-    statusNote: 'The stdio bridge is covered by 6 JSON-RPC integration tests; a live Codex host was not available on this machine, and we say so instead of claiming it.',
+    status: 'validated',
+    statusNote:
+      'Validated in a live Codex CLI host on 2026-09-01: the stdio bridge was registered with codex mcp add, the host listed Cherry’s tools, read the workspace export, and verified the compiled bundle’s SHA-256 (transcript: docs/release/CODEX_MCP_CAPTURE.md). The IDE extension was not exercised.',
     steps: [
       'In the Studio, export your workspace (Settings → Connections → Export) and compile skill bundles from the Skill Library.',
       'Add the bridge to Codex with the config below — your Codex subscription is the reasoning engine; Cherry is the memory it reads.',
       'Codex can then list your skills, read exact approved revisions, and verify bundle hashes locally.',
     ],
-    block: { label: 'config.toml (or use the one-liner)', text: `${CODEX_TOML}\n\n# one-liner alternative\n${CODEX_CLI}` },
+    block: { label: 'config.toml (or use the one-liner)', name: 'Codex configuration', text: `${CODEX_TOML}\n\n# one-liner alternative\n${CODEX_CLI}` },
   },
   {
     id: 'claude',
@@ -109,7 +115,7 @@ const HOSTS: HostCard[] = [
       'Drop the bundle folder into .claude/skills/ (project) or ~/.claude/skills/ (global).',
       'Optionally register the MCP bridge so Claude can read the whole library.',
     ],
-    block: { label: 'MCP registration', text: CLAUDE_MCP },
+    block: { label: 'MCP registration', name: 'Claude Code MCP registration', text: CLAUDE_MCP },
   },
   {
     id: 'hermes',
@@ -136,7 +142,7 @@ export function Connect() {
         </nav>
       </header>
       <main className="band band-cream" style={{ minHeight: '100vh' }}>
-        <div className="band-inner stack" style={{ gap: 'var(--sp-7)' }}>
+        <div className="band-inner stack" style={{ gap: 'var(--sp-8)' }}>
           <div className="stack" style={{ gap: 'var(--sp-3)' }}>
             <h1 className="display-sm">Bring the agent you already pay for</h1>
             <p className="subhead" style={{ maxWidth: 760 }}>
@@ -170,7 +176,7 @@ export function Connect() {
             </ul>
           </section>
 
-          <div className="grid-cards" data-testid="connect-hosts">
+          <div className="grid-cards host-grid" data-testid="connect-hosts">
             {HOSTS.map((host) => (
               <article key={host.id} className="card stack" aria-labelledby={`host-${host.id}`} style={{ gap: 'var(--sp-3)' }}>
                 <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -182,7 +188,7 @@ export function Connect() {
                     <li key={step} style={{ marginBottom: 'var(--sp-1)' }}>{step}</li>
                   ))}
                 </ol>
-                {host.block ? <CopyBlock label={host.block.label} text={host.block.text} testId={`copy-${host.id}`} /> : null}
+                {host.block ? <CopyBlock label={host.block.label} name={host.block.name} text={host.block.text} testId={`copy-${host.id}`} /> : null}
                 <p className="quiet" style={{ margin: 0, fontSize: 13 }}>{host.statusNote}</p>
               </article>
             ))}

@@ -47,15 +47,17 @@
   border-radius: var(--radius-card);
   background: var(--color-paper-white);
 }
+/* Unreached milestones read as quiet, not faded: the dot carries the state and
+   the label stays above 4.5:1 (an opacity fade failed axe at 2.8:1). */
 .showcase-rail-item {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  opacity: 0.45;
+  color: var(--color-graphite);
   transform: translateY(1px);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: color 180ms ease, transform 180ms ease;
 }
-.showcase-rail-item.is-on { opacity: 1; transform: none; }
+.showcase-rail-item.is-on { color: var(--color-carbon); transform: none; }
 .showcase-rail-dot {
   width: 8px;
   height: 8px;

@@ -26,17 +26,17 @@ const ROWS: Row[] = [
   {
     surface: 'Workforce: inbox, crew, routines (local)',
     status: 'validated',
-    evidence: 'Work items run a strict state machine (no shortcut to success), the five-agent starter crew is editable, and routine schedules are DST-aware with exact-revision approval. Covered by 30 workforce unit tests and a Playwright journey.',
+    evidence: 'Work items run a strict state machine (no shortcut to success), the five-agent starter crew is editable, and routine schedules are DST-aware with exact-revision approval. Covered by the workforce and routine unit suites and a Playwright journey.',
   },
   {
     surface: 'Manual golden journey (no AI provider)',
     status: 'validated',
-    evidence: 'Playwright e2e walks workspace → lesson → transcript → evidence → SkillGraph → exact-revision approval → artifact → honest fail → repair → pass → receipt → hash recompute → export → import → reload. 19 e2e tests total.',
+    evidence: 'Playwright e2e walks workspace → lesson → transcript → evidence → SkillGraph → exact-revision approval → artifact → honest fail → repair → pass → receipt → hash recompute → export → import → reload, in the e2e suite of this repository.',
   },
   {
-    surface: 'WebMCP tool aperture (register/unregister by state)',
+    surface: 'Tools the agent can use right now (registered and retired by state)',
     status: 'validated',
-    evidence: '8 unit tests against the document.modelContext contract with a mock host: aperture ≤ 5+2, AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, full journey through the tool layer against the same persisted state as the UI.',
+    evidence: '8 unit tests against the document.modelContext contract with a mock host: at most 5 mutation tools plus 2 globals live at once, AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, full journey through the tool layer against the same persisted state as the UI.',
   },
   {
     surface: 'ChatGPT / Codex in-app browser (live WebMCP host)',
@@ -51,7 +51,7 @@ const ROWS: Row[] = [
   {
     surface: 'Skill Library + global library tools (list / recommend / get)',
     status: 'validated',
-    evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. Mutation aperture unchanged (max 5 per surface); globals grew to 7 read-only tools.',
+    evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. Mutation tools unchanged (max 5 per surface); globals grew to 7 read-only tools.',
   },
   {
     surface: 'Agent Skills bundle export (SKILL.md + targets)',
@@ -140,22 +140,22 @@ export function Compatibility() {
             means built to the documented contract, awaiting a live host. <strong>Roadmap</strong> means
             it does not exist yet — and no screen pretends it does.
           </p>
-          <div className="row">
+          <p className="row" aria-label="Status legend" style={{ margin: 0 }}>
             {(Object.keys(STATUS_STYLE) as Status[]).map((status) => (
               <span key={status} className={STATUS_STYLE[status].className}>{STATUS_STYLE[status].label}</span>
             ))}
-          </div>
-          <div className="stack" data-testid="compat-rows">
+          </p>
+          <ul className="stack" data-testid="compat-rows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {ROWS.map((row) => (
-              <div key={row.surface} className="card row" style={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--sp-4)' }}>
+              <li key={row.surface} className="card row" style={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--sp-4)' }}>
                 <div className="stack" style={{ gap: 'var(--sp-1)', flex: 1, minWidth: 240 }}>
                   <strong>{row.surface}</strong>
                   <span style={{ fontSize: 14 }}>{row.evidence}</span>
                 </div>
                 <span className={STATUS_STYLE[row.status].className}>{STATUS_STYLE[row.status].label}</span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <p className="label">
             Full evidence with commands and outputs: docs/release/ in the repository.
           </p>

@@ -44,11 +44,6 @@
   color: var(--color-carbon);
 }
 
-.studio-rail .rail-link:focus-visible {
-  outline: 2px solid var(--shell-accent);
-  outline-offset: 2px;
-}
-
 .studio-rail .rail-link[aria-current='page'] {
   background: rgba(217, 154, 114, 0.13);
   color: #f4d8c4;
@@ -121,11 +116,6 @@ dialog.source-dialog::backdrop {
 .source-option:hover {
   background: var(--color-cherry-wash);
   border-color: rgba(217, 154, 114, 0.55);
-}
-
-.source-option:focus-visible {
-  outline: 2px solid #d99a72;
-  outline-offset: 2px;
 }
 
 .source-option-title {

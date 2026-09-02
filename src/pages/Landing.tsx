@@ -74,7 +74,7 @@ function LessonCard() {
 
   if (card === 'unavailable') {
     return (
-      <div className="lesson-card" aria-hidden="true">
+      <div className="lesson-card" role="status">
         <p className="label" style={{ margin: 0 }}>The example lesson could not load. The Studio still works — everything is local.</p>
       </div>
     );
@@ -107,7 +107,7 @@ function LessonCard() {
             </span>
           </p>
           {card.receiptHash ? (
-            <p className="label tnum" style={{ margin: 0 }}>Receipt {card.receiptHash}… — recompute it yourself</p>
+            <p className="label tnum" style={{ margin: 0, textTransform: 'none' }}>Proof {card.receiptHash}… — recompute it yourself</p>
           ) : null}
         </div>
       ) : null}
@@ -121,13 +121,14 @@ export function Landing() {
       <header>
         <nav className="top-nav" aria-label="Main navigation">
           <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
-          <div className="row nav-links" style={{ flex: 1, justifyContent: 'center' }}>
+          <div className="row nav-links">
             <a href="#how" className="nav-pill">How it works</a>
             <Link to="/showcase" className="nav-pill">Showcase</Link>
             <Link to="/connect" className="nav-pill">Connect</Link>
             <Link to="/compatibility" className="nav-pill">What's proven</Link>
           </div>
-          <Link to="/studio" className="btn btn-primary">Open Studio</Link>
+          {/* Quiet here: the hero owns the single primary action on this screen. */}
+          <Link to="/studio" className="btn">Open Studio</Link>
         </nav>
       </header>
 
@@ -147,7 +148,17 @@ export function Landing() {
               <Link to="/studio" className="link-quiet">Open Studio</Link>
             </div>
             <p className="trust-line" style={{ margin: 0 }}>Local-first · Human-approved · Proof-backed</p>
-            <div className="row" aria-label="Connect your existing tools"><BrandMark brand="slack" /><BrandMark brand="teams" /><BrandMark brand="discord" /><BrandMark brand="telegram" /><BrandMark brand="github" /><BrandMark brand="youtube" /></div>
+            {/* Brand marks only where the integration is real or explicitly a target. */}
+            <dl className="brand-groups" data-testid="brand-groups">
+              <div>
+                <dt className="label">Learns from</dt>
+                <dd><BrandMark brand="youtube" /></dd>
+              </div>
+              <div>
+                <dt className="label">Delivery targets · not shipped yet</dt>
+                <dd><BrandMark brand="slack" /><BrandMark brand="teams" /><BrandMark brand="discord" /><BrandMark brand="telegram" /><BrandMark brand="github" /></dd>
+              </div>
+            </dl>
           </div>
           <LessonCard />
         </section>
@@ -202,7 +213,7 @@ export function Landing() {
               with a hash it can verify.
             </p>
             <div className="row">
-              <Link to="/connect" className="btn btn-primary">Connect your agent</Link>
+              <Link to="/connect" className="btn">Connect your agent</Link>
               <Link to="/studio/skills" className="link-quiet">Browse the Skill Library</Link>
               <Link to="/showcase#real-run" className="link-quiet">Watch the real run</Link>
             </div>

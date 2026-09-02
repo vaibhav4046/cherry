@@ -167,8 +167,9 @@
 }
 .run-row:first-child { border-top: none; }
 .run-ico { font-family: var(--font-mono); text-align: center; }
-.run-ico-pass { color: var(--color-mint-pop); }
-.run-ico-fail { color: var(--color-cherry-pop); }
+/* Pass/fail glyphs use the same inks as the pass/fail stickers. */
+.run-ico-pass { color: #176b3a; }
+.run-ico-fail { color: #a3261d; }
 .run-ico-step { color: var(--color-ink-soft); }
 .run-time {
   font-family: var(--font-mono);
