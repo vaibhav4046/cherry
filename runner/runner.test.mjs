@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { probeScraplingRuntime } from './lib/scrapling-probe.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const BASE = 'http://127.0.0.1:47821';
@@ -68,6 +69,31 @@ test('status endpoint reports pairing separately from reachability', async () =>
   const authenticatedBody = await authenticated.json();
   assert.equal(authenticatedBody.paired, true);
   assert.ok(authenticatedBody.adapters.includes('cherry-verify'));
+  assert.equal(authenticatedBody.scraplingReady, false);
+  assert.equal(authenticatedBody.scraplingConfigured, false);
+  assert.equal(authenticatedBody.scraplingStatus, 'not_configured');
+});
+
+test('Scrapling readiness requires a passing worker self-check', async () => {
+  const base = { executable: 'python', worker: 'worker.py', root: workDir, workerExists: true };
+  const missing = await probeScraplingRuntime({
+    ...base,
+    runProcess: async () => ({ exitCode: 1, stdout: JSON.stringify({ ready: false, reason: 'dependencies missing' }), stderr: '' }),
+  });
+  assert.deepEqual(missing, { configured: true, ready: false, status: 'setup_required', reason: 'dependencies missing' });
+
+  const invalid = await probeScraplingRuntime({
+    ...base,
+    runProcess: async () => ({ exitCode: 0, stdout: 'not json', stderr: '' }),
+  });
+  assert.equal(invalid.ready, false);
+  assert.equal(invalid.status, 'check_failed');
+
+  const ready = await probeScraplingRuntime({
+    ...base,
+    runProcess: async () => ({ exitCode: 0, stdout: JSON.stringify({ ready: true, versions: { scrapling: '0.4.15' } }), stderr: '' }),
+  });
+  assert.deepEqual(ready, { configured: true, ready: true, status: 'ready', versions: { scrapling: '0.4.15' } });
 });
 
 test('jobs endpoint rejects requests without the pairing token', async () => {

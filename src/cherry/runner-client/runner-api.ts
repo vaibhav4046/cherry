@@ -9,6 +9,9 @@ export interface RunnerStatus {
   adapters?: string[];
   v2Adapters?: string[];
   scraplingReady?: boolean;
+  scraplingConfigured?: boolean;
+  scraplingStatus?: 'checking' | 'ready' | 'setup_required' | 'check_failed' | 'not_configured';
+  scraplingReason?: string;
 }
 
 const RUNNER_ORIGIN = 'http://127.0.0.1:47821';
@@ -55,7 +58,7 @@ export async function runnerStatus(): Promise<RunnerStatus> {
   try {
     const response = await runnerFetch('/status');
     if (!response.ok) return { paired: false, reachable: true };
-    const body = (await response.json()) as { version?: string; queueDepth?: number; adapters?: string[]; paired?: boolean; scraplingReady?: boolean; v2?: { adapters?: string[] } };
+    const body = (await response.json()) as { version?: string; queueDepth?: number; adapters?: string[]; paired?: boolean; scraplingReady?: boolean; scraplingConfigured?: boolean; scraplingStatus?: RunnerStatus['scraplingStatus']; scraplingReason?: string; v2?: { adapters?: string[] } };
     return {
       paired: body.paired === true,
       reachable: true,
@@ -64,6 +67,9 @@ export async function runnerStatus(): Promise<RunnerStatus> {
       ...(body.adapters ? { adapters: body.adapters } : {}),
       ...(body.v2?.adapters ? { v2Adapters: body.v2.adapters } : {}),
       scraplingReady: body.scraplingReady === true,
+      scraplingConfigured: body.scraplingConfigured === true,
+      ...(body.scraplingStatus ? { scraplingStatus: body.scraplingStatus } : {}),
+      ...(body.scraplingReason ? { scraplingReason: body.scraplingReason } : {}),
     };
   } catch {
     return { paired: false, reachable: false };

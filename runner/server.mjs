@@ -26,6 +26,7 @@ import { DurableQueue, validateEnvelope } from './lib/queue.mjs';
 import { Scheduler, validateRoutine } from './lib/scheduler.mjs';
 import { createAdapters } from './lib/adapters.mjs';
 import { buildChildEnv, isPythonExecutable } from './lib/process-policy.mjs';
+import { probeScraplingRuntime } from './lib/scrapling-probe.mjs';
 import {
   SOURCE_WATCH_NAMESPACE,
   SourceWatchTombstoneStore,
@@ -71,6 +72,13 @@ const PORT = Number(argValues('--port')[0] ?? 47821);
 const dataDir = resolve(argValues('--data-dir')[0] ?? join(stateDir, 'v2'));
 
 const pairToken = process.env.CHERRY_RUNNER_TOKEN ?? randomBytes(24).toString('base64url');
+const scraplingExecutable = allowedExecutables.has('python') ? 'python' : allowedExecutables.has('python3') ? 'python3' : null;
+const scraplingWorker = join(allowedRoots[0], 'scraper', 'worker.py');
+let scraplingProbeState = {
+  configured: Boolean(scraplingExecutable && existsSync(scraplingWorker)),
+  ready: false,
+  status: scraplingExecutable && existsSync(scraplingWorker) ? 'checking' : 'not_configured',
+};
 
 function loadJobs() {
   try {
@@ -173,12 +181,10 @@ async function adapterCli(binary, job) {
 /** Fixed-path optional Scrapling worker. It is enabled only when Python is
  * explicitly allowlisted and never claims that extraction is verification. */
 async function adapterScrapling(job) {
-  const executable = allowedExecutables.has('python') ? 'python' : allowedExecutables.has('python3') ? 'python3' : null;
-  if (!executable) throw new Error('scrapling-fetch requires --allow-exec python (or python3)');
-  const worker = join(allowedRoots[0], 'scraper', 'worker.py');
-  if (!existsSync(worker)) throw new Error('scraper/worker.py is not installed under the approved root');
+  const readiness = await scraplingProbePromise;
+  if (!readiness.ready) throw new Error(`scrapling-fetch is not ready: ${readiness.reason ?? readiness.status}`);
   const payload = job.input && typeof job.input === 'object' ? JSON.stringify(job.input) : '{}';
-  return runProcess(executable, [worker], allowedRoots[0], Math.min(Number(job.timeoutMs) || 30_000, 30_000), payload);
+  return runProcess(scraplingExecutable, [scraplingWorker], allowedRoots[0], Math.min(Number(job.timeoutMs) || 30_000, 30_000), payload);
 }
 
 function runProcess(executable, processArguments, cwd, timeoutMs, stdinText) {
@@ -232,6 +238,17 @@ function runProcess(executable, processArguments, cwd, timeoutMs, stdinText) {
   });
 }
 
+const scraplingProbePromise = probeScraplingRuntime({
+  executable: scraplingExecutable,
+  worker: scraplingWorker,
+  root: allowedRoots[0],
+  workerExists: existsSync(scraplingWorker),
+  runProcess,
+}).then((state) => {
+  scraplingProbeState = state;
+  return state;
+});
+
 const ADAPTERS = {
   'cherry-verify': adapterVerify,
   'cherry-export': adapterExport,
@@ -281,9 +298,13 @@ const currentSourceWatchForEnvelope = (envelope) => {
   return routine && sourceWatchJobMatchesRoutine({ envelope }, routine) ? routine : null;
 };
 
-const v2Executor = (envelope, context) => {
+const v2Executor = async (envelope, context) => {
   if (envelope.adapter === 'youtube-rss-watch' && !currentSourceWatchForEnvelope(envelope)) {
     throw new Error('youtube-rss-watch execution is not bound to the current channel watch');
+  }
+  if (envelope.adapter === 'scrapling-fetch') {
+    const readiness = await scraplingProbePromise;
+    if (!readiness.ready) throw new Error(`scrapling-fetch is not ready: ${readiness.reason ?? readiness.status}`);
   }
   return v2Adapters.run(envelope, context);
 };
@@ -403,7 +424,11 @@ const server = createServer((request, response) => {
         paired: authorized,
         queueDepth: jobs.filter((job) => job.status === 'queued' || job.status === 'running').length,
         adapters: Object.keys(ADAPTERS),
-        scraplingReady: (allowedExecutables.has('python') || allowedExecutables.has('python3')) && existsSync(join(allowedRoots[0], 'scraper', 'worker.py')),
+        scraplingReady: scraplingProbeState.ready,
+        scraplingConfigured: scraplingProbeState.configured,
+        scraplingStatus: scraplingProbeState.status,
+        ...(scraplingProbeState.reason ? { scraplingReason: scraplingProbeState.reason } : {}),
+        ...(scraplingProbeState.versions ? { scraplingVersions: scraplingProbeState.versions } : {}),
         v2: {
           adapters: v2Adapters.names,
           concurrency: v2Concurrency,
