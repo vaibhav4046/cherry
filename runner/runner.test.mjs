@@ -226,3 +226,4 @@ test('output redaction removes secret-shaped strings', async () => {
 // Dynamic import AFTER the hooks above are registered, because the
 // test:runner script lists explicit files and cannot be changed here.
 await import('./v2.test.mjs');
+await import('./sandbox-manager.test.mjs');
