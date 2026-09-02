@@ -1,0 +1,649 @@
+{
+  "id": "plan-fixture",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Fix the failing test in the fixture repository and prove it",
+  "constraints": [
+    "Do not push"
+  ],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [
+    {
+      "id": "n0",
+      "missionId": "ms-fixture",
+      "title": "Node n0",
+      "objective": "Do n0",
+      "definitionOfDone": [
+        "n0 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n0-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n0.txt",
+          "description": "n0 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n1",
+      "missionId": "ms-fixture",
+      "title": "Node n1",
+      "objective": "Do n1",
+      "definitionOfDone": [
+        "n1 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n1-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n1.txt",
+          "description": "n1 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n2",
+      "missionId": "ms-fixture",
+      "title": "Node n2",
+      "objective": "Do n2",
+      "definitionOfDone": [
+        "n2 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n2-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n2.txt",
+          "description": "n2 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n3",
+      "missionId": "ms-fixture",
+      "title": "Node n3",
+      "objective": "Do n3",
+      "definitionOfDone": [
+        "n3 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n3-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n3.txt",
+          "description": "n3 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n4",
+      "missionId": "ms-fixture",
+      "title": "Node n4",
+      "objective": "Do n4",
+      "definitionOfDone": [
+        "n4 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n4-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n4.txt",
+          "description": "n4 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n5",
+      "missionId": "ms-fixture",
+      "title": "Node n5",
+      "objective": "Do n5",
+      "definitionOfDone": [
+        "n5 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n5-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n5.txt",
+          "description": "n5 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n6",
+      "missionId": "ms-fixture",
+      "title": "Node n6",
+      "objective": "Do n6",
+      "definitionOfDone": [
+        "n6 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n6-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n6.txt",
+          "description": "n6 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n7",
+      "missionId": "ms-fixture",
+      "title": "Node n7",
+      "objective": "Do n7",
+      "definitionOfDone": [
+        "n7 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n7-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n7.txt",
+          "description": "n7 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n8",
+      "missionId": "ms-fixture",
+      "title": "Node n8",
+      "objective": "Do n8",
+      "definitionOfDone": [
+        "n8 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n8-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n8.txt",
+          "description": "n8 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n9",
+      "missionId": "ms-fixture",
+      "title": "Node n9",
+      "objective": "Do n9",
+      "definitionOfDone": [
+        "n9 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n9-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n9.txt",
+          "description": "n9 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n10",
+      "missionId": "ms-fixture",
+      "title": "Node n10",
+      "objective": "Do n10",
+      "definitionOfDone": [
+        "n10 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n10-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n10.txt",
+          "description": "n10 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n11",
+      "missionId": "ms-fixture",
+      "title": "Node n11",
+      "objective": "Do n11",
+      "definitionOfDone": [
+        "n11 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n11-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n11.txt",
+          "description": "n11 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n12",
+      "missionId": "ms-fixture",
+      "title": "Node n12",
+      "objective": "Do n12",
+      "definitionOfDone": [
+        "n12 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n12-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n12.txt",
+          "description": "n12 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n13",
+      "missionId": "ms-fixture",
+      "title": "Node n13",
+      "objective": "Do n13",
+      "definitionOfDone": [
+        "n13 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n13-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n13.txt",
+          "description": "n13 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n14",
+      "missionId": "ms-fixture",
+      "title": "Node n14",
+      "objective": "Do n14",
+      "definitionOfDone": [
+        "n14 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n14-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n14.txt",
+          "description": "n14 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n15",
+      "missionId": "ms-fixture",
+      "title": "Node n15",
+      "objective": "Do n15",
+      "definitionOfDone": [
+        "n15 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n15-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n15.txt",
+          "description": "n15 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n16",
+      "missionId": "ms-fixture",
+      "title": "Node n16",
+      "objective": "Do n16",
+      "definitionOfDone": [
+        "n16 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n16-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n16.txt",
+          "description": "n16 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n17",
+      "missionId": "ms-fixture",
+      "title": "Node n17",
+      "objective": "Do n17",
+      "definitionOfDone": [
+        "n17 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n17-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n17.txt",
+          "description": "n17 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n18",
+      "missionId": "ms-fixture",
+      "title": "Node n18",
+      "objective": "Do n18",
+      "definitionOfDone": [
+        "n18 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n18-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n18.txt",
+          "description": "n18 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n19",
+      "missionId": "ms-fixture",
+      "title": "Node n19",
+      "objective": "Do n19",
+      "definitionOfDone": [
+        "n19 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n19-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n19.txt",
+          "description": "n19 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "n20",
+      "missionId": "ms-fixture",
+      "title": "Node n20",
+      "objective": "Do n20",
+      "definitionOfDone": [
+        "n20 is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "n20-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/n20.txt",
+          "description": "n20 output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    }
+  ]
+}
