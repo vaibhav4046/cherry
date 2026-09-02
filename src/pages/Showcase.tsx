@@ -299,7 +299,7 @@ export function Showcase() {
       title: '5 · Exact revision',
       detail: data.skillGraph?.versionHash
         ? `Revision r${data.skillGraph.revision} · hash ${data.skillGraph.versionHash.slice(0, 12)}… — any edit invalidates approval`
-        : 'Approval binds to a hashed revision, not to a vibe.',
+        : 'Approval is pinned to the exact revision you read. Any edit makes it stale.',
       status: data.skillGraph ? 'done' : 'todo',
     },
     {

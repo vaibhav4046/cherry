@@ -38,10 +38,12 @@
   align-items: center;
   max-width: 1180px;
   margin: 0 auto;
-  padding: var(--sp-9) var(--sp-6);
+  /* Only tokens that exist: an undefined --sp-* here drops the whole padding
+     shorthand, which is what left the phone hero flush against the edge. */
+  padding: var(--sp-10) var(--sp-6);
 }
 @media (max-width: 860px) {
-  .home-hero { grid-template-columns: 1fr; padding: var(--sp-7) var(--sp-5); }
+  .home-hero { grid-template-columns: 1fr; padding: var(--sp-6) var(--sp-5); }
 }
 
 .home-eyebrow {
@@ -66,6 +68,12 @@
 }
 .brand-mark { display: inline-flex; align-items: center; gap: .45rem; min-height: 44px; color: var(--color-carbon); }
 .brand-mark svg { flex: 0 0 auto; }
+/* Brand marks are grouped under an honest label: what Cherry learns from
+   today versus delivery targets that do not exist yet. */
+.brand-groups { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-8); margin: 0; }
+.brand-groups > div { display: flex; flex-direction: column; gap: 0; }
+.brand-groups dt { margin: 0; }
+.brand-groups dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-3); }
 .memory-graph-canvas { min-height: 180px; border: 1px solid rgba(255,185,205,.25); border-radius: var(--radius-card); padding: var(--sp-3); overflow: auto; color: #ff9db8; }
 .memory-graph-canvas svg { display: block; width: 100%; min-width: 620px; height: 220px; }
 .memory-graph tr.is-selected { background: rgba(255,79,120,.14); }
@@ -100,7 +108,7 @@
   grid-template-columns: 3.6em 1fr;
   gap: var(--sp-3);
   padding: var(--sp-2) 0;
-  border-top: 1px solid rgba(255, 157, 186, 0.18);
+  border-top: 1px solid rgba(29, 29, 31, 0.1);
   font-size: 0.9rem;
 }
 .lesson-card .obs-time { font-variant-numeric: tabular-nums; opacity: 0.85; }

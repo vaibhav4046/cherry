@@ -21,14 +21,31 @@ const colors: Record<Brand, string> = {
   youtube: '#ff0000',
 };
 
-export function BrandIcon({ brand, size = 22, colored = true, ...props }: { brand: Brand; size?: number; colored?: boolean } & Omit<SVGProps<SVGSVGElement>, 'aria-label'>) {
-  const labels: Record<Brand, string> = { slack: 'Slack', teams: 'Microsoft Teams', discord: 'Discord', telegram: 'Telegram', github: 'GitHub', youtube: 'YouTube' };
-  return <svg {...props} width={size} height={size} viewBox="0 0 24 24" role="img" aria-label={`${labels[brand]} icon`} fill={colored ? colors[brand] : 'currentColor'} focusable="false"><path d={paths[brand]} /></svg>;
+const labels: Record<Brand, string> = { slack: 'Slack', teams: 'Microsoft Teams', discord: 'Discord', telegram: 'Telegram', github: 'GitHub', youtube: 'YouTube' };
+
+type BrandIconProps = { brand: Brand; size?: number; colored?: boolean } & Omit<SVGProps<SVGSVGElement>, 'aria-label'>;
+
+export function BrandIcon({ brand, size = 22, colored = true, ...props }: BrandIconProps) {
+  // A decorative mark (next to its own text label) must not also announce itself.
+  const isHidden = props['aria-hidden'] === true || props['aria-hidden'] === 'true';
+  return (
+    <svg
+      {...props}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      role={isHidden ? undefined : 'img'}
+      aria-label={isHidden ? undefined : `${labels[brand]} icon`}
+      fill={colored ? colors[brand] : 'currentColor'}
+      focusable="false"
+    >
+      <path d={paths[brand]} />
+    </svg>
+  );
 }
 
 export function BrandMark({ brand, className }: { brand: Brand; className?: string }) {
-  const labels: Record<Brand, string> = { slack: 'Slack', teams: 'Microsoft Teams', discord: 'Discord', telegram: 'Telegram', github: 'GitHub', youtube: 'YouTube' };
-  return <span className={className ?? 'brand-mark'}><BrandIcon brand={brand} /><span>{labels[brand]}</span></span>;
+  return <span className={className ?? 'brand-mark'}><BrandIcon brand={brand} aria-hidden="true" /><span>{labels[brand]}</span></span>;
 }
 
 export type { Brand };
