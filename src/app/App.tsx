@@ -6,6 +6,8 @@ import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
 import NotFound from '../pages/NotFound.tsx';
 
 const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
+const MissionControl = lazy(() => import('../pages/studio/MissionControl.tsx'));
+const MissionControlDetail = lazy(() => import('../pages/studio/MissionControlDetail.tsx'));
 const Connect = lazy(() => import('../pages/Connect.tsx'));
 const Showcase = lazy(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
 const Compatibility = lazy(() =>
@@ -54,6 +56,8 @@ export function App() {
         </Route>
         <Route path="/studio" element={<StudioLayout />}>
           <Route index element={<CommandCenter />} />
+          <Route path="control" element={<MissionControl />} />
+          <Route path="control/:missionId" element={<MissionControlDetail />} />
           <Route path="onboarding" element={<Onboarding />} />
           <Route path="quick" element={<QuickSkill />} />
           <Route path="sources" element={<Sources />} />

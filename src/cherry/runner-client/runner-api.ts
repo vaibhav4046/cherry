@@ -46,12 +46,16 @@ export function clearPairToken(): void {
   }
 }
 
-async function runnerFetch(path: string, init?: RequestInit): Promise<Response> {
+const DEFAULT_TIMEOUT_MS = 4000;
+/** Probing every agent host spawns CLIs on the runner; the first uncached answer can take longer than a status check. */
+const HOST_PROBE_TIMEOUT_MS = 20_000;
+
+async function runnerFetch(path: string, init?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Response> {
   const token = getStoredPairToken();
   const headers = new Headers(init?.headers);
   if (token) headers.set('x-cherry-pair', token);
   headers.set('content-type', 'application/json');
-  return fetch(`${RUNNER_ORIGIN}${path}`, { ...init, headers, signal: AbortSignal.timeout(4000) });
+  return fetch(`${RUNNER_ORIGIN}${path}`, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
 }
 
 export async function runnerStatus(): Promise<RunnerStatus> {
@@ -268,4 +272,120 @@ export async function unregisterRunnerChannelWatch(
   } catch {
     return fail('temporary', 'Runner is not reachable; the channel schedule was not removed');
   }
+}
+
+// ---------------- Missions and agent hosts (God Mode) ----------------
+
+export type SandboxBoundary = 'process' | 'worktree-process' | 'container' | 'cloud-sandbox' | 'unknown';
+
+export interface RunnerHostProbe {
+  hostId: string;
+  kind: string;
+  executable: string | null;
+  available: boolean;
+  authenticated: boolean | null;
+  version: string | null;
+  modes: string[];
+  capabilities: string[];
+  boundary: SandboxBoundary;
+  checkedAt: string | null;
+  /** Free-form probe detail from the runner: a string, a list, or a small object. */
+  details: unknown;
+  status: 'shipped_tested' | 'experimental' | 'designed' | 'unavailable';
+}
+
+export type RunnerMissionNodeStatus =
+  | 'pending' | 'ready' | 'running' | 'verifying' | 'waiting_for_human' | 'succeeded' | 'failed' | 'blocked' | 'cancelled';
+
+export interface RunnerMissionNode {
+  status: RunnerMissionNodeStatus;
+  attempts: number;
+  jobIds: string[];
+  sandbox: { id: string; provider: string; root: string; branchName: string | null; baseCommit: string | null; boundary: SandboxBoundary; basedOn?: string | null; headCommit?: string | null } | null;
+  host: { hostId: string; kind: string; version: string | null } | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  evaluation: { status: 'passed' | 'failed' | 'blocked'; checks: Array<{ id: string; name: string; status: string; detail: string }> } | null;
+  lastError: string | null;
+}
+
+export interface RunnerMission {
+  id: string;
+  planId: string;
+  missionId: string;
+  workspaceId: string;
+  status: string;
+  revision: number;
+  contentHash: string;
+  nodes: Record<string, RunnerMissionNode>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function missionHttpFailure(response: Response): Result<never> {
+  if (response.status === 401) return fail('approval_required', 'Runner pairing token missing or invalid');
+  if (response.status === 404) return fail('not_found', 'Runner mission was not found');
+  if (response.status === 409) return fail('conflict', 'Runner already holds a different version of this mission');
+  if (response.status === 400) return fail('validation', `Runner refused the request (${response.status})`);
+  return fail('temporary', `Runner returned ${response.status}`);
+}
+
+async function missionRequest<T>(path: string, init: RequestInit | undefined, pick: (body: Record<string, unknown>) => T | null, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Result<T>> {
+  try {
+    const response = await runnerFetch(path, init, timeoutMs);
+    if (!response.ok) return missionHttpFailure(response);
+    const body = (await response.json()) as Record<string, unknown>;
+    const value = pick(body);
+    return value === null ? fail('internal', 'Runner returned an unexpected mission payload') : ok(value);
+  } catch {
+    return fail('temporary', 'Runner is not reachable; nothing was sent');
+  }
+}
+
+/** Probe records for every known agent host, as the runner observed them. */
+export async function listRunnerHosts(): Promise<Result<{ hosts: RunnerHostProbe[]; probedAt: string }>> {
+  return missionRequest('/v2/hosts', undefined, (body) =>
+    Array.isArray(body.hosts) ? { hosts: body.hosts as RunnerHostProbe[], probedAt: String(body.probedAt ?? '') } : null,
+  HOST_PROBE_TIMEOUT_MS);
+}
+
+export interface SubmitRunnerMissionInput {
+  plan: Record<string, unknown>;
+  envelopes: Record<string, Record<string, unknown>>;
+}
+
+/** Register a validated plan and its hashed node envelopes; idempotent per plan id and revision. */
+export async function submitRunnerMission(input: SubmitRunnerMissionInput): Promise<Result<{ missionRunId: string }>> {
+  return missionRequest('/v2/missions', { method: 'POST', body: JSON.stringify(input) }, (body) =>
+    typeof body.missionRunId === 'string' ? { missionRunId: body.missionRunId } : null,
+  );
+}
+
+function pickMission(body: Record<string, unknown>): RunnerMission | null {
+  const mission = body.mission as RunnerMission | undefined;
+  return mission && typeof mission.id === 'string' ? mission : null;
+}
+
+export async function getRunnerMission(missionRunId: string): Promise<Result<RunnerMission>> {
+  return missionRequest(`/v2/missions/${encodeURIComponent(missionRunId)}`, undefined, pickMission);
+}
+
+export async function startRunnerMission(missionRunId: string): Promise<Result<RunnerMission>> {
+  return missionRequest(`/v2/missions/${encodeURIComponent(missionRunId)}/start`, { method: 'POST', body: '{}' }, pickMission);
+}
+
+export async function cancelRunnerMission(missionRunId: string): Promise<Result<RunnerMission>> {
+  return missionRequest(`/v2/missions/${encodeURIComponent(missionRunId)}/cancel`, { method: 'POST', body: '{}' }, pickMission);
+}
+
+export interface RunnerMissionDecision {
+  nodeId: string;
+  decision: 'approved' | 'rejected';
+  approvalId: string;
+  contentHash: string;
+}
+
+/** Record a human decision on a human_decision node. The browser calls this only after a real ApprovalRecord exists. */
+export async function decideRunnerMission(missionRunId: string, decision: RunnerMissionDecision): Promise<Result<RunnerMission>> {
+  return missionRequest(`/v2/missions/${encodeURIComponent(missionRunId)}/decisions`, { method: 'POST', body: JSON.stringify(decision) }, pickMission);
 }

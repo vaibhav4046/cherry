@@ -300,7 +300,7 @@ describe('proposal persistence: migration and archive', () => {
   });
 
   it('adds the skillProposals table in a new schema version and keeps older data on upgrade', async () => {
-    expect(CHERRY_DB_VERSION).toBe(5);
+    expect(CHERRY_DB_VERSION).toBe(6);
     const migration = CHERRY_DB_MIGRATIONS.find((entry) => entry.version === 5);
     expect(migration?.stores['skillProposals']).toContain('sourceId');
 
@@ -316,7 +316,7 @@ describe('proposal persistence: migration and archive', () => {
 
     const upgraded = new CherryDatabase(name);
     await upgraded.open();
-    expect(upgraded.verno).toBe(5);
+    expect(upgraded.verno).toBe(6);
     expect(await upgraded.workspaces.get('ws-legacy')).toMatchObject({ name: 'Legacy' });
     expect(await upgraded.skillProposals.count()).toBe(0);
     upgraded.close();

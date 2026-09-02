@@ -1,0 +1,49 @@
+{
+  "id": "plan-fixture",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Fix the failing test in the fixture repository and prove it",
+  "constraints": [
+    "Do not push"
+  ],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [
+    {
+      "id": "a",
+      "missionId": "ms-fixture",
+      "title": "Node a",
+      "objective": "Do a",
+      "definitionOfDone": [
+        "a is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "telepathy"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "a-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/a.txt",
+          "description": "a output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "note": "Every validator (TypeScript in src/cherry/workforce/mission-plan-model.ts and JavaScript in runner/lib/mission-plan.mjs) must return exactly these problem codes (as a set) for each fixture. injection_marker applies to validateMissionPlan and to the model-planner sanitisation path alike. depth.json: chain of 8 nodes exceeds maxDepth 6. fan-out.json: root has 4 children, exceeding maxFanOut 3.",
+  "fixtures": [
+    {
+      "file": "valid-release.json",
+      "expectedProblemCodes": []
+    },
+    {
+      "file": "valid-two-parallel.json",
+      "expectedProblemCodes": []
+    },
+    {
+      "file": "cycle.json",
+      "expectedProblemCodes": [
+        "cycle"
+      ]
+    },
+    {
+      "file": "missing-dependency.json",
+      "expectedProblemCodes": [
+        "missing_dependency"
+      ]
+    },
+    {
+      "file": "duplicate-id.json",
+      "expectedProblemCodes": [
+        "duplicate_id"
+      ]
+    },
+    {
+      "file": "self-dependency.json",
+      "expectedProblemCodes": [
+        "self_dependency"
+      ]
+    },
+    {
+      "file": "empty-definition-of-done.json",
+      "expectedProblemCodes": [
+        "empty_definition_of_done"
+      ]
+    },
+    {
+      "file": "no-verification.json",
+      "expectedProblemCodes": [
+        "no_verification"
+      ]
+    },
+    {
+      "file": "unknown-capability.json",
+      "expectedProblemCodes": [
+        "unknown_capability"
+      ]
+    },
+    {
+      "file": "forbidden-capability.json",
+      "expectedProblemCodes": [
+        "forbidden_capability"
+      ]
+    },
+    {
+      "file": "fan-out.json",
+      "expectedProblemCodes": [
+        "fan_out"
+      ]
+    },
+    {
+      "file": "too-many-nodes.json",
+      "expectedProblemCodes": [
+        "too_many_nodes"
+      ]
+    },
+    {
+      "file": "timeout-range.json",
+      "expectedProblemCodes": [
+        "timeout_range"
+      ]
+    },
+    {
+      "file": "attempts-range.json",
+      "expectedProblemCodes": [
+        "attempts_range"
+      ]
+    },
+    {
+      "file": "bad-id.json",
+      "expectedProblemCodes": [
+        "bad_id"
+      ]
+    },
+    {
+      "file": "empty-outcome.json",
+      "expectedProblemCodes": [
+        "empty_outcome"
+      ]
+    },
+    {
+      "file": "no-nodes.json",
+      "expectedProblemCodes": [
+        "no_nodes"
+      ]
+    },
+    {
+      "file": "bad-check.json",
+      "expectedProblemCodes": [
+        "bad_check"
+      ]
+    },
+    {
+      "file": "injection-marker.json",
+      "expectedProblemCodes": [
+        "injection_marker"
+      ]
+    },
+    {
+      "file": "depth.json",
+      "expectedProblemCodes": [
+        "depth"
+      ]
+    },
+    {
+      "file": "invalid-node-contract.json",
+      "expectedProblemCodes": [
+        "bad_node"
+      ]
+    },
+    {
+      "file": "mission-binding.json",
+      "expectedProblemCodes": [
+        "workspace_mismatch"
+      ]
+    },
+    {
+      "file": "invalid-check-contract.json",
+      "expectedProblemCodes": [
+        "bad_check"
+      ]
+    },
+    {
+      "file": "no-required-check.json",
+      "expectedProblemCodes": [
+        "no_required_check"
+      ]
+    },
+    {
+      "file": "invalid-human-contract.json",
+      "expectedProblemCodes": [
+        "bad_check",
+        "bad_node"
+      ]
+    },
+    {
+      "file": "multiple-worktree-parents.json",
+      "expectedProblemCodes": [
+        "multiple_worktree_parents"
+      ]
+    }
+  ]
+}

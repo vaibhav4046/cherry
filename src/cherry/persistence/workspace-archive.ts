@@ -34,6 +34,17 @@ import {
   PROPOSAL_READINESS,
 } from '../source/proposal-model.ts';
 import { RUNTIME_CAPABILITIES, validateSchedule, type ScheduleSpec } from '../workforce/workforce-model.ts';
+import {
+  EVALUATION_STATUSES,
+  EVALUATOR_KINDS,
+  MISSION_PLAN_STATUSES,
+  VERIFICATION_CHECK_KINDS,
+  computeEvaluationReportHash,
+  computePlanContentHash,
+  validateMissionPlan,
+  type EvaluationReport,
+  type MissionPlan,
+} from '../workforce/mission-plan-model.ts';
 
 export const LEGACY_WORKSPACE_EXPORT_VERSION = '1.0.0';
 /** 1.1.0 archives predate skill proposals; they import with that table absent. */
@@ -80,6 +91,8 @@ export interface WorkspaceExport {
   handoffs?: unknown[];
   executionHosts?: unknown[];
   routines?: unknown[];
+  missionPlans?: unknown[];
+  evaluationReports?: unknown[];
   integrity: {
     canonicalization: 'JCS-RFC8785';
     hashAlgorithm: 'SHA-256';
@@ -98,7 +111,7 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
     db.memoryVersions, db.approvals, db.artifactSets, db.artifactFiles, db.artifactVersions,
     db.verifications, db.runs, db.proofEvents, db.receipts, db.sourceRecords,
     db.channelWatches, db.skillProposals, db.agentProfiles, db.crews, db.workItems, db.workMessages,
-    db.handoffs, db.executionHosts, db.routines,
+    db.handoffs, db.executionHosts, db.routines, db.missionPlans, db.evaluationReports,
   ], async (): Promise<WorkspaceExport | null> => {
     const workspace = await db.workspaces.get(workspaceId);
     if (!workspace) return null;
@@ -138,6 +151,8 @@ export async function exportWorkspace(workspaceId: string): Promise<Result<Works
       handoffs: await load(db.handoffs),
       executionHosts: await load(db.executionHosts),
       routines: await load(db.routines),
+      missionPlans: await load(db.missionPlans),
+      evaluationReports: await load(db.evaluationReports),
       integrity: { canonicalization: 'JCS-RFC8785', hashAlgorithm: 'SHA-256', payloadSha256: '' },
     };
   });
@@ -239,7 +254,12 @@ const ARRAY_LIMITS: Array<[keyof WorkspaceExport, number]> = [
   ['handoffs', 100000],
   ['executionHosts', 1000],
   ['routines', 10000],
+  ['missionPlans', 10000],
+  ['evaluationReports', 100000],
 ];
+
+/** Arrays added after the 1.1.0 export version shipped; older 1.1.0 archives lack them. */
+const OPTIONAL_ARRAYS_ANY_VERSION = new Set<keyof WorkspaceExport>(['missionPlans', 'evaluationReports']);
 
 type ArchiveRow = Record<string, unknown>;
 
@@ -845,7 +865,7 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
       && (row['snapshot'] as ArchiveRow)['id'] === row['memoryId']
       && (row['snapshot'] as ArchiveRow)['revision'] === row['revision']
       && typeof row['changeSummary'] === 'string';
-    case 'approvals': return isOneOf(row['objectType'], ['skillgraph', 'memory', 'consequential_action', 'runner_job', 'routine'])
+    case 'approvals': return isOneOf(row['objectType'], ['skillgraph', 'memory', 'consequential_action', 'runner_job', 'routine', 'mission_plan', 'action_intent'])
       && isValidId(row['objectId'])
       && hasPositiveRevision({ revision: row['objectRevision'] })
       && isOneOf(row['decision'], ['approved', 'rejected', 'pending'])
@@ -1048,8 +1068,55 @@ function validArchiveRow(key: keyof WorkspaceExport, row: ArchiveRow): boolean {
       && (row['skillGraphId'] === null || isValidId(row['skillGraphId']))
       && isIsoDate(row['createdAt'])
       && isIsoDate(row['updatedAt']);
+    case 'missionPlans': return validMissionPlanShape(row);
+    case 'evaluationReports': return validEvaluationReportShape(row);
     default: return true;
   }
+}
+
+function validMissionPlanShape(row: ArchiveRow): boolean {
+  const nodeWorkItemIds = row['nodeWorkItemIds'];
+  return isValidId(row['missionId'])
+    && (row['templateId'] === null || typeof row['templateId'] === 'string')
+    && hasString(row, 'outcome')
+    && isStringArray(row['constraints'], 1000)
+    && Array.isArray(row['nodes'])
+    && row['nodes'].every(isRecord)
+    && isOneOf(row['status'], MISSION_PLAN_STATUSES)
+    && hasPositiveRevision(row)
+    && typeof row['contentHash'] === 'string'
+    && /^[a-f0-9]{64}$/.test(row['contentHash'])
+    && isOptionalNullableId(row['approvalId'])
+    && isRecord(nodeWorkItemIds)
+    && Object.entries(nodeWorkItemIds).every(([nodeId, workItemId]) => typeof nodeId === 'string' && isValidId(workItemId))
+    && validateMissionPlan(row as unknown as MissionPlan).length === 0;
+}
+
+function validEvaluationReportShape(row: ArchiveRow): boolean {
+  const checks = row['checks'];
+  return isValidId(row['missionId'])
+    && isValidId(row['workItemId'])
+    && (row['workerRunId'] === null || typeof row['workerRunId'] === 'string')
+    && hasString(row, 'nodeId')
+    && Number.isInteger(row['planRevision'])
+    && Number(row['planRevision']) >= 1
+    && Number.isInteger(row['attempt'])
+    && Number(row['attempt']) >= 1
+    && isOneOf(row['status'], EVALUATION_STATUSES)
+    && Array.isArray(checks)
+    && checks.length <= 1000
+    && checks.every((check) => isRecord(check)
+      && hasString(check, 'id')
+      && isOneOf(check['kind'], VERIFICATION_CHECK_KINDS)
+      && typeof check['required'] === 'boolean'
+      && isOneOf(check['status'], ['passed', 'failed', 'blocked', 'not_run'])
+      && typeof check['detail'] === 'string'
+      && (check['durationMs'] === undefined || isFiniteNumber(check['durationMs'], 0))
+      && (check['evidenceRef'] === undefined || isNullableString(check['evidenceRef'])))
+    && typeof row['summary'] === 'string'
+    && isOneOf(row['evaluatorKind'], EVALUATOR_KINDS)
+    && typeof row['contentHash'] === 'string'
+    && /^[a-f0-9]{64}$/.test(row['contentHash']);
 }
 
 const REQUIRED_ROW_ARRAYS: Partial<Record<keyof WorkspaceExport, readonly string[]>> = {
@@ -1066,6 +1133,8 @@ const REQUIRED_ROW_ARRAYS: Partial<Record<keyof WorkspaceExport, readonly string
   workMessages: ['referenceIds'],
   handoffs: ['contextRefs'],
   executionHosts: ['capabilities'],
+  missionPlans: ['constraints', 'nodes'],
+  evaluationReports: ['checks'],
 };
 
 const REQUIRED_REVISION_ROWS = new Set<keyof WorkspaceExport>([
@@ -1087,6 +1156,7 @@ const REQUIRED_REVISION_ROWS = new Set<keyof WorkspaceExport>([
   'workItems',
   'executionHosts',
   'routines',
+  'missionPlans',
 ]);
 
 const REQUIRED_CREATED_AT_ROWS = new Set<keyof WorkspaceExport>([
@@ -1112,6 +1182,8 @@ const REQUIRED_CREATED_AT_ROWS = new Set<keyof WorkspaceExport>([
   'workMessages',
   'handoffs',
   'routines',
+  'missionPlans',
+  'evaluationReports',
 ]);
 
 const REQUIRED_UPDATED_AT_ROWS = new Set<keyof WorkspaceExport>([
@@ -1132,6 +1204,7 @@ const REQUIRED_UPDATED_AT_ROWS = new Set<keyof WorkspaceExport>([
   'workItems',
   'handoffs',
   'routines',
+  'missionPlans',
 ]);
 
 function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
@@ -1197,6 +1270,7 @@ function validateArchiveShape(value: unknown): Result<WorkspaceExport> {
   for (const [key, limit] of ARRAY_LIMITS) {
     const rows = value[key];
     if (optionalArrays.has(key) && rows === undefined) continue;
+    if (OPTIONAL_ARRAYS_ANY_VERSION.has(key) && rows === undefined) continue;
     if (!Array.isArray(rows)) return invalid(`Export field ${String(key)} must be an array`);
     if (rows.length > limit) return invalid(`Export field ${String(key)} exceeds the limit of ${limit}`);
     const primaryKey = key === 'proofReceipts' ? 'receiptId' : 'id';
@@ -1495,6 +1569,33 @@ function validateArchiveReferences(archive: WorkspaceExport): Result<void> {
       return invalid('Export contains routine authority without an approval');
     }
   }
+  const missionPlans = rowIds(archive, 'missionPlans');
+  for (const approval of archiveRows(archive, 'approvals')) {
+    if (approval['objectType'] === 'mission_plan' && !requiredRef(approval, 'objectId', missionPlans)) return invalid('Export contains a dangling mission plan approval');
+  }
+  for (const plan of archiveRows(archive, 'missionPlans')) {
+    if (!requiredRef(plan, 'missionId', missions)) return invalid('Export contains a dangling mission plan reference');
+    const nodeWorkItemIds = plan['nodeWorkItemIds'] as Record<string, unknown>;
+    const nodeIds = new Set((plan['nodes'] as ArchiveRow[]).map((node) => String(node['id'])));
+    for (const [nodeId, workItemId] of Object.entries(nodeWorkItemIds)) {
+      if (!nodeIds.has(nodeId) || typeof workItemId !== 'string' || !workItems.has(workItemId)) return invalid('Export contains a dangling mission plan work item');
+    }
+    if (plan['approvalId'] === null) continue;
+    const approval = approvalsById.get(String(plan['approvalId']));
+    if (
+      !approval
+      || approval['objectType'] !== 'mission_plan'
+      || approval['objectId'] !== plan['id']
+      || approval['objectRevision'] !== plan['revision']
+      || approval['decision'] !== 'approved'
+      || approval['contentHash'] !== plan['contentHash']
+    ) return invalid('Export contains a stale mission plan approval');
+  }
+  for (const report of archiveRows(archive, 'evaluationReports')) {
+    if (!requiredRef(report, 'missionId', missions) || !requiredRef(report, 'workItemId', workItems)) {
+      return invalid('Export contains a dangling evaluation report reference');
+    }
+  }
 
   return ok(undefined);
 }
@@ -1568,6 +1669,14 @@ async function validateArchiveDerivedIntegrity(archive: WorkspaceExport): Promis
     const computed = await computeChannelWatchActionHash(watch as never);
     if (watch['actionHash'] !== computed) return invalid('Export contains a channel watch with an invalid action hash');
   }
+  for (const plan of archiveRows(archive, 'missionPlans')) {
+    const computed = await computePlanContentHash(plan as unknown as MissionPlan);
+    if (plan['contentHash'] !== computed) return invalid('Export contains a mission plan with an invalid content hash');
+  }
+  for (const report of archiveRows(archive, 'evaluationReports')) {
+    const computed = await computeEvaluationReportHash(report as unknown as EvaluationReport);
+    if (report['contentHash'] !== computed) return invalid('Export contains an evaluation report with an invalid content hash');
+  }
   for (const receipt of archive.proofReceipts as ProofReceipt[]) {
     const computed = await sha256CanonicalExcluding(
       receipt as unknown as Record<string, unknown>,
@@ -1634,7 +1743,9 @@ type ArchiveIdDomain =
   | 'workMessage'
   | 'handoff'
   | 'executionHost'
-  | 'routine';
+  | 'routine'
+  | 'missionPlan'
+  | 'evaluationReport';
 
 const ARCHIVE_ID_PREFIX: Record<ArchiveIdDomain, IdPrefix> = {
   workspace: 'ws',
@@ -1664,6 +1775,8 @@ const ARCHIVE_ID_PREFIX: Record<ArchiveIdDomain, IdPrefix> = {
   handoff: 'hf',
   executionHost: 'ho',
   routine: 'rt',
+  missionPlan: 'pl',
+  evaluationReport: 'er',
 };
 
 function scopedArchiveId(domain: ArchiveIdDomain, id: string): string {
@@ -1695,6 +1808,8 @@ function proofObjectDomain(objectType: unknown): ArchiveIdDomain | null {
     handoff: 'handoff',
     executionHost: 'executionHost',
     routine: 'routine',
+    mission_plan: 'missionPlan',
+    evaluation_report: 'evaluationReport',
   };
   return typeof objectType === 'string' ? domains[objectType] ?? null : null;
 }
@@ -1768,7 +1883,11 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
     mapPayloadField('sourceId', 'source');
     mapPayloadField('lessonId', 'lesson');
     mapPayloadField('executionHostId', 'executionHost');
+    mapPayloadField('missionId', 'mission');
+    mapPayloadField('planId', 'missionPlan');
+    mapPayloadField('workItemId', 'workItem');
     mapPayloadArray('createdSourceIds', 'source');
+    mapPayloadArray('dependencyIds', 'workItem');
     return changed;
   };
   const proofEventsWithChangedPayloads = new Set<string>();
@@ -1850,6 +1969,18 @@ function remapArchiveReferences(archive: WorkspaceExport, idMap: ReadonlyMap<str
   }
   for (const row of mapped.handoffs ?? [] as ArchiveRow[]) {
     mapBase(row as ArchiveRow, 'handoff'); mapField(row as ArchiveRow, 'workItemId', 'workItem'); mapField(row as ArchiveRow, 'fromAgentId', 'agentProfile'); mapField(row as ArchiveRow, 'toAgentId', 'agentProfile');
+  }
+  for (const row of mapped.missionPlans ?? [] as ArchiveRow[]) {
+    const plan = row as ArchiveRow;
+    mapBase(plan, 'missionPlan'); mapField(plan, 'missionId', 'mission'); mapField(plan, 'approvalId', 'approval');
+    for (const node of (plan['nodes'] as ArchiveRow[] | undefined) ?? []) mapField(node, 'missionId', 'mission');
+    const nodeWorkItemIds = plan['nodeWorkItemIds'];
+    if (isRecord(nodeWorkItemIds)) {
+      plan['nodeWorkItemIds'] = Object.fromEntries(Object.entries(nodeWorkItemIds).map(([nodeId, workItemId]) => [nodeId, mapValue('workItem', workItemId)]));
+    }
+  }
+  for (const row of mapped.evaluationReports ?? [] as ArchiveRow[]) {
+    mapBase(row as ArchiveRow, 'evaluationReport'); mapField(row as ArchiveRow, 'missionId', 'mission'); mapField(row as ArchiveRow, 'workItemId', 'workItem');
   }
   for (const row of mapped.executionHosts ?? [] as ArchiveRow[]) mapBase(row as ArchiveRow, 'executionHost');
   for (const row of mapped.routines ?? [] as ArchiveRow[]) {
@@ -1953,7 +2084,24 @@ async function normalizeImportedAuthorityAndHashes(
     nextRunAt: null,
     lastRunAt: null,
   }));
-  archive.approvals = (archive.approvals as ApprovalRecord[]).filter((approval) => approval.objectType !== 'routine');
+  archive.approvals = (archive.approvals as ApprovalRecord[]).filter((approval) => approval.objectType !== 'routine' && approval.objectType !== 'mission_plan' && approval.objectType !== 'action_intent');
+  // Plans arrive with their ids remapped, so the hashed content changed; the
+  // approval that bound the old hash cannot carry over, and no run is live.
+  const importedPlans: MissionPlan[] = [];
+  for (const value of archive.missionPlans ?? []) {
+    const plan = value as MissionPlan;
+    const status = plan.status === 'succeeded' || plan.status === 'failed' || plan.status === 'cancelled' ? plan.status : 'validated';
+    const next: MissionPlan = { ...plan, status, approvalId: null };
+    next.contentHash = await computePlanContentHash(next);
+    importedPlans.push(next);
+  }
+  archive.missionPlans = importedPlans;
+  const importedReports: EvaluationReport[] = [];
+  for (const value of archive.evaluationReports ?? []) {
+    const report = value as EvaluationReport;
+    importedReports.push({ ...report, contentHash: await computeEvaluationReportHash(report) });
+  }
+  archive.evaluationReports = importedReports;
 
   if (!preserveLabelledExampleState) {
     const lessonsWithTranscript = new Set((archive.transcriptSegments as ArchiveRow[]).map((segment) => String(segment['lessonId'])));
@@ -2156,6 +2304,8 @@ async function importWorkspaceWithPolicy(
     ['handoffs', 'handoff'],
     ['executionHosts', 'executionHost'],
     ['routines', 'routine'],
+    ['missionPlans', 'missionPlan'],
+    ['evaluationReports', 'evaluationReport'],
   ];
   for (const [key, domain, primaryKey = 'id'] of primaryIds) {
     for (const row of (parsed[key] as unknown[]) ?? []) {
@@ -2328,6 +2478,17 @@ async function importWorkspaceWithPolicy(
       },
     });
   }
+  for (const row of parsed.missionPlans ?? []) {
+    const plan = row as MissionPlan;
+    importEvents.push({
+      type: 'mission.plan_created',
+      actorType: 'human',
+      objectType: 'mission_plan',
+      objectId: plan.id,
+      summary: `Mission plan restored from import (r${plan.revision}, ${plan.nodes.length} nodes, approval cleared)`,
+      payload: { missionId: plan.missionId, templateId: plan.templateId, revision: plan.revision, contentHash: plan.contentHash, nodeCount: plan.nodes.length, imported: true },
+    });
+  }
 
   try {
   await withWorkspaceTx(
@@ -2362,6 +2523,8 @@ async function importWorkspaceWithPolicy(
       'handoffs',
       'executionHosts',
       'routines',
+      'missionPlans',
+      'evaluationReports',
     ],
     async (ctx) => {
       await ctx.db.workspaces.add(importedWorkspace as never);
@@ -2393,6 +2556,8 @@ async function importWorkspaceWithPolicy(
       await ctx.db.handoffs.bulkAdd(remap(parsed.handoffs ?? []) as never[]);
       await ctx.db.executionHosts.bulkAdd(remap(parsed.executionHosts ?? []) as never[]);
       await ctx.db.routines.bulkAdd(remap(parsed.routines ?? []) as never[]);
+      await ctx.db.missionPlans.bulkAdd(remap(parsed.missionPlans ?? []) as never[]);
+      await ctx.db.evaluationReports.bulkAdd(remap(parsed.evaluationReports ?? []) as never[]);
       for (const event of importEvents) ctx.emit(event);
     },
   );

@@ -1,0 +1,247 @@
+{
+  "id": "plan-fixture",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Fix the failing test in the fixture repository and prove it",
+  "constraints": [
+    "Do not push"
+  ],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [
+    {
+      "id": "research-competitor",
+      "missionId": "ms-fixture",
+      "title": "Node research-competitor",
+      "objective": "Do research-competitor",
+      "definitionOfDone": [
+        "research-competitor is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "research-competitor-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/research-competitor.txt",
+          "description": "research-competitor output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "audit-onboarding",
+      "missionId": "ms-fixture",
+      "title": "Node audit-onboarding",
+      "objective": "Do audit-onboarding",
+      "definitionOfDone": [
+        "audit-onboarding is done"
+      ],
+      "dependencyIds": [],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "audit-onboarding-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/audit-onboarding.txt",
+          "description": "audit-onboarding output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "prioritise",
+      "missionId": "ms-fixture",
+      "title": "Node prioritise",
+      "objective": "Do prioritise",
+      "definitionOfDone": [
+        "prioritise is done"
+      ],
+      "dependencyIds": [
+        "research-competitor",
+        "audit-onboarding"
+      ],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "prioritise-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/prioritise.txt",
+          "description": "prioritise output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "developer-fix",
+      "missionId": "ms-fixture",
+      "title": "Node developer-fix",
+      "objective": "Do developer-fix",
+      "definitionOfDone": [
+        "developer-fix is done"
+      ],
+      "dependencyIds": [
+        "prioritise"
+      ],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [
+        "codex-cli"
+      ],
+      "requiredCapabilities": [
+        "repository_write",
+        "command_execution"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "developer-fix-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/developer-fix.txt",
+          "description": "developer-fix output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "git-worktree"
+    },
+    {
+      "id": "content-draft",
+      "missionId": "ms-fixture",
+      "title": "Node content-draft",
+      "objective": "Do content-draft",
+      "definitionOfDone": [
+        "content-draft is done"
+      ],
+      "dependencyIds": [
+        "prioritise"
+      ],
+      "kind": "agent",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "repository_read"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "content-draft-check",
+          "kind": "file",
+          "required": true,
+          "path": "out/content-draft.txt",
+          "description": "content-draft output exists"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "independent-verification",
+      "missionId": "ms-fixture",
+      "title": "Node independent-verification",
+      "objective": "Do independent-verification",
+      "definitionOfDone": [
+        "independent-verification is done"
+      ],
+      "dependencyIds": [
+        "developer-fix",
+        "content-draft"
+      ],
+      "kind": "verify",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "verification"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "required": true,
+          "argv": [
+            "node",
+            "--test"
+          ],
+          "expectExitCode": 0,
+          "description": "Fixture tests pass"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "directory"
+    },
+    {
+      "id": "publish-approval",
+      "missionId": "ms-fixture",
+      "title": "Node publish-approval",
+      "objective": "Do publish-approval",
+      "definitionOfDone": [
+        "publish-approval is done"
+      ],
+      "dependencyIds": [
+        "independent-verification"
+      ],
+      "kind": "human_decision",
+      "preferredAgentProfileId": null,
+      "preferredHostKinds": [],
+      "requiredCapabilities": [
+        "human_approval"
+      ],
+      "riskLevel": "low",
+      "verificationPlan": [
+        {
+          "id": "publish-approval-human",
+          "kind": "human",
+          "required": true,
+          "description": "A person decides"
+        }
+      ],
+      "contextRefs": [],
+      "maxAttempts": 2,
+      "timeoutMs": 60000,
+      "sandbox": "none"
+    }
+  ]
+}

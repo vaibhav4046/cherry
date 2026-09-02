@@ -167,6 +167,38 @@ Transcript/manual fallback is the path the golden journey itself uses. **PASSED*
   model; a proposal without a transcript carries only a title-derived name and sentence.
 - **Screenshots.** `docs/release/screenshots/creators/` (empty, sample, draft-ready; 1440 and 390 wide).
 
+## mission_control_workforce
+
+- **What is proven.** An outcome typed in Mission Control becomes a persisted mission plan that is
+  validated before anything runs (`src/cherry/workforce/mission-plan-model.ts`: acyclic, at most 20
+  nodes, fan-out 3, parallel 3, depth 6, bounded timeouts and attempts, injection markers refused,
+  RFC 8785 content hash). Approval binds a person to the exact revision and hash; a revision clears
+  it. The paired runner (`runner/lib/mission-executor.mjs`) leases one sandbox per task
+  (`runner/lib/sandbox-manager.mjs`: a directory or a git worktree, labelled `process` or
+  `worktree-process`, never a VM), runs up to three tasks at once, hands a passed task's declared
+  artifacts to its dependants, commits a worktree result on the sandbox branch only, and moves a task
+  to succeeded only when its own checks pass (`runner/lib/checks.mjs`) or a person decides. The
+  browser mirrors runner state through legal work-item transitions and refuses a "succeeded" without
+  a passed evaluation report (`src/cherry/workforce/mission-orchestrator.ts`). Five contextual WebMCP
+  tools appear only on Mission Control; none can approve; every call lands in Agent View.
+  Unit: `tests/cherry/mission-plan.test.ts`, `mission-orchestrator.test.ts`, `evaluation-service.test.ts`,
+  `policy-service.test.ts`, `mission-control.test.tsx`, `mission-run-coordination.test.ts`,
+  `webmcp-god-mode.test.ts`, `host-registry.test.ts`; runner: `runner/mission-executor.test.mjs`,
+  `sandbox-manager.test.mjs`, `agent-hosts.test.mjs`; browser to real runner process:
+  `tests/cherry/mission-runner-integration.test.ts`; Playwright: `e2e/cherry/god-mode-mission.spec.ts`
+  (two workers overlap in different sandboxes, one bounded repair, a person decides, the mission
+  completes; measured overlap read back from the runner's own record) and
+  `e2e/cherry/webmcp-god-mode.spec.ts`. Real Codex CLI 0.152.1 execution captured in
+  `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md`: two nodes in two worktrees, overlapping, both decided
+  by the runner's own `node --test` and file checks.
+- **What is not proven.** No Claude Code execution was captured (`claude -p` returned a revoked
+  OAuth token on this machine; a sign-in is human-only). No live ChatGPT site-tool session was
+  captured; the WebMCP proof uses the mock host. Nothing runs when the paired runner is off; there
+  is no cloud worker. LinkedIn, Gmail and YouTube publishing are Roadmap: the recipes Cherry writes
+  are text a person creates in the other host.
+- **Screenshots.** `docs/release/screenshots/god-mode/` (landing at 1440 and 390 wide; Mission
+  Control empty, running, needs-you, complete).
+
 ## schema_validation
 
 ```

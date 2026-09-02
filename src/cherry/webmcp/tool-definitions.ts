@@ -10,6 +10,7 @@ import {
   type CherryToolResult,
 } from './tool-contract.ts';
 import { buildWorkforceToolDefinitions } from './workforce-tools.ts';
+import { buildMissionToolDefinitions } from './mission-tools.ts';
 import type { Result } from '../core/result.ts';
 import {
   createMission,
@@ -300,7 +301,7 @@ async function skillCitationEnvelope(graph: SkillGraph): Promise<SkillCitationEn
 }
 
 export function buildToolDefinitions(context: ToolContext): CherryToolDefinition[] {
-  const definitions: CherryToolDefinition[] = [...buildWorkforceToolDefinitions(context)];
+  const definitions: CherryToolDefinition[] = [...buildWorkforceToolDefinitions(context), ...buildMissionToolDefinitions(context)];
 
   const define = <I>(definition: CherryToolDefinition<I>): void => {
     definitions.push(definition as CherryToolDefinition);

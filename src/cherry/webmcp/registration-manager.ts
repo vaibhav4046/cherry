@@ -74,13 +74,15 @@ const SURFACE_STATES: Record<Exclude<ToolSurface, 'default'>, ProductState[]> = 
   routines: ['planning', 'execution', 'verification', 'passed'],
   run: ['learning', 'planning', 'execution', 'verification', 'passed'],
   sources: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
+  // Mission Control works from the first visit: create_outcome_mission creates the space when none exists.
+  control: ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'],
 };
 
 const ALL_PRODUCT_STATES: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
 
 function surfaceForTool(name: string): ToolSurface {
   const resolved = Object.entries(SAFE_TOOL_NAME_ALIASES).find(([, legacy]) => legacy === name)?.[0] ?? name;
-  for (const surface of ['inbox', 'crew', 'routines', 'run', 'sources'] as const) {
+  for (const surface of ['inbox', 'crew', 'routines', 'run', 'sources', 'control'] as const) {
     if (TOOL_SURFACE_TABLE[surface].includes(resolved)) return surface;
   }
   return 'default';

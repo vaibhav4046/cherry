@@ -1,0 +1,33 @@
+{
+  "id": "plan-no-required-check",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Require a meaningful verification bar",
+  "constraints": [],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [{
+    "id": "a",
+    "missionId": "ms-fixture",
+    "title": "Optional only",
+    "objective": "Never pass without a required check",
+    "definitionOfDone": ["A required check exists"],
+    "dependencyIds": [],
+    "kind": "agent",
+    "preferredAgentProfileId": null,
+    "preferredHostKinds": [],
+    "requiredCapabilities": ["repository_read"],
+    "riskLevel": "low",
+    "verificationPlan": [{"id":"optional","kind":"file","required":false,"path":"out/a.txt","description":"optional output"}],
+    "contextRefs": [],
+    "maxAttempts": 1,
+    "timeoutMs": 60000,
+    "sandbox": "directory"
+  }]
+}

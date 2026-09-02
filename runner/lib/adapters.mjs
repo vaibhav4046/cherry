@@ -13,11 +13,16 @@ import { redact } from './redact.mjs';
 import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
 import { sourceWatchRoutineId } from './source-watch.mjs';
 import { buildChildEnv, isPythonExecutable } from './process-policy.mjs';
+import { buildHostArgv, buildTaskText, createAgentHosts, hostIdForKind } from './agent-hosts.mjs';
+import { runChecks } from './checks.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
 const MAX_TIMEOUT_MS = 600_000;
 const MAX_EXPORT_FILES = 2000;
 const PROVIDER_NOTE = 'Provider CLI completion is not verification. Run cherry-verify afterwards.';
+const CHECK_NOTE = 'Deterministic checks decide; a provider never verifies its own work.';
+/** Agent hosts tried for a task with no host preference, in order. */
+const DEFAULT_AGENT_HOST_IDS = ['codex'];
 
 /** Shell-free process runner with timeout + abort-signal support. */
 export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal, stdinText } = {}) {
@@ -74,11 +79,18 @@ export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal,
 }
 
 /**
- * Build the registry. config: { allowedRoots: absolute paths, allowedExecutables: Set }.
+ * Build the registry. config: { allowedRoots: absolute paths, allowedExecutables: Set,
+ * allowMockHost?, hosts? (an agent-hosts instance), hostCommands?, hostEndpoints?, searchPath? }.
  */
 export function createAdapters(config) {
   const allowedRoots = config.allowedRoots.map((root) => resolve(root));
   const allowedExecutables = config.allowedExecutables;
+  const hosts = config.hosts ?? createAgentHosts({
+    commands: config.hostCommands ?? {},
+    endpoints: config.hostEndpoints ?? {},
+    allowMockHost: Boolean(config.allowMockHost),
+    searchPath: config.searchPath,
+  });
 
   function withinRoots(candidate) {
     const resolved = resolve(candidate);
@@ -144,6 +156,7 @@ export function createAdapters(config) {
 
   /** Provider CLIs spawn ONLY when allowed by BOTH the envelope and config. */
   async function providerCli(binary, envelope, context) {
+    if (binary === 'claude') throw new Error('Claude is probe only because Cherry cannot enforce an equivalent automatic containment boundary; use a manual handoff');
     if (!Array.isArray(envelope.allowedExecutables) || !envelope.allowedExecutables.includes(binary)) {
       throw new Error(`${binary} is not allowed by the execution envelope`);
     }
@@ -160,7 +173,9 @@ export function createAdapters(config) {
     } catch {
       providerVersion = null;
     }
-    const cliArgv = binary === 'codex' ? ['exec', prompt] : ['-p', prompt];
+    const probe = (await hosts.probe({ force: true })).find((candidate) => candidate.hostId === 'codex');
+    if (!probe?.available) throw new Error(`Codex is unavailable for contained execution: ${probe?.details?.reason ?? 'required --sandbox support was not observed'}`);
+    const cliArgv = buildHostArgv('codex', probe.details?.flags ?? {}, { root: cwd, prompt });
     const run = await runProcess(binary, cliArgv, cwd, context);
     return {
       // NEVER 'verified' — verification only comes from cherry-verify.
@@ -235,6 +250,82 @@ export function createAdapters(config) {
     return { status: 'completed', exitCode: 0, stdout: JSON.stringify(feed), stderr: '', feed };
   }
 
+  /** Task for a host from the node payload; the mission executor may pass its own (repairs). */
+  function hostTask(payload, context) {
+    return context.task ?? {
+      text: buildTaskText(payload),
+      attempt: Number.isInteger(context.attempt) ? context.attempt : 1,
+      contextText: typeof payload.contextText === 'string' ? payload.contextText : null,
+      mock: payload.mock ?? null,
+      nodeId: typeof payload.nodeId === 'string' ? payload.nodeId : null,
+      outputs: Array.isArray(payload.outputs) ? payload.outputs.map(String) : [],
+    };
+  }
+
+  /** agent-host: run the node task on the first usable host named by the
+   *  payload hostKinds (codex-cli, claude-cli, local-runner = mock, manual).
+   *  CLI hosts must be allowed by BOTH the envelope and the config, exactly
+   *  like providerCli; the mock host needs --allow-mock-host. */
+  async function agentHost(envelope, context) {
+    const payload = parsePayload(envelope);
+    const cwd = requireWorkingDirectory(envelope);
+    const probes = await hosts.probe();
+    const wanted = Array.isArray(payload.hostKinds) && payload.hostKinds.length > 0
+      ? payload.hostKinds
+      : (typeof envelope.executionHostId === 'string' && envelope.executionHostId !== 'any' ? [envelope.executionHostId] : null);
+    const candidates = wanted
+      ? [...new Set(wanted.map(hostIdForKind).filter(Boolean))]
+      : [...DEFAULT_AGENT_HOST_IDS, ...(config.allowMockHost ? ['mock'] : [])];
+    if (candidates.length === 0) throw new Error(`no agent host matches ${JSON.stringify(wanted)}`);
+    const reasons = [];
+    for (const hostId of candidates) {
+      if (hostId === 'mock' && !config.allowMockHost) {
+        reasons.push('the mock host is enabled only with --allow-mock-host');
+        continue;
+      }
+      if (hostId !== 'mock' && hostId !== 'manual') {
+        if (!Array.isArray(envelope.allowedExecutables) || !envelope.allowedExecutables.includes(hostId)) {
+          reasons.push(`${hostId} is not allowed by the execution envelope`);
+          continue;
+        }
+        if (!allowedExecutables.has(hostId)) {
+          reasons.push(`${hostId} is not in the runner config allowlist (start with --allow-exec ${hostId})`);
+          continue;
+        }
+        const probe = probes.find((candidate) => candidate.hostId === hostId);
+        if (!probe?.available) {
+          reasons.push(`${hostId}: ${probe?.details?.reason ?? 'unavailable'}`);
+          continue;
+        }
+      }
+      const result = await hosts.run(hostId, hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
+      // NEVER 'verified': the mission executor evaluates the sandbox afterwards.
+      return { ...result, providerNote: PROVIDER_NOTE };
+    }
+    throw new Error(`no agent host is available for this task (${reasons.join('; ')})`);
+  }
+
+  /** cherry-check: run the envelope verificationPlan inside workingDirectory. */
+  async function cherryCheck(envelope, context) {
+    const cwd = requireWorkingDirectory(envelope);
+    const report = await runChecks(envelope.verificationPlan, cwd, { allowedExecutables, authorizedExecutables: new Set(envelope.allowedExecutables ?? []), timeoutMs: context.timeoutMs, signal: context.signal });
+    const passed = report.status === 'passed';
+    return { status: passed ? 'completed' : 'failed', exitCode: passed ? 0 : 1, stdout: JSON.stringify(report), stderr: '', report, providerNote: CHECK_NOTE };
+  }
+
+  /** mock-host: scripted host for tests; registered only with --allow-mock-host. */
+  async function mockHost(envelope, context) {
+    const payload = parsePayload(envelope);
+    const cwd = requireWorkingDirectory(envelope);
+    return hosts.run('mock', hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
+  }
+
+  const missionAdapters = {
+    'agent-host': agentHost,
+    'cherry-check': cherryCheck,
+    ...(config.allowMockHost ? { 'mock-host': mockHost } : {}),
+  };
+
   const adapters = {
     'cherry-verify': cherryVerify,
     'cherry-export': cherryExport,
@@ -245,11 +336,16 @@ export function createAdapters(config) {
     'youtube-rss-watch': youtubeRssWatch,
   };
 
+  const registry = { ...adapters, ...missionAdapters };
+
   return {
+    /** General-purpose adapters exposed to /v2/jobs; mission adapters are listed separately. */
     names: Object.keys(adapters),
-    has: (name) => Object.prototype.hasOwnProperty.call(adapters, name),
+    missionAdapterNames: Object.keys(missionAdapters),
+    hosts,
+    has: (name) => Object.prototype.hasOwnProperty.call(registry, name),
     async run(envelope, context = {}) {
-      const adapter = adapters[envelope.adapter];
+      const adapter = registry[envelope.adapter];
       if (!adapter) throw new Error(`unknown adapter ${envelope.adapter}`);
       return adapter(envelope, context);
     },

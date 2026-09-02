@@ -33,7 +33,7 @@ import {
 } from '../workforce/routines-service.ts';
 import { validateSchedule, type ScheduleSpec } from '../workforce/workforce-model.ts';
 
-export type ToolSurface = 'default' | 'inbox' | 'crew' | 'routines' | 'run' | 'sources';
+export type ToolSurface = 'default' | 'inbox' | 'crew' | 'routines' | 'run' | 'sources' | 'control';
 
 export const TOOL_SURFACE_TABLE: Record<Exclude<ToolSurface, 'default'>, string[]> = {
   inbox: ['create_work_item', 'read_attention_queue', 'read_work_thread', 'assign_work_item', 'request_work_run'],
@@ -41,6 +41,7 @@ export const TOOL_SURFACE_TABLE: Record<Exclude<ToolSurface, 'default'>, string[
   routines: ['list_routines', 'draft_routine', 'set_routine_schedule', 'pause_routine'],
   run: ['read_run_status', 'record_run_checkpoint', 'record_task_result', 'request_human_action', 'request_verification'],
   sources: ['list_sources', 'save_source', 'request_source_fetch', 'archive_source', 'prepare_source_for_skill'],
+  control: ['create_outcome_mission', 'plan_current_mission', 'start_current_mission', 'cancel_current_mission', 'request_mission_action'],
 };
 
 function requireWorkspace(context: ToolContext): string | null {

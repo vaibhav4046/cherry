@@ -118,7 +118,7 @@ test.describe('route metadata', () => {
       });
     });
     await page.reload();
-    await expect(page.getByRole('heading', { name: /Turn a lesson into a skill/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /One task. An entire AI team./i })).toBeVisible();
 
     await context.setOffline(true);
     try {

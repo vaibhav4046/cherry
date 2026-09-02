@@ -3,7 +3,7 @@ import { resolveRouteMeta } from '../../src/app/RouteMeta.tsx';
 
 describe('route metadata', () => {
   it.each([
-    ['/', 'Cherry Wine · Turn lessons into skills every agent can run'],
+    ['/', 'Cherry · One task. An entire AI team.'],
     ['/showcase', 'Showcase · Cherry Wine'],
     ['/connect', 'Connect your agent · Cherry Wine'],
     ['/Connect', 'Connect your agent · Cherry Wine'],
@@ -23,6 +23,8 @@ describe('route metadata', () => {
     ['/studio/routines/routine-1', 'Routine · Cherry Wine'],
     ['/studio/missions/new', 'New project · Cherry Wine'],
     ['/studio/missions/mission-1', 'Project · Cherry Wine'],
+    ['/studio/control', 'Missions · Cherry Wine'],
+    ['/studio/control/mission-1', 'Mission · Cherry Wine'],
     ['/studio/watch/source-1', 'Review source · Cherry Wine'],
     ['/studio/memory', 'Memory · Cherry Wine'],
     ['/studio/skills', 'Skill Library · Cherry Wine'],

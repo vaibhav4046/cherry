@@ -1,0 +1,20 @@
+{
+  "id": "plan-ambiguous-worktrees",
+  "workspaceId": "ws-fixture",
+  "missionId": "ms-fixture",
+  "templateId": null,
+  "outcome": "Refuse ambiguous worktree ancestry",
+  "constraints": [],
+  "status": "draft",
+  "revision": 1,
+  "contentHash": "",
+  "approvalId": null,
+  "nodeWorkItemIds": {},
+  "createdAt": "2026-09-02T12:00:00.000Z",
+  "updatedAt": "2026-09-02T12:00:00.000Z",
+  "nodes": [
+    {"id":"a","missionId":"ms-fixture","title":"A","objective":"Change A","definitionOfDone":["A done"],"dependencyIds":[],"kind":"agent","preferredAgentProfileId":null,"preferredHostKinds":[],"requiredCapabilities":["repository_write"],"riskLevel":"medium","verificationPlan":[{"id":"a-check","kind":"file","required":true,"path":"out/a.txt","description":"a exists"}],"contextRefs":["repository:/fixture"],"maxAttempts":1,"timeoutMs":60000,"sandbox":"git-worktree"},
+    {"id":"b","missionId":"ms-fixture","title":"B","objective":"Change B","definitionOfDone":["B done"],"dependencyIds":[],"kind":"agent","preferredAgentProfileId":null,"preferredHostKinds":[],"requiredCapabilities":["repository_write"],"riskLevel":"medium","verificationPlan":[{"id":"b-check","kind":"file","required":true,"path":"out/b.txt","description":"b exists"}],"contextRefs":["repository:/fixture"],"maxAttempts":1,"timeoutMs":60000,"sandbox":"git-worktree"},
+    {"id":"c","missionId":"ms-fixture","title":"C","objective":"Combine","definitionOfDone":["C done"],"dependencyIds":["a","b"],"kind":"agent","preferredAgentProfileId":null,"preferredHostKinds":[],"requiredCapabilities":["repository_write"],"riskLevel":"medium","verificationPlan":[{"id":"c-check","kind":"file","required":true,"path":"out/c.txt","description":"c exists"}],"contextRefs":["repository:/fixture"],"maxAttempts":1,"timeoutMs":60000,"sandbox":"git-worktree"}
+  ]
+}

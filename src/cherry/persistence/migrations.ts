@@ -66,6 +66,13 @@ export const CHERRY_DB_MIGRATIONS: CherryMigration[] = [
       skillProposals: 'id, workspaceId, sourceId, [workspaceId+readiness], publishedAt, updatedAt',
     },
   },
+  {
+    version: 6,
+    stores: {
+      missionPlans: 'id, workspaceId, missionId, status, updatedAt',
+      evaluationReports: 'id, workspaceId, missionId, workItemId, createdAt',
+    },
+  },
 ];
 
 export const CHERRY_DB_VERSION = CHERRY_DB_MIGRATIONS[CHERRY_DB_MIGRATIONS.length - 1]!.version;

@@ -1,0 +1,596 @@
+{
+  "schemaVersion": 1,
+  "title": "God Mode scale benchmark",
+  "scope": "A 2000-record local benchmark on one machine. It is not evidence for any larger claim.",
+  "startedAt": "2026-09-02T13:09:48.610Z",
+  "finishedAt": "2026-09-02T13:10:23.436Z",
+  "command": "node scripts/god-mode/run-scale-benchmark.mjs --documents 1000 --media 1000 --seed 20260902 --out docs/release/benchmarks",
+  "machine": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12450HX",
+    "cores": 12,
+    "totalMemoryBytes": 16873545728,
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64",
+    "node": "v24.12.0",
+    "commit": "ad046d4056b4990a37178fd8db0a5b79c9b609ee"
+  },
+  "corpus": {
+    "seed": 20260902,
+    "manifestSha256": "92f2699637d5d87d43c057c3c239584939e8abe7b550d6d22c1ec1d35d088d7a",
+    "documents": 1000,
+    "media": 1000,
+    "records": 2000,
+    "bytes": 74714572,
+    "categories": {
+      "documents": {
+        "normal": 600,
+        "exact_duplicate": 100,
+        "near_duplicate": 100,
+        "hostile": 75,
+        "corrupt": 50,
+        "large": 50,
+        "unicode": 25
+      },
+      "media": {
+        "normal": 700,
+        "exact_duplicate": 100,
+        "near_duplicate": 75,
+        "metadata_only": 50,
+        "malformed": 25,
+        "hostile": 25,
+        "long": 25
+      }
+    },
+    "source": "generated into a temporary directory, deleted after the run",
+    "ingestOrder": "sorted by record id; ids are a seeded permutation, so originals do not necessarily precede their duplicates"
+  },
+  "ingest": {
+    "totalMs": 13496.76,
+    "recordsPerSecond": 148.18,
+    "processed": 2000,
+    "accepted": 1750,
+    "batchSize": 50,
+    "batches": 40,
+    "latencyMs": {
+      "count": 2000,
+      "p50": 4.227,
+      "p95": 15.335,
+      "p99": 67.332,
+      "max": 138.338,
+      "mean": 6.734
+    },
+    "memory": {
+      "peakRssBytes": 335990784,
+      "peakHeapUsedBytes": 156200680,
+      "samples": 41,
+      "sampling": "process.memoryUsage() before the run and after every batch"
+    },
+    "disk": {
+      "storeBytesBefore": 0,
+      "storeBytesAfter": 72053736,
+      "indexBytes": 1584144,
+      "objects": 1750,
+      "growthBytes": 72053736
+    },
+    "generationMs": 5353.09,
+    "exactDuplicates": {
+      "injected": 200,
+      "eliminated": 200,
+      "percentage": 100,
+      "duplicateOutcomes": 200,
+      "note": "a pair counts as eliminated when exactly one member is accepted, the other is reported duplicate, and one object holds the shared hash"
+    },
+    "nearDuplicates": {
+      "injected": 175,
+      "linked": 175,
+      "totalLinks": 175,
+      "falseLinks": 0,
+      "method": "bottom-32 sketch of word 5-shingles selects candidates; exact shingle Jaccard over both bodies must exceed 0.9"
+    },
+    "isolated": {
+      "count": 50,
+      "injected": 50,
+      "isolatedWithExpectedReason": 50,
+      "byReason": {
+        "invalid_metadata": 16,
+        "empty_body": 17,
+        "invalid_utf8": 17
+      },
+      "records": [
+        {
+          "id": "doc-00010",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 117 (line 5 column 8)"
+        },
+        {
+          "id": "doc-00011",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00077",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 116 (line 5 column 8)"
+        },
+        {
+          "id": "doc-00120",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00157",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00196",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00211",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 114 (line 5 column 9)"
+        },
+        {
+          "id": "doc-00246",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00277",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00278",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00304",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00316",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 121 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00322",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00332",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 118 (line 5 column 6)"
+        },
+        {
+          "id": "doc-00350",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 117 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00354",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 117 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00449",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00452",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00458",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 116 (line 5 column 9)"
+        },
+        {
+          "id": "doc-00488",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00512",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 115 (line 5 column 7)"
+        },
+        {
+          "id": "doc-00542",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 116 (line 5 column 7)"
+        },
+        {
+          "id": "doc-00561",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00571",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00583",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00592",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00604",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 117 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00608",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00623",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00629",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00635",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00645",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00664",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00707",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 117 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00756",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 116 (line 5 column 5)"
+        },
+        {
+          "id": "doc-00799",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00826",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00834",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00863",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00882",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00885",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 116 (line 5 column 6)"
+        },
+        {
+          "id": "doc-00888",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00892",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00922",
+          "kind": "document",
+          "reason": "empty_body",
+          "detail": ""
+        },
+        {
+          "id": "doc-00931",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00949",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00953",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 114 (line 5 column 8)"
+        },
+        {
+          "id": "doc-00960",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00985",
+          "kind": "document",
+          "reason": "invalid_utf8",
+          "detail": ""
+        },
+        {
+          "id": "doc-00991",
+          "kind": "document",
+          "reason": "invalid_metadata",
+          "detail": "Unterminated string in JSON at position 114 (line 5 column 9)"
+        }
+      ],
+      "note": "each corrupt record is reported individually and the batch continues"
+    },
+    "hostile": {
+      "injected": 100,
+      "acceptedAsInertText": 100,
+      "storedVerbatim": 100,
+      "note": "verbatim means the stored object re-hashes to the SHA-256 of the source bytes; trust stays untrusted; no classifier runs"
+    },
+    "keyExtraction": {
+      "checked": 1750,
+      "matched": 1750,
+      "rate": 1
+    },
+    "provenance": {
+      "acceptedRecords": 1750,
+      "missingSourceIdOrTrust": 0
+    },
+    "media": {
+      "malformed": {
+        "injected": 25,
+        "acceptedWithExpectedWarnings": 25
+      },
+      "long": {
+        "injected": 25,
+        "acceptedOverThreeHours": 25
+      },
+      "metadataOnly": {
+        "injected": 50,
+        "acceptedWithMetadataHash": 50
+      }
+    },
+    "documents": {
+      "large": {
+        "injected": 50,
+        "acceptedWithSourceHash": 50
+      },
+      "unicode": {
+        "injected": 25,
+        "acceptedWithSourceHash": 25
+      }
+    },
+    "maxSingleRecordBytes": 1030985
+  },
+  "retrieval": {
+    "queries": 3900,
+    "hits": 3900,
+    "successRate": 1,
+    "topK": 5,
+    "latencyMs": {
+      "count": 3900,
+      "p50": 0.188,
+      "p95": 0.402,
+      "p99": 0.886,
+      "max": 5.6,
+      "mean": 0.186
+    },
+    "method": "BM25 over tokenised title and tags only; bodies are never indexed for search",
+    "sampleMisses": []
+  },
+  "restartRecovery": {
+    "method": "throw from the per-record hook mid-batch, construct a fresh pipeline over the same store directory, run every source again",
+    "crashed": true,
+    "crashedAtRecord": 166,
+    "batchesCompletedBeforeCrash": 3,
+    "crashedMidBatch": true,
+    "acceptedBeforeCrash": 158,
+    "recoveredFromIndex": 1750,
+    "skippedOnResume": 158,
+    "acceptedAfterResume": 1750,
+    "duplicateAcceptedRecords": 0,
+    "matchesUninterruptedRun": true
+  },
+  "cancellation": {
+    "method": "AbortController aborted from the per-record hook mid-batch; the pipeline checks the signal before every record",
+    "abortedAtRecord": 112,
+    "abortedMidBatch": true,
+    "status": "cancelled",
+    "processed": 112,
+    "acceptedAtAbort": 108,
+    "recoveredRecords": 108,
+    "recoverWarnings": 0,
+    "consistent": true
+  },
+  "noExecutionPath": {
+    "files": [
+      "runner/lib/storage/cas.mjs",
+      "runner/lib/storage/ingest-pipeline.mjs",
+      "runner/lib/storage/record-index.mjs",
+      "runner/lib/storage/text.mjs",
+      "scripts/god-mode/generate-corpus.mjs"
+    ],
+    "forbiddenTokens": [
+      "eval(",
+      "new Function",
+      "Function(",
+      "child_process",
+      "node:vm",
+      "fetch(",
+      "dynamic import()",
+      "node:http(s)",
+      "node:net",
+      "WebSocket"
+    ],
+    "violations": [],
+    "ok": true,
+    "statement": "The modules that read record bodies (runner/lib/storage/*.mjs and scripts/god-mode/generate-corpus.mjs) never import child_process, vm, http, net or WebSocket and never call eval, Function, fetch or a dynamic import. No ingested body can reach an execution or network path because none exists in that code. The benchmark driver imports child_process for one call, git rev-parse HEAD, made before any record is read."
+  },
+  "targets": [
+    {
+      "kind": "invariant",
+      "name": "exact duplicates eliminated",
+      "target": "100%",
+      "actual": "100% (200 of 200)",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "near duplicates linked, no false links",
+      "target": "175 linked, 0 false",
+      "actual": "175 linked, 0 false",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "corrupt records isolated with the expected reason",
+      "target": "50",
+      "actual": "50 of 50 (50 isolated in total)",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "hostile records inert and stored verbatim",
+      "target": "100",
+      "actual": "100 inert, 100 verbatim",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "restart recovery without duplicate accepted records",
+      "target": "0 duplicates, same result as the uninterrupted run",
+      "actual": "0 duplicates, matches true",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "cancellation leaves the index consistent",
+      "target": "consistent",
+      "actual": "true",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "provenance on every accepted record",
+      "target": "0 missing",
+      "actual": "0 missing of 1750",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "no execution or network path for bodies",
+      "target": "0 forbidden tokens",
+      "actual": "0 violations",
+      "met": true
+    },
+    {
+      "kind": "invariant",
+      "name": "entity and step keys extracted as expected",
+      "target": "100%",
+      "actual": "1750 of 1750",
+      "met": true
+    },
+    {
+      "kind": "target",
+      "name": "retrieval p95 under 1000 ms",
+      "target": "< 1000 ms",
+      "actual": "0.402 ms",
+      "met": true
+    },
+    {
+      "kind": "target",
+      "name": "retrieval answer key in top 5",
+      "target": ">= 95%",
+      "actual": "100% (3900 of 3900)",
+      "met": true
+    },
+    {
+      "kind": "target",
+      "name": "ingest p95 under 100 ms per record (harness-chosen)",
+      "target": "< 100 ms",
+      "actual": "15.335 ms",
+      "met": true
+    }
+  ],
+  "invariantsHold": true
+}

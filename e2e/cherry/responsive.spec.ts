@@ -13,7 +13,7 @@ test.describe('responsive and accessible shell', () => {
     test(`landing and studio render without horizontal overflow at ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /Turn a lesson into a skill/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /One task. An entire AI team./i })).toBeVisible();
       const landingOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(landingOverflow, 'landing horizontal overflow').toBeLessThanOrEqual(1);
 
