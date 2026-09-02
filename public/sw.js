@@ -1,7 +1,7 @@
 /* Cherry service worker: caches the static shell only. Workspace records live
    in IndexedDB and are NEVER cached here.
 
-   Strategy (v3): network-first for navigations and the HTML shell, cache-first
+   Strategy (v4): network-first for navigations and the HTML shell, cache-first
    for hashed /assets/ files.
 
    Why: a cache-first shell keeps serving an old index.html after a deploy, and
@@ -9,8 +9,8 @@
    visitor then gets a blank page. Navigations therefore always try the network
    first and fall back to the cached shell only when offline. Hashed assets are
    immutable, so cache-first is safe and keeps the app fast offline. */
-const CACHE = 'cherry-shell-v3';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/cherry.svg'];
+const CACHE = 'cherry-shell-v4';
+const SHELL = ['/index.html', '/manifest.webmanifest', '/cherry.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -45,7 +45,9 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request).then((cached) => cached ?? caches.match('/index.html'))),
+        // Offline: always fall back to the most recently fetched shell, never to
+        // an install-time snapshot that may point at assets a later deploy removed.
+        .catch(() => caches.match('/index.html')),
     );
     return;
   }

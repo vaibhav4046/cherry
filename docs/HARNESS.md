@@ -89,7 +89,8 @@ approve direction, record the demo, submit.
 1. **One deployer.** Codex never deploys. Every production release goes out as a locally built,
    render-verified prebuilt artifact, then is verified again on the live domain by content.
 2. **Gates before every commit:** `npm run gates` (typecheck, lint, unit, runner). Before any
-   session ends: `npm run verify:all` (adds build, e2e, pack verification, submission audit).
+   session ends: `npm run verify:all` (adds build, e2e, pack verification, the service-worker
+   behaviour check `verify:sw`, and the submission audit).
 3. **`npm ci` is law.** `package.json` and `package-lock.json` change together, in the same commit.
 4. **STATUS.md is the only channel.** Append-only. Every ticket transition, every bounce, every
    owner note.

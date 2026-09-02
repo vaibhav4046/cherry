@@ -14,7 +14,7 @@ describe('repository harness contract', () => {
       'npm run typecheck && npm run lint && npm run test && npm run test:runner',
     );
     expect(packageJson.scripts?.['verify:all']).toBe(
-      'npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run audit:submission',
+      'npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run verify:sw && npm run audit:submission',
     );
   });
 
