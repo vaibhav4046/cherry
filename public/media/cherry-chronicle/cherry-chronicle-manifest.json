@@ -1,0 +1,318 @@
+{
+  "version": "1.0.0",
+  "collection": "Cherry Chronicle",
+  "created": "2026-09-02",
+  "rightsPolicy": "public-domain-plus-original-overlay",
+  "essentialTextPolicy": "No essential words are embedded in Chronicle artwork. Product labels, status, interaction, and claims belong in live HTML.",
+  "palette": {
+    "paper": "#f7efe3",
+    "paperDeep": "#ead9c4",
+    "ink": "#211417",
+    "wine": "#641c37",
+    "cherry": "#b7234a",
+    "blush": "#d98599",
+    "moss": "#647650",
+    "proof": "#365a9b"
+  },
+  "constraints": {
+    "artifactCount": 7,
+    "desktop": {
+      "width": 1600,
+      "height": 1000,
+      "maxBytes": 350000
+    },
+    "mobile": {
+      "width": 780,
+      "height": 1040,
+      "maxBytes": 300000
+    }
+  },
+  "sources": [
+    {
+      "id": "flora-batava-0226",
+      "title": "Prunus avium — Plate 0226, Flora Batava, volume 3",
+      "creator": "Flora Batava; published by Jan Christiaan Sepp",
+      "date": "1814",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Prunus_avium_-_Pl0226_-_FloraBatava-KB-v03.jpg",
+      "originalFile": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Prunus_avium_-_Pl0226_-_FloraBatava-KB-v03.jpg",
+      "rights": {
+        "status": "public domain",
+        "basis": "Faithful reproduction of a two-dimensional public-domain work first published in 1814; Wikimedia Commons marks the file free of known copyright restrictions.",
+        "url": "https://creativecommons.org/publicdomain/mark/1.0/"
+      },
+      "original": {
+        "width": 2905,
+        "height": 3655,
+        "bytes": 2938564,
+        "sha256": "a29478d9bd9a8a0090a2666bde9e2b1795ebb49d16d5132278e1feda187983e7"
+      },
+      "derivative": {
+        "file": "sources/flora-batava-0226.webp",
+        "width": 1200,
+        "height": 1510,
+        "bytes": 140478,
+        "sha256": "6b0d0cde2b42a3d5baabf82a4cc7eb20c5efad838fe68357d7cf929826559054"
+      },
+      "derivativeNotes": "Mechanical resize to 1200 px maximum width/1600 px maximum height, metadata stripped, WebP quality 82; no generative alteration."
+    },
+    {
+      "id": "usda-pom00004708",
+      "title": "Short Stemmed Montmorency cherries, POM00004708",
+      "creator": "Harriet L. Thompson for the U.S. Department of Agriculture",
+      "date": "1915",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Pomological_Watercolor_POM00004708.jpg",
+      "originalFile": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pomological_Watercolor_POM00004708.jpg",
+      "rights": {
+        "status": "public domain in the United States",
+        "basis": "U.S. Department of Agriculture Pomological Watercolor Collection; Commons identifies the federal-government work as public domain in the United States.",
+        "url": "https://www.nal.usda.gov/web-policies-and-important-links"
+      },
+      "original": {
+        "width": 2667,
+        "height": 4000,
+        "bytes": 8708312,
+        "sha256": "817a4de367ad4d4e1bdd63c8d2a5abe00a2ed5da32e5a810c9801ca9abab0db6"
+      },
+      "derivative": {
+        "file": "sources/usda-pom00004708.webp",
+        "width": 1067,
+        "height": 1600,
+        "bytes": 143432,
+        "sha256": "c9bb81e32306a781f200c988f8e031c938f36554664e4cafd8aece9eae91f480"
+      },
+      "derivativeNotes": "Mechanical resize to 1600 px height, metadata stripped, WebP quality 82; no generative alteration."
+    },
+    {
+      "id": "usda-pom00004719",
+      "title": "Cherry branch section, POM00004719",
+      "creator": "J. Marion Shull for the U.S. Department of Agriculture",
+      "date": "1909",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Pomological_Watercolor_POM00004719.jpg",
+      "originalFile": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pomological_Watercolor_POM00004719.jpg",
+      "rights": {
+        "status": "public domain in the United States",
+        "basis": "U.S. Department of Agriculture Pomological Watercolor Collection; Commons identifies the federal-government work as public domain in the United States.",
+        "url": "https://www.nal.usda.gov/web-policies-and-important-links"
+      },
+      "original": {
+        "width": 2725,
+        "height": 4000,
+        "bytes": 7957294,
+        "sha256": "fd0ff3d597c609aaa904b4041b3446d6d9cd1501cdaf11beb75d1ebaae3ed213"
+      },
+      "derivative": {
+        "file": "sources/usda-pom00004719.webp",
+        "width": 1090,
+        "height": 1600,
+        "bytes": 79504,
+        "sha256": "f0a5dd6e22f741dc0449c8e158fda660789f5b611b0aa9a297cd3d54adf4d6c0"
+      },
+      "derivativeNotes": "Mechanical resize to 1600 px height, metadata stripped, WebP quality 82; no generative alteration."
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "seed-outcome",
+      "motif": "seed",
+      "feature": "Outcome definition and first mission graph",
+      "sourceIds": [
+        "usda-pom00004708"
+      ],
+      "originalOverlay": "Original cross-section seed, emerging root split, two dependency endpoints, registration marks, and live-copy safe zone.",
+      "altRecommendation": "A historic cherry study overlaid with a seed opening into a two-branch mission graph.",
+      "liveLabelGuidance": "Place the numbered outcome headline and action copy in the open upper/left field; keep all claims in HTML.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/seed-outcome-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 193362,
+          "sha256": "15f9ced2ccc7f24944c9729a319eb27e095a1c4dc66e685e89c930ef31a3627a",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/seed-outcome-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 193331,
+          "sha256": "d975226065f9ce9b986639b21e6d10ffd6c070649efd6c72ff8940da5568d06c",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "roots-capability",
+      "motif": "roots",
+      "feature": "MCP, WebMCP, files, tools, and approved applications",
+      "sourceIds": [
+        "flora-batava-0226"
+      ],
+      "originalOverlay": "Original five-root capability fan with bounded endpoints, a moss rootstock join, registration marks, and live-copy safe zone.",
+      "altRecommendation": "A botanical cherry branch whose trunk continues into five bounded capability roots.",
+      "liveLabelGuidance": "Use the open left field on desktop and the band below the plate on mobile for live capability labels.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/roots-capability-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 189694,
+          "sha256": "e05204f4d7b3dbf66e91fcd7718c06415d1de27b516c576fadeb57b86c682d57",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/roots-capability-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 189631,
+          "sha256": "c0700ff093f028c52fbcc0ff076201bfa377b16272b878d0a2b6aa2180659a4f",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "branches-workforce",
+      "motif": "branches",
+      "feature": "Parallel agent tasks, dependencies, and independently checked completion",
+      "sourceIds": [
+        "flora-batava-0226"
+      ],
+      "originalOverlay": "Original branching dependency graph, one parent task, three parallel terminals, proof ticks, and live-copy safe zone.",
+      "altRecommendation": "A cherry branch aligned with a parallel task graph ending in independently checked fruit-like nodes.",
+      "liveLabelGuidance": "Anchor live worker names and statuses outside the SVG at the terminal-node positions; the SVG carries no labels.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/branches-workforce-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 189959,
+          "sha256": "9c6648e5c8144bfffbaae94b3c942d5c90775e4d7d35a17501cce7f993bdbb82",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/branches-workforce-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 189921,
+          "sha256": "e70f53631338dd96a40f03d860e6bba18e7104e5e5d8a98a2e4621b036ebd3d1",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "grafts-portability",
+      "motif": "grafts",
+      "feature": "Portable model workers attached to one stable Cherry runtime",
+      "sourceIds": [
+        "usda-pom00004719"
+      ],
+      "originalOverlay": "Original five graft paths, distinct proof and moss accents, rootstock rings, registration marks, and bilateral label space.",
+      "altRecommendation": "A historic cherry graft section receiving five distinct model connections around one stable rootstock.",
+      "liveLabelGuidance": "Place model names in live DOM chips at the five exterior endpoints; never bake vendor names into the artwork.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/grafts-portability-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 108727,
+          "sha256": "9ad23d31372c94e2951b3168689cad2ef7ee952e7408c793962360657c7b3fea",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/grafts-portability-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 108693,
+          "sha256": "d719a4cdc85fa112d8a4f6f193295995019f5d01e47676115a1a7efa699adcbe",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "glasshouse-sandboxes",
+      "motif": "glasshouse",
+      "feature": "Separate worktrees, per-worker boundaries, and controlled execution",
+      "sourceIds": [
+        "flora-batava-0226"
+      ],
+      "originalOverlay": "Original Victorian glasshouse section, three hard compartment dividers, three bounded workbenches, and a proof-blue active room.",
+      "altRecommendation": "A botanical cherry specimen contained within three visibly isolated glasshouse workspaces.",
+      "liveLabelGuidance": "Place workspace names and boundary details in adjacent HTML; the compartments remain legible without embedded words.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/glasshouse-sandboxes-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 189568,
+          "sha256": "0544bc1ea4cc25e8bfdbbbf03a65a7f34a2c28a3a88586d30b9427b98551fc27",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/glasshouse-sandboxes-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 189754,
+          "sha256": "817564896969967bae59cc380cfa182840c396a7ab064f4c76d1b92d8eefec2d",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "harvest-proof",
+      "motif": "harvest",
+      "feature": "Independent checks, correction path, and human approval boundary",
+      "sourceIds": [
+        "usda-pom00004708"
+      ],
+      "originalOverlay": "Original inspection medallion, proof-blue check geometry, dashed correction route, registration marks, and claim-safe copy field.",
+      "altRecommendation": "A public-domain cherry watercolor beside an independent inspection mark and a separate correction route.",
+      "liveLabelGuidance": "Render check names, actual results, and approval state as live product UI; do not imply a pass from the illustration alone.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/harvest-proof-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 193068,
+          "sha256": "c7498ad41b5433e8bb67b31210f81c0a8430c391e033b7c6d9c7eccccb64ba76",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/harvest-proof-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 193020,
+          "sha256": "3f4450b881750728fae97c4a9b039c4634f3d9b2bcb5c0511eefb4efc51a8193",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    },
+    {
+      "id": "seed-bank-memory",
+      "motif": "seed bank",
+      "feature": "Approved reusable skills, revision history, and portable procedures",
+      "sourceIds": [
+        "usda-pom00004708"
+      ],
+      "originalOverlay": "Original archival card grid, seed silhouettes, per-card revision nodes, proof-blue version-history line, and live-copy header field.",
+      "altRecommendation": "Seven botanical archive cards preserve cherry seeds and connect into a visible version-history line.",
+      "liveLabelGuidance": "Add skill names, revisions, and approval metadata as live DOM content associated with each card.",
+      "variants": {
+        "desktop": {
+          "file": "artifacts/seed-bank-memory-desktop.svg",
+          "width": 1600,
+          "height": 1000,
+          "bytes": 195504,
+          "sha256": "4518baa3f6090dbb353c95014a443d89b87728c6f08b26dd66bba370a4d56025",
+          "intendedDisplay": "800x500 CSS px at viewport widths of 768 px and above"
+        },
+        "mobile": {
+          "file": "artifacts/seed-bank-memory-mobile.svg",
+          "width": 780,
+          "height": 1040,
+          "bytes": 195022,
+          "sha256": "f333150fa373122de56526eac53ce93b4a2afd2a8ea5a6707e78e9270447fb45",
+          "intendedDisplay": "390x520 CSS px below 768 px"
+        }
+      }
+    }
+  ]
+}
