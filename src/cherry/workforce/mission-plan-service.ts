@@ -20,7 +20,6 @@ import type { Mission, RiskLevel } from '../mission/mission-model.ts';
 import { createWorkItem } from './workforce-service.ts';
 import {
   canTransition,
-  hostSatisfies,
   type ExecutionEnvelope,
   type ExecutionHost,
   type ExecutionHostKind,
@@ -41,6 +40,7 @@ import {
   type PlanRisk,
 } from './mission-plan-model.ts';
 import { instantiateTemplate, isMissionTemplateId, matchTemplateForOutcome } from './mission-templates.ts';
+import { rankHosts } from './host-registry-service.ts';
 
 export { requiresApproval };
 
@@ -338,17 +338,6 @@ export async function projectPlanToWorkItems(workspaceId: string, planId: string
 
 // ---------------- Envelopes ----------------
 
-/** Available hosts that satisfy the node, preferred kinds first, then name. Replaced by the host registry ranking in GOD-2. */
-function rankCapableHosts(hosts: readonly ExecutionHost[], node: MissionPlanNode): ExecutionHost[] {
-  const preferredIndex = (host: ExecutionHost): number => {
-    const index = node.preferredHostKinds.indexOf(host.kind);
-    return index === -1 ? node.preferredHostKinds.length : index;
-  };
-  return hosts
-    .filter((host) => host.status === 'available' && hostSatisfies(host, node.requiredCapabilities))
-    .sort((a, b) => preferredIndex(a) - preferredIndex(b) || a.name.localeCompare(b.name));
-}
-
 function executablesForKinds(kinds: readonly ExecutionHostKind[]): string[] {
   const wanted = new Set(kinds.map((kind) => HOST_KIND_EXECUTABLE[kind]).filter((executable): executable is (typeof EXECUTABLE_ORDER)[number] => executable !== undefined));
   return EXECUTABLE_ORDER.filter((executable) => wanted.has(executable));
@@ -363,7 +352,7 @@ export interface NodeEnvelopeOptions {
 }
 
 async function buildEnvelope(plan: MissionPlan, node: MissionPlanNode, workItem: WorkItem, hosts: readonly ExecutionHost[], options: NodeEnvelopeOptions): Promise<ExecutionEnvelope> {
-  const rankedKinds = [...new Set(rankCapableHosts(hosts, node).map((host) => host.kind))];
+  const rankedKinds = [...new Set(rankHosts(hosts, node).map((host) => host.kind))];
   const hostKinds = node.preferredHostKinds.length > 0 ? [...node.preferredHostKinds] : rankedKinds;
   const allowedExecutables = node.kind === 'verify' ? ['node'] : executablesForKinds(hostKinds);
   const sourceRoot = options.sourceRoot !== undefined ? options.sourceRoot : repositoryRootFromNode(node);

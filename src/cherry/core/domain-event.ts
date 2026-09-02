@@ -70,6 +70,7 @@ export const PROOF_EVENT_TYPES = [
   'routine.enabled',
   'routine.paused',
   'routine.run_requested',
+  'host.probed',
   'mission.plan_created',
   'mission.plan_revised',
   'mission.plan_approved',
