@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
-import { createWorkspace } from '../../cherry/mission/mission-service.ts';
+import { createWorkspace, deleteWorkspace } from '../../cherry/mission/mission-service.ts';
 import { runnerStatus, type RunnerStatus } from '../../cherry/runner-client/runner-api.ts';
 import { createMission, listMissionCards, syncMission, type MissionCard } from '../../cherry/workforce/mission-control-service.ts';
 import { MISSION_TEMPLATES } from '../../cherry/workforce/mission-templates.ts';
@@ -59,10 +59,15 @@ export default function MissionControl() {
   }, [liveSync, activeWorkspace, cards, load]);
 
   async function checkRunner() {
-    if (runnerChecking || runner) return;
+    if (runnerChecking) return;
     setRunnerChecking(true);
-    setRunner(await runnerStatus());
-    setRunnerChecking(false);
+    try {
+      setRunner(await runnerStatus());
+    } catch {
+      setRunner({ reachable: false, paired: false });
+    } finally {
+      setRunnerChecking(false);
+    }
   }
 
   async function handlePlan(event: FormEvent<HTMLFormElement>) {
@@ -80,6 +85,26 @@ export default function MissionControl() {
 
     setError(null);
     setBusy(true);
+    let createdWorkspaceId: string | null = null;
+
+    async function failWithCompensation(message: string) {
+      if (!createdWorkspaceId) {
+        setError(message);
+        return;
+      }
+      try {
+        const cleanup = await deleteWorkspace(createdWorkspaceId);
+        if (!cleanup.ok) {
+          setError(`${message} Cherry could not remove the unfinished My Cherry space: ${cleanup.error.message}. Your outcome is still here—try again.`);
+          return;
+        }
+        setError(`${message} The unfinished My Cherry space was removed. Your outcome is still here—try again.`);
+      } catch (reason) {
+        const detail = reason instanceof Error ? reason.message : 'cleanup failed unexpectedly';
+        setError(`${message} Cherry could not remove the unfinished My Cherry space: ${detail}. Your outcome is still here—try again.`);
+      }
+    }
+
     try {
       let workspaceId = activeWorkspace?.id ?? null;
       if (!workspaceId) {
@@ -89,7 +114,7 @@ export default function MissionControl() {
           return;
         }
         workspaceId = workspace.value.id;
-        setActiveWorkspace(workspaceId);
+        createdWorkspaceId = workspaceId;
       }
 
       const result = await createMission({
@@ -100,16 +125,17 @@ export default function MissionControl() {
         constraints: constraints.split('\n').map((line) => line.trim()).filter(Boolean),
       });
       if (!result.ok) {
-        setError(result.error.message);
+        await failWithCompensation(result.error.message);
         return;
       }
 
+      if (createdWorkspaceId) setActiveWorkspace(workspaceId);
       setActiveMission(result.value.mission.id);
       await refresh();
       if (searchParams.get('outcome')) setSearchParams({}, { replace: true });
       navigate(`/studio/control/${result.value.mission.id}`);
     } catch {
-      setError('Cherry could not save that mission. Your outcome is still here—try again.');
+      await failWithCompensation('Cherry could not save that mission.');
     } finally {
       setBusy(false);
     }
@@ -126,11 +152,11 @@ export default function MissionControl() {
           : 'No runner detected. Planning and the recorded replay still work here.';
 
   return (
-    <main className="chronicle-control" data-testid="mission-control">
+    <section className="chronicle-control" data-testid="mission-control" aria-labelledby="mission-control-heading">
       <header className="chronicle-control__masthead">
         <div>
           <p className="chronicle-control__kicker">Mission Control · Outcome desk</p>
-          <h1 className="display-sm">What should Cherry take care of?</h1>
+          <h1 id="mission-control-heading" className="display-sm">What should Cherry take care of?</h1>
           <p className="chronicle-control__intro">
             Describe the result. Cherry turns it into a durable plan, with the team, checks, and decisions recorded before anything runs.
           </p>
@@ -201,7 +227,7 @@ export default function MissionControl() {
 
       <aside className="chronicle-replay" aria-label="Recorded mission replay">
         <span>
-          <Link to="/showcase#recorded-codex-mission">Replay the verified Codex mission</Link>
+          <Link to="/showcase#recorded-mission">Replay the verified Codex mission</Link>
           {' '}— a recorded, read-only walkthrough that needs no runner.
         </span>
       </aside>
@@ -238,6 +264,6 @@ export default function MissionControl() {
           </p>
         </section>
       ) : null}
-    </main>
+    </section>
   );
 }

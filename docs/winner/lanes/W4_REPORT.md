@@ -159,3 +159,71 @@ Rejected UI variants:
 - staged paths: exactly the eight files listed above
 - staged diff inspected: pass
 - clean worktree after commit: recorded in the W4 handoff
+
+## Fix round 1 — independent review findings
+
+### Status and exact files
+
+The first review concern above about a possible orphaned first-run workspace is superseded by this fix. The UI now performs a compensating rollback through the existing public `deleteWorkspace` service whenever this submission created `My Cherry` but mission planning subsequently failed or threw. No domain, persistence, runner, workforce, policy, or service file changed.
+
+Files changed in this round:
+
+- `src/pages/studio/MissionControl.tsx`
+- `src/components/studio/mission-control/LiveStartGate.tsx`
+- `tests/cherry/mission-control-first-run.test.tsx`
+- `e2e/cherry/final-winner-control.spec.ts`
+- `docs/winner/lanes/W4_REPORT.md`
+
+`src/pages/studio/MissionControlDetail.tsx` and `tests/cherry/mission-control.test.tsx` remained unchanged because the fixes did not require broadening their prior temporary locks.
+
+### RED evidence
+
+Command:
+
+```text
+npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx
+```
+
+The valid unrestricted RED run exited 1 with **7 failed / 7 passed (14 tests)**. Each failure matched one requested defect:
+
+1. the post-persistence `createMission` exception left the workspace and partial records instead of reporting a completed rollback;
+2. cleanup failure was not disclosed;
+3. the replay still navigated to `/showcase#recorded-codex-mission`;
+4. reopening Execution settings retained the first runner result;
+5. Mission Control added a second `<main>` inside the Studio shell;
+6. runner disconnect on window focus left Start visible;
+7. a once-eligible host never expired or re-probed.
+
+The first attempted RED command could not load Vitest because the sandbox denied Vite's `.vite-temp` write (`EPERM`); it was not counted as behavioral evidence. The same command was rerun outside that restriction to obtain the defect-specific RED result above.
+
+### Implementation and trust boundaries
+
+- The workspace id eligible for compensation exists only in the local submission scope and is assigned only after this submit successfully creates `My Cherry`. Existing active workspaces can never enter this rollback branch.
+- Active workspace and mission selection are delayed until `createMission` returns success. On failure, neither local-storage selection points to the transient workspace.
+- `deleteWorkspace` remains the sole rollback mechanism. Its existing cascade removes the workspace, mission, plan, and proof-event rows together. The regression first invokes the real `createMission`, lets it persist a partial mission, throws afterward, then proves all four observable record groups are empty after compensation.
+- If rollback returns a failure result or throws, the alert names that cleanup did not complete and includes the cleanup reason. The outcome stays in the textarea for recovery; the UI does not claim the workspace was removed.
+- `LiveStartGate` now starts every probe fail-closed, prevents overlapping probes, refreshes every 15 seconds and on window focus or visible-document return, and removes its interval/listeners on cleanup. Runner/host probe exceptions are caught and keep Start hidden.
+- Eligible host evidence must have a valid non-future `checkedAt` younger than 60 seconds. The test supplies a fresh timestamp, advances the clock through the bounded interval, and proves the previously visible Start action disappears once the evidence expires. A separate focus test proves runner unpair/disconnect also removes it.
+- Opening Execution settings now always rechecks runner status instead of treating the first response as permanent.
+- The recorded replay target is exactly `/showcase#recorded-mission`. This isolated W4 base intentionally lacks the W3 anchor; W0 must verify the real target after integrating W3.
+- Mission Control now uses one labelled `<section>` inside the Studio shell's existing `<main>`, preserving a single valid main landmark.
+
+### GREEN evidence
+
+- `npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx` — **14/14 passed**.
+- `npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx tests/cherry/mission-control.test.tsx` — **17/17 passed**.
+- `npm.cmd run typecheck` — passed after removing one unused test-only binding found by the first run.
+- `$env:CI='1'; npx.cmd playwright test e2e/cherry/final-winner-control.spec.ts --project=desktop` — **4/4 passed** against a fresh build: first outcome/reload, recoverable storage retry, exact replay URL, and 390×844 keyboard/reduced-motion/axe/overflow acceptance.
+- `npm.cmd run gates` — passed: typecheck; lint; Vitest **553 passed / 2 skipped**; runner/MCP **131 passed / 0 failed**.
+- `git diff --check` — passed before report append and is rerun in the final commit checklist.
+
+The first Playwright attempt was invalid because `reuseExistingServer` attached to a stale Showcase-lane preview on port 4173; its captured tree showed the pre-W4 `Name a space first` page. W3 confirmed and stopped that exact stale process. The authoritative run above forced CI mode, built this W4 worktree, and passed all four cases. Generated `docs/release/e2e-results.json`, `tsconfig.tsbuildinfo`, and `test-results/**` churn was restored or removed before staging.
+
+### Self-review and remaining concerns
+
+- Exact review of `74f104f608904f9c8e16fe9625f529c6c86b23a4..HEAD` found no direct database mutation, service semantic change, runner/policy change, unbounded polling, stale event listener, or cross-lane source edit.
+- Compensation is deliberately limited to a workspace created by the current submit. Failure in an existing workspace leaves that workspace untouched.
+- The live-start gate remains advisory UI only; `startMission` remains the click-time authority.
+- No new visual asset, dependency, gradient, animation, or design-system rule was added.
+- Concern: if compensating `deleteWorkspace` itself fails, partial state necessarily remains; the UI now reports that truthfully and retains the outcome, but does not attempt an unsafe lower-level cleanup.
+- Concern: no live runner credentials were used. Disconnect, host capability/freshness, rejection, cleanup, and timer behavior are verified through deterministic boundary doubles; W0 should verify the integrated W3 replay anchor and perform final release verification.

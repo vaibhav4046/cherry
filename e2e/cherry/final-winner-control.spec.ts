@@ -81,7 +81,7 @@ test.describe('final winner Mission Control', () => {
     const consoleErrors = collectConsoleErrors(page);
     await page.goto('/studio/control');
     await page.getByRole('link', { name: /Replay the verified Codex mission/i }).click();
-    await expect(page).toHaveURL(/\/showcase#recorded-codex-mission$/);
+    await expect(page).toHaveURL(/\/showcase#recorded-mission$/);
     expect(consoleErrors).toEqual([]);
   });
 
