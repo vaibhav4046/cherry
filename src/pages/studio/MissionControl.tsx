@@ -143,7 +143,7 @@ export default function MissionControl() {
         setActiveMission(savedMissionId);
         await refresh();
         if (searchParams.get('outcome')) setSearchParams({}, { replace: true });
-        navigate(`/studio/control/${savedMissionId}`);
+        await navigate(`/studio/control/${savedMissionId}`);
       } catch {
         setError('The mission was saved, but Cherry could not refresh Mission Control or open it. Your outcome is still here—reload to continue.');
       }

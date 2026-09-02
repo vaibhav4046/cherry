@@ -29,6 +29,21 @@ const appStateApi = vi.hoisted(() => ({
   refresh: null as null | (() => Promise<void>),
 }));
 
+const routerApi = vi.hoisted(() => ({
+  navigate: null as null | ((to: string) => void | Promise<void>),
+}));
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => {
+      const navigate = actual.useNavigate();
+      return routerApi.navigate ?? navigate;
+    },
+  };
+});
+
 vi.mock('../../src/app/AppState.tsx', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/app/AppState.tsx')>();
   return {
@@ -135,6 +150,7 @@ describe('Mission Control first run', () => {
     freshDb();
     localStorage.clear();
     appStateApi.refresh = null;
+    routerApi.navigate = null;
     await resetServiceDoubles();
     runnerApi.status.mockReset().mockResolvedValue({ reachable: false, paired: false });
     runnerApi.hosts.mockReset().mockResolvedValue({
@@ -257,6 +273,44 @@ describe('Mission Control first run', () => {
     expect(workspaceApi.remove).not.toHaveBeenCalled();
     expect(localStorage.getItem('cherry.activeWorkspaceId')).toBe(workspace.id);
     expect(localStorage.getItem('cherry.activeMissionId')).toBe(missions[0]!.id);
+    await waitFor(() => expect(screen.getByTestId('plan-mission').getAttribute('aria-busy')).toBe('false'));
+    expect(screen.queryByTestId('detail-route')).toBeNull();
+  });
+
+  it('reports rejected navigation without rolling back a saved first mission', async () => {
+    const outcome = 'Research this market and produce an evidence-backed launch brief.';
+    let rejectNavigation = (_reason: Error) => {};
+    const navigationFailure = new Promise<void>((_resolve, reject) => {
+      rejectNavigation = reject;
+    });
+    void navigationFailure.catch(() => undefined);
+    const rejectedNavigate = vi.fn().mockReturnValue(navigationFailure);
+    routerApi.navigate = rejectedNavigate;
+    renderControl();
+
+    const input = await screen.findByTestId('outcome-input');
+    fireEvent.change(input, { target: { value: outcome } });
+    fireEvent.submit(screen.getByTestId('outcome-composer'));
+    await waitFor(() => expect(rejectedNavigate).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      rejectNavigation(new Error('Navigation failed'));
+      await Promise.resolve();
+    });
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(/mission was saved.*open.*reload/i);
+    expect((input as HTMLTextAreaElement).value).toBe(outcome);
+    const workspaces = await listWorkspaces();
+    expect(workspaces).toHaveLength(1);
+    const workspace = workspaces[0]!;
+    const missions = await listMissions(workspace.id);
+    expect(missions).toHaveLength(1);
+    expect(await listMissionPlans(workspace.id)).toHaveLength(1);
+    expect(await listMissionCards(workspace.id)).toHaveLength(1);
+    expect((await listProofEvents(workspace.id, 100)).some((event) => event.type === 'mission.plan_created')).toBe(true);
+    expect(workspaceApi.remove).not.toHaveBeenCalled();
+    expect(localStorage.getItem('cherry.activeWorkspaceId')).toBe(workspace.id);
+    expect(localStorage.getItem('cherry.activeMissionId')).toBe(missions[0]!.id);
+    expect(rejectedNavigate).toHaveBeenCalledWith(`/studio/control/${missions[0]!.id}`);
     await waitFor(() => expect(screen.getByTestId('plan-mission').getAttribute('aria-busy')).toBe('false'));
     expect(screen.queryByTestId('detail-route')).toBeNull();
   });

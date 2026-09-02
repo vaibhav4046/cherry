@@ -274,3 +274,47 @@ The known Browserslist/Tailwind notices and third-party Privy PURE-annotation/ch
 - Existing active workspaces remain ineligible for compensation. The page still uses only public services and AppState APIs; no lower-level IndexedDB write was added.
 - No visual layout, runner readiness, replay, or live-start behavior changed in this round.
 - Concern: after a post-save UI synchronization failure, the user must reload Mission Control to resynchronize the in-memory shell with the already durable records. The UI states this plainly and does not retry automatically or risk deleting valid state.
+
+## Fix round 3 — observe asynchronous navigation failure
+
+### Status and exact files
+
+Status: **DONE**. This round changes only:
+
+- `src/pages/studio/MissionControl.tsx`
+- `tests/cherry/mission-control-first-run.test.tsx`
+- `docs/winner/lanes/W4_REPORT.md`
+
+No service, persistence, runtime, runner, workforce, policy, route, E2E, package, asset, or other report file changed.
+
+### RED evidence
+
+Command:
+
+```text
+npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx -t "reports rejected navigation without rolling back a saved first mission"
+```
+
+The RED run exited 1 with **1 failed / 15 skipped**. After real workspace, mission, plan, and proof persistence, the mocked React Router `NavigateFunction` returned a promise that was rejected under `act`. The unmodified page did not observe that promise, so the regression failed with `Unable to find role="alert"`: no controlled post-save guidance appeared.
+
+### Implementation and recovery boundary
+
+- The existing post-success call is now `await navigate(...)`. Both a synchronous navigation throw and an asynchronous navigation rejection therefore enter the same non-destructive post-save catch.
+- The creation-success boundary and compensation behavior are unchanged. Navigation failure cannot invoke `deleteWorkspace`.
+- The regression keeps the domain services real and mocks only the router navigation boundary. It proves that the workspace, mission, plan, mission card, and `mission.plan_created` proof event remain durable; active workspace and mission ids refer to those retained records; the outcome remains in the textarea; no detail route is claimed; rollback is not called; and the existing truthful saved/reload alert appears.
+
+### GREEN evidence
+
+- Isolated navigation regression — **1/1 passed** (15 skipped).
+- `npm.cmd test -- tests/cherry/mission-control-first-run.test.tsx tests/cherry/mission-control.test.tsx` — **19/19 passed**.
+- `npm.cmd run gates` — passed: typecheck; lint; Vitest **60 passed / 1 skipped files, 555 passed / 2 skipped tests**; runner/MCP **131 passed / 0 failed**.
+- `git diff --check` — passed before this append and is rerun after staging.
+
+Targeted Playwright was not rerun because this round changes only observation of a programmatically rejected navigation promise. The direct Vitest regression controls that otherwise unavailable browser boundary; normal route targets, layout, and user-visible success navigation are unchanged. Known Browserslist and Tailwind notices remain unchanged.
+
+### Self-review and remaining concerns
+
+- Removing `await` recreates the exact RED: persisted state survives, but the rejected promise produces no controlled guidance. This makes the regression sensitive to the required production behavior rather than the mock alone.
+- The diff adds one production keyword and one boundary regression; it does not broaden the post-success catch or compensation scope.
+- Existing refresh-rejection, partial-create rollback, cleanup-failure, reload, replay, landmark, and live-start regressions remain green through the focused suite and full gates.
+- Concern: the normal React Router implementation generally completes navigation synchronously; this regression protects data and guidance if a framework/data-router implementation returns a rejecting promise in the future.
