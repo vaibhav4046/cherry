@@ -220,4 +220,7 @@ Recorded, not patched:
 
 `origin/main` moved from `c4a0af1` to `f761615` (four commits) while this lane ran. None of them touch
 a file in this lane; `git merge-tree --write-tree origin/main claude/final-visual-qa` reports a clean
-merge. Of the three main regressions above, `163e391` addresses 7 and 9; 8 remains.
+merge. Re-running the three specs against a detached checkout of `f761615` (fresh `npm ci`, build,
+preview on :4176): `library-actions.spec.ts` 3 passed, `t11-misc-copy.spec.ts` 4 passed,
+`memory-routine.spec.ts` 4 passed and 1 failed (`:97`, "Runner paired" still never appears). So
+blockers 7 and 9 are closed on main; blocker 8 remains.
