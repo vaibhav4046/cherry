@@ -86,6 +86,11 @@ export function Landing() {
               <Link to="/studio?demo=1" className="btn btn-sm" data-testid="guided-example-link">Try the guided example</Link>
               <Link to="/studio/skills" className="link-quiet">Browse the skill library</Link>
             </div>
+            <div className="gm-band" data-testid="real-run-band">
+              <h3 className="gm-band-title">Teach once. Every agent gets better.</h3>
+              <p className="muted">The recorded golden run shows one lesson becoming a proven skill that Codex, Claude Code and a WebMCP host install at the same approved revision.</p>
+              <Link to="/showcase#real-run" className="link-quiet">Watch the real run</Link>
+            </div>
           </div>
           <EditorialPlate plate="teach" />
         </LandingSection>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listMissions, listWorkspaces } from '../../cherry/mission/mission-service.ts';
-import { runnerStatus } from '../../cherry/runner-client/runner-api.ts';
+import { getStoredPairToken, runnerStatus } from '../../cherry/runner-client/runner-api.ts';
 import { TEAMMATE_EXAMPLE_ROWS } from './landing-content.ts';
 
 interface LiveRow {
@@ -37,6 +37,9 @@ export function TeammateRail() {
     let cancelled = false;
     void (async () => {
       try {
+        // A public page never probes the local runner on its own; only a browser that already
+        // holds a pairing token (the owner, in Studio) asks whether live rows exist.
+        if (!getStoredPairToken()) return;
         const runner = await runnerStatus();
         if (!runner.reachable || !runner.paired) return;
         const workspaces = await listWorkspaces();

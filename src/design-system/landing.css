@@ -111,3 +111,20 @@
 @media (prefers-reduced-motion: reduce) {
   .gm-use-case { transition: none; }
 }
+
+/* A short proof band inside a chapter figure. */
+.gm-band {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: var(--border);
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.gm-band-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
