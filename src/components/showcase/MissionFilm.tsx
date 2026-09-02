@@ -33,19 +33,21 @@ function MissionStill() {
 
 export function MissionFilm({ reducedMotion }: { reducedMotion: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [paused, setPaused] = useState(false);
+  const [playback, setPlayback] = useState<'paused' | 'playing' | 'error'>('paused');
 
   if (reducedMotion) return <MissionStill />;
 
   async function togglePlayback() {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) {
-      await video.play();
-      setPaused(false);
-    } else {
+    if (playback === 'playing') {
       video.pause();
-      setPaused(true);
+      return;
+    }
+    try {
+      await video.play();
+    } catch {
+      setPlayback('error');
     }
   }
 
@@ -62,10 +64,19 @@ export function MissionFilm({ reducedMotion }: { reducedMotion: boolean }) {
         playsInline
         preload="metadata"
         aria-label="Silent mission film"
+        onPlay={() => setPlayback('playing')}
+        onPause={() => setPlayback('paused')}
+        onEnded={() => setPlayback('paused')}
+        onError={() => setPlayback('error')}
       />
       <button type="button" className="mission-film__control" onClick={() => void togglePlayback()}>
-        {paused ? 'Play film' : 'Pause film'}
+        {playback === 'playing' ? 'Pause film' : playback === 'error' ? 'Retry film' : 'Play film'}
       </button>
+      {playback === 'error' ? (
+        <p className="mission-film__error" role="status" aria-live="polite">
+          The mission film could not play.
+        </p>
+      ) : null}
     </div>
   );
 }

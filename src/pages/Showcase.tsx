@@ -34,6 +34,7 @@ function useRecordedMission() {
         if (!response.ok) throw new Error(`Replay returned HTTP ${response.status}.`);
         const replay: unknown = await response.json();
         if (!(await verifyRecordedMissionFixture(replay))) throw new Error('Replay integrity verification failed.');
+        if (controller.signal.aborted) return;
         setFixture(replay as RecordedMissionFixture);
       } catch (reason) {
         if (!controller.signal.aborted) {
@@ -163,7 +164,7 @@ export function Showcase() {
             This is a replay of a committed real Codex run: concurrent work, isolated boundaries,
             independent checks, and an honest stop before public action.
           </p>
-          <a className="winner-showcase__jump" href="#recorded-mission">Inspect the sealed replay ↓</a>
+          <a className="winner-showcase__jump" href="#recorded-mission">Inspect the digest-pinned replay ↓</a>
         </div>
         <div className="winner-showcase__film">
           <MissionFilm reducedMotion={reducedMotion} />

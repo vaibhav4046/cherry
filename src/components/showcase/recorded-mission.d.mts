@@ -1,4 +1,4 @@
-/** Public, integrity-sealed projection of the committed real-host capture. */
+/** Public projection whose SHA-256 digest is pinned outside the replay payload. */
 export type RecordedMissionStateName =
   | 'idle'
   | 'planning'
@@ -70,4 +70,4 @@ export interface RecordedMissionFixture {
 
 export function canonicalJson(value: unknown): string;
 export function buildRecordedMissionFixture(captureText: string): Promise<RecordedMissionFixture>;
-export function verifyRecordedMissionFixture(candidate: unknown): Promise<boolean>;
+export function verifyRecordedMissionFixture(candidate: unknown, expectedReplaySha256?: string): Promise<boolean>;

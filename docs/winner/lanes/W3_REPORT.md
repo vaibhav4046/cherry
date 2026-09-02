@@ -127,3 +127,28 @@ After cherry-picking the W3 handoff commit, W0 should:
 5. deploy only from W0's integration lane, then verify the public media returns 200 and that no service worker serves an older showcase chunk.
 
 No live-deployment claim is made here. Integration should use the exact W3 commit SHA supplied in the handoff.
+
+## Fix round 1 — independently pinned replay and claim validation
+
+Status: **DONE**
+
+This section appends to, and where necessary corrects, the original evidence above. The replay's embedded SHA-256 field is no longer treated as a self-authenticating seal. The default browser verifier now requires both (a) a recomputed canonical payload digest matching the embedded digest and (b) that digest matching the independently committed pin in `src/components/showcase/recorded-mission-trust.mjs`. The UI now says `digest-pinned replay` and `SHA-256 pin verified`. The owned generator updates the public JSON and source pin together from the committed capture; deterministic regeneration kept the replay at **7,381 bytes** and the pinned digest at `bac2a98278782ea4ad9b937d43b19f18960da0cee720ade3022c8f5878932490`.
+
+The source projection now rejects any worker unless its node status is `succeeded`, evaluation and every required check are `passed`, boundary is `worktree-process`, base commit is `18774c71f7a0d9ca4e06997093b1011c75f3ba85`, host identity is `codex` / `codex-cli`, and host version is `codex-cli 0.152.1`. Each private root must be an absolute Windows path ending in the mission/worker-specific `.cherry-sandboxes/<mission>/wk-<worker>` suffix, must equal the evaluation root, and must be unique; the root is still stripped from the public projection. A sweep of all worker start/end boundaries now recomputes peak concurrency, with finishes ordered before starts at equal timestamps, and the source's `maxConcurrentNodes` claim must equal that measured peak. The public verifier independently rechecks worker success, passed checks, expected boundary/base/version, valid intervals, and exact overlap evidence before success copy can render.
+
+`MissionFilm` now begins from the observable paused state and derives its Play/Pause/ended/error state only from media events. A rejected `play()` request produces a polite status and retry control. The replay loader now rechecks its `AbortSignal` after async digest verification and before publishing state, preventing an obsolete Strict Mode request from overwriting the current replay.
+
+### Fix-round TDD evidence
+
+- Initial focused RED: `npm.cmd test -- tests/cherry/showcase-winner.test.tsx` — **19 failed / 11 passed**. Failures demonstrated a forged payload plus recomputed embedded self-hash being accepted; 11 invalid raw source claims being accepted; four forged public success structures being accepted; the independent pin not being generated; and film control state not following media reality. Three existing missing-field cases already failed closed.
+- Abort race RED: after correcting only the test's router/provider/Strict Mode harness, the isolated test failed on `expected null`, receiving `Stale replay from the aborted request` after the already-aborted request's delayed digest resumed.
+- Focused GREEN: `npm.cmd test -- tests/cherry/showcase-winner.test.tsx` — **30/30 passed** on three independent final runs (Vitest total durations **6.88 s**, **6.34 s**, and **6.20 s**).
+- Deterministic generation: `node scripts/capture-winner-demo.mjs` — **passed**, wrote a verified **7,381-byte** replay and matching source pin; the tracked public JSON remained byte-identical.
+- Focused ESLint — **passed** for every changed implementation/test file.
+- `npm.cmd run typecheck` — **passed**.
+- `npm.cmd run build` — **passed** (`tsc -b` plus Vite, built in **31.82 s**; existing third-party PURE-annotation and chunk-size warnings only).
+- `npx.cmd playwright test e2e/cherry/final-winner-showcase.spec.ts --project=desktop` — **4/4 passed** in **1.7 min**: evidence-first story, keyboard/evidence controls, reduced-motion still/no autoplay, and 390 px no-overflow/asset integrity.
+- `npm.cmd run gates` — **passed**: typecheck; lint; Vitest **60 passed / 1 skipped files, 569 passed / 2 skipped tests**; runner/MCP **131/131 passed**.
+- `git diff --check` — **passed**.
+
+Fix-round owned changes are limited to `scripts/capture-winner-demo.mjs`, `src/components/showcase/MissionFilm.tsx`, `src/components/showcase/RecordedMissionPlayer.tsx`, `src/components/showcase/recorded-mission.{mjs,d.mts}`, new generated `src/components/showcase/recorded-mission-trust.mjs`, `src/pages/Showcase.tsx`, `tests/cherry/showcase-winner.test.tsx`, and this appended report section. No media bytes, W1 assets, runtime/workforce semantics, manifests, release source evidence, authentication, or deployment state changed.

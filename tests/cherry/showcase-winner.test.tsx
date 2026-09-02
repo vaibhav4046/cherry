@@ -1,19 +1,53 @@
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { AppStateProvider } from '../../src/app/AppState';
 import {
   buildRecordedMissionFixture,
+  canonicalJson,
   verifyRecordedMissionFixture,
 } from '../../src/components/showcase/recorded-mission.mjs';
+import { MissionFilm } from '../../src/components/showcase/MissionFilm';
 import { RecordedMissionPlayer } from '../../src/components/showcase/RecordedMissionPlayer';
 import type { RecordedMissionFixture } from '../../src/components/showcase/recorded-mission.mjs';
+import { Showcase } from '../../src/pages/Showcase';
 // @ts-expect-error The owned Node ESM capture CLI is exercised through its runtime exports.
 import { inspectWebm, writePublicReplay } from '../../scripts/capture-winner-demo.mjs';
 
 const capturePath = resolve('docs/release/benchmarks/god-mode-hosts.json');
 const captureText = readFileSync(capturePath, 'utf8');
+const expectedReplaySha256 = 'bac2a98278782ea4ad9b937d43b19f18960da0cee720ade3022c8f5878932490';
+
+interface RawWorkerFixture {
+  status?: string;
+  sandbox?: { root?: string; boundary?: string; baseCommit?: string };
+  host?: { hostId?: string; kind?: string; version?: string };
+  evaluation?: { status?: string; checks: Array<{ status?: string }> };
+}
+
+interface RawCaptureFixture {
+  maxConcurrentNodes?: number;
+  mission: { nodes: Record<string, RawWorkerFixture> };
+}
+
+function rawCapture(): RawCaptureFixture {
+  return JSON.parse(captureText) as RawCaptureFixture;
+}
+
+function firstRawWorker(capture: RawCaptureFixture): RawWorkerFixture {
+  return capture.mission.nodes['developer-fix']!;
+}
+
+function recomputeEmbeddedHash(fixture: RecordedMissionFixture): void {
+  const { integrity, ...payload } = fixture;
+  void integrity;
+  fixture.integrity.replaySha256 = createHash('sha256').update(canonicalJson(payload)).digest('hex');
+}
 
 describe('winner mission replay fixture', () => {
   it('derives an ordered, overlapping and public-safe replay from the committed real-host capture', async () => {
@@ -84,16 +118,68 @@ describe('winner mission replay fixture', () => {
     expect(await verifyRecordedMissionFixture(tampered)).toBe(false);
   });
 
+  it('rejects a forged replay even when an attacker recomputes its embedded self-hash', async () => {
+    const fixture = await buildRecordedMissionFixture(captureText);
+    const forged = structuredClone(fixture);
+    forged.mission.outcome = 'Forged outcome with a matching embedded digest';
+    recomputeEmbeddedHash(forged);
+
+    expect(forged.integrity.replaySha256).not.toBe(expectedReplaySha256);
+    expect(await verifyRecordedMissionFixture(forged)).toBe(false);
+  });
+
+  it.each([
+    ['an impossible max concurrency claim', (raw: RawCaptureFixture) => { raw.maxConcurrentNodes = 99; }],
+    ['a failed worker', (raw: RawCaptureFixture) => { firstRawWorker(raw).status = 'failed'; }],
+    ['a failed evaluation', (raw: RawCaptureFixture) => { firstRawWorker(raw).evaluation!.status = 'failed'; }],
+    ['a failed check', (raw: RawCaptureFixture) => { firstRawWorker(raw).evaluation!.checks[0]!.status = 'failed'; }],
+    ['a shared-process boundary', (raw: RawCaptureFixture) => { firstRawWorker(raw).sandbox!.boundary = 'shared-process'; }],
+    ['the wrong host id', (raw: RawCaptureFixture) => { firstRawWorker(raw).host!.hostId = 'other'; }],
+    ['the wrong host kind', (raw: RawCaptureFixture) => { firstRawWorker(raw).host!.kind = 'other-cli'; }],
+    ['a missing host', (raw: RawCaptureFixture) => { delete firstRawWorker(raw).host; }],
+    ['the wrong base commit', (raw: RawCaptureFixture) => { firstRawWorker(raw).sandbox!.baseCommit = 'f'.repeat(40); }],
+    ['a missing base commit', (raw: RawCaptureFixture) => { delete firstRawWorker(raw).sandbox!.baseCommit; }],
+    ['the wrong workspace root', (raw: RawCaptureFixture) => { firstRawWorker(raw).sandbox!.root = 'C:\\shared\\worker'; }],
+    ['a missing workspace root', (raw: RawCaptureFixture) => { delete firstRawWorker(raw).sandbox!.root; }],
+    ['the wrong Codex version', (raw: RawCaptureFixture) => { firstRawWorker(raw).host!.version = 'codex-cli 999'; }],
+    ['a missing Codex version', (raw: RawCaptureFixture) => { delete firstRawWorker(raw).host!.version; }],
+  ])('rejects source evidence with %s', async (_label, mutate) => {
+    const raw = rawCapture();
+    mutate(raw);
+
+    await expect(buildRecordedMissionFixture(JSON.stringify(raw))).rejects.toThrow();
+  });
+
+  it.each([
+    ['failed worker status', (fixture: RecordedMissionFixture) => { fixture.workers[0]!.status = 'failed'; }],
+    ['failed check status', (fixture: RecordedMissionFixture) => { fixture.workers[0]!.checks[0]!.status = 'failed'; }],
+    ['the wrong boundary', (fixture: RecordedMissionFixture) => { fixture.workers[0]!.boundary = 'shared-process'; }],
+    ['an impossible peak', (fixture: RecordedMissionFixture) => { fixture.overlap.maxConcurrentNodes = 99; }],
+  ])('rejects structurally false public success evidence with %s', async (_label, mutate) => {
+    const fixture = await buildRecordedMissionFixture(captureText);
+    const forged = structuredClone(fixture);
+    mutate(forged);
+    recomputeEmbeddedHash(forged);
+
+    expect(await verifyRecordedMissionFixture(forged, forged.integrity.replaySha256)).toBe(false);
+  });
+
   it('writes only the sealed public projection and produces identical bytes on repeat generation', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'cherry-recorded-mission-'));
     const firstPath = join(directory, 'first.json');
     const secondPath = join(directory, 'second.json');
+    const firstTrustPath = join(directory, 'first-trust.mjs');
+    const secondTrustPath = join(directory, 'second-trust.mjs');
     try {
-      const first = await writePublicReplay(capturePath, firstPath);
-      const second = await writePublicReplay(capturePath, secondPath);
+      const first = await writePublicReplay(capturePath, firstPath, firstTrustPath);
+      const second = await writePublicReplay(capturePath, secondPath, secondTrustPath);
       const firstBytes = readFileSync(firstPath, 'utf8');
       expect(first).toEqual({ outputPath: firstPath, bytes: Buffer.byteLength(firstBytes), verified: true });
       expect(readFileSync(secondPath, 'utf8')).toBe(firstBytes);
+      expect(readFileSync(firstTrustPath, 'utf8')).toBe(
+        `// Generated by scripts/capture-winner-demo.mjs; do not hand-edit.\nexport const RECORDED_MISSION_EXPECTED_SHA256 = '${expectedReplaySha256}';\n`,
+      );
+      expect(readFileSync(secondTrustPath, 'utf8')).toBe(readFileSync(firstTrustPath, 'utf8'));
       expect(second.verified).toBe(true);
       expect(firstBytes).not.toMatch(/(?:[A-Z]:\\|AppData|\\Users\\|\.cherry-sandboxes|stdoutTail|stderrTail)/i);
     } finally {
@@ -112,6 +198,98 @@ describe('winner mission replay fixture', () => {
   });
 });
 
+describe('mission film', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('derives its control from actual media events and reports a rejected play request', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValueOnce(new DOMException('Autoplay blocked', 'NotAllowedError'));
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    render(<MissionFilm reducedMotion={false} />);
+
+    const film = screen.getByLabelText('Silent mission film');
+    expect(screen.getByRole('button', { name: 'Play film' })).toBeTruthy();
+    fireEvent.play(film);
+    expect(screen.getByRole('button', { name: 'Pause film' })).toBeTruthy();
+    fireEvent.pause(film);
+    expect(screen.getByRole('button', { name: 'Play film' })).toBeTruthy();
+    fireEvent.play(film);
+    fireEvent.ended(film);
+    expect(screen.getByRole('button', { name: 'Play film' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play film' }));
+    expect((await screen.findByRole('status')).textContent).toContain('The mission film could not play.');
+    expect(screen.getByRole('button', { name: 'Retry film' })).toBeTruthy();
+  });
+});
+
+describe('Showcase replay loading', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not publish a replay whose digest finishes after its request was aborted', async () => {
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })));
+    const fixture = await buildRecordedMissionFixture(captureText);
+    const abortedReplay = structuredClone(fixture);
+    const currentReplay = structuredClone(fixture);
+    let resolveAbortedFetch = (_response: { ok: boolean; json: () => Promise<RecordedMissionFixture> }) => {};
+    const abortedFetch = new Promise<{ ok: boolean; json: () => Promise<RecordedMissionFixture> }>((resolveFetch) => {
+      resolveAbortedFetch = resolveFetch;
+    });
+    const fetchMock = vi.fn()
+      .mockReturnValueOnce(abortedFetch)
+      .mockResolvedValue({ ok: true, json: async () => currentReplay });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const originalDigest = globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+    let releaseDigest = () => {};
+    let markDigestStarted = () => {};
+    const digestGate = new Promise<void>((resolveGate) => { releaseDigest = resolveGate; });
+    const digestStarted = new Promise<void>((resolveStarted) => { markDigestStarted = resolveStarted; });
+    vi.spyOn(globalThis.crypto.subtle, 'digest')
+      .mockImplementationOnce((algorithm, data) => originalDigest(algorithm, data))
+      .mockImplementationOnce(async (algorithm, data) => {
+        const digest = await originalDigest(algorithm, data);
+        markDigestStarted();
+        await digestGate;
+        return digest;
+      })
+      .mockImplementation((algorithm, data) => originalDigest(algorithm, data));
+
+    render(
+      <StrictMode>
+        <MemoryRouter>
+          <AppStateProvider><Showcase /></AppStateProvider>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    expect(await screen.findAllByText(fixture.mission.outcome)).toHaveLength(2);
+    await act(async () => {
+      resolveAbortedFetch({ ok: true, json: async () => abortedReplay });
+    });
+    await digestStarted;
+    abortedReplay.mission.outcome = 'Stale replay from the aborted request';
+    await act(async () => {
+      releaseDigest();
+      await new Promise((resolveTick) => setTimeout(resolveTick, 0));
+    });
+
+    await waitFor(() => expect(screen.queryByText('Stale replay from the aborted request')).toBeNull());
+  });
+});
+
 describe('recorded mission player', () => {
   let fixture: RecordedMissionFixture;
 
@@ -121,6 +299,7 @@ describe('recorded mission player', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('exposes all six states and exact keyboard-operable controls without relying on color', () => {

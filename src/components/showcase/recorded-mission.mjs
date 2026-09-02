@@ -1,6 +1,15 @@
+import { RECORDED_MISSION_EXPECTED_SHA256 } from './recorded-mission-trust.mjs';
+
 const PRIVATE_MATERIAL = /(?:[a-z]:\\|\\users\\|\/users\/|\/home\/|\/tmp\/|appdata|\.cherry-sandboxes|stdouttail|stderrtail)/i;
 const SHA256 = /^[a-f0-9]{64}$/;
 const GIT_COMMIT = /^[a-f0-9]{40}$/;
+const EXPECTED_BASE_COMMIT = '18774c71f7a0d9ca4e06997093b1011c75f3ba85';
+const EXPECTED_BOUNDARY = 'worktree-process';
+const EXPECTED_HOST = Object.freeze({
+  hostId: 'codex',
+  kind: 'codex-cli',
+  version: 'codex-cli 0.152.1',
+});
 const REPLAY_STATES = [
   'idle',
   'planning',
@@ -115,18 +124,38 @@ function validatePublicEvents(value, missionId) {
   }
 }
 
-function publicWorkers(nodes) {
+function publicWorkers(nodes, missionId) {
   const entries = Object.entries(record(nodes, 'mission.nodes'))
     .sort(([, left], [, right]) => Date.parse(left.startedAt) - Date.parse(right.startedAt));
   invariant(entries.length >= 2, 'mission must contain at least two workers');
+  const roots = new Set();
 
   return entries.map(([id, candidate], index) => {
     const node = record(candidate, `mission.nodes.${id}`);
     const sandbox = record(node.sandbox, `mission.nodes.${id}.sandbox`);
     const host = record(node.host, `mission.nodes.${id}.host`);
     const evaluation = record(node.evaluation, `mission.nodes.${id}.evaluation`);
+    invariant(node.id === id, `worker ${id} identity does not match its node key`);
+    invariant(node.status === 'succeeded', `worker ${id} status is not succeeded`);
+    invariant(evaluation.status === 'passed', `worker ${id} evaluation did not pass`);
+    invariant(sandbox.boundary === EXPECTED_BOUNDARY, `worker ${id} boundary is not ${EXPECTED_BOUNDARY}`);
+    invariant(sandbox.baseCommit === EXPECTED_BASE_COMMIT, `worker ${id} base commit is unexpected`);
+    invariant(host.hostId === EXPECTED_HOST.hostId, `worker ${id} host id is unexpected`);
+    invariant(host.kind === EXPECTED_HOST.kind, `worker ${id} host kind is unexpected`);
+    invariant(host.version === EXPECTED_HOST.version, `worker ${id} host version is unexpected`);
+
+    const root = string(sandbox.root, `worker ${id}.sandbox.root`);
+    const normalizedRoot = root.replace(/\\/g, '/');
+    const expectedSuffix = `/.cherry-sandboxes/${missionId}/wk-${id}`;
+    invariant(/^[a-z]:\//i.test(normalizedRoot), `worker ${id} workspace root is not absolute`);
+    invariant(normalizedRoot.endsWith(expectedSuffix), `worker ${id} workspace root is unexpected`);
+    invariant(evaluation.sandboxRoot === root, `worker ${id} evaluation workspace root does not match`);
+    invariant(!roots.has(normalizedRoot.toLowerCase()), `worker ${id} reuses another workspace root`);
+    roots.add(normalizedRoot.toLowerCase());
+
     const checks = array(evaluation.checks, `mission.nodes.${id}.evaluation.checks`).map((candidateCheck, checkIndex) => {
       const check = record(candidateCheck, `mission.nodes.${id}.evaluation.checks[${checkIndex}]`);
+      invariant(check.status === 'passed', `check ${id}.${checkIndex} did not pass`);
       return {
         id: safeText(check.id, `check ${id}.${checkIndex}.id`),
         name: safeText(check.name, `check ${id}.${checkIndex}.name`),
@@ -135,6 +164,13 @@ function publicWorkers(nodes) {
       };
     });
     invariant(checks.length > 0, `worker ${id} must have verification checks`);
+    const requiredIds = array(evaluation.requiredIds, `mission.nodes.${id}.evaluation.requiredIds`)
+      .map((requiredId, requiredIndex) => safeText(requiredId, `worker ${id}.requiredIds[${requiredIndex}]`));
+    invariant(requiredIds.length === checks.length, `worker ${id} required checks are incomplete`);
+    invariant(
+      requiredIds.every((requiredId) => checks.some((check) => check.id === requiredId)),
+      `worker ${id} required checks do not match results`,
+    );
 
     return {
       id: safeText(id, `worker ${index}.id`),
@@ -152,9 +188,14 @@ function publicWorkers(nodes) {
   });
 }
 
-function measuredOverlap(workers, maxConcurrentNodes) {
+function measuredOverlap(workers) {
   let best = null;
+  const boundaries = [];
   for (let left = 0; left < workers.length; left += 1) {
+    const workerStart = Date.parse(workers[left].startedAt);
+    const workerFinish = Date.parse(workers[left].finishedAt);
+    invariant(workerFinish > workerStart, `worker ${workers[left].id} interval is invalid`);
+    boundaries.push({ at: workerStart, delta: 1 }, { at: workerFinish, delta: -1 });
     for (let right = left + 1; right < workers.length; right += 1) {
       const start = Math.max(Date.parse(workers[left].startedAt), Date.parse(workers[right].startedAt));
       const finish = Math.min(Date.parse(workers[left].finishedAt), Date.parse(workers[right].finishedAt));
@@ -165,7 +206,14 @@ function measuredOverlap(workers, maxConcurrentNodes) {
     }
   }
   invariant(best, 'overlap claim has no overlapping worker intervals');
-  return { ...best, maxConcurrentNodes: integer(maxConcurrentNodes, 'maxConcurrentNodes') };
+  boundaries.sort((left, right) => left.at - right.at || left.delta - right.delta);
+  let concurrent = 0;
+  let maxConcurrentNodes = 0;
+  for (const boundary of boundaries) {
+    concurrent += boundary.delta;
+    maxConcurrentNodes = Math.max(maxConcurrentNodes, concurrent);
+  }
+  return { ...best, maxConcurrentNodes };
 }
 
 function replayStates(capture, mission, plan, workers, overlap) {
@@ -243,22 +291,32 @@ function validatePublicReplay(candidate) {
     safeText(worker.id, `workers[${index}].id`);
     safeText(worker.label, `workers[${index}].label`);
     invariant(worker.workspaceLabel === `Isolated worktree ${index + 1}`, `workers[${index}] workspace label is invalid`);
-    safeText(worker.boundary, `workers[${index}].boundary`);
-    safeText(worker.baseCommit, `workers[${index}].baseCommit`);
-    safeText(worker.hostVersion, `workers[${index}].hostVersion`);
-    timestamp(worker.startedAt, `workers[${index}].startedAt`);
-    timestamp(worker.finishedAt, `workers[${index}].finishedAt`);
-    timestamp(worker.verificationStartedAt, `workers[${index}].verificationStartedAt`);
-    array(worker.checks, `workers[${index}].checks`).forEach((check, checkIndex) => {
+    invariant(worker.boundary === EXPECTED_BOUNDARY, `workers[${index}] boundary is invalid`);
+    invariant(worker.baseCommit === EXPECTED_BASE_COMMIT, `workers[${index}] base commit is invalid`);
+    invariant(worker.hostVersion === EXPECTED_HOST.version, `workers[${index}] host version is invalid`);
+    invariant(worker.status === 'succeeded', `workers[${index}] status is not succeeded`);
+    const startedAt = timestamp(worker.startedAt, `workers[${index}].startedAt`);
+    const finishedAt = timestamp(worker.finishedAt, `workers[${index}].finishedAt`);
+    const verificationStartedAt = timestamp(worker.verificationStartedAt, `workers[${index}].verificationStartedAt`);
+    invariant(Date.parse(finishedAt) > Date.parse(startedAt), `workers[${index}] interval is invalid`);
+    invariant(
+      Date.parse(verificationStartedAt) >= Date.parse(startedAt)
+        && Date.parse(verificationStartedAt) <= Date.parse(finishedAt),
+      `workers[${index}] verification time is outside its interval`,
+    );
+    const checks = array(worker.checks, `workers[${index}].checks`);
+    invariant(checks.length > 0, `workers[${index}] checks are incomplete`);
+    checks.forEach((check, checkIndex) => {
       const item = record(check, `workers[${index}].checks[${checkIndex}]`);
       safeText(item.id, 'check.id');
       safeText(item.name, 'check.name');
-      safeText(item.status, 'check.status');
+      invariant(item.status === 'passed', `workers[${index}].checks[${checkIndex}] did not pass`);
       safeText(item.detail, 'check.detail');
     });
   });
   const overlap = record(replay.overlap, 'overlap');
-  const recomputed = measuredOverlap(workers, overlap.maxConcurrentNodes);
+  integer(overlap.maxConcurrentNodes, 'overlap.maxConcurrentNodes');
+  const recomputed = measuredOverlap(workers);
   invariant(canonicalJson(recomputed) === canonicalJson(overlap), 'overlap evidence does not match worker intervals');
   validatePublicEvents(replay.events, missionId);
   invariant(!PRIVATE_MATERIAL.test(JSON.stringify(replay)), 'replay contains private material');
@@ -271,10 +329,12 @@ export async function buildRecordedMissionFixture(captureText) {
   const plan = record(mission.plan, 'mission.plan');
   const missionId = safeText(mission.id, 'mission.id');
   invariant(mission.status === 'succeeded', 'mission must be succeeded');
-  const workers = publicWorkers(mission.nodes);
+  const workers = publicWorkers(mission.nodes, missionId);
   invariant(capture.overlap === true, 'capture does not claim overlap');
-  invariant(capture.maxConcurrentNodes >= 2, 'capture does not prove concurrent workers');
-  const overlap = measuredOverlap(workers, capture.maxConcurrentNodes);
+  const claimedMaxConcurrentNodes = integer(capture.maxConcurrentNodes, 'maxConcurrentNodes');
+  const overlap = measuredOverlap(workers);
+  invariant(claimedMaxConcurrentNodes === overlap.maxConcurrentNodes, 'maxConcurrentNodes does not match worker intervals');
+  invariant(overlap.maxConcurrentNodes >= 2, 'capture does not prove concurrent workers');
   const events = validateRawEvents(capture.events, missionId);
   const sourceCapture = string(captureText, 'captureText');
 
@@ -308,7 +368,10 @@ export async function buildRecordedMissionFixture(captureText) {
   };
 }
 
-export async function verifyRecordedMissionFixture(candidate) {
+export async function verifyRecordedMissionFixture(
+  candidate,
+  expectedReplaySha256 = RECORDED_MISSION_EXPECTED_SHA256,
+) {
   try {
     const replay = validatePublicReplay(candidate);
     const integrity = record(replay.integrity, 'integrity');
@@ -316,7 +379,9 @@ export async function verifyRecordedMissionFixture(candidate) {
     invariant(SHA256.test(string(integrity.replaySha256, 'integrity.replaySha256')), 'replay hash is invalid');
     const { integrity: omitted, ...unsignedReplay } = replay;
     void omitted;
-    return (await sha256(canonicalJson(unsignedReplay))) === integrity.replaySha256;
+    const replaySha256 = await sha256(canonicalJson(unsignedReplay));
+    return replaySha256 === integrity.replaySha256
+      && integrity.replaySha256 === expectedReplaySha256;
   } catch {
     return false;
   }
