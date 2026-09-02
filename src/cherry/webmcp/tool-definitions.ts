@@ -56,7 +56,6 @@ import { exportWorkspace } from '../persistence/workspace-archive.ts';
 import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../library/library-service.ts';
 import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
-import { runnerStatus } from '../runner-client/runner-api.ts';
 import { isSyntheticSampleGraph, SYNTHETIC_SAMPLE_NOTICE } from '../skillgraph/sample-state.ts';
 
 /**
@@ -334,13 +333,21 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   });
   const sourceIdSchema = z.object({ sourceId: z.string().min(1) });
   define({
-    name: 'request_source_fetch', description: 'Request one explicit fetch for an allowlisted public page through the paired local Scrapling adapter. Never fetches YouTube or LinkedIn.',
-    inputSchema: objectSchema({ sourceId: { type: 'string' } }, ['sourceId']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'execute' }, states: [], zodSchema: sourceIdSchema,
+    name: 'request_source_fetch', description: 'Save a local request to fetch one permitted public article. Nothing is sent to the network; a person dispatches it from Sources.',
+    inputSchema: objectSchema({ sourceId: { type: 'string' } }, ['sourceId']), annotations: { readOnlyHint: false, untrustedContentHint: true, sideEffect: 'write' }, states: [], zodSchema: sourceIdSchema,
     execute: guarded(sourceIdSchema, async (input) => {
+      const workspaceId = requireWorkspace(context); if (typeof workspaceId !== 'string') return workspaceId;
       const source = await getSource(input.sourceId); if (!source) return toolError('not_found', `Source ${input.sourceId} was not found`);
-      const status = await runnerStatus();
-      if (!status.paired || !(status.adapters ?? []).includes('scrapling-fetch')) return toolError('temporary', 'Local Scrapling fetcher is not connected. Start and pair the optional runner first.');
-      return fromResult(await requestSourceFetch(input.sourceId, 'agent'), (value) => ({ sourceId: value.id, fetchStatus: value.fetchStatus, note: 'Queued for the paired local worker; content remains untrusted.' }));
+      if (source.workspaceId !== workspaceId) return toolError('not_found', 'Source was not found in the active workspace');
+      if (source.kind !== 'article') return toolError('unsupported', 'Only saved article sources can use the local page fetcher');
+      if (!source.permissionAcknowledgedAt) return toolError('approval_required', 'A person must acknowledge permission before fetching this source');
+      return fromResult(await requestSourceFetch(input.sourceId, 'agent'), (value) => ({
+        sourceId: value.id,
+        fetchStatus: value.fetchStatus,
+        executionStatus: 'not_started',
+        next: '/studio/sources',
+        note: 'Fetch request saved locally. Nothing was sent to the network. A person must dispatch it from Sources.',
+      }));
     }),
   });
   define({
@@ -1418,7 +1425,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'prepare_runner_job',
     description:
-      'Queue a deterministic job (verify/export) for the paired local runner. If no runner is paired the job waits as waiting_for_runner — never shown as running.',
+      'Prepare a deterministic verify/export job in this local workspace. It records waiting_for_runner until the paired local runner is explicitly connected; this tool never starts remote or cloud execution.',
     inputSchema: objectSchema(
       { adapter: { type: 'string', enum: ['cherry-verify', 'cherry-export'] }, note: { type: 'string' } },
       ['adapter'],
@@ -1431,6 +1438,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       if (typeof workspaceId !== 'string') return workspaceId;
       const missionId = context.getActiveMissionId();
       if (!missionId) return toolError('conflict', 'No active mission');
+      const mission = await getMission(missionId);
+      if (!mission || mission.workspaceId !== workspaceId) return toolError('not_found', 'Active mission was not found in the active workspace');
       const result = await recordRun(
         {
           workspaceId,
@@ -1443,7 +1452,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         },
         'agent',
       );
-      return fromResult(result, (run) => ({ runId: run.id, status: run.status }));
+      return fromResult(result, (run) => ({ runId: run.id, workspaceId: run.workspaceId, missionId: run.missionId, status: run.status, note: 'Saved locally and waiting for an explicitly paired runner; it has not started.' }));
     }),
   });
 
@@ -1511,9 +1520,9 @@ export const TOOL_STATE_TABLE: Record<string, string[]> = {
   onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson'],
   learning: ['load_lesson', 'import_transcript', 'record_observation', 'add_source_evidence', 'derive_skill'],
   planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'revise_checkpoint'],
-  execution: ['write_artifact_file', 'record_task_result', 'request_consequential_action', 'run_verification'],
+  execution: ['write_artifact_file', 'record_task_result', 'run_verification'],
   verification: ['run_verification', 'apply_verified_repair', 'read_failed_assertions', 'propose_memory', 'write_artifact_file'],
-  passed: ['compile_skill_bundle', 'export_proof_receipt', 'export_workspace', 'prepare_runner_job', 'request_consequential_action'],
+  passed: ['compile_skill_bundle', 'export_proof_receipt', 'export_workspace', 'prepare_runner_job'],
 };
 
 // Referenced to keep the export/import surface complete for evals.

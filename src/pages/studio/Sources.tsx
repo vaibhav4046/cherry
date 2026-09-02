@@ -710,9 +710,17 @@ export default function Sources() {
     setBusy(true); setError(null); setNotice(null);
     const domain = domainOf(source.url) ?? '';
     if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com')) { setError('LinkedIn fetching is disabled; paste or upload the text instead.'); setBusy(false); return; }
-    if (runnerReady !== true) { setNotice('Local fetcher not connected. Start and pair the optional Scrapling worker in Connections.'); setBusy(false); return; }
-    const result = await requestSourceFetch(source.id);
-    if (!result.ok) setError(plainSourceError(result.error.message));
+    if (runnerReady !== true) {
+      setNotice(
+        runner?.paired && runner.scraplingConfigured
+          ? `Local fetcher setup required. ${runner.scraplingReason ?? 'Install the pinned worker dependencies and restart the runner.'}`
+          : 'Local fetcher not connected. Start and pair the optional Scrapling worker in Connections.',
+      );
+      setBusy(false);
+      return;
+    }
+    const result = source.fetchStatus === 'queued' ? null : await requestSourceFetch(source.id);
+    if (result && !result.ok) setError(plainSourceError(result.error.message));
     else {
       const persistTerminalFailure = async (failure: SourceFetchFailure) => {
         const failed = await failSourceFetch(source.id, failure);
@@ -919,7 +927,7 @@ export default function Sources() {
                     {source.status !== 'archived' ? <>
                       <Link className="btn btn-sm" to={`/studio/watch/${source.lessonId}`}>Review source</Link>
                       {!needsYouTubeTranscript ? <button type="button" className="btn btn-sm" onClick={() => navigate(`/studio/quick?sourceId=${encodeURIComponent(source.id)}`)}>Create skill</button> : null}
-                      {source.url && source.kind !== 'youtube' ? <button type="button" className="btn btn-sm" disabled={busy || source.fetchStatus === 'queued'} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Fetch queued' : 'Fetch selected page'}</button> : null}
+                      {source.url && source.kind === 'article' ? <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void fetchSource(source)}>{source.fetchStatus === 'queued' ? 'Dispatch fetch' : 'Fetch selected page'}</button> : null}
                       {canArchiveSource ? <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void archive(source)}>Archive</button> : null}
                     </> : <span className="label">Recoverable archive</span>}
                   </div>

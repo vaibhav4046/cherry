@@ -14,6 +14,8 @@ import {
   validatePostMessageEnvelope,
 } from '../../src/cherry/webmcp/tool-contract.ts';
 import { createMission, createWorkspace } from '../../src/cherry/mission/mission-service.ts';
+import { createSource } from '../../src/cherry/source/source-service.ts';
+import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
 import { addEvidence } from '../../src/cherry/evidence/evidence-service.ts';
 import {
   decideSkillGraphApproval,
@@ -221,6 +223,107 @@ describe('WebMCP tool aperture', () => {
     const saved = parseResult(await manager.executeLocal('save_source', { kind: 'note', title: 'Agent note', content: 'A human-supplied note', permissionAcknowledged: false }));
     expect(saved.status).toBe('ready');
     expect(parseResult(await manager.executeLocal('list_sources', {}))).toHaveLength(1);
+  });
+
+  it('source fetch stays local, queued, and fail-closed at the active workspace boundary', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const active = parseResult(await manager.executeLocal('create_workspace', { name: 'Active source workspace' }));
+    context.workspaceId = active.workspaceId as string;
+    manager.setSurface('sources');
+    manager.syncState('onboarding');
+
+    const other = unwrap(await createWorkspace({ name: 'Other source workspace' }));
+    const foreign = unwrap(await createSource({
+      workspaceId: other.id,
+      kind: 'article',
+      title: 'Foreign article',
+      url: 'https://example.com/foreign',
+      permissionAcknowledged: true,
+    }));
+    const foreignResult = parseResult(await manager.executeLocal('request_source_fetch', { sourceId: foreign.id }));
+    expect(foreignResult.error).toBe('not_found');
+    expect((await getDb().sourceRecords.get(foreign.id))?.fetchStatus).toBe('not_requested');
+
+    const article = unwrap(await createSource({
+      workspaceId: context.workspaceId,
+      kind: 'article',
+      title: 'Local article',
+      url: 'https://example.com/local',
+      permissionAcknowledged: true,
+    }));
+    const queued = parseResult(await manager.executeLocal('request_source_fetch', { sourceId: article.id }));
+    expect(queued).toMatchObject({
+      sourceId: article.id,
+      fetchStatus: 'queued',
+      executionStatus: 'not_started',
+      next: '/studio/sources',
+    });
+    expect(queued.note).toContain('Nothing was sent to the network');
+    expect((await getDb().sourceRecords.get(article.id))?.fetchStatus).toBe('queued');
+
+    const conflict = parseResult(await manager.executeLocal('request_source_fetch', { sourceId: article.id }));
+    expect(conflict.error).toBe('conflict');
+  });
+
+  it('source fetch requires an article and a recorded permission acknowledgement', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const workspace = parseResult(await manager.executeLocal('create_workspace', { name: 'Source guardrails' }));
+    context.workspaceId = workspace.workspaceId as string;
+    manager.setSurface('sources');
+    manager.syncState('onboarding');
+
+    const note = unwrap(await createSource({
+      workspaceId: context.workspaceId,
+      kind: 'note',
+      title: 'A note with a link',
+      url: 'https://example.com/note',
+    }));
+    expect(parseResult(await manager.executeLocal('request_source_fetch', { sourceId: note.id })).error).toBe('unsupported');
+
+    const article = unwrap(await createSource({
+      workspaceId: context.workspaceId,
+      kind: 'article',
+      title: 'Unacknowledged article',
+      url: 'https://example.com/unacknowledged',
+      permissionAcknowledged: true,
+    }));
+    await getDb().sourceRecords.put({ ...article, permissionAcknowledgedAt: null });
+    expect(parseResult(await manager.executeLocal('request_source_fetch', { sourceId: article.id })).error).toBe('approval_required');
+  });
+
+  it('does not advertise consequential or immediate routine controls', async () => {
+    expect(TOOL_SURFACE_TABLE.routines).not.toContain('run_routine_now');
+    expect(TOOL_STATE_TABLE.execution).not.toContain('request_consequential_action');
+    expect(TOOL_STATE_TABLE.passed).not.toContain('request_consequential_action');
+    expect(TOOL_SURFACE_TABLE.sources).toContain('request_source_fetch');
+    const manager = new WebMcpRegistrationManager(makeContext());
+    expect(manager.activeNamesFor('passed', 'routines')).not.toContain('run_routine_now');
+    expect(manager.activeNamesFor('execution')).not.toContain('request_consequential_action');
+    expect(manager.activeNamesFor('passed')).not.toContain('request_consequential_action');
+    expect(manager.activeNamesFor('onboarding', 'sources')).toContain('request_source_fetch');
+  });
+
+  it('prepares only a local runner job for a mission in the active workspace', async () => {
+    const context = makeContext();
+    const manager = new WebMcpRegistrationManager(context);
+    const active = parseResult(await manager.executeLocal('create_workspace', { name: 'Runner workspace' }));
+    context.workspaceId = active.workspaceId as string;
+    const mission = parseResult(await manager.executeLocal('create_mission', { title: 'Runner mission', objective: 'Verify locally', definitionOfDone: ['done'] }));
+    context.missionId = mission.missionId as string;
+
+    const prepared = parseResult(await manager.executeLocal('prepare_runner_job', { adapter: 'cherry-verify' }));
+    expect(prepared).toMatchObject({ status: 'waiting_for_runner' });
+    const run = (await getDb().runs.toArray())[0];
+    expect(run).toMatchObject({ workspaceId: context.workspaceId, missionId: context.missionId, mode: 'runner', status: 'waiting_for_runner' });
+
+    const other = unwrap(await createWorkspace({ name: 'Foreign runner workspace' }));
+    const foreignMission = unwrap(await createMission({ workspaceId: other.id, title: 'Foreign mission', objective: 'Should not queue', definitionOfDone: ['never'] }));
+    context.missionId = foreignMission.id;
+    const refused = parseResult(await manager.executeLocal('prepare_runner_job', { adapter: 'cherry-export' }));
+    expect(refused.error).toBe('not_found');
+    expect(await getDb().runs.where('missionId').equals(foreignMission.id).count()).toBe(0);
   });
 
   it('inbox tools create and advance a work item honestly, never past QUEUED', async () => {

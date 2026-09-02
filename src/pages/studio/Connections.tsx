@@ -141,6 +141,11 @@ export default function Connections() {
               </details>
             </div>
           )}
+          {runner?.reachable && runner.paired ? (
+            <p style={{ fontSize: 14, margin: 0 }}>
+              Page fetcher: {runner.scraplingReady ? 'ready' : runner.scraplingConfigured ? `setup required${runner.scraplingReason ? ` · ${runner.scraplingReason}` : ''}` : 'not configured'}.
+            </p>
+          ) : null}
           <form onSubmit={handlePair} className="row">
             <label className="field" style={{ flex: 1, minWidth: 160 }}>
               <span>Pairing code</span>
