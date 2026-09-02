@@ -2,7 +2,8 @@
 
 **Assembled:** 2026-09-02, London morning cycle
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** see "State of the product" below
+**Signed against commit:** `b6b7d11` (the commit that added this document; this line and the
+push state below were confirmed in the commit immediately after it)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -112,8 +113,10 @@ drifted lockfile is what produced the one blank-page outage this project had.
 
 **Repository:** `https://github.com/vaibhav4046/cherry`, MIT.
 
-**GitHub push state:** see section 6. This is the one item that needed a human at the time of
-writing.
+**GitHub push state:** pushed and verified. `origin/main` and local `HEAD` are both `b6b7d11`,
+0 commits ahead. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
+returns 200 anonymously, which is only possible on a public repository, and `README.md`,
+`docs/HARNESS.md`, and `docs/media/cherry-landing.png` do the same.
 
 **Gate counts on the signed commit:**
 
@@ -248,7 +251,7 @@ A submitted entry that is 90 percent polished beats a perfect one that missed th
 
 | Item | State | What finishing it takes |
 |---|---|---|
-| **GitHub push** | The device shell has no git credentials, so commits made here could not be pushed. | Vaibhav runs `git push` in `D:\project\cherry` from a terminal that has his GitHub credentials. This is the only item that genuinely blocks the submission, because the repo link must be public and current. |
+| **GitHub push** | **Resolved.** Pushed to `origin/main` at `b6b7d11` and verified public. | Nothing. This was the last blocking item and it is closed. |
 | T13, the 90-second judge card on `/showcase` | Not built. | About an hour: a dismissible card with the four judge steps, dismissal persisted locally, plus render and dismissal e2e coverage. Nice to have, not blocking; `/showcase` already tells the story linearly. |
 | T19, the technical report | Not assembled. | The content exists in `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this handoff. Devpost does not ask for a separate report, so this is a post-submission tidy. |
 | T20 launch kit, T23 landing self-demo | Not started. | Both are post-submission polish. |
