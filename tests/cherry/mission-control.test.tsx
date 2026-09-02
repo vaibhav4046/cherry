@@ -4,9 +4,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { freshDb } from '../setup.ts';
 import { AppStateProvider } from '../../src/app/AppState.tsx';
 import MissionControl from '../../src/pages/studio/MissionControl.tsx';
-import { createWorkspace } from '../../src/cherry/mission/mission-service.ts';
+import { createWorkspace, listWorkspaces } from '../../src/cherry/mission/mission-service.ts';
 import { listMissionPlans } from '../../src/cherry/workforce/mission-plan-service.ts';
 import { unwrap } from '../../src/cherry/core/result.ts';
+
+async function waitForPlanning(): Promise<HTMLButtonElement> {
+  const button = screen.getByTestId('plan-mission') as HTMLButtonElement;
+  await waitFor(() => expect(button.disabled).toBe(false));
+  return button;
+}
 
 function renderControl(initialEntry = '/studio/control') {
   return render(
@@ -34,14 +40,19 @@ describe('Mission Control page', () => {
     vi.unstubAllGlobals();
   });
 
-  it('asks for a space first, then shows the outcome composer', async () => {
+  it('creates My Cherry from the first outcome instead of asking for a space first', async () => {
     renderControl();
-    await screen.findByTestId('control-empty');
-    fireEvent.change(screen.getByLabelText('Space name'), { target: { value: 'Missions test' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create space' }));
-    await screen.findByTestId('outcome-composer');
+    const input = await screen.findByTestId('outcome-input');
     expect(screen.getByRole('heading', { level: 1, name: 'What should Cherry take care of?' })).toBeTruthy();
-    await waitFor(() => expect(screen.getByTestId('runner-line').textContent).toMatch(/No runner detected/));
+    expect(screen.queryByLabelText('Space name')).toBeNull();
+    fireEvent.change(input, { target: { value: 'Research this market and produce an evidence-backed launch brief.' } });
+    fireEvent.click(await waitForPlanning());
+    await screen.findByTestId('detail-route');
+    await waitFor(async () => {
+      const workspaces = await listWorkspaces();
+      expect(workspaces).toHaveLength(1);
+      expect(workspaces[0]!.name).toBe('My Cherry');
+    });
   });
 
   it('plans a mission from an outcome, persists it, and moves to the detail route', async () => {
@@ -50,7 +61,7 @@ describe('Mission Control page', () => {
     renderControl('/studio/control?outcome=Audit%20this%20repository%20and%20fix%20the%20highest-impact%20defect.');
     const input = await screen.findByTestId('outcome-input');
     expect((input as HTMLTextAreaElement).value).toBe('Audit this repository and fix the highest-impact defect.');
-    fireEvent.click(screen.getByTestId('plan-mission'));
+    fireEvent.click(await waitForPlanning());
     await screen.findByTestId('detail-route');
     await waitFor(async () => {
       const plans = await listMissionPlans(workspace.id);
@@ -65,6 +76,7 @@ describe('Mission Control page', () => {
     localStorage.setItem('cherry.activeWorkspaceId', workspace.id);
     renderControl();
     const input = await screen.findByTestId('outcome-input');
+    await waitForPlanning();
     (input as HTMLTextAreaElement).removeAttribute('minlength');
     fireEvent.change(input, { target: { value: 'Fix it' } });
     fireEvent.submit(screen.getByTestId('outcome-composer'));

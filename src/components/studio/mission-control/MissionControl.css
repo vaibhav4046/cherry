@@ -1,0 +1,204 @@
+.chronicle-control {
+  --chronicle-rule: color-mix(in srgb, var(--color-carbon) 22%, transparent);
+  display: grid;
+  gap: var(--sp-8);
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+.chronicle-control__masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, .65fr);
+  align-items: end;
+  gap: var(--sp-8);
+  border-bottom: 1px solid var(--chronicle-rule);
+  padding-bottom: var(--sp-6);
+}
+
+.chronicle-control__kicker {
+  margin: 0 0 var(--sp-2);
+  color: var(--color-accent-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.chronicle-control__intro {
+  max-width: 680px;
+  margin: var(--sp-3) 0 0;
+  color: var(--color-graphite);
+}
+
+.chronicle-control__seed {
+  display: block;
+  width: min(100%, 320px);
+  margin-left: auto;
+}
+
+.chronicle-composer {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  border: 1px solid var(--chronicle-rule);
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-cards);
+  background: var(--color-paper-white);
+}
+
+.chronicle-composer .textarea {
+  min-height: 116px;
+  resize: vertical;
+}
+
+.chronicle-composer__footer,
+.chronicle-ledger__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.chronicle-settings {
+  border-top: 1px solid var(--chronicle-rule);
+  padding-top: var(--sp-3);
+}
+
+.chronicle-settings summary {
+  width: fit-content;
+  color: var(--color-carbon);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chronicle-settings summary::marker {
+  color: var(--color-accent);
+}
+
+.chronicle-settings__body {
+  display: grid;
+  grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr);
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+}
+
+.chronicle-settings__body .field:last-of-type,
+.chronicle-settings__runner {
+  grid-column: 1 / -1;
+}
+
+.chronicle-settings__runner {
+  margin: 0;
+  padding-left: var(--sp-3);
+  border-left: 3px solid var(--color-signal-blue);
+  color: var(--color-graphite);
+  font-size: var(--text-body-sm);
+}
+
+.chronicle-replay {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+  max-width: 680px;
+  color: var(--color-graphite);
+  font-size: var(--text-body-sm);
+}
+
+.chronicle-replay::before {
+  content: 'REC';
+  padding: 2px 7px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sticker);
+  color: var(--color-accent-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+}
+
+.chronicle-ledger {
+  display: grid;
+  gap: var(--sp-4);
+  padding-top: var(--sp-2);
+}
+
+.chronicle-ledger__title {
+  margin: 0;
+}
+
+.chronicle-ledger__columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--chronicle-rule);
+}
+
+.chronicle-ledger__column {
+  min-width: 0;
+  padding: var(--sp-4);
+}
+
+.chronicle-ledger__column + .chronicle-ledger__column {
+  border-left: 1px solid var(--chronicle-rule);
+}
+
+.chronicle-ledger__column h3 {
+  margin: 0 0 var(--sp-3);
+}
+
+.chronicle-ledger__empty {
+  margin: 0;
+  color: var(--color-ash);
+  font-size: var(--text-body-sm);
+}
+
+.chronicle-control :is(summary, a, button, input, textarea, select):focus-visible {
+  outline: 3px solid var(--color-signal-blue);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .chronicle-control {
+    gap: var(--sp-6);
+  }
+
+  .chronicle-control__masthead {
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+  }
+
+  .chronicle-control__seed {
+    width: min(76%, 280px);
+    margin-inline: auto;
+  }
+
+  .chronicle-composer {
+    padding: var(--sp-4);
+  }
+
+  .chronicle-settings__body,
+  .chronicle-ledger__columns {
+    grid-template-columns: 1fr;
+  }
+
+  .chronicle-ledger__column + .chronicle-ledger__column {
+    border-left: 0;
+    border-top: 1px solid var(--chronicle-rule);
+  }
+
+  .chronicle-composer__footer .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chronicle-control *,
+  .chronicle-control *::before,
+  .chronicle-control *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

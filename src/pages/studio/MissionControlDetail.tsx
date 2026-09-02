@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { listProofEvents } from '../../cherry/persistence/transactions.ts';
@@ -17,6 +17,7 @@ import {
 import type { PlanNodeRunStatus } from '../../cherry/workforce/mission-plan-model.ts';
 import { buildCodexAutomationRecipe, buildWorkTaskRecipe, renderRecipeText } from '../../cherry/workforce/automation-recipes.ts';
 import { missionStatusClass, missionStatusLabel } from './MissionCardView.tsx';
+import { LiveStartGate } from '../../components/studio/mission-control/LiveStartGate.tsx';
 
 const NODE_LABEL: Record<PlanNodeRunStatus, string> = {
   pending: 'Waiting',
@@ -93,6 +94,12 @@ export default function MissionControlDetail() {
   const [busy, setBusy] = useState(false);
   const [liveSync, setLiveSync] = useState(false);
   const [recipe, setRecipe] = useState<string | null>(null);
+  const requiredCapabilitySets = useMemo(
+    () => view?.plan.nodes
+      .filter((node) => node.kind !== 'human_decision')
+      .map((node) => node.requiredCapabilities) ?? [],
+    [view],
+  );
 
   const load = useCallback(async () => {
     if (!activeWorkspace || !missionId) return;
@@ -175,9 +182,13 @@ export default function MissionControlDetail() {
         {needsPlanApproval ? (
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void run(() => approveMissionPlan(workspaceId, plan.id, plan.revision, 'human'), 'Plan approved at this exact revision.')} data-testid="approve-plan">Approve plan r{plan.revision}</button>
         ) : null}
-        {canStart ? (
-          <button type="button" className={needsPlanApproval ? 'btn' : 'btn btn-primary'} disabled={busy} onClick={() => void run(() => startMission(workspaceId, missionId, plan.revision), 'Started on your paired runner.')} data-testid="start-mission">Start on the paired runner</button>
-        ) : null}
+        <LiveStartGate
+          canStart={canStart && view.problems.length === 0}
+          policyAllows={!needsPlanApproval}
+          requiredCapabilitySets={requiredCapabilitySets}
+          busy={busy}
+          onStart={() => void run(() => startMission(workspaceId, missionId, plan.revision), 'Started on your paired runner.')}
+        />
         <button type="button" className="btn" disabled={busy} onClick={() => void run(() => syncMission(workspaceId, missionId), 'Synced from the runner.')} data-testid="sync-mission">Sync now</button>
         {canCancel ? <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void run(() => cancelMission(workspaceId, missionId, 'human'), 'Cancelled.')} data-testid="cancel-mission">Cancel</button> : null}
         <label className="row" style={{ gap: 'var(--sp-2)' }}>
