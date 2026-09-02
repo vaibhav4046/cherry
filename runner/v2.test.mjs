@@ -710,7 +710,7 @@ test('safe-command child cannot read runner or ambient secrets', async () => {
   }
 });
 
-test('provider CLIs require BOTH the envelope allowlist and the config allowlist', async () => {
+test('runnable provider CLIs require BOTH the envelope allowlist and the config allowlist', async () => {
   const root = tempDir('ad-cli-');
   const configOnly = createAdapters({ allowedRoots: [root], allowedExecutables: new Set(['codex']) });
   await assert.rejects(
@@ -719,7 +719,7 @@ test('provider CLIs require BOTH the envelope allowlist and the config allowlist
   );
   const envelopeOnly = createAdapters({ allowedRoots: [root], allowedExecutables: new Set() });
   await assert.rejects(
-    () => envelopeOnly.run(makeEnvelope({ adapter: 'claude-cli', workingDirectory: root, boundedPrompt: 'do things', allowedExecutables: ['claude'] })),
+    () => envelopeOnly.run(makeEnvelope({ adapter: 'codex-cli', workingDirectory: root, boundedPrompt: 'do things', allowedExecutables: ['codex'] })),
     /not in the runner config allowlist/,
   );
 });
