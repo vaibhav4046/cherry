@@ -1,129 +1,107 @@
+<p align="center">
+  <img src="docs/media/cherry-landing.png" alt="Cherry: turn a lesson into a skill every agent you own can run" width="820">
+</p>
+
 # Cherry 🍒
 
-**The user-owned apprenticeship, memory, mission, and verification layer for AI agents.**
+**Teach once. Cherry remembers. Every agent gets better.**
 
-Your agents should not start from zero. Cherry turns permitted lessons, supplied transcripts, and
-your observations into trusted memory and portable skills, then gives the agents you already use a
-mission they can execute — and prove.
+You learn your craft from creators: a YouTube lesson, an article, a post. Your agents cannot. Every
+workflow you teach an AI dies in a chat transcript, unusable in the next session and the next tool.
 
-> Teach once. Cherry remembers. Every agent gets better.
+Cherry is the layer underneath. Give it a source you are allowed to learn from. It drafts the method
+from timestamped evidence, waits for your approval on an exact revision, verifies the result with
+checks that can genuinely fail, seals it with a receipt anyone can recompute, and then serves the
+finished skill to the agents you already pay for.
 
-Built for the **OpenAI WebMCP Challenge 2026**.
+**Cherry never calls a model and never asks for an API key.** Your agents bring the reasoning.
+Cherry brings the memory, the approval gates, and the proof.
 
-**Live:** https://cherry-wine.vercel.app · **Judge route:** [/showcase](https://cherry-wine.vercel.app/showcase) · **Source:** https://github.com/vaibhav4046/cherry
+- **Live:** https://cherry-wine.vercel.app
+- **Judge route:** https://cherry-wine.vercel.app/showcase
+- **Watch a real run:** the uncut recording of the automated end-to-end test driving the product,
+  linked from the showcase page. Nothing staged.
+- **What is actually proven:** https://cherry-wine.vercel.app/compatibility
 
-![Cherry landing — Teach once. Prove it. Keep it.](docs/release/screenshots/landing-v4-desktop.png)
+Built for the **OpenAI WebMCP Challenge 2026**. MIT licensed. Free and open source, with no paid
+tier, no account required, and no telemetry.
 
-## What it does
+## The inversion
 
-```
-WATCH / READ / OBSERVE  →  UNDERSTAND AND STRUCTURE  →  APPROVE THE SKILLGRAPH
-        →  EXECUTE THROUGH AN AGENT  →  VERIFY THE RESULT  →  TURN CORRECTIONS INTO MEMORY
-```
+Most agent-ready sites let an agent operate them. **Cherry's site upgrades the agent.**
 
-- **Cherry Watch** — learn from a permitted YouTube lesson (official player only) or manual material.
-  Paste/upload transcripts (.txt/.srt/.vtt), record timestamped observations, and see computed —
-  never invented — coverage with declared criteria and honest gaps.
-- **Source Inbox** — save YouTube lessons, article/post exports, private notes, and local text files
-  as provenance-linked lessons. A visible, one-page-at-a-time Scrapling fetch is optional for an
-  allowlisted public article when your paired local runner is configured; it never fetches YouTube
-  or LinkedIn and never runs in the background.
-- **Evidence Ledger** — every claim is a record with provenance and a trust label. Everything from
-  the outside world starts **untrusted**; only a human can raise trust.
-- **SkillGraph** — an editable, versioned, vendor-neutral workflow representation. Approvals bind to
-  the exact revision you reviewed; any edit invalidates them.
-- **Memory Vault** — scoped, source-linked memory with an inbox. Nothing becomes memory without your
-  approval. A correction compiler turns failures into scoped rules.
-- **Artifact Workspace** — real files (HTML/CSS/JS/MD/JSON), versioned, previewed in a sandboxed,
-  network-blocked iframe that cannot touch Cherry data.
-- **Cherry Verify** — deterministic checks against actual files and state: file, DOM, hash,
-  placeholder, accessibility, and graph assertions. Failures link to evidence; repairs re-verify.
-- **Proof** — an append-only event ledger compiles into receipts hashed with SHA-256 over RFC 8785
-  canonical JSON. Tamper-evident and independently recomputable (not a signature, and never called one).
-- **Cherry Compiler** — export approved skills as Agent Skills bundles with Codex and Claude Code
-  install targets, evidence references, policies, evals, and a standalone `verify.mjs`.
-- **Agent View (MCP Inspector)** — a live inspector at /studio/agent: current phase, the exact
-  tool aperture per phase, live registrations, retired tools, and a real tool-call log. In manual
-  mode it shows the honest truth: nothing registered, nothing called.
-- **Guided example + walkthrough** — one click imports a real exported example workspace and walks
-  you through the whole loop, ending at the recomputable receipt. Replayable anytime.
-- **WebMCP (Experimental)** — in a compatible client where `document.modelContext` exists, Cherry
-  registers **state-aware site tools** (max 5 per surface + 7 global reads) against the same visible workspace. Tools appear and
-  disappear as the product state changes. No WebMCP? The complete product works manually.
-- **Local Runner (optional)** — a loopback-only Node process with pairing tokens, allowlists, and
-  timeouts for deterministic jobs. **Native MCP bridge (optional)** — a stdio server for Claude
-  Code/Codex CLI that reads and verifies workspace exports.
+Three always-on WebMCP read tools serve your library to any agent that visits:
 
-## Zero-dollar core
+| Tool | What it does |
+| --- | --- |
+| `list_skills` | Every skill you have taught, with status, revision, and approval hash |
+| `recommend_skills` | "Here is my task" → ranked approved skills, with an explanation of each match |
+| `get_skill` | Install-ready SKILL.md / AGENTS.md / CLAUDE.md, streamed in bounded parts with a full-file SHA-256 the agent verifies |
 
-Cherry's core requires **no AI API key, no YouTube API key, no cloud database, no account, and no
-paid backend**. Everything persists in your browser's IndexedDB. Export/import complete workspaces as
-hash-verified JSON. Connecting an agent accelerates the same product; it never unlocks a different one.
+Only human-approved exact revisions are installable. An agent can request an approval; it can never
+grant one. Everything else stays state-gated behind a bounded aperture: at most five contextual
+mutation tools per surface, registered and unregistered live as the work advances.
+
+## How it works
+
+1. **Add a source.** A YouTube lesson (official embed, your transcript or on-device Whisper), an
+   article, plain text, a file, your own watch-history export, or any page via the Save to Cherry
+   bookmarklet.
+2. **Approve the method.** Cherry compiles evidence into a readable, versioned skill. You approve
+   the exact revision you read. Edit one step and the approval goes stale.
+3. **Use it everywhere.** Install into Codex (`AGENTS.md`), Claude Code (`SKILL.md`), or any agent
+   reading Agent Skills bundles. Or let a visiting agent pull it live over WebMCP.
 
 ## Quickstart
 
 ```bash
-npm install
+npm ci
 npm run dev        # http://127.0.0.1:5273
 ```
 
-Production build and checks:
+Everything works as a guest with zero configuration. Sign-in (Privy, email) is opt-in and only
+activates when `VITE_PRIVY_APP_ID` is set at build time; guests never download the auth SDK.
 
 ```bash
-npm run typecheck && npm run lint && npm run test && npm run test:runner && npm run build
-npm run test:e2e   # builds, serves, and runs the golden journey + a11y + sandbox suites
+npm run gates      # typecheck + lint + unit + runner
+npm run verify:all # gates + build + e2e + pack verification + submission audit
 ```
 
-Optional local runner:
+## Verification
 
-```bash
-node runner/server.mjs --root /path/you/approve
-# prints a pairing token → paste it in Studio → Connections
-```
+Cherry's claims are meant to survive checking. Current gates on `main`:
 
-Optional native MCP bridge (Claude Code / Codex CLI):
+| Gate | Result |
+| --- | --- |
+| Unit | 379 passed, 2 opt-in skips |
+| Runner and MCP bridge | 68 passed |
+| End-to-end (Playwright, desktop + mobile) | 84 passed |
+| Bundle verification (`verify:pack`) | tamper-evident, evidence-complete |
+| Submission audit | 0 failures, 0 warnings |
 
-```bash
-node runner/mcp/server.mjs --workspace path/to/cherry-workspace-export.json
-```
+Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.
+Every compiled bundle ships its own standalone `scripts/verify.mjs` so a stranger can check it
+without trusting us.
 
-## Architecture
+## Deliberate boundaries
 
-Typed domain services (`src/cherry/*`) are independent of React, WebMCP, and MCP. The manual UI, the
-WebMCP tool layer, and the native bridge all call the same validated services, so an agent can never
-do something the UI would refuse. IndexedDB (Dexie) with versioned migrations persists everything;
-every domain mutation emits a ProofEvent in the same transaction. See `docs/CHERRY_REPO_MAP.md`.
+These are product decisions, not missing features:
 
-## Security & privacy
+- Cherry does **not** watch video. It works from transcripts you supply, on-device Whisper, or
+  captions you paste. No frame-level vision is claimed anywhere.
+- Cherry does **not** scrape LinkedIn, download YouTube media, or automate anyone's ChatGPT
+  account. Agents connect through WebMCP, MCP, and skills bundles.
+- Nothing fetches in the background. Every fetch is user-triggered or scheduled by you to your own
+  paired local runner, and fails closed.
+- Approvals, trust promotion, and memory activation are human-only code paths.
 
-- Learning material is data, never instructions; trust promotion is human-only.
-- Exact-revision approvals; agents cannot approve their own work.
-- Sandboxed, network-blocked artifact previews (e2e-verified against a hostile artifact).
-- Loopback-only runner with pairing, allowlisted executables, no shell strings, output redaction.
-- No telemetry or analytics. External calls are limited to the YouTube embed you opt into and
-  visible, user-triggered fetches through your paired local runner.
-- Full audit trail in `docs/release/`.
+## Contributing
 
-## Honest limitations
-
-- WebMCP tools exist only while the page is open in a compatible client; that client's availability
-  is outside Cherry's control (feature-detected, shown in Connections).
-- Receipts are hash-based tamper-evidence, not cryptographic signatures.
-- The runner runs while your machine is on — it is not a cloud.
-- "Full lesson coverage" means declared segments/criteria were processed, not that every video frame
-  was semantically understood.
-- Cherry does not watch every video automatically, scrape LinkedIn, train a private foundation model,
-  access a ChatGPT/Codex subscription invisibly, execute in the cloud without a configured runner,
-  auto-approve skills or memories, or claim to understand every frame of a video.
-- The native MCP bridge is read/verify over exports (browser IndexedDB is unreachable from Node).
-- Optional encrypted sync is not in golden v1.
-
-## What is proven vs. roadmap
-
-See the in-app page at /compatibility (or the live site) — every surface is labelled Validated /
-Shipped / Experimental / Roadmap with the actual test behind the label. Auth is guest-first and
-optional; Privy activates only when configured (decision D-019 in docs/CHERRY_DECISIONS.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the gates, the file lanes, the claim discipline, and four
+worked extension points: adding a source kind, adding a WebMCP tool, adding an export target, and
+adding a runner job type. Good starting points are in
+[docs/GOOD_FIRST_ISSUES.md](docs/GOOD_FIRST_ISSUES.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
