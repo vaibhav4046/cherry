@@ -24,3 +24,9 @@ docs/release/e2e-results.json
 
 scraper/__pycache__/
 scraper/tests/__pycache__/
+
+# local scratch, never part of the public repo
+work/
+.firecrawl/
+*.tgz
+debug.log
