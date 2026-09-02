@@ -1,26 +1,26 @@
 # God Mode final report
 
-Branch `claude/god-mode-v2`, written by the integrating Claude Code session on 2026-09-02. Every
-count below was measured by the named command on the named commit. Nothing is deployed and nothing
-is merged by this branch; the release manager reviews and decides.
+Branch `claude/god-mode-v2`, updated by the Codex release conductor on 2026-09-02. Every count below
+was measured by the named command on the named commit. Nothing is deployed and nothing is merged by
+this branch; the release manager reviews and decides.
 
 ```text
 Branch: claude/god-mode-v2 (worktree D:\project\cherry-god-mode-v2), rebased onto origin/main
 Base commit: e1d62c5 (origin/main when this report was closed, 2026-09-02)
-Final product/claims commit: 3f7e12f (this closeout adds documentation only)
-Commits: 20 commits after e1d62c5 before this documentation closeout
-Mode selected: GREEN (32.1 h to the deadline and 23.1 h to the 12:00 freeze at 12:51 London start; freeze respected, no feature work after this report)
+Final verified product/claims commit: 1110098 (this closeout adds documentation only)
+Commits: 26 commits after e1d62c5 before this documentation closeout
+Mode selected: GREEN BASELINE (full verification at 1110098; the Winner OS feature freeze at 11:00 Europe/London on 2026-09-03 has not arrived)
 Tickets completed: GOD-0 (baseline, official-source research, architecture lock, 20 shared fixtures), GOD-1 (validated mission graph, Dexie v6), GOD-2 (host and capability registries), GOD-3 (sandbox manager: directory and git-worktree leases), GOD-4 (probed agent hosts: codex, claude, mock, manual; probe-only endpoints), GOD-5 (mission executor: parallel nodes, independent checks, bounded repair, human decisions, cancellation, crash recovery), GOD-6 (policy-bound execution, exact-revision approvals, evaluation reports), GOD-7 (outcome-first Mission Control, browser mirror of the runner, runner mission client), GOD-8 (five bounded WebMCP mission tools on the control surface, none can approve, every call in Agent View), GOD-9 (landing repositioned as the open AI workforce with Cherry-origin plates), GOD-11 (deterministic 1,000 + 1,000 workload harness with chaos cases), GOD-12 (real Codex capture)
 Tickets not completed: GOD-10 was folded into GOD-7 and GOD-9 (approval-bound routines are exposed as draft recipes only: ChatGPT Work task and Codex Automation text a person creates in the other host; no scheduler change). GOD-12 Claude Code half: not captured, `claude -p` returned "401 OAuth access token has been revoked" on this machine and a sign-in is human-only. Live ChatGPT WebMCP capture: not done (no live host session in this environment).
-Files changed: 146 files changed, 21,596 insertions, 511 deletions before this documentation closeout (git diff --stat e1d62c5...3f7e12f)
+Files changed: 154 files changed, 22,260 insertions, 514 deletions before this documentation closeout (git diff --shortstat e1d62c5..1110098)
 Dependencies changed: none (package.json and package-lock.json untouched; git diff origin/main...HEAD -- package.json package-lock.json is empty)
-Clean npm ci: the controller checked out detached `3f7e12f` in a clean worktree: npm ci exit 0 (992 packages), typecheck 0, lint 0, unit 533 passed + 2 skipped (59 files passed + 1 skipped), runner 125 passed / 0 failed, build exit 0 (55.41 s), release pack 6/6, verify-sw 5/5, audit-submission 0 FAIL / 0 WARN, scale harness 17/17. The Windows symlink chaos case remained the documented EPERM platform skip. The clean worktree was removed afterwards.
-Final verification: the controller observed `npm run verify:all` at `3f7e12f` with every stage green.
+Clean npm ci: the controller checked out detached `3f7e12f` in a clean worktree: npm ci exit 0 (992 packages), typecheck 0, lint 0, unit 533 passed + 2 skipped (59 files passed + 1 skipped), runner 125 passed / 0 failed, build exit 0 (55.41 s), release pack 6/6, verify-sw 5/5, audit-submission 0 FAIL / 0 WARN, scale harness 17/17. The Windows symlink chaos case remained the documented EPERM platform skip. The clean worktree was removed afterwards. A fresh clean checkout of the synchronized Winner OS base is the next integration gate.
+Final verification: the controller observed `npm run verify:all` at `1110098` with every stage green.
 Typecheck: 0 errors (tsc --noEmit)
 Lint: 0 problems (eslint .)
-Unit: 533 passed, 2 skipped (535), 59 files passed, 1 skipped (vitest, includes the browser-to-real-runner integration test)
-Runner/MCP: 125 passed, 0 failed (node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs, which aggregates the sandbox, host, executor, queue and bridge suites)
-Build: tsc -b and vite build succeeded in 16.46 s
+Unit: 539 passed, 2 skipped (541), 59 files passed, 1 skipped (vitest, includes the browser-to-real-runner integration test)
+Runner/MCP: 131 passed, 0 failed (node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs, which aggregates the sandbox, host, executor, queue and bridge suites)
+Build: tsc -b and vite build succeeded
 Playwright: 115 passed, 0 failed, 0 flaky in 5.6 min (desktop 1440x1024 plus the Pixel 7 responsive project, 1 worker); the God Mode specs alone were green three consecutive times before the full run; docs/release/e2e-results.json records 115 expected, 0 unexpected
 Service worker: verify-sw 5/5 (cherry-shell-v4)
 Pack verification: release pack 6/6 (bundle genuine, tamper-evident, evidence-complete)
@@ -30,8 +30,8 @@ Real Codex capture: yes. docs/release/GOD_MODE_REAL_HOST_CAPTURE.md and docs/rel
 Real Claude capture: no. Claude Code 2.1.224 is installed and probed; a non-interactive `claude -p` run returned "Failed to authenticate. API Error: 401 OAuth access token has been revoked". A sign-in is a human-only credential step, so the Claude Code row stays EXPERIMENTAL. After `claude login`, `CHERRY_REAL_CLAUDE=1 node scripts/god-mode/run-real-host-smoke.mjs --claude-command "<path to bin\claude.exe>"` records it in the same capture file.
 Real ChatGPT WebMCP capture: no. The WebMCP mission tools are proven against the mock host in e2e/cherry/webmcp-god-mode.spec.ts (registered only on Mission Control, retired on route change, create, plan, start refusal without approval and then without a runner, cancel, hostile outcome refused, every call visible in Agent View, skill library still reachable). Live ChatGPT stays EXPERIMENTAL.
 Parallel overlap evidence: (1) runner event log in the real Codex capture: node_started 13:39:17.501Z and 13:39:17.508Z, node_completed 13:39:51.938Z and 13:39:53.630Z (two nodes running for 34 s at once); (2) runner/mission-executor.test.mjs "two ready nodes run in parallel on different sandboxes, provable from the events log" and "at most three nodes run at once when four are ready"; (3) tests/cherry/mission-runner-integration.test.ts: the browser mirror sees two nodes RUNNING against a real runner process; (4) e2e/cherry/god-mode-mission.spec.ts: two node rows show Running with different Workspace roots (docs/release/screenshots/god-mode/control-running.png) and the test reads the overlap back from the runner's own /v2/missions record (annotation parallel-overlap).
-Sandbox boundary: one lease per task from runner/lib/sandbox-manager.mjs. `directory` gives `<approved root>/.cherry-sandboxes/<run>/<work item>/` with boundary `process`; `git-worktree` gives a worktree on branch `cherry/mission/<run>/<work item>` with boundary `worktree-process`; a task without a repository gets an empty scratch root inside the approved root. The UI prints the root, branch and base commit and the boundary word; the word "VM" appears nowhere as a claim. Passed worktree results are committed on the sandbox branch only; the source branch is never checked out, merged or reset (asserted in runner/mission-executor.test.mjs).
-Known limitations: nothing runs while the paired runner is off (no cloud worker, never "24/7"); Claude Code and live ChatGPT are not captured; the mock host is test-only behind --allow-mock-host; the verify node runs the repository tests in a worktree based on the developer's committed result, so an uncommitted host result is not tested there (the developer node's own check still is); artifacts are handed to direct dependants only; LinkedIn, Gmail and YouTube publishing are Roadmap (recipes are text a person creates elsewhere); the 1,000 + 1,000 harness is a local benchmark, not a scale claim; the scale lane's symlink chaos case is skipped on this account.
+Sandbox boundary: one lease per task from runner/lib/sandbox-manager.mjs. `directory` gives `<approved root>/.cherry-sandboxes/<run>/<work item>/` with boundary `process`; `git-worktree` gives a worktree on branch `cherry/mission/<run>/<work item>` with boundary `worktree-process`; a task without a repository gets an empty scratch root inside the approved root. These are workspace/process boundaries, not OS virtual machines. Physical-path guards reject symlink/junction traversal for allocation, reads, writes, artifact transfer and cleanup. The UI prints the root, branch and base commit and the boundary word; the word "VM" appears nowhere as a claim. Passed worktree results are committed on the sandbox branch only; the source branch is never checked out, merged or reset (asserted in runner/mission-executor.test.mjs).
+Known limitations: nothing runs while the paired runner is off (no cloud worker, never "24/7"); Claude Code is probe-only and live ChatGPT is not captured; the mock host is test-only behind --allow-mock-host; command checks require explicit runner and envelope authorization and are limited to data-only `node --test` workspace targets; the verify node runs repository tests in a worktree based on the developer's committed result, so an uncommitted host result is not tested there (the developer node's own check still is); artifacts are handed to direct dependants only; semantic envelope binding, runner-acknowledged parking and atomic browser projection remain follow-up audit items for the Winner OS integration; LinkedIn, Gmail and YouTube publishing are Roadmap; the 1,000 + 1,000 harness is a local benchmark, not a scale claim; the scale lane's symlink chaos case is skipped on this account.
 Claims removed or narrowed: "Connected" never appears as a status (Validated, Shipped, Available, Experimental, Roadmap only); "works with Claude Code" narrowed to EXPERIMENTAL; "works in ChatGPT" narrowed to EXPERIMENTAL with the mock-host proof named; "runs 24/7" and "cloud VM" are refused claims; "Grok Bot is obsolete" is not claimed (docs/god-mode/GROK_PARITY_MATRIX.md states parity per feature with evidence); the original "YouTube to skill" headline is replaced, the YouTube learning path is kept and labelled with what it does (transcript, embed, RSS metadata; no download).
 Screenshot paths: docs/release/screenshots/god-mode/landing-1440x900.png, landing-390x844.png, control-empty.png, control-running.png, control-needs-you.png, control-complete.png
 Review command: see below
@@ -72,7 +72,13 @@ Generated from `git log --reverse origin/main..HEAD` when this report was closed
 | 03f1134 | GOD-9 | docs(release): refresh the landing screenshots |
 | 5c062dc | docs | docs(release): close the God Mode branch with measured results |
 | 3f7e12f | GOD-12 | fix(claims): align God Mode evidence with captured behavior |
-| (this commit) | docs | docs(release): record final God Mode verification |
+| 7f1b187 | docs | docs(release): record final God Mode verification |
+| 9eca5c5 | security | fix(runner): fail closed on command and host execution |
+| 3b6d15e | security | fix(runner): reject physical path link traversal |
+| 83f10a4 | security | fix(missions): align plan validation contracts |
+| 8b80afc | tests | test(runner): align provider allowlist contract |
+| 1110098 | tests | test(e2e): allow bounded Node verification |
+| (this commit) | docs | docs(release): record synchronized Winner OS baseline |
 
 ## Defects found and fixed during integration
 
@@ -95,6 +101,10 @@ Each row names its regression test; the security report carries the same list wi
 | A hostile outcome was refused with a generic "invalid plan" message | the refusal names the instruction-injection marker | tests/cherry/webmcp-god-mode.test.ts |
 | The full Playwright suite caught three collisions with existing product gates: the Studio nav had lost its "Command" link and said "Missions" (the plain-language rule bans implementation nouns in Studio copy), the landing teammate rail probed the local runner from a public page, and the landing had lost the "Teach once. Every agent gets better." band with its real-run link | nav restored to Command plus a "Team" entry, the rail asks the runner only when this browser already holds a pairing token, the band lives in the teach chapter | e2e/cherry/golden-manual.spec.ts, plain-language.spec.ts, visual-qa.spec.ts, demo-recording-ui.spec.ts (all green after the fix) |
 | Landing claims overstated multi-host evidence, said four tasks could run in parallel despite the three-worker cap, labelled uncaptured Claude execution Available, and conflated the browser recording with separate host evidence | scoped truthful landing and release-document copy separates the evidence, states the three-worker limit, and keeps Claude execution Experimental pending a human sign-in capture | tests/cherry/landing-god-mode.test.tsx (11), e2e/cherry/landing-god-mode.spec.ts (5/5) |
+| Verification commands and provider hosts could run without the full runner/envelope containment contract | command checks require both allowlists and accept only bounded data-only Node test targets; Codex requires observed sandbox support; Claude is probe-only | runner/agent-hosts.test.mjs, runner/v2.test.mjs |
+| Lexical containment could follow symlinks or Windows junctions during sandbox and artifact operations | one physical-path guard rejects link traversal before allocation, read, write, copy and cleanup | runner/sandbox-manager.test.mjs, runner/agent-hosts.test.mjs, runner/mission-executor.test.mjs |
+| Browser and runner mission-plan validators accepted different malformed plans, including optional-only verification | shared literal fixtures now enforce the same node, check, human-decision and required-check contract in both layers | tests/cherry/mission-plan.test.ts, runner/mission-executor.test.mjs |
+| The paired-runner browser proof did not opt into the Node verifier required by the fail-closed command policy | the E2E runner grants the exact Node executable capability while the plan envelope independently authorizes its bounded check | e2e/cherry/god-mode-mission.spec.ts (3/3 focused; included in 115/115 full Playwright) |
 
 ## What the owner still has to do
 
