@@ -160,8 +160,9 @@ export function Compatibility() {
             {ROWS.map((row) => (
               <li key={row.surface} className="card row" style={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--sp-4)' }}>
                 <div className="stack" style={{ gap: 'var(--sp-1)', flex: 1, minWidth: 240 }}>
-                  <strong>{row.surface}</strong>
-                  <span style={{ fontSize: 14 }}>{row.evidence}</span>
+                  <strong style={{ overflowWrap: 'anywhere' }}>{row.surface}</strong>
+                  {/* Evidence cites file paths; let them break so a narrow column never scrolls sideways. */}
+                  <span style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{row.evidence}</span>
                 </div>
                 <span className={STATUS_STYLE[row.status].className}>{STATUS_STYLE[row.status].label}</span>
               </li>

@@ -53,8 +53,15 @@ if (stderrMatch) process.stderr.write(stderrMatch[1] + '\n');
 const sleepMatch = /\[\[sleep:(\d+)\]\]/.exec(script);
 const exitMatch = /\[\[exit:(\d+)\]\]/.exec(script);
 const exitCode = exitMatch ? Number(exitMatch[1]) : 0;
+// Flush stdout before exiting: on Linux a pipe write of several hundred KiB is
+// asynchronous, and process.exit would drop the unwritten tail, so the [[big]]
+// case would never reach the cap it is meant to exercise. Windows pipes are
+// synchronous, which is why this only showed up on a Linux verification clone.
+function exitAfterFlush(code) {
+  process.stdout.write('', () => process.exit(code));
+}
 if (sleepMatch) {
-  setTimeout(() => process.exit(exitCode), Number(sleepMatch[1]));
+  setTimeout(() => exitAfterFlush(exitCode), Number(sleepMatch[1]));
 } else {
-  process.exit(exitCode);
+  exitAfterFlush(exitCode);
 }
