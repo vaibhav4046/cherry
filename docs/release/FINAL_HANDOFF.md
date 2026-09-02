@@ -1,9 +1,8 @@
 # Cherry: final handoff
 
-**Assembled:** 2026-09-02, London morning cycle
+**Assembled:** 2026-09-02, London morning cycle; **amended** 2026-09-02 afternoon after the Creators engine and the judge card shipped
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** `b6b7d11` (the commit that added this document; this line and the
-push state below were confirmed in the commit immediately after it)
+**Signed against commit:** `e81dbc3` (afternoon amendment; the morning signature was `b6b7d11`)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -38,7 +37,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | T10 | Validate the Codex path against a live Codex host | VERIFIED | `2ab9a1a` | `docs/release/CODEX_MCP_CAPTURE.md`, codex-cli 0.151.0-alpha.7.2, captured 2026-09-01 |
 | T11 | Inspection sweep, every screen against the reference bar | DONE | `e48ed8e` | 81 route/width combinations logged in STATUS 2026-09-01 15:42 |
 | T12 | Performance and meta polish | VERIFIED | `76e5b14`, verified at `2660569` | Per-route titles, wine favicon, 1200x630 OG image, entry chunk 480,795 bytes |
-| T13 | The 90-second judge card on `/showcase` | **NOT DONE** | none | Bounced to the Claude lane 2026-09-01 18:31 and never built. See section 6. |
+| T13 | The 90-second judge card on `/showcase` | VERIFIED | `e81dbc3` | Dismissible card with four real steps, dismissal remembered per browser, restore link; folds the old judge script into one surface; `e2e/cherry/judge-card.spec.ts` (render, links, dismiss and restore across reloads, mobile overflow, axe, keyboard, reset leaves it alone). Fixing its axe run also made the showcase event timeline keyboard-scrollable. |
 | T14 | "Add anything", one door for every ingestion path | DONE | `7f4f117` | One Add to Cherry menu reaches 7 entry points within two clicks |
 
 ### Sprint 3 (09_SPRINT3_ENDGAME.md)
@@ -65,7 +64,16 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | Ticket | What it was | Status | Commit | Evidence |
 |---|---|---|---|---|
 | T24 | Five-persona judge tribunal to two perfect rounds | **NOT RUN** | none | No tribunal sessions were run and no `TRIBUNAL_LOG.md` exists. The honest consequence is stated in section 2. |
-| T25 | This document | DONE | this commit | You are reading it. |
+| T25 | This document | DONE | `b6b7d11`, amended `e81dbc3` | You are reading it. |
+
+### Takeover (13_CLAUDE_TAKEOVER.md, afternoon)
+
+| Ticket | What it was | Status | Commit | Evidence |
+|---|---|---|---|---|
+| T26 | The Creators watch engine at `/studio/creators` | VERIFIED | `84fea70` | Follow a creator, paired-runner daily feed check, deterministic skill proposals with honest readiness, human-only set-aside, Dexie v5, archive v1.2.0, `list_sources` rows (no new tool), Command Center card, inline Sources line, labelled synthetic sample creator in the starter library. Unit 406, `e2e/cherry/creators.spec.ts`, `docs/release/screenshots/creators/`, `CHERRY_RELEASE_EVIDENCE.md` creators_watch_engine, compatibility row. Built on Claude Code's snapshot after its session stopped. |
+| T28 | Creators story in public copy | **PARTIAL** | `84fea70` | Landing step 01 sentence and the compatibility row shipped; the showcase "Source" chapter does not mention Creators. |
+| T19 | Technical report | **NOT DONE** | none | Unchanged from the morning: the material exists across `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this document. |
+| T29 | Self-loop on shipped work | **PARTIAL** | `84fea70`, `e81dbc3` | The Creators and judge-card specs each ran green twice in a row; the wider three-times loop did not run. |
 
 ---
 
@@ -102,6 +110,7 @@ A judge reading this should treat the product as audited but not tournament-hard
 | `https://cherry-wine.vercel.app/connect` | 200 |
 | `https://cherry-wine.vercel.app/compatibility` | 200 |
 | `https://cherry-wine.vercel.app/studio/skills` | 200 |
+| `https://cherry-wine.vercel.app/studio/creators` | 200 |
 | `https://cherry-wine.vercel.app/robots.txt` | 200 |
 | `https://cherry-wine.vercel.app/sitemap.xml` | 200 |
 | `https://getcherry.vercel.app/` (public alias) | 200, redirects to canonical |
@@ -113,7 +122,9 @@ drifted lockfile is what produced the one blank-page outage this project had.
 
 **Repository:** `https://github.com/vaibhav4046/cherry`, MIT.
 
-**GitHub push state:** pushed and verified. `origin/main` and local `HEAD` are both `b6b7d11`,
+**Deploy of record:** `dpl_6jUGHVjEt4p44rsA6DVTE7WnSmtH`, prebuilt from the fresh clone with the Vercel production env; the live index chunk matches the built output byte-for-byte.
+
+**GitHub push state:** pushed and verified. `origin/main` and local `HEAD` are both `e81dbc3`,
 0 commits ahead. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
 returns 200 anonymously, which is only possible on a public repository, and `README.md`,
 `docs/HARNESS.md`, and `docs/media/cherry-landing.png` do the same.
@@ -124,18 +135,19 @@ returns 200 anonymously, which is only possible on a public repository, and `REA
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **385 passed**, 2 opt-in skips, 42 files |
+| Unit | `npm run test` | **406 passed**, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | **69 passed**, 0 failed |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
 | Submission audit | `npm run audit:submission` | **0 FAIL, 0 WARN** |
-| End to end (Playwright) | `npx playwright test` | **96 passed**, 0 failed, 0 flaky, desktop 1440x1024 plus Pixel 7 |
+| End to end (Playwright) | `npx playwright test` | **105 passed**, 0 failed, 0 flaky, desktop 1440x1024 plus Pixel 7 |
 | Clean install | `npm ci` | exit 0, 996 packages |
 | Dependency advisories | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
+| Service worker behaviour | `npm run verify:sw` | 5/5 (icon fetch never poisons the shell, redeploy reaches returning visitors, offline serves the freshest shell) |
 
-Every row above was measured on 2026-09-02 from a clean checkout of the signed commit with no
+Every row above was measured on 2026-09-02 from a fresh GitHub clone of the signed commit with no
 pre-existing `node_modules`, on Linux with Node 22.22.2. The Playwright JSON report from that
-exact run is committed at `docs/release/e2e-results.json` (`expected: 96, unexpected: 0`).
+exact run is committed at `docs/release/e2e-results.json`.
 
 There is no separate "chaos" gate. Sprint 4's breaker work turned each defect it found into a
 permanent unit or e2e regression inside the counts above, which is why unit went from 311 to 385
@@ -196,16 +208,20 @@ unlisted, because Devpost judges must be able to open it without an account.
 4. **0:50 to 1:25, honest failure.** Walk to the SkillGraph step, then artifacts, then Proof.
    Open **failures and repairs** on the receipt. Click **Recompute hashes**. This is the
    credibility peak. Do not cut it.
-5. **1:25 to 2:05, Agent View.** Show the aperture table and the call log. If you are in a normal
+5. **1:25 to 1:55, Agent View.** Show the aperture table and the call log. If you are in a normal
    browser it will say manual mode and nothing registered, and you should say that out loud. That
    honesty is the point.
-6. **2:05 to 2:35, take it anywhere.** `/studio/skills`, point at the install-ready sticker and the
+6. **1:55 to 2:15, Creators.** Open `/studio/creators` with the sample library loaded. Point at the
+   followed creator (SAMPLE DATA), the **Needs transcript** row and the **Ready to draft** row.
+   Say the Creators lines from DEMO_SCRIPT: the runner checks the public feed daily, Cherry never
+   downloads the video, you add the transcript, you approve.
+7. **2:15 to 2:40, take it anywhere.** `/studio/skills`, point at the install-ready sticker and the
    approval hash chip, open a skill, show **Download SKILL.md**, **Copy AGENTS.md (Codex)**,
    **Compile skill bundle**. Flash `/connect` and its `config.toml` block.
-7. **2:35 to 2:50, close.** Back to landing, the "Teach once. Every agent gets better." band.
-8. **Three don'ts** (from DEMO_SCRIPT): do not claim live ChatGPT attachment, do not call receipts
+8. **2:40 to 2:55, close.** Back to landing, the "Teach once. Every agent gets better." band.
+9. **Three don'ts** (from DEMO_SCRIPT): do not claim live ChatGPT attachment, do not call receipts
    "signed" (they are tamper-evident hashes), do not trim the failed-verification beat.
-9. **Upload (20 min).** YouTube, public, title `Cherry: teach a workflow once, every agent gets
+10. **Upload (20 min).** YouTube, public, title `Cherry: teach a workflow once, every agent gets
    better`, description = the "Judging-criteria cheat sheet" block from
    `docs/release/DEVPOST_SUBMISSION.md` plus the live URL and the repo URL. Copy the watch link.
 
@@ -252,9 +268,10 @@ A submitted entry that is 90 percent polished beats a perfect one that missed th
 | Item | State | What finishing it takes |
 |---|---|---|
 | **GitHub push** | **Resolved.** Pushed to `origin/main` at `b6b7d11` and verified public. | Nothing. This was the last blocking item and it is closed. |
-| T13, the 90-second judge card on `/showcase` | Not built. | About an hour: a dismissible card with the four judge steps, dismissal persisted locally, plus render and dismissal e2e coverage. Nice to have, not blocking; `/showcase` already tells the story linearly. |
 | T19, the technical report | Not assembled. | The content exists in `docs/HARNESS.md`, `docs/ARCHITECTURE.md`, `CHERRY_RELEASE_EVIDENCE.md` and this handoff. Devpost does not ask for a separate report, so this is a post-submission tidy. |
 | T20 launch kit, T23 landing self-demo | Not started. | Both are post-submission polish. |
+| Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by Claude Cowork. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch `claude/takeover` can be deleted after the hackathon. |
+| `.gitattributes` line-ending normalisation | Deferred. | Nine tracked files carry CRLF; normalising them mid-flight would have conflicted with the takeover branch. Add `* text=auto eol=lf` after submission and renormalise in one commit, keeping the hash-verified example archives byte-identical. |
 | T24 tribunal | Not run. | Section 2 is the honest replacement. |
 | Live ChatGPT in-app browser capture | Not captured. | Requires access to a WebMCP-enabled host. The compatibility page labels this Experimental and says so plainly, which is the correct state, not a gap to paper over. |
 | Secret rotation | Pending. | The Privy app secret and the Vercel token were shared in a chat during the build. The Privy app secret was never used and is not in the repo or the client bundle; the Vercel token was used only to set `VITE_PRIVY_APP_ID` and to deploy. **Rotate both after the hackathon**, in the Privy dashboard and in Vercel account settings. |
