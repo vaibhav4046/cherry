@@ -41,10 +41,12 @@ Learning tools exist only while learning; export tools only after verification p
 register and unregister live as the mission's state machine advances, agents can request but never
 grant approvals, and every tool call lands in a visible inspector (Agent View). In a browser without
 WebMCP, the complete product works manually — the agent path and the human path are the same product.
+Browser-host WebMCP remains Experimental: its registration contract and closures are covered by
+unit and Playwright mock-host tests, but no live proprietary browser-host capture exists yet.
 
 And the inversion we think judges haven't seen: most WebMCP sites let an agent operate them —
-Cherry's site upgrades the agent. Three always-on read tools serve your cross-workspace Skill
-Library to whoever visits: `list_skills`, `recommend_skills` (deterministic, explainable ranking —
+Cherry's site upgrades the agent. Seven always-on read tools include three that serve your cross-workspace
+Skill Library to whoever visits: `list_skills`, `recommend_skills` (deterministic, explainable ranking —
 no hidden model call), and `get_skill`, which streams install-ready SKILL.md / AGENTS.md / CLAUDE.md
 in bounded parts with a full-file sha256 the agent recomputes after joining. Only human-approved
 exact revisions are installable, each pinned to its approval hash. `/connect` onboards each host
@@ -54,8 +56,9 @@ front of judges — guest mode is the complete product.
 
 On top sits a workforce layer: a crew of named agent seats, a work inbox with legal state
 transitions (an agent can never mark its own work SUCCEEDED), routines with action-hash approvals,
-and an optional durable runner (leased job queue, worker pool, exactly-once scheduler, hash-chained
-events). Lessons transcribe on-device with Whisper (WebGPU, WASM fallback) — still no API key.
+and an optional paired local runner for visible, user-triggered jobs. Timed routines fail closed
+without an approved local executor. Lessons transcribe on-device with Whisper (WebGPU, WASM
+fallback) — still no API key.
 
 ## How we built it
 
@@ -104,7 +107,7 @@ mcp (stdio), node, playwright, vitest
 
 ## Judging-criteria cheat sheet (for the form / video description)
 
-- **Use of WebMCP:** state-aware tool aperture (≤5+2), live register/unregister on a real state
+- **Use of WebMCP:** state-aware tool aperture (≤5+7), live register/unregister on a real state
   machine, runtime re-validation, cancellation, untrusted-content hints, visible Agent View
   inspector with a real call log.
 - **Real product:** local-first persistence, refresh-safe, import/export, no fake states — the

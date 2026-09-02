@@ -139,7 +139,8 @@ export function Landing() {
             <p className="subhead" style={{ margin: 0, maxWidth: 480 }}>
               Give Cherry a source you're allowed to learn from. It drafts the method from timestamped
               evidence, waits for your approval, verifies the result — then serves the finished skill
-              to the agents you already pay for: ChatGPT, Codex, Claude, and beyond. No API keys.
+              to Codex and Claude Code, with compatible WebMCP browser clients marked Experimental.
+              Cherry itself needs no model API key.
             </p>
             <div className="row" data-testid="hero-ctas" style={{ marginTop: 'var(--sp-2)' }}>
               <Link to="/studio?demo=1" className="btn btn-primary">Try the guided example</Link>
@@ -194,9 +195,9 @@ export function Landing() {
           <div className="band-inner stack" style={{ gap: 'var(--sp-4)' }}>
             <h2 id="agents-heading" className="display-sm" style={{ margin: 0 }}>Teach once. Every agent gets better.</h2>
             <p className="subhead" style={{ margin: 0, maxWidth: 760 }}>
-              Approved skills live in your library and follow you into every agent you use: ChatGPT
-              and Codex through WebMCP and the MCP bridge, Claude Code and Hermes-class agents through
-              Agent Skills bundles. An agent visiting this site can call <code>recommend_skills</code>{' '}
+              Approved skills live in your library and follow you into Codex through the MCP bridge,
+              Claude Code and Hermes-class agents through Agent Skills bundles, and compatible WebMCP
+              clients marked Experimental. An agent visiting this site can call <code>recommend_skills</code>{' '}
               mid-task and leave more capable — every install pinned to the exact revision you approved,
               with a hash it can verify.
             </p>

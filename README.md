@@ -2,9 +2,9 @@
 
 **The user-owned apprenticeship, memory, mission, and verification layer for AI agents.**
 
-Your agents should not start from zero. Cherry watches how useful work gets done, turns the process
-into trusted memory and portable skills, then gives the agents you already use a mission they can
-execute — and prove.
+Your agents should not start from zero. Cherry turns permitted lessons, supplied transcripts, and
+your observations into trusted memory and portable skills, then gives the agents you already use a
+mission they can execute — and prove.
 
 > Teach once. Cherry remembers. Every agent gets better.
 
@@ -47,8 +47,8 @@ WATCH / READ / OBSERVE  →  UNDERSTAND AND STRUCTURE  →  APPROVE THE SKILLGRA
   mode it shows the honest truth: nothing registered, nothing called.
 - **Guided example + walkthrough** — one click imports a real exported example workspace and walks
   you through the whole loop, ending at the recomputable receipt. Replayable anytime.
-- **WebMCP native** — in a compatible ChatGPT/Codex client, Cherry registers **state-aware site
-  tools** (max 5 per state + 2 global reads) that mutate the same visible workspace. Tools appear and
+- **WebMCP (Experimental)** — in a compatible client where `document.modelContext` exists, Cherry
+  registers **state-aware site tools** (max 5 per surface + 7 global reads) against the same visible workspace. Tools appear and
   disappear as the product state changes. No WebMCP? The complete product works manually.
 - **Local Runner (optional)** — a loopback-only Node process with pairing tokens, allowlists, and
   timeouts for deterministic jobs. **Native MCP bridge (optional)** — a stdio server for Claude
@@ -100,7 +100,8 @@ every domain mutation emits a ProofEvent in the same transaction. See `docs/CHER
 - Exact-revision approvals; agents cannot approve their own work.
 - Sandboxed, network-blocked artifact previews (e2e-verified against a hostile artifact).
 - Loopback-only runner with pairing, allowlisted executables, no shell strings, output redaction.
-- No telemetry, no analytics, no external calls beyond the YouTube embed you opt into.
+- No telemetry or analytics. External calls are limited to the YouTube embed you opt into and
+  visible, user-triggered fetches through your paired local runner.
 - Full audit trail in `docs/release/`.
 
 ## Honest limitations
@@ -120,8 +121,8 @@ every domain mutation emits a ProofEvent in the same transaction. See `docs/CHER
 ## What is proven vs. roadmap
 
 See the in-app page at /compatibility (or the live site) — every surface is labelled Validated /
-Shipped / Experimental / Roadmap with the actual test behind the label. Auth is deliberately
-absent (guest-first, decision D-008 in docs/CHERRY_DECISIONS.md).
+Shipped / Experimental / Roadmap with the actual test behind the label. Auth is guest-first and
+optional; Privy activates only when configured (decision D-019 in docs/CHERRY_DECISIONS.md).
 
 ## License
 

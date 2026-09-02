@@ -1,10 +1,11 @@
 # Cherry release evidence
 
-> **Production deployment addendum (2026-08-31):** commit `5b7d731` deployed successfully to the
+> **Historical production deployment addendum (2026-08-31):** commit `5b7d731` deployed successfully to the
 > linked Vercel project as `dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC` with a READY production target. The
 > public alias is [https://getcherry.vercel.app](https://getcherry.vercel.app); HTTP returned 200 and
 > a browser smoke check rendered the Cherry landing page with no Vercel/Vite overlay or captured
-> console errors. The preview deployment remains Vercel-auth protected, so the production alias is
+> console errors. A later 2026-08-31 deployment is recorded in `docs/BUILD_STATUS.md`; neither
+> historical block claims that subsequent local commits are live. The preview deployment remains Vercel-auth protected, so the production alias is
 > the inspection URL. The live WebMCP host boundary is unchanged and remains experimental.
 
 > **Finalist hardening addendum (2026-08-31):** full gate suite re-run after the

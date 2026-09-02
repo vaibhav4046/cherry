@@ -10,6 +10,6 @@
 | PWA install | Implemented | manifest + service worker (static shell only); requires HTTPS host for install prompt. |
 | Local runner | Working | `node runner/server.mjs`; 9 integration tests. Windows/macOS/Linux (pure Node stdlib). |
 | Native MCP bridge (Claude Code / Codex CLI) | Working, read/verify scope | `node runner/mcp/server.mjs --workspace export.json`; stdio JSON-RPC (initialize, tools/list, tools/call); 6 integration tests. Mutations intentionally excluded (decision D-005). |
-| Codex CLI adapter | Present, opt-in | Runs only if `codex` is on PATH; exit codes never count as verification. Untested here (no CLI credentials on this machine — by design, core needs none). |
-| Claude CLI adapter | Present, opt-in | Same policy as Codex adapter. |
+| Codex CLI / MCP | Validated, opt-in | Live Codex CLI host validation recorded 2026-09-01. Provider exit codes never count as verification. |
+| Claude Code / MCP | Validated, opt-in | Live Claude Code host validation recorded 2026-08-29. Provider exit codes never count as verification. |
 | Optional encrypted sync | Not implemented | Explicitly out of golden v1; no UI pretends otherwise. |

@@ -119,7 +119,7 @@ const HOSTS: HostCard[] = [
     steps: [
       'Export SKILL.md from an approved skill.',
       'Place it in the agent’s skills directory (one folder per skill).',
-      'The skill carries its provenance: sources, guardrails, verification steps, and the approval it was pinned at.',
+      'The skill carries where it came from: sources, guardrails, verification steps, and the approval it was pinned at.',
     ],
   },
 ];
@@ -160,7 +160,7 @@ export function Connect() {
             <p style={{ margin: 0 }}>
               Most agent-ready sites let an agent operate them. Cherry inverts it: the site upgrades
               the agent. Three always-on read tools serve your library to whoever visits, and the
-              bounded aperture (at most five mutation tools per surface) keeps everything else
+              limited tool set (at most five mutation tools per surface) keeps everything else
               state-gated with approvals that only a human can grant.
             </p>
             <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>

@@ -20,6 +20,9 @@ release-critical.
 
 ## Production deployment (2026-08-31)
 
+This is a historical deployment snapshot. It does not claim that later local commits are live;
+the release manager must record a new deployment after the final verified build.
+
 - **Status:** READY
 - **Commit:** `dd0677d`
 - **Deployment:** `dpl_EhP7qaomLMuiLxGPfN7Kqdy6ahsp`
@@ -78,8 +81,8 @@ flipping one byte of `SKILL.md` (must FAIL) and deleting `references/evidence.md
   understanding of every frame.
 - The native MCP bridge is read/verify over exports only (browser IndexedDB is unreachable
   from Node — decision D-005).
-- Codex/Claude CLI adapters are present but opt-in and untested here (no CLI credentials on
-  this machine, by design).
+- Codex CLI was validated in a live Codex CLI host on 2026-09-01; Claude Code/MCP was validated
+  in a live Claude Code host on 2026-08-29. Browser-host WebMCP remains unverified.
 - Optional encrypted sync is not implemented; auth is guest-first with an optional Privy
   boundary that is setup_required until `VITE_PRIVY_APP_ID` is configured (D-019 supersedes
   D-008).

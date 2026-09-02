@@ -41,12 +41,13 @@ in your sources — and the UI says so.
 ### Totals
 86 unit + 15 runner/bridge + 31 e2e — all passing.
 
-## v1.3.0 — Cherry Wine: Autopilot + live-host proof (2026-08-29)
+## v1.3.0 — Cherry Wine: Autopilot brief + Claude Code validation (2026-08-29)
 
 ### Added
-- **Autopilot brief** (Agent View): copy one brief into an attached ChatGPT/Claude client and your
-  own subscription drives the whole loop through Cherry's tools — including watching the embedded
-  video with the host's browser vision. New WebMCP tools: import_transcript (append-capable) and
+- **Autopilot brief** (Agent View): copy one brief into a compatible attached client; the client can
+  use Cherry's state-aware tools to import supplied transcript text and continue the approval-bound
+  workflow. Browser-host WebMCP remains Experimental; Cherry does not download video or captions or
+  claim frame-level understanding. New WebMCP tools: import_transcript (append-capable) and
   generate_quick_skill (auto-named); load_lesson now advances the mission state. Aperture still ≤5+2.
 - **Live Claude Code validation** (D-012): compiled bundle installed and discovered as a real skill
   in a live host session; MCP bridge registered via claude mcp add → ✔ Connected.
