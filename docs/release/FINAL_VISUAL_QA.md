@@ -1,9 +1,8 @@
 # Cherry final visual and accessibility QA
 
-**Date:** 2026-09-02 · **Branch:** `claude/final-visual-qa` (worktree from `origin/main` @ `c4a0af1`)
-**Lane:** `src/design-system/**`, `src/components/BrandIcons.tsx`, the four public pages, one focused
-Playwright sweep, this report. Nothing in `src/cherry/**`, `runner/**`, `scraper/**`, service worker,
-proof, compiler, approval, persistence, WebMCP, or source-domain logic was touched.
+**Date:** 2026-09-02 · **Original lane:** `claude/final-visual-qa` (worktree from `origin/main` @ `c4a0af1`)
+**Integrated on:** `main` at `505d1d9`, followed by the canonical Cherry masthead and offline-shell
+cache repair recorded in the integration verification below.
 
 ## Routes and viewports inspected
 
@@ -14,16 +13,18 @@ proof, compiler, approval, persistence, WebMCP, or source-domain logic was touch
 | `/connect` | yes | yes | all five host cards, copy blocks |
 | `/compatibility` | yes | yes | full status table |
 | `/studio` | yes | yes | setup-required (no space) and populated by the guided example |
-| `/studio/sources` | yes | yes | empty inbox and populated |
-| `/studio/quick` | yes | yes | empty wizard and populated |
-| `/studio/skills` | yes | yes | empty library and populated |
+| `/studio/sources` | yes | yes | empty inbox in setup-required and example-loaded workspaces |
+| `/studio/quick` | yes | yes | blank wizard in setup-required and example-loaded workspaces |
+| `/studio/skills` | yes | yes | empty library and labelled starter skills from the guided example |
 
 Method: a Playwright sweep (`e2e/cherry/visual-qa.spec.ts`) drives every route at both sizes and
-asserts, per page: horizontal overflow ≤ 1px, zero axe serious/critical violations, zero console
-errors, every visible button/link has an accessible name, the first heading is an `h1` with no skipped
-levels, and (desktop) every tabbable control in the first 14 tab stops shows a ≥2px focus ring in the
-accent colour. Screenshots are written to `docs/release/screenshots/final-qa/`. Before-state captures
-were taken with the same tooling for comparison.
+asserts, per page: horizontal overflow ≤ 1px, zero axe serious/critical violations, no unexpected
+console errors, every visible button/link has an accessible name, the first heading is an `h1` with no
+skipped levels, one canonical Cherry SVG masthead link, and (desktop) every tabbable control in the
+first 14 tab stops shows a ≥2px focus ring in the accent colour. The optional
+`CHERRY_CAPTURE_VISUAL_EVIDENCE=1` flag writes screenshots to
+`docs/release/screenshots/final-qa/`; ordinary test runs use Playwright's disposable output directory
+and do not rewrite tracked evidence.
 
 ## Problems found
 
@@ -93,8 +94,8 @@ Components and pages:
   single primary); brand marks split into a `<dl>` with "Learns from" (YouTube) and "Delivery targets ·
   not shipped yet" (Slack, Teams, Discord, Telegram, GitHub); failure state is `role="status"`; receipt
   line reads "Proof <hash>… — recompute it yourself" without uppercase transform.
-- `Connect.tsx`: Codex card is Validated with the 2026-09-01 capture note and "The IDE extension was
-  not exercised"; copy buttons are named ("Copy Codex configuration", "Copy Claude Code MCP
+- `Connect.tsx`: Codex CLI card is Validated with the 2026-09-01 capture note; copy buttons are named
+  ("Copy Codex configuration", "Copy Claude Code MCP
   registration") with an `sr-only` status line; code blocks wrap instead of scrolling; `host-grid`;
   stack gap uses an existing token.
 - `Compatibility.tsx`: "aperture" replaced with "tools the agent can use right now" wording; stale
@@ -106,6 +107,17 @@ Tests:
 
 - `e2e/cherry/visual-qa.spec.ts` (new): the sweep described above, 6 tests (3 per viewport). It runs
   under the standard `playwright.config.ts` (`npx playwright test e2e/cherry/visual-qa.spec.ts`).
+
+Integration follow-up:
+
+- `CherryHomeLink.tsx` makes the wine two-cherry SVG the single masthead mark on Landing, Showcase,
+  Connect, Compatibility, and every Studio route. One CSS rule owns its 44px target.
+- Compatibility copy now matches the runtime contract: up to 5 state-specific tools plus 7
+  always-on tools. The Connect card names only the live-validated Codex CLI MCP bridge.
+- `public/sw.js` separates HTML navigations from cached icon/manifest requests and bumps the cache to
+  v3. This prevents `/cherry.svg` from overwriting the cached `/index.html` offline fallback.
+- `tests/cherry/cherry-logo.test.tsx` and the visual sweep lock in the shared accessible mark; the
+  existing offline-shell browser test locks in the cache repair.
 
 ## Screenshots
 
@@ -148,8 +160,9 @@ npm run audit:submission → 13 PASS, 0 FAIL, 0 WARN
 git diff --check       → clean
 ```
 
-To reproduce on the shared port, Codex can run `npx playwright test` (standard config, 4173); the two
-ingest tests pass there by construction, and the three main regressions will fail until fixed.
+On the integration tree, Codex ran the standard configuration on its contract port (`4173`): the
+pre-merge main suite passed 96/96, then the merged visual sweep passed 6/6 against the built preview.
+The final combined run is recorded in the integration update below.
 
 ## Console-error result
 
@@ -164,8 +177,8 @@ separately and prints them; they come from the runner client, which is outside t
 
 ## Accessibility result
 
-- axe-core (serious + critical): **0 violations** on all 8 routes × 2 viewports × the empty and
-  populated Studio states, after the fixes. Before: 7 contrast nodes on `/showcase`, 1 on
+- axe-core (serious + critical): **0 violations** on all 8 routes × 2 viewports × the setup-required
+  and example-loaded Studio passes, after the fixes. Before: 7 contrast nodes on `/showcase`, 1 on
   `/studio/quick`, 2 scrollable regions on `/connect`.
 - Keyboard: every tab stop reached on the four public pages and four Studio routes shows a 3px accent
   ring (`rgb(140, 29, 47)`); before, 27 stops showed blue or copper rings (13 on `/`, 14 in the Studio).
@@ -178,8 +191,8 @@ separately and prints them; they come from the runner client, which is outside t
 
 - Browser-host WebMCP (ChatGPT in-app, Chrome flag) stays **Experimental** on `/connect` and
   `/compatibility`.
-- Codex is **Validated** on both pages with the same capture reference; the IDE path is stated as not
-  exercised.
+- Codex CLI is **Validated** on both pages with the same capture reference; the Connect card no longer
+  groups the untested IDE extension into that validated surface.
 - Brand marks are labelled as a real source (YouTube) or as targets that are not shipped.
 - No page claims automatic caption download, LinkedIn scraping, cloud autonomy, automatic approval, or
   signed receipts. "Tamper-evident" appears only in the Showcase detail step and the Compatibility row.
@@ -208,10 +221,10 @@ Recorded, not patched:
    "Pasted notes" (`src/pages/studio/QuickSkill.tsx:432`), so the test's card filter by skill name
    matches 2 cards instead of 1. Addressed on main after this branch was cut: `163e391` names skills
    from content instead of the source label (see the update below).
-8. **e2e regression on main: `memory-routine.spec.ts:97`.** After seeding runs the test expects the
-   "Runner paired" sticker (`src/pages/studio/Runs.tsx:86`), which never appears; most likely a
-   consequence of the runner boundary change (`15de518`). Needs a product decision on what Runs shows
-   without a paired runner. Still open on `origin/main` @ `f761615`.
+8. **Port-specific harness mismatch in `memory-routine.spec.ts:97`.** The branch attribution run used
+   port `4176`, while that test's mocked runner response deliberately allows origin `4173`. The browser
+   therefore blocked the mock response before "Runner paired" could render. The standard release run
+   on `4173` passes this case; it was not a product regression.
 9. **e2e stale copy: `t11-misc-copy.spec.ts:90`.** The test expected "Sandboxed · no network · no access
    to Cherry data", which `f36e026` (inert static previews) removed from `Artifacts.tsx`. Addressed on
    main by `163e391`, which points the assertion at the new "Static · no scripts …" label.
@@ -222,5 +235,28 @@ Recorded, not patched:
 a file in this lane; `git merge-tree --write-tree origin/main claude/final-visual-qa` reports a clean
 merge. Re-running the three specs against a detached checkout of `f761615` (fresh `npm ci`, build,
 preview on :4176): `library-actions.spec.ts` 3 passed, `t11-misc-copy.spec.ts` 4 passed,
-`memory-routine.spec.ts` 4 passed and 1 failed (`:97`, "Runner paired" still never appears). So
-blockers 7 and 9 are closed on main; blocker 8 remains.
+`memory-routine.spec.ts` 4 passed and 1 failed (`:97`, "Runner paired" still never appears). That last
+result is attributable to the mirror port: its response fixture sends
+`Access-Control-Allow-Origin: http://127.0.0.1:4173`, not `4176`. Codex then ran the standard suite on
+`4173` against `f761615`: all 96 tests passed, including `memory-routine.spec.ts:97`. Blockers 7, 8,
+and 9 are therefore closed.
+
+## Integration verification
+
+Claude's branch was reviewed and merged into main as `505d1d9` on 2026-09-02. On the combined tree:
+
+- typecheck and lint passed; unit tests passed 386 with 2 opt-in skips; runner/bridge passed 69;
+- the complete standard-port Playwright suite passed 102/102 after the masthead and cache repair;
+- the built-preview visual and accessibility sweep passed 6/6 at 1440x900 and 390x844, including the
+  canonical-logo assertion on every inspected route;
+- the offline-shell failure was reproduced, traced to an SVG response replacing `/index.html`, fixed,
+  passed in isolation, and passed again inside the 102-test suite;
+- the release pack passed all six tamper/evidence checks;
+- the submission audit passed 13/13 with zero failures or warnings;
+- the production dependency audit found zero high or critical advisories (the documented optional
+  Privy wallet subtree retains moderate `uuid` advisories rather than taking a breaking downgrade);
+- the Scrapling worker contract passed 12/12.
+
+The tracked screenshots in this directory and `docs/media/cherry-landing.png` were regenerated from
+the final built preview. No production deployment was performed by Codex; live deployment remains the
+release manager's separate step.

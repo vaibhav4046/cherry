@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CherryHomeLink } from '../components/CherryHomeLink.tsx';
 
 type Status = 'validated' | 'shipped' | 'experimental';
 
@@ -94,10 +95,10 @@ const HOSTS: HostCard[] = [
   },
   {
     id: 'codex',
-    title: 'Codex CLI / IDE (MCP bridge)',
+    title: 'Codex CLI (MCP bridge)',
     status: 'validated',
     statusNote:
-      'Validated in a live Codex CLI host on 2026-09-01: the stdio bridge was registered with codex mcp add, the host listed Cherry’s tools, read the workspace export, and verified the compiled bundle’s SHA-256 (transcript: docs/release/CODEX_MCP_CAPTURE.md). The IDE extension was not exercised.',
+      'Validated in a live Codex CLI host on 2026-09-01: the stdio bridge was registered with codex mcp add, the host listed Cherry’s tools, read the workspace export, and verified the compiled bundle’s SHA-256 (transcript: docs/release/CODEX_MCP_CAPTURE.md).',
     steps: [
       'In the Studio, export your workspace (Settings → Connections → Export) and compile skill bundles from the Skill Library.',
       'Add the bridge to Codex with the config below — your Codex subscription is the reasoning engine; Cherry is the memory it reads.',
@@ -135,7 +136,7 @@ export function Connect() {
     <div>
       <header>
         <nav className="top-nav" aria-label="Main navigation">
-          <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
+          <CherryHomeLink />
           <span className="label" style={{ marginRight: 'auto' }}>Connect your agent</span>
           <Link to="/compatibility" className="btn">What&rsquo;s proven</Link>
           <Link to="/studio" className="btn btn-primary">Open Studio</Link>

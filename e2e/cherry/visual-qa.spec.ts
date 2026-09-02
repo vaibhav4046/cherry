@@ -1,5 +1,5 @@
 import { mkdirSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
@@ -12,6 +12,7 @@ import AxeBuilder from '@axe-core/playwright';
  */
 
 const OUT_DIR = 'docs/release/screenshots/final-qa';
+const CAPTURE_EVIDENCE = process.env.CHERRY_CAPTURE_VISUAL_EVIDENCE === '1';
 
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
@@ -36,6 +37,10 @@ const ACCENT_OUTLINE = 'rgb(140, 29, 47)';
 
 function slug(path: string): string {
   return path === '/' ? 'home' : path.replace(/^\//, '').replace(/\//g, '-');
+}
+
+function screenshotPath(testInfo: TestInfo, filename: string): string {
+  return CAPTURE_EVIDENCE ? `${OUT_DIR}/${filename}` : testInfo.outputPath(filename);
 }
 
 /**
@@ -66,6 +71,11 @@ function collectConsoleErrors(page: Page): { errors: string[]; runnerProbeErrors
 }
 
 async function assertPageHealth(page: Page, label: string) {
+  await expect(
+    page.locator('[data-testid="cherry-home-link"] img[src="/cherry.svg"]'),
+    `${label}: canonical Cherry home mark`,
+  ).toHaveCount(1);
+
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
@@ -145,11 +155,11 @@ async function assertFocusRings(page: Page, label: string, limit = 14) {
 
 test.describe('final visual and accessibility QA', () => {
   test.beforeAll(() => {
-    mkdirSync(OUT_DIR, { recursive: true });
+    if (CAPTURE_EVIDENCE) mkdirSync(OUT_DIR, { recursive: true });
   });
 
   for (const viewport of VIEWPORTS) {
-    test(`public pages at ${viewport.name} (${viewport.width}x${viewport.height})`, async ({ page }) => {
+    test(`public pages at ${viewport.name} (${viewport.width}x${viewport.height})`, async ({ page }, testInfo) => {
       test.setTimeout(240_000);
       const { errors, runnerProbeErrors } = collectConsoleErrors(page);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -158,7 +168,7 @@ test.describe('final visual and accessibility QA', () => {
         await page.goto(route.path);
         await expect(page.getByRole('heading', { level: 1, name: route.ready })).toBeVisible();
         await page.waitForLoadState('networkidle');
-        await page.screenshot({ path: `${OUT_DIR}/${viewport.name}-${slug(route.path)}.png`, fullPage: true });
+        await page.screenshot({ path: screenshotPath(testInfo, `${viewport.name}-${slug(route.path)}.png`), fullPage: true });
         await assertPageHealth(page, `${route.path}@${viewport.name}`);
         if (viewport.name === 'desktop') await assertFocusRings(page, route.path);
       }
@@ -167,7 +177,7 @@ test.describe('final visual and accessibility QA', () => {
       expect(runnerProbeErrors, `public pages must not probe the local runner @${viewport.name}`).toEqual([]);
     });
 
-    test(`studio setup-required states at ${viewport.name}`, async ({ page }) => {
+    test(`studio setup-required states at ${viewport.name}`, async ({ page }, testInfo) => {
       test.setTimeout(240_000);
       const { errors, runnerProbeErrors } = collectConsoleErrors(page);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -176,7 +186,7 @@ test.describe('final visual and accessibility QA', () => {
         await page.goto(route.path);
         await expect(page.getByRole('heading', { level: 1, name: route.ready }).first()).toBeVisible();
         await page.waitForLoadState('networkidle');
-        await page.screenshot({ path: `${OUT_DIR}/${viewport.name}-${slug(route.path)}-empty.png`, fullPage: true });
+        await page.screenshot({ path: screenshotPath(testInfo, `${viewport.name}-${slug(route.path)}-empty.png`), fullPage: true });
         await assertPageHealth(page, `${route.path} (empty)@${viewport.name}`);
         if (viewport.name === 'desktop') await assertFocusRings(page, `${route.path} (empty)`);
       }
@@ -185,7 +195,7 @@ test.describe('final visual and accessibility QA', () => {
       console.log(`[visual-qa] empty studio @${viewport.name}: ${runnerProbeErrors.length} refused runner probe(s) (known, outside lane)`);
     });
 
-    test(`studio populated by the guided example at ${viewport.name}`, async ({ page }) => {
+    test(`studio populated by the guided example at ${viewport.name}`, async ({ page }, testInfo) => {
       test.setTimeout(240_000);
       const { errors, runnerProbeErrors } = collectConsoleErrors(page);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -198,7 +208,7 @@ test.describe('final visual and accessibility QA', () => {
         await page.goto(route.path);
         await expect(page.getByRole('heading', { level: 1, name: route.ready }).first()).toBeVisible();
         await page.waitForLoadState('networkidle');
-        await page.screenshot({ path: `${OUT_DIR}/${viewport.name}-${slug(route.path)}-populated.png`, fullPage: true });
+        await page.screenshot({ path: screenshotPath(testInfo, `${viewport.name}-${slug(route.path)}-populated.png`), fullPage: true });
         await assertPageHealth(page, `${route.path} (populated)@${viewport.name}`);
       }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandMark } from '../components/BrandIcons.tsx';
+import { CherryHomeLink } from '../components/CherryHomeLink.tsx';
 
 interface CardRow {
   seconds: number;
@@ -120,7 +121,7 @@ export function Landing() {
     <div>
       <header>
         <nav className="top-nav" aria-label="Main navigation">
-          <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
+          <CherryHomeLink />
           <div className="row nav-links">
             <a href="#how" className="nav-pill">How it works</a>
             <Link to="/showcase" className="nav-pill">Showcase</Link>

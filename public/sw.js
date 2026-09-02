@@ -1,7 +1,7 @@
 /* Cherry service worker: caches the static shell only. Workspace records live
    in IndexedDB and are NEVER cached here.
 
-   Strategy (v2): network-first for navigations and the HTML shell, cache-first
+   Strategy (v3): network-first for navigations and the HTML shell, cache-first
    for hashed /assets/ files.
 
    Why: a cache-first shell keeps serving an old index.html after a deploy, and
@@ -9,7 +9,7 @@
    visitor then gets a blank page. Navigations therefore always try the network
    first and fall back to the cached shell only when offline. Hashed assets are
    immutable, so cache-first is safe and keeps the app fast offline. */
-const CACHE = 'cherry-shell-v2';
+const CACHE = 'cherry-shell-v3';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/cherry.svg'];
 
 self.addEventListener('install', (event) => {
@@ -28,7 +28,8 @@ self.addEventListener('fetch', (event) => {
   // Never intercept localhost runner calls.
   if (url.port === '47821') return;
 
-  const isNavigation = event.request.mode === 'navigate' || SHELL.includes(url.pathname);
+  const isNavigation =
+    event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html';
 
   if (isNavigation) {
     // Network first, bypassing the HTTP cache: a fresh deploy must reach
@@ -45,6 +46,16 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => caches.match(event.request).then((cached) => cached ?? caches.match('/index.html'))),
+    );
+    return;
+  }
+
+  // Static shell files are cached under their own URLs. Keeping them out of
+  // the navigation branch prevents an icon or manifest response from ever
+  // replacing the cached /index.html fallback.
+  if (SHELL.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached ?? fetch(event.request)),
     );
     return;
   }

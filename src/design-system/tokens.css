@@ -329,21 +329,6 @@ label.field > span:first-child { font-size: var(--text-caption); font-weight: 70
   flex-wrap: wrap;
 }
 
-.logo-mark {
-  width: 44px;
-  height: 44px;
-  border: var(--border);
-  border-radius: var(--radius-pill);
-  background: #d52f58;
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 20px;
-  text-decoration: none;
-}
-
 .nav-pill {
   border: var(--border);
   border-radius: var(--radius-pill);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { CherryHomeLink } from '../components/CherryHomeLink.tsx';
 import { useAppState } from '../app/AppState.tsx';
 import { createExampleWorkspace, createMission } from '../cherry/mission/mission-service.ts';
 import {
@@ -409,7 +410,7 @@ export function Showcase() {
     <main className="band band-cream" style={{ minHeight: '100vh' }}>
       <div className="band-inner stack" style={{ gap: 'var(--sp-6)' }}>
         <nav className="row" aria-label="Showcase navigation" style={{ justifyContent: 'space-between' }}>
-          <Link to="/" className="nav-pill">← Cherry</Link>
+          <CherryHomeLink />
           <div className="row">
             <Link to="/studio" className="nav-pill">Open Studio</Link>
             <Link to="/studio/agent" className="nav-pill">Agent View</Link>

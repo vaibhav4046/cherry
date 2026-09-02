@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { CherryHomeLink } from '../components/CherryHomeLink.tsx';
 
 type Status = 'validated' | 'shipped' | 'experimental' | 'roadmap';
 
@@ -36,7 +37,7 @@ const ROWS: Row[] = [
   {
     surface: 'Tools the agent can use right now (registered and retired by state)',
     status: 'validated',
-    evidence: '8 unit tests against the document.modelContext contract with a mock host: at most 5 mutation tools plus 2 globals live at once, AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, full journey through the tool layer against the same persisted state as the UI.',
+    evidence: 'Mock-host tests exercise the document.modelContext contract with up to 5 state-specific tools plus 7 always-on tools: AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, and a full journey through the same persisted state as the UI.',
   },
   {
     surface: 'ChatGPT / Codex in-app browser (live WebMCP host)',
@@ -51,7 +52,7 @@ const ROWS: Row[] = [
   {
     surface: 'Skill Library + global library tools (list / recommend / get)',
     status: 'validated',
-    evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. Mutation tools unchanged (max 5 per surface); globals grew to 7 read-only tools.',
+    evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. State-specific tools stay bounded to 5; 7 always-on tools remain available.',
   },
   {
     surface: 'Agent Skills bundle export (SKILL.md + targets)',
@@ -125,7 +126,7 @@ export function Compatibility() {
     <div>
       <header>
         <nav className="top-nav" aria-label="Main navigation">
-          <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
+          <CherryHomeLink />
           <span className="label" style={{ marginRight: 'auto' }}>What's proven</span>
           <Link to="/studio" className="btn btn-primary">Open Studio</Link>
         </nav>

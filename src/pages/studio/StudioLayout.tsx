@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
-import { NavLink, Outlet, Link , useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
+import { CherryHomeLink } from '../../components/CherryHomeLink.tsx';
 import { GuidedTour } from '../../components/GuidedTour.tsx';
 import { Icons } from '../../components/Icons.tsx';
 import type { ProductState } from '../../cherry/mission/mission-state.ts';
@@ -116,7 +117,7 @@ export function StudioLayout() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <header style={{ borderBottom: 'var(--border)' }}>
         <nav className="top-nav" aria-label="Studio navigation">
-          <Link to="/" className="logo-mark" aria-label="Cherry home">C</Link>
+          <CherryHomeLink />
           <span className="label top-nav-context" style={{ marginRight: 'auto' }}>
             {workspaces.length > 1 ? (
               <select
