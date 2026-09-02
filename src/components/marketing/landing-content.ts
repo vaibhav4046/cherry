@@ -11,7 +11,7 @@ export const HERO = {
   eyebrow: 'Cherry / Open AI workforce',
   headline: 'One task. An entire AI team.',
   subhead:
-    'Cherry turns Codex, Claude, Kimi and local models into teammates with tools, memory and isolated workspaces. They work in parallel and return with verified results.',
+    'Cherry coordinates the tools and agent hosts you already use, plans and bounds the work, creates constrained teammates, verifies the results, and returns for genuine decisions.',
   primaryCta: { label: 'Run a real mission', to: '/studio/control' },
   secondaryCta: { label: 'See how Cherry works', to: '#how' },
   trustLine: 'Model-agnostic · Permission-scoped · Verification-backed',
@@ -24,7 +24,7 @@ export interface TeammateExampleRow {
 }
 
 export const TEAMMATE_EXAMPLE_ROWS: readonly TeammateExampleRow[] = [
-  { name: 'Chief', role: 'coordinator', line: 'Release mission planned. Four tasks can run in parallel.' },
+  { name: 'Chief', role: 'coordinator', line: 'Release mission planned. Up to three tasks can run in parallel.' },
   { name: 'Developer', role: 'build', line: 'Codex is working in an isolated repository worktree.' },
   { name: 'Research', role: 'research', line: 'Compared the current product against official benchmark sources.' },
   { name: 'Content', role: 'content', line: 'Drafted the launch post. Public publishing still needs approval.' },
@@ -145,7 +145,7 @@ export const COMPUTER_ROWS: readonly StatusRow[] = [
 
 export const MODEL_ROWS: readonly StatusRow[] = [
   { name: 'Codex', detail: 'Builds inside a worktree with an explicit sandbox flag. Uses your Codex sign-in and available Codex usage.', status: 'Available' },
-  { name: 'Claude Code', detail: 'Reviews and repairs in a separate worktree through its non-interactive mode.', status: 'Available' },
+  { name: 'Claude Code', detail: 'The integration is built. A real execution capture requires a Claude sign-in.', status: 'Experimental' },
   { name: 'Local models through Ollama', detail: 'Classification and extraction on this machine once tool use is validated.', status: 'Experimental' },
   { name: 'Kimi, Kilo and OpenAI-compatible endpoints', detail: 'Probed and labelled honestly before any work is assigned.', status: 'Roadmap' },
 ];

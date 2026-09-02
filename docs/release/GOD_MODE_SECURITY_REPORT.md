@@ -56,4 +56,4 @@ these Roadmap or Experimental.
 | A scratch root stays inside the approved root | `scratchRootFor` builds it from `allowedRoots[0]` | `runner/mission-executor.test.mjs` (scratch root case) |
 | A runner failure is final in the browser mirror; nothing shows as running that is not | `runnerEventFor` maps a runner `failed` to FAILED regardless of attempts | `tests/cherry/mission-run-coordination.test.ts` |
 | A manual handoff never outranks a host that can do the work | fallback tiers in `rankHosts`, manual last | `tests/cherry/host-registry.test.ts` |
-| Public pages never probe the local runner; only a browser that already holds a pairing token asks for live rows | `TeammateRail` checks `getStoredPairToken()` before any request | `e2e/cherry/visual-qa.spec.ts` ("public pages must not probe the local runner") |
+| Anonymous public pages never probe the local runner; only a browser that already holds a pairing token asks for live rows | `TeammateRail` checks `getStoredPairToken()` before any request | `e2e/cherry/visual-qa.spec.ts` ("public pages must not probe the local runner") |

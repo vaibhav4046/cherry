@@ -51,7 +51,7 @@ describe('landing: open AI workforce positioning', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'One task. An entire AI team.' })).toBeTruthy();
     expect(
       screen.getByText(
-        'Cherry turns Codex, Claude, Kimi and local models into teammates with tools, memory and isolated workspaces. They work in parallel and return with verified results.',
+        'Cherry coordinates the tools and agent hosts you already use, plans and bounds the work, creates constrained teammates, verifies the results, and returns for genuine decisions.',
       ),
     ).toBeTruthy();
     const ctas = screen.getByTestId('hero-ctas');
@@ -69,6 +69,33 @@ describe('landing: open AI workforce positioning', () => {
       expect(within(rail).getByText(row.line)).toBeTruthy();
     }
     expect(within(rail).queryByText(/live/i)).toBeNull();
+  });
+
+  it('states the enforced three-task parallel limit', () => {
+    renderLanding();
+    const rail = screen.getByTestId('teammate-rail');
+    expect(within(rail).getByText('Release mission planned. Up to three tasks can run in parallel.')).toBeTruthy();
+    expect(within(rail).queryByText(/Four tasks can run in parallel/i)).toBeNull();
+  });
+
+  it('labels Claude Code mission execution Experimental until a signed-in capture exists', () => {
+    renderLanding();
+    const modelDemo = screen.getByTestId('model-demo');
+    const claudeRow = within(modelDemo).getByText('Claude Code').closest('li');
+    expect(claudeRow).not.toBeNull();
+    expect(within(claudeRow!).getByTestId('status-chip').textContent).toBe('Experimental');
+    expect(
+      within(claudeRow!).getByText('The integration is built. A real execution capture requires a Claude sign-in.'),
+    ).toBeTruthy();
+  });
+
+  it('separates the recorded browser journey from the Codex, Claude Code and WebMCP evidence', () => {
+    renderLanding();
+    expect(
+      screen.getByText(
+        'The recorded browser journey shows a lesson becoming an approved, verified skill with tamper-evident proof. Codex execution and a Claude Code skill installation were captured separately. WebMCP is mock-host tested.',
+      ),
+    ).toBeTruthy();
   });
 
   it('renders the twelve required sections in the directive order', () => {

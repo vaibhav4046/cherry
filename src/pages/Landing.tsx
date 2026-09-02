@@ -88,7 +88,7 @@ export function Landing() {
             </div>
             <div className="gm-band" data-testid="real-run-band">
               <h3 className="gm-band-title">Teach once. Every agent gets better.</h3>
-              <p className="muted">The recorded golden run shows one lesson becoming a proven skill that Codex, Claude Code and a WebMCP host install at the same approved revision.</p>
+              <p className="muted">The recorded browser journey shows a lesson becoming an approved, verified skill with tamper-evident proof. Codex execution and a Claude Code skill installation were captured separately. WebMCP is mock-host tested.</p>
               <Link to="/showcase#real-run" className="link-quiet">Watch the real run</Link>
             </div>
           </div>

@@ -1,12 +1,14 @@
-# Cherry: technical report
+# Cherry: technical report (pre-God-Mode baseline)
 
 **Date:** 2026-09-02
 **Commit of record:** `c8e2181` on `main` (source identical to the live deploy `dpl_6jUGHVjEt4p44rsA6DVTE7WnSmtH`, built from `e81dbc3`)
 **Live:** https://cherry-wine.vercel.app (canonical) and https://getcherry.vercel.app (alias)
 **Repository:** https://github.com/vaibhav4046/cherry (MIT)
 
-This report assembles what the repository already proves. Every statement below points at a
-file, a test, a capture, or a live response. Section 8 lists what is not proven.
+This historical report describes the pre-God-Mode baseline at `c8e2181`; it is not the report for
+the branch now under review. See [GOD_MODE_FINAL_REPORT.md](GOD_MODE_FINAL_REPORT.md) for that branch.
+Every statement below points at baseline evidence. Section 8 lists what was not proven at this
+snapshot.
 
 ## 1. What Cherry is
 
@@ -17,15 +19,16 @@ read, builds real artifacts, verifies them with checks that can fail, seals the 
 tamper-evident receipt, and serves the approved skill to agents over three open conventions:
 WebMCP in the browser, MCP on the machine, and Agent Skills bundles anywhere.
 
-Cherry never calls a model and never asks for an API key. The reasoning engine is the agent the
-person already pays for. The browser is the database. The core runs with no account and no cloud.
+At this snapshot, Cherry makes no direct model API calls and asks for no model API key. The paired
+local runner can invoke configured agent CLIs under its allowlist; those hosts provide the reasoning.
+The browser is the database. The core runs with no account and no cloud.
 
 ## 2. Architecture
 
 | Layer | Location | Role |
 |---|---|---|
 | Domain core | `src/cherry/*` | Typed services, models, and state machines. No React, WebMCP, or MCP imports. |
-| Persistence | `src/cherry/persistence/` | Dexie over IndexedDB with versioned migrations (v5 today). Every domain mutation emits a ProofEvent inside the same transaction. |
+| Persistence | `src/cherry/persistence/` | Dexie over IndexedDB with versioned migrations (v5 at the historical `c8e2181` snapshot). Every domain mutation emits a ProofEvent inside the same transaction. |
 | Proof ledger | `src/cherry/core/domain-event.ts`, `src/cherry/proof/` | Append-only ledger. Receipts are SHA-256 over RFC 8785 canonical JSON. Tamper-evident and recomputable, never signed. |
 | UI | `src/pages/`, `src/app/` | React 19 shell. Pages call domain services directly, so the agent path and the human path share one implementation. |
 | WebMCP layer | `src/cherry/webmcp/` | Feature-detects `document.modelContext.registerTool`, registers tools by product state and route surface with AbortController lifecycles, and logs every call to Agent View. |
@@ -127,7 +130,8 @@ code enforces) and the team harness (gates before every commit, full Playwright 
 push, one deployer, an append-only STATUS log, and a claims discipline under which nothing is
 stated beyond what a test, receipt, or capture shows).
 
-Gates on `c8e2181` from a fresh GitHub clone with no pre-existing `node_modules`, Linux, Node 22:
+Historical baseline gates on `c8e2181` from a fresh GitHub clone with no pre-existing
+`node_modules`, Linux, Node 22 (these are not current God Mode counts):
 
 | Gate | Result |
 |---|---|

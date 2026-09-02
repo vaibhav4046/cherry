@@ -55,8 +55,9 @@ Raw record: docs/release/benchmarks/god-mode-hosts.json (sha256 14d0c601b06f881f
 
 ## Claude Code (not captured)
 
-Claude Code 2.1.224 is installed (`bin/claude.exe`), but on this machine a non-interactive
-`claude -p` run returned `Failed to authenticate. API Error: 401 OAuth access token has been revoked.`
+The automated PATH probe above marked Claude unavailable because `claude` was absent from PATH. A
+direct binary was found at `bin/claude.exe` (Claude Code 2.1.224), but a non-interactive run returned
+`Failed to authenticate. API Error: 401 OAuth access token has been revoked.`
 A sign-in is a human-only credential step, so no Claude execution was captured and the Claude Code
 row stays EXPERIMENTAL. After `claude login`, the same command with `CHERRY_REAL_CLAUDE=1` and
 `--claude-command "<path to claude.exe>"` records it in this file. The runner never stores or
