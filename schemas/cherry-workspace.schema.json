@@ -163,6 +163,12 @@
         "$ref": "#/$defs/routine"
       }
     },
+    "missionPlans": {
+      "$ref": "#/$defs/records10000"
+    },
+    "evaluationReports": {
+      "$ref": "#/$defs/records100000"
+    },
     "settings": {
       "type": "object",
       "maxProperties": 0

@@ -70,6 +70,16 @@ export const PROOF_EVENT_TYPES = [
   'routine.enabled',
   'routine.paused',
   'routine.run_requested',
+  'mission.plan_created',
+  'mission.plan_revised',
+  'mission.plan_approved',
+  'mission.plan_started',
+  'mission.plan_status',
+  'mission.node_updated',
+  'evaluation.recorded',
+  'policy.decided',
+  'sandbox.leased',
+  'sandbox.released',
 ] as const;
 
 export type ProofEventType = (typeof PROOF_EVENT_TYPES)[number];
