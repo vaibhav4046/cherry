@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "title": "God Mode storage and pipeline chaos cases",
+  "generatedAt": "2026-09-02T13:10:45.911Z",
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "node": "v24.12.0"
+  },
+  "summary": {
+    "cases": 12,
+    "pass": 11,
+    "fail": 0,
+    "skipped": 1
+  },
+  "results": [
+    {
+      "case": "cas_corrupted_object_detected",
+      "expectation": "verify() reports ok:false with the recomputed digest after an object is altered on disk",
+      "result": "pass",
+      "detail": "expected 59d8792018a5, recomputed 8bdb06add637"
+    },
+    {
+      "case": "index_corrupt_tail_skipped_on_recover",
+      "expectation": "a truncated last line is skipped with a warning, later appends land on their own line, and count stays correct",
+      "result": "pass",
+      "detail": "warning: line 4 skipped (truncated tail): Unterminated string in JSON at position 49 (line 1 column 50)"
+    },
+    {
+      "case": "interrupted_batch_resumed_without_duplicates",
+      "expectation": "a pipeline that throws mid-batch is resumed by a fresh pipeline over the same store with zero duplicate accepted records and the same result as an uninterrupted run",
+      "result": "pass",
+      "detail": "crashed at record 37 of 200, 35 accepted before, 175 after resume, 35 skipped"
+    },
+    {
+      "case": "duplicate_put_idempotent",
+      "expectation": "a second putBytes of identical bytes returns created:false, leaves the object untouched and adds no object",
+      "result": "pass",
+      "detail": "hash e515ff8b30ce, one object, mtime unchanged"
+    },
+    {
+      "case": "oversized_record_rejected",
+      "expectation": "a 2 MiB body is isolated as oversized by maxBytes of 1 MiB and nothing is stored",
+      "result": "pass",
+      "detail": "2097152 bytes exceeds maxBytes 1048576"
+    },
+    {
+      "case": "path_traversal_in_record_id_rejected",
+      "expectation": "metadata whose id or body path escapes the corpus directory is isolated and nothing is stored",
+      "result": "pass",
+      "detail": "{\"absolute\":\"unsafe_body_path\",\"bodypath\":\"unsafe_body_path\",\"traversal\":\"unsafe_id\"}"
+    },
+    {
+      "case": "symlink_under_corpus_refused",
+      "expectation": "a body that is a symlink is isolated as symlink_refused; skipped where the platform does not permit symlink creation",
+      "result": "skipped",
+      "detail": "symlink creation not permitted here (EPERM); enable Developer Mode or run elevated on Windows to exercise this case"
+    },
+    {
+      "case": "invalid_utf8_isolated",
+      "expectation": "a body containing invalid UTF-8 bytes is isolated as invalid_utf8 and the batch continues",
+      "result": "pass",
+      "detail": "{\"bad\":\"invalid_utf8\",\"good\":\"accepted\"}"
+    },
+    {
+      "case": "zero_byte_record_isolated",
+      "expectation": "an empty body is isolated as empty_body and nothing is stored for it",
+      "result": "pass",
+      "detail": "empty_body"
+    },
+    {
+      "case": "hostile_record_stays_text",
+      "expectation": "a prompt-injection body is stored verbatim as data with trust untrusted; the marker is present in the stored object unchanged",
+      "result": "pass",
+      "detail": "marker found in object f53fd311fdf7, trust untrusted, bytes identical"
+    },
+    {
+      "case": "index_cursor_pagination_2000",
+      "expectation": "paging 2,000 index records with an opaque cursor visits every record exactly once",
+      "result": "pass",
+      "detail": "55 pages of 37, 2000 distinct ids"
+    },
+    {
+      "case": "cas_cursor_pagination_2000",
+      "expectation": "listing 2,000 objects with an opaque cursor visits every object exactly once",
+      "result": "pass",
+      "detail": "32 pages of 64, 2000 distinct hashes"
+    }
+  ]
+}
