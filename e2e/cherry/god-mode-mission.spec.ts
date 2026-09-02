@@ -66,7 +66,7 @@ function createFixtureRepo(root: string): string {
 function startRunner(root: string): Promise<ChildProcess> {
   const child = spawn(
     process.execPath,
-    ['runner/server.mjs', '--root', root, '--state', join(root, '.state'), '--allow-mock-host', '--mock-fail-first', 'content-draft', '--mock-delay-ms', '8000', '--concurrency', '3'],
+    ['runner/server.mjs', '--root', root, '--state', join(root, '.state'), '--allow-exec', process.execPath, '--allow-mock-host', '--mock-fail-first', 'content-draft', '--mock-delay-ms', '8000', '--concurrency', '3'],
     { env: { ...process.env, CHERRY_RUNNER_TOKEN: PAIR_TOKEN }, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   return new Promise((resolve, reject) => {
