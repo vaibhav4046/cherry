@@ -1,5 +1,9 @@
 # Cherry baseline
 
+> **Historical snapshot:** every count below describes the initial 2026-08-29 tree. It is retained
+> as build provenance, not as a statement about the current dependency graph. See
+> `docs/release/DEPENDENCY_AUDIT.md` for the current dated audit.
+
 **Date:** 2026-08-29
 **Machine:** Windows 11, Node v24.12.0, npm 11.6.2, git 2.49.0.windows.1
 

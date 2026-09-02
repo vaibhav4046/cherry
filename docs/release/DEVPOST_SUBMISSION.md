@@ -79,7 +79,7 @@ Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists,
 
 ## Accomplishments
 
-- 168 unit (+2 opt-in skips) + 42 runner/bridge + 43 e2e tests, including a hostile-artifact sandbox probe, axe
+- 385 unit (+2 opt-in skips) + 69 runner/bridge + 94 e2e tests, including a hostile-artifact sandbox probe, axe
   audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
 - A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
   the actual test behind the label — including what we did NOT test.

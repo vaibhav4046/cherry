@@ -5,7 +5,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { createMission, createWorkspace, transitionMission, updateMission } from '../../cherry/mission/mission-service.ts';
 import { getLesson, listTranscript, updateLesson } from '../../cherry/watch/lesson-service.ts';
 import { embedUrl, isYouTubeFamilyHost } from '../../cherry/watch/youtube-url.ts';
-import { previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
+import { autoNameSkill, previewQuickSkill, generateSkillFromLesson } from '../../cherry/skillgraph/quick-skill.ts';
 import { requestSkillGraphApproval, decideSkillGraphApproval, getSkillGraph, listApprovals } from '../../cherry/skillgraph/skillgraph-service.ts';
 import { listVerifications, runVerification } from '../../cherry/verify/verification-service.ts';
 import { compileSkillBundle } from '../../cherry/compiler/archive-builder.ts';
@@ -256,7 +256,12 @@ export default function QuickSkill() {
         setTranscriptText(matchingDraft?.transcriptText ?? '');
         setAdditionalSourceText(matchingDraft?.additionalSourceText ?? '');
         setTranscriptSource(matchingDraft?.transcriptSource ?? 'user_text');
-        setSkillName(matchingDraft?.skillName || source.title);
+        // A source label such as "Pasted notes" describes where the material
+        // came from, not the skill it teaches. Keep the field blank so the
+        // deterministic content-derived name remains the default. Older
+        // interrupted drafts may contain that source label; treat it as the
+        // same legacy default rather than preserving duplicate skill names.
+        setSkillName(matchingDraft?.skillName === source.title ? '' : (matchingDraft?.skillName ?? ''));
         setSourceCount(segments.length > 0 ? 1 : 0);
 
         if (segments.length === 0) {
@@ -1052,7 +1057,9 @@ export default function QuickSkill() {
           <div className="stack" style={{ gap: 'var(--sp-4)', minWidth: 0 }}>
             <section className="card stack" style={{ gap: 4, padding: 'var(--sp-4)' }}>
               <p className="kicker" style={{ fontSize: 12 }}>Notebook</p>
-              <h2 className="subhead" style={{ fontSize: 22, margin: 0 }}>{skillName.trim() || lesson?.title || 'Untitled notebook'}</h2>
+              <h2 className="subhead" style={{ fontSize: 22, margin: 0 }}>
+                {skillName.trim() || (lesson && draft ? autoNameSkill(lesson.title, draft) : lesson?.title) || 'Untitled notebook'}
+              </h2>
               <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>
                 {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {digest?.wordCount ?? 0} words added · named for you
               </span>

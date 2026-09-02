@@ -1,5 +1,9 @@
 # Cherry release evidence
 
+> This file preserves dated evidence snapshots. Older clean-install counts are historical and do
+> not describe the current lockfile. The current dependency result, including remaining moderate
+> findings and peer warnings, is in `docs/release/DEPENDENCY_AUDIT.md`.
+
 > **Historical production deployment addendum (2026-08-31):** commit `5b7d731` deployed successfully to the
 > linked Vercel project as `dpl_CcTPQWLDuda2SsPH2NA5kqBKksUC` with a READY production target. The
 > public alias is [https://getcherry.vercel.app](https://getcherry.vercel.app); HTTP returned 200 and

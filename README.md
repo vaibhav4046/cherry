@@ -97,8 +97,9 @@ These are product decisions, not missing features:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the gates, the file lanes, the claim discipline, and four
-worked extension points: adding a source kind, adding a WebMCP tool, adding an export target, and
+Read [docs/HARNESS.md](docs/HARNESS.md) first for how the product engine and the build harness
+actually work. Then see [CONTRIBUTING.md](CONTRIBUTING.md) for the gates, the file lanes, the claim
+discipline, and four worked extension points: adding a source kind, adding a WebMCP tool, adding an export target, and
 adding a runner job type. Good starting points are in
 [docs/GOOD_FIRST_ISSUES.md](docs/GOOD_FIRST_ISSUES.md).
 

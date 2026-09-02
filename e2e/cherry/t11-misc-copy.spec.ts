@@ -100,7 +100,7 @@ test.describe('T11 Studio copy surfaces', () => {
     await expect(filePathField.getByLabel('File path')).toBeVisible();
     await expect(page.getByText(/sha256 .* by you/)).toBeVisible();
 
-    const previewLimit = page.getByText('Sandboxed · no network · no access to Cherry data');
+    const previewLimit = page.getByText('Static · no scripts · no network · no access to Cherry data');
     await expect(previewLimit).not.toHaveCSS('text-transform', 'uppercase');
   });
 });

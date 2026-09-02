@@ -28,17 +28,17 @@
 
 ## Threat: artifact XSS / exfiltration
 
-- Preview iframe: `sandbox="allow-scripts"` only — opaque origin, no same-origin, no popups, no forms,
-  no top navigation. Inner meta CSP `default-src 'none'; connect-src 'none'`.
-- E2E probe (`responsive.spec.ts` "malicious artifact cannot reach Cherry storage or the network")
-  runs a hostile artifact that attempts localStorage/indexedDB access, external fetch, and
-  `window.top` navigation: storage throws SecurityError, navigation is blocked, Cherry stays intact.
+- Preview iframe: inert `sandbox=""` with `referrerpolicy="no-referrer"`; artifact JavaScript cannot
+  run at all. Inner meta CSP starts with `default-src 'none'; script-src 'none'; connect-src 'none'`.
+- The preview builder removes scripts, event handlers, forms, links, refresh/navigation targets,
+  external resources, and CSS URL/import loads before constructing `srcdoc`.
+- E2E probe (`responsive.spec.ts` "malicious artifact is rendered as static content with no
+  navigation or network") confirms the hostile markup stays static and does not execute.
 - Artifact paths reject traversal, absolute paths, backslashes, null bytes, unsupported extensions
   (unit-tested).
-- Parent CSP note: see decision D-003 (srcdoc CSP inheritance forces `'unsafe-inline'`); no
-  `dangerouslySetInnerHTML`, `innerHTML`, `eval`, or `new Function` exists in `src/` (grep-verified).
+- No preview bridge or `postMessage` proof-write path remains.
 
-**Result: PASS** (with documented D-003 trade-off)
+**Result: PASS**
 
 ## Threat: import corruption / ZIP path traversal
 
@@ -68,8 +68,9 @@ Runner integration tests (9, all passing) demonstrate:
   strings, no `api_key=`, no tokens. `.env*` is gitignored; `.env.example` contains no values.
 - The client never asks for or stores provider credentials; the runner never dumps `process.env`;
   captured output is redacted.
-- No analytics, no telemetry, no external POSTs anywhere in the client (connect-src limits to self +
-  127.0.0.1 runner).
+- No analytics or telemetry. Network access is constrained by the deployment CSP and explicit
+  product surfaces: self, the loopback runner, configured Privy, Hugging Face model assets, fonts,
+  and the YouTube embed. User-triggered runner fetches stay visible and fail closed.
 
 **Result: PASS**
 
@@ -96,7 +97,7 @@ A second, independent pass whose explicit job was to REFUTE the five highest-ris
 
 | Claim | Verdict | Notes |
 |---|---|---|
-| Artifact preview sandbox network-blocked + isolated | CONFIRMED | `allow-scripts` only, CSP `default-src 'none'`; pinned by `e2e/cherry/responsive.spec.ts` malicious-artifact test |
+| Artifact preview sandbox network-blocked + isolated | CONFIRMED, strengthened later | Current preview is inert `sandbox=""`, CSP `script-src 'none'`, and sanitized static `srcdoc`; pinned by unit and `e2e/cherry/responsive.spec.ts` tests |
 | Exact-revision approval binding; no tool can approve | CONFIRMED | `decideSkillGraphApproval` rejects replay + stale revision; approval function never registered as a WebMCP tool |
 | Transcript/article text cannot become tool policy | CONFIRMED | no eval/innerHTML in `src/`; `untrustedContentHint` on ingest tools; trust raised only by the user |
 | Bundle/receipt tamper detection, hash not signature | CONFIRMED | RFC 8785-style canonical JSON + SHA-256; one-byte tamper pinned by unit test and `scripts/verify-release.mjs` |
@@ -107,9 +108,8 @@ Fixes landed 2026-08-30:
 - `src/pages/studio/Watch.tsx`: outbound `postMessage` now targets the exact embed origin
   `https://www.youtube-nocookie.com` (never `'*'`), and the inbound handler rejects any message
   whose `event.source` is not the player iframe's `contentWindow`.
-- `src/pages/studio/Artifacts.tsx`: the preview-message listener now accepts only messages with
-  the sandboxed frame's opaque origin (`'null'`) AND `event.source === previewFrameRef.contentWindow`,
-  closing a low-value proof-event forgery path.
+- `src/pages/studio/Artifacts.tsx`: the later static-preview hardening removed artifact scripts and
+  the preview message listener entirely, eliminating that proof-event path.
 
 Sweep results: no credential-shaped strings outside deliberate redaction-test fixtures; no
 `eval` / `new Function` / `dangerouslySetInnerHTML` / `innerHTML` in `src/`; no sensitive
