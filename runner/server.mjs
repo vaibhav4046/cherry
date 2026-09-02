@@ -69,6 +69,8 @@ const allowedRoots = (argValues('--root').length > 0 ? argValues('--root') : [pr
 const allowedExecutables = new Set(argValues('--allow-exec'));
 /** God Mode hosts: --allow-mock-host enables the scripted test host; --host-command name=<path or url> overrides where a host is found. */
 const allowMockHost = args.includes('--allow-mock-host');
+/** --mock-fail-first <nodeId> (repeatable): the mock host writes nothing on that node's first attempt. */
+const mockFailFirst = argValues('--mock-fail-first');
 const hostCommands = {};
 const hostEndpoints = { ollama: 'http://127.0.0.1:11434', omniroute: 'http://127.0.0.1:20128' };
 for (const spec of argValues('--host-command')) {
@@ -302,7 +304,7 @@ async function pump() {
 
 // ---------------- Runner v2: durable queue, events, scheduler ----------------
 const v2Events = new EventsLog(join(dataDir, 'events.log'));
-const v2Hosts = createAgentHosts({ commands: hostCommands, endpoints: hostEndpoints, allowMockHost });
+const v2Hosts = createAgentHosts({ commands: hostCommands, endpoints: hostEndpoints, allowMockHost, mockFailFirst });
 const v2Adapters = createAdapters({ allowedRoots, allowedExecutables, allowMockHost, hosts: v2Hosts });
 const v2Concurrency = Math.min(3, Math.max(1, Number(argValues('--concurrency')[0]) || 1));
 const v2Queue = new DurableQueue({ dataDir, events: v2Events, concurrency: v2Concurrency });
@@ -467,6 +469,8 @@ const server = createServer((request, response) => {
           eventsHead: { seq: v2Events.seq, chain: v2Events.chain },
           missionAdapters: v2Adapters.missionAdapterNames,
           missions: missionExecutor.list().length,
+          allowMockHost,
+          mockFailFirst,
         },
       },
       origin,

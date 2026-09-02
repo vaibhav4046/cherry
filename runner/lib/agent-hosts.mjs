@@ -51,6 +51,20 @@ export const HOST_DESCRIPTORS = [
 
 const descriptorFor = (hostId) => HOST_DESCRIPTORS.find((descriptor) => descriptor.hostId === hostId) ?? null;
 
+/** Browser ExecutionHostKind values mapped to runner host ids. */
+export const HOST_KIND_TO_ID = Object.freeze({ 'codex-cli': 'codex', 'claude-cli': 'claude', 'local-runner': 'mock', manual: 'manual' });
+
+/** Host id for a browser host kind or a runner host id; null when unknown. */
+export function hostIdForKind(kind) {
+  if (typeof kind !== 'string') return null;
+  if (Object.prototype.hasOwnProperty.call(HOST_KIND_TO_ID, kind)) return HOST_KIND_TO_ID[kind];
+  return descriptorFor(kind) ? kind : null;
+}
+
+export function hostKindOf(hostId) {
+  return descriptorFor(hostId)?.kind ?? null;
+}
+
 // ---------------- process discipline ----------------
 
 /**
@@ -331,9 +345,23 @@ function writeTaskFiles(root, text, contextText) {
   return text.length > INLINE_TASK_LIMIT ? TASK_POINTER_PROMPT : text;
 }
 
-async function runMockScript(task, root, attempt, { signal, timeoutMs }) {
-  const attempts = Array.isArray(task.mock?.attempts) ? task.mock.attempts : [];
-  const step = attempts[attempt - 1] ?? attempts[attempts.length - 1] ?? {};
+/**
+ * The mock step for an attempt: the explicit script when the task carries
+ * one; otherwise every expected output is written with deterministic content,
+ * except that a node listed in mockFailFirst writes nothing on its first
+ * attempt (so its file checks fail once and the executor schedules a repair).
+ */
+function mockStepFor(task, attempt, mockFailFirst) {
+  const attempts = Array.isArray(task.mock?.attempts) ? task.mock.attempts : null;
+  if (attempts) return attempts[attempt - 1] ?? attempts[attempts.length - 1] ?? {};
+  const nodeId = typeof task.nodeId === 'string' && task.nodeId.length > 0 ? task.nodeId : 'node';
+  if (attempt === 1 && mockFailFirst.has(nodeId)) return { writeFiles: {}, exitCode: 0 };
+  const outputs = Array.isArray(task.outputs) ? task.outputs.map(String) : [];
+  return { writeFiles: Object.fromEntries(outputs.map((relative) => [relative, `written by the mock host for ${nodeId} attempt ${attempt}\n`])), exitCode: 0 };
+}
+
+async function runMockScript(task, root, attempt, { signal, timeoutMs, mockFailFirst = new Set() }) {
+  const step = mockStepFor(task, attempt, mockFailFirst);
   const files = Object.entries(step.writeFiles ?? {});
   for (const [relative] of files) containedPath(root, relative);
   const wrote = files.map(([relative, content]) => writeInside(root, relative, String(content)));
@@ -418,7 +446,7 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
   if (hostId === 'mock') {
     if (!context.allowMockHost) return fail('the mock host is not enabled (start the runner with --allow-mock-host)');
     try {
-      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs });
+      run = await runMockScript(task ?? {}, root, attempt, { signal: context.signal, timeoutMs, mockFailFirst: new Set(context.mockFailFirst ?? []) });
     } catch (error) {
       return fail(String(error?.message ?? error));
     }
@@ -464,7 +492,7 @@ export async function runHostTask(hostId, task, sandbox, context = {}) {
 
 /**
  * A configured host set with a cached probe (60 s by default).
- * config: { commands, endpoints, allowMockHost, searchPath, probeTtlMs, now }.
+ * config: { commands, endpoints, allowMockHost, mockFailFirst, searchPath, probeTtlMs, now }.
  */
 export function createAgentHosts(config = {}) {
   const now = config.now ?? (() => Date.now());
@@ -497,6 +525,7 @@ export function createAgentHosts(config = {}) {
         command: context.command ?? commandFor(hostId),
         probe: context.probe ?? probes.find((probe) => probe.hostId === hostId) ?? null,
         allowMockHost: Boolean(config.allowMockHost),
+        mockFailFirst: Array.isArray(config.mockFailFirst) ? config.mockFailFirst : [],
         now,
       });
     },

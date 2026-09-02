@@ -13,7 +13,7 @@ import { redact } from './redact.mjs';
 import { fetchYouTubeChannelFeed, validateYouTubeChannelId } from './youtube-rss-watch.mjs';
 import { sourceWatchRoutineId } from './source-watch.mjs';
 import { buildChildEnv, isPythonExecutable } from './process-policy.mjs';
-import { buildTaskText, createAgentHosts } from './agent-hosts.mjs';
+import { buildTaskText, createAgentHosts, hostIdForKind } from './agent-hosts.mjs';
 import { runChecks } from './checks.mjs';
 
 const MAX_OUTPUT_BYTES = 256 * 1024;
@@ -21,8 +21,8 @@ const MAX_TIMEOUT_MS = 600_000;
 const MAX_EXPORT_FILES = 2000;
 const PROVIDER_NOTE = 'Provider CLI completion is not verification. Run cherry-verify afterwards.';
 const CHECK_NOTE = 'Deterministic checks decide; a provider never verifies its own work.';
-/** Agent hosts that can take a mission task, in preference order. */
-const AGENT_HOST_IDS = ['codex', 'claude'];
+/** Agent hosts tried for a task with no host preference, in order. */
+const DEFAULT_AGENT_HOST_IDS = ['codex', 'claude'];
 
 /** Shell-free process runner with timeout + abort-signal support. */
 export function runProcess(executable, argv, cwd, { timeoutMs = 120_000, signal, stdinText } = {}) {
@@ -254,11 +254,15 @@ export function createAdapters(config) {
       attempt: Number.isInteger(context.attempt) ? context.attempt : 1,
       contextText: typeof payload.contextText === 'string' ? payload.contextText : null,
       mock: payload.mock ?? null,
+      nodeId: typeof payload.nodeId === 'string' ? payload.nodeId : null,
+      outputs: Array.isArray(payload.outputs) ? payload.outputs.map(String) : [],
     };
   }
 
-  /** agent-host: run the node task on the first available codex/claude host
-   *  allowed by BOTH the envelope and the config, exactly like providerCli. */
+  /** agent-host: run the node task on the first usable host named by the
+   *  payload hostKinds (codex-cli, claude-cli, local-runner = mock, manual).
+   *  CLI hosts must be allowed by BOTH the envelope and the config, exactly
+   *  like providerCli; the mock host needs --allow-mock-host. */
   async function agentHost(envelope, context) {
     const payload = parsePayload(envelope);
     const cwd = requireWorkingDirectory(envelope);
@@ -266,24 +270,36 @@ export function createAdapters(config) {
     const wanted = Array.isArray(payload.hostKinds) && payload.hostKinds.length > 0
       ? payload.hostKinds
       : (typeof envelope.executionHostId === 'string' && envelope.executionHostId !== 'any' ? [envelope.executionHostId] : null);
-    const byKind = AGENT_HOST_IDS
-      .map((hostId) => probes.find((probe) => probe.hostId === hostId))
-      .filter((probe) => probe && (!wanted || wanted.includes(probe.kind) || wanted.includes(probe.hostId)));
-    if (byKind.length === 0) throw new Error(`no agent host matches ${JSON.stringify(wanted)}`);
-    const envelopeAllowed = byKind.filter((probe) => Array.isArray(envelope.allowedExecutables) && envelope.allowedExecutables.includes(probe.hostId));
-    if (envelopeAllowed.length === 0) throw new Error(`${byKind.map((probe) => probe.hostId).join(', ')} is not allowed by the execution envelope`);
-    const configAllowed = envelopeAllowed.filter((probe) => allowedExecutables.has(probe.hostId));
-    if (configAllowed.length === 0) {
-      throw new Error(`${envelopeAllowed.map((probe) => probe.hostId).join(', ')} is not in the runner config allowlist (start with --allow-exec <name>)`);
+    const candidates = wanted
+      ? [...new Set(wanted.map(hostIdForKind).filter(Boolean))]
+      : [...DEFAULT_AGENT_HOST_IDS, ...(config.allowMockHost ? ['mock'] : [])];
+    if (candidates.length === 0) throw new Error(`no agent host matches ${JSON.stringify(wanted)}`);
+    const reasons = [];
+    for (const hostId of candidates) {
+      if (hostId === 'mock' && !config.allowMockHost) {
+        reasons.push('the mock host is enabled only with --allow-mock-host');
+        continue;
+      }
+      if (hostId !== 'mock' && hostId !== 'manual') {
+        if (!Array.isArray(envelope.allowedExecutables) || !envelope.allowedExecutables.includes(hostId)) {
+          reasons.push(`${hostId} is not allowed by the execution envelope`);
+          continue;
+        }
+        if (!allowedExecutables.has(hostId)) {
+          reasons.push(`${hostId} is not in the runner config allowlist (start with --allow-exec ${hostId})`);
+          continue;
+        }
+        const probe = probes.find((candidate) => candidate.hostId === hostId);
+        if (!probe?.available) {
+          reasons.push(`${hostId}: ${probe?.details?.reason ?? 'unavailable'}`);
+          continue;
+        }
+      }
+      const result = await hosts.run(hostId, hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
+      // NEVER 'verified': the mission executor evaluates the sandbox afterwards.
+      return { ...result, providerNote: PROVIDER_NOTE };
     }
-    const chosen = configAllowed.find((probe) => probe.available);
-    if (!chosen) {
-      const reasons = configAllowed.map((probe) => `${probe.hostId}: ${probe.details?.reason ?? 'unavailable'}`).join('; ');
-      throw new Error(`no agent host is available for this task (${reasons})`);
-    }
-    const result = await hosts.run(chosen.hostId, hostTask(payload, context), context.sandbox ?? { root: cwd }, context);
-    // NEVER 'verified': the mission executor evaluates the sandbox afterwards.
-    return { ...result, providerNote: PROVIDER_NOTE };
+    throw new Error(`no agent host is available for this task (${reasons.join('; ')})`);
   }
 
   /** cherry-check: run the envelope verificationPlan inside workingDirectory. */

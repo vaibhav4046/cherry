@@ -101,7 +101,7 @@ test('ready nodes and plan status derive from node statuses', () => {
 
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 
-function planNode(id, { deps = [], kind = 'agent', checks = null, maxAttempts = 1, sandbox = 'directory', timeoutMs = 10_000, missionId = 'ms-x' } = {}) {
+function planNode(id, { deps = [], kind = 'agent', checks = null, maxAttempts = 1, sandbox = 'directory', timeoutMs = 10_000, missionId = 'ms-x', hostKinds = [] } = {}) {
   const verificationPlan = checks ?? (kind === 'human_decision'
     ? [{ id: `${id}-human`, kind: 'human', required: true, description: 'A person decides' }]
     : [{ id: `${id}-check`, kind: 'file', required: true, path: `out/${id}.txt`, description: `${id} output exists` }]);
@@ -114,7 +114,7 @@ function planNode(id, { deps = [], kind = 'agent', checks = null, maxAttempts = 
     dependencyIds: deps,
     kind,
     preferredAgentProfileId: null,
-    preferredHostKinds: [],
+    preferredHostKinds: hostKinds,
     requiredCapabilities: kind === 'human_decision' ? ['human_approval'] : ['repository_read'],
     riskLevel: 'low',
     verificationPlan,
@@ -264,7 +264,7 @@ test('two ready nodes run in parallel on different sandboxes, provable from the 
   assert.equal(events[0].type, 'mission_started');
   assert.ok(events.some((event) => event.type === 'sandbox_leased'));
   assert.ok(events.some((event) => event.type === 'sandbox_released'));
-  assert.equal(mission.nodes.a.report.status, 'passed');
+  assert.equal(mission.nodes.a.evaluation.status, 'passed');
 });
 
 test('at most three nodes run at once when four are ready', async () => {
@@ -332,7 +332,7 @@ test('a node whose provider exits 0 but whose required check fails never reaches
   assert.equal(mission.status, 'failed');
   assert.equal(mission.nodes.a.status, 'failed');
   assert.equal(mission.nodes.a.attempts, 2, 'one attempt plus one repair within the repair budget');
-  assert.equal(mission.nodes.a.report.status, 'failed');
+  assert.equal(mission.nodes.a.evaluation.status, 'failed');
   assert.equal(mission.nodes.b.status, 'blocked');
   const events = eventsOf(harness, missionRunId);
   assert.equal(countEvents(events, 'a', 'node_succeeded'), 0);
@@ -421,7 +421,7 @@ test('a human decision parks the mission until decide records the approval', asy
   assert.equal(approved.ok, true, JSON.stringify(approved));
   const mission = await settle(harness, missionRunId);
   assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
-  assert.deepEqual(mission.nodes.h.decision, { decision: 'approve', approvalId: 'ap-1', contentHash: plan.contentHash, at: mission.nodes.h.decision.at });
+  assert.deepEqual(mission.nodes.h.decision, { decision: 'approved', approvalId: 'ap-1', contentHash: plan.contentHash, at: mission.nodes.h.decision.at });
   const events = eventsOf(harness, missionRunId);
   assert.equal(countEvents(events, 'h', 'node_waiting_for_human'), 1);
   assert.ok(indexOfEvent(events, 'h', 'node_succeeded') < indexOfEvent(events, 'b', 'node_started'));
@@ -430,11 +430,45 @@ test('a human decision parks the mission until decide records the approval', asy
   const rejectPlan = makePlan([planNode('h', { kind: 'human_decision' }), planNode('b', { deps: ['h'] })], { id: 'plan-reject' });
   const rejectId = await registerAndStart(rejecting, rejectPlan);
   await settle(rejecting, rejectId);
-  const rejected = rejecting.executor.decide(rejectId, { nodeId: 'h', decision: 'reject', approvalId: null, contentHash: rejectPlan.contentHash });
-  assert.equal(rejected.ok, true);
+  const rejected = rejecting.executor.decide(rejectId, { nodeId: 'h', decision: 'rejected', approvalId: '', contentHash: rejectPlan.contentHash });
+  assert.equal(rejected.ok, true, 'a rejection needs no approval id');
+  assert.equal(rejecting.executor.get(rejectId).nodes.h.decision.decision, 'rejected');
   const failed = await settle(rejecting, rejectId);
   assert.equal(failed.status, 'failed');
   assert.deepEqual(nodeStatuses(failed), { h: 'failed', b: 'blocked' });
+});
+
+test('a browser-style agent-host envelope with hostKinds local-runner runs on the mock host without a script', async () => {
+  const harness = makeHarness();
+  const plan = makePlan([planNode('a', { hostKinds: ['local-runner'], maxAttempts: 2 }), planNode('b', { deps: ['a'], hostKinds: ['local-runner'] })]);
+  const envelopes = Object.fromEntries(plan.nodes.map((node) => [node.id, envelopeFor(plan, node, { adapter: 'agent-host', sourceRoot: harness.source })]));
+  assert.ok(!envelopes.a.boundedPrompt.includes('"mock"'), 'no mock script in the envelope');
+  const registered = harness.executor.register({ plan, envelopes });
+  assert.equal(registered.ok, true, JSON.stringify(registered));
+  harness.executor.start(registered.missionRunId);
+  const mission = await settle(harness, registered.missionRunId);
+  assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
+  assert.equal(readFileSync(join(mission.nodes.a.sandbox.root, 'out', 'a.txt'), 'utf8'), 'written by the mock host for a attempt 1\n');
+  assert.deepEqual(mission.nodes.a.host, { hostId: 'mock', kind: 'mock', version: 'mock' });
+  assert.equal(mission.nodes.a.attempts, 1);
+  assert.deepEqual(Object.keys(mission.nodes.a.sandbox).sort(), ['baseCommit', 'boundary', 'branchName', 'id', 'provider', 'root', 'status']);
+  assert.equal(mission.nodes.a.evaluation.status, 'passed');
+  assert.equal(mission.nodes.b.status, 'succeeded');
+});
+
+test('a sandbox provider without a sourceRoot fails the node with a clear reason', async () => {
+  const harness = makeHarness();
+  const plan = makePlan([planNode('a', { sandbox: 'git-worktree' })]);
+  const envelopes = { a: envelopeFor(plan, plan.nodes[0], { sourceRoot: null }) };
+  const registered = harness.executor.register({ plan, envelopes });
+  assert.equal(registered.ok, true, JSON.stringify(registered));
+  harness.executor.start(registered.missionRunId);
+  const mission = await settle(harness, registered.missionRunId);
+  assert.equal(mission.status, 'failed');
+  assert.equal(mission.nodes.a.status, 'failed');
+  assert.match(mission.nodes.a.lastError, /git-worktree sandbox but its envelope names no sourceRoot/);
+  assert.equal(mission.nodes.a.sandbox, null);
+  assert.equal(mission.nodes.a.attempts, 0);
 });
 
 test('registration refuses stale hashes, foreign workspaces and bad envelopes, and is idempotent otherwise', async () => {
@@ -506,7 +540,7 @@ describe('mission HTTP wiring', () => {
     mkdirSync(source);
     child = spawn(
       process.execPath,
-      [join(here, 'server.mjs'), '--root', workDir, '--state', join(workDir, '.state'), '--port', '47831', '--allow-mock-host'],
+      [join(here, 'server.mjs'), '--root', workDir, '--state', join(workDir, '.state'), '--port', '47831', '--allow-mock-host', '--mock-fail-first', 'flaky'],
       { env: { ...process.env, CHERRY_RUNNER_TOKEN: token }, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     for (let attempt = 0; attempt < 100; attempt += 1) {
@@ -548,6 +582,8 @@ describe('mission HTTP wiring', () => {
       ['cherry-export', 'cherry-verify', 'claude-cli', 'codex-cli', 'safe-command', 'scrapling-fetch', 'youtube-rss-watch'].sort(),
     );
     assert.deepEqual(body.v2.missionAdapters, ['agent-host', 'cherry-check', 'mock-host']);
+    assert.equal(body.v2.allowMockHost, true);
+    assert.deepEqual(body.v2.mockFailFirst, ['flaky']);
     assert.equal((await fetch(`${BASE}/v2/hosts`)).status, 401);
     assert.equal((await fetch(`${BASE}/v2/missions`)).status, 401);
   });
@@ -587,13 +623,29 @@ describe('mission HTTP wiring', () => {
     assert.equal((await started.json()).mission.status, 'running');
     const mission = await pollMission(missionRunId, (candidate) => TERMINAL.has(candidate.status));
     assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
-    assert.equal(mission.nodes.b.report.status, 'passed');
-    assert.equal(mission.nodes.a.host, 'mock');
+    assert.equal(mission.nodes.b.evaluation.status, 'passed');
+    assert.deepEqual(mission.nodes.a.host, { hostId: 'mock', kind: 'mock', version: 'mock' });
+    assert.match(mission.nodes.a.startedAt, /^\d{4}-/);
+    assert.match(mission.nodes.a.finishedAt, /^\d{4}-/);
+    assert.deepEqual(Object.keys(mission.nodes.a.evaluation.checks[0]).sort(), ['detail', 'evidenceRefs', 'id', 'name', 'status']);
 
     const list = await (await api('/v2/missions')).json();
     assert.ok(list.missions.some((summary) => summary.id === missionRunId && summary.status === 'succeeded'));
     assert.equal((await api('/v2/missions/mr-missing')).status, 404);
     assert.equal((await api(`/v2/missions/${missionRunId}/start`, { method: 'POST', body: '{}' })).status, 409, 'a finished mission cannot start again');
+  });
+
+  test('mock-fail-first makes the first attempt fail its checks and the executor repairs once', async () => {
+    const plan = makePlan([planNode('flaky', { hostKinds: ['local-runner'], maxAttempts: 2 })], { id: 'plan-http-flaky', missionId: 'ms-http-flaky' });
+    const envelopes = { flaky: envelopeFor(plan, plan.nodes[0], { adapter: 'agent-host', sourceRoot: source }) };
+    const { missionRunId } = await (await api('/v2/missions', { method: 'POST', body: JSON.stringify({ plan, envelopes }) })).json();
+    await api(`/v2/missions/${missionRunId}/start`, { method: 'POST', body: '{}' });
+    const mission = await pollMission(missionRunId, (candidate) => TERMINAL.has(candidate.status));
+    assert.equal(mission.status, 'succeeded', JSON.stringify(nodeStatuses(mission)));
+    assert.equal(mission.nodes.flaky.attempts, 2);
+    assert.equal(mission.nodes.flaky.jobIds.length, 2);
+    assert.equal(mission.nodes.flaky.evaluation.status, 'passed');
+    assert.equal(readFileSync(join(mission.nodes.flaky.sandbox.root, 'out', 'flaky.txt'), 'utf8'), 'written by the mock host for flaky attempt 2\n');
   });
 
   test('decisions and cancellation work over HTTP', async () => {
@@ -605,7 +657,9 @@ describe('mission HTTP wiring', () => {
     assert.equal(waiting.nodes.h.status, 'waiting_for_human');
     const badHash = await api(`/v2/missions/${missionRunId}/decisions`, { method: 'POST', body: JSON.stringify({ nodeId: 'h', decision: 'approve', approvalId: 'ap-1', contentHash: 'c'.repeat(64) }) });
     assert.equal(badHash.status, 409);
-    const decided = await api(`/v2/missions/${missionRunId}/decisions`, { method: 'POST', body: JSON.stringify({ nodeId: 'h', decision: 'approve', approvalId: 'ap-1', contentHash: plan.contentHash }) });
+    const emptyApproval = await api(`/v2/missions/${missionRunId}/decisions`, { method: 'POST', body: JSON.stringify({ nodeId: 'h', decision: 'approved', approvalId: '', contentHash: plan.contentHash }) });
+    assert.equal(emptyApproval.status, 400);
+    const decided = await api(`/v2/missions/${missionRunId}/decisions`, { method: 'POST', body: JSON.stringify({ nodeId: 'h', decision: 'approved', approvalId: 'ap-1', contentHash: plan.contentHash }) });
     assert.equal(decided.status, 200);
     const done = await pollMission(missionRunId, (candidate) => TERMINAL.has(candidate.status));
     assert.equal(done.status, 'succeeded', JSON.stringify(nodeStatuses(done)));

@@ -20,7 +20,7 @@ import { computeActionHash } from './canonical.mjs';
 import { validateEnvelope } from './queue.mjs';
 import { redact } from './redact.mjs';
 import { runChecks } from './checks.mjs';
-import { buildTaskText } from './agent-hosts.mjs';
+import { buildTaskText, hostKindOf } from './agent-hosts.mjs';
 import {
   PLAN_LIMITS,
   computeBlockedNodeIds,
@@ -34,7 +34,9 @@ const ACTIVE_MISSION_STATUSES = new Set(['running', 'verifying', 'waiting_for_hu
 const TERMINAL_MISSION_STATUSES = new Set(['succeeded', 'failed', 'cancelled']);
 const IN_FLIGHT_NODE_STATUSES = new Set(['ready', 'running', 'verifying']);
 const SANDBOX_PROVIDERS = new Set(['directory', 'git-worktree']);
-const DECISIONS = new Set(['approve', 'reject']);
+/** Accepted decision spellings, normalised to the browser vocabulary. */
+const DECISIONS = { approve: 'approved', approved: 'approved', reject: 'rejected', rejected: 'rejected' };
+const FINISHED_NODE_STATUSES = new Set(['succeeded', 'failed', 'blocked', 'cancelled']);
 const DEFAULT_REPAIR_BUDGET = 1;
 const OUTPUT_TAIL_CHARS = 2000;
 
@@ -74,12 +76,20 @@ function newNode(planNode, at) {
     sandbox: null,
     host: null,
     hostResult: null,
-    report: null,
+    evaluation: null,
     failedChecks: [],
     decision: null,
     lastError: null,
+    startedAt: null,
+    finishedAt: null,
     updatedAt: at,
   };
+}
+
+/** The host record the browser reads: { hostId, kind, version } or null. */
+function hostRecord(summary, previous) {
+  if (!summary?.hostId) return previous ?? null;
+  return { hostId: summary.hostId, kind: hostKindOf(summary.hostId), version: summary.providerVersion ?? null };
 }
 
 /** Keep queue results compact: the full streams live in the sandbox artifacts. */
@@ -170,6 +180,8 @@ export class MissionExecutor {
     node.status = status;
     node.updatedAt = this.iso();
     mission.updatedAt = node.updatedAt;
+    if (status === 'running' && !node.startedAt) node.startedAt = node.updatedAt;
+    if (FINISHED_NODE_STATUSES.has(status)) node.finishedAt = node.updatedAt;
     const type = NODE_EVENT_TYPES[status];
     if (type) this.emit(mission, node.id, type);
   }
@@ -281,10 +293,11 @@ export class MissionExecutor {
     if (!node) return refuse('unknown_node', `mission run ${missionRunId} has no node ${nodeId}`);
     if (node.status !== 'waiting_for_human') return refuse('not_waiting', `node ${nodeId} is ${node.status}, not waiting for a person`);
     if (contentHash !== mission.contentHash) return refuse('hash_mismatch', 'the decision names a different plan contentHash; the plan changed since the person looked at it');
-    if (!DECISIONS.has(decision)) return refuse('bad_decision', 'decision must be approve or reject');
-    if (decision === 'approve' && !nonEmpty(approvalId)) return refuse('approval_required', 'an approval id is required to approve');
-    node.decision = { decision, approvalId: nonEmpty(approvalId) ? approvalId : null, contentHash, at: this.iso() };
-    if (decision === 'approve') {
+    const normalised = typeof decision === 'string' ? DECISIONS[decision] : undefined;
+    if (!normalised) return refuse('bad_decision', 'decision must be approved or rejected');
+    if (normalised === 'approved' && !nonEmpty(approvalId)) return refuse('approval_required', 'an approval id is required to approve');
+    node.decision = { decision: normalised, approvalId: nonEmpty(approvalId) ? approvalId : null, contentHash, at: this.iso() };
+    if (normalised === 'approved') {
       this.transition(mission, node, 'succeeded');
       void this.releaseSandbox(mission, node, 'succeeded');
     } else {
@@ -347,7 +360,7 @@ export class MissionExecutor {
       }
       if (job.status !== 'completed' && job.status !== 'failed') continue;
       node.hostResult = job.result?.hostResult ?? summariseHostResult({ status: 'failed', reason: job.lastError ?? 'the job failed before the host ran' });
-      node.host = node.hostResult.hostId ?? node.host;
+      node.host = hostRecord(node.hostResult, node.host);
       if (node.hostResult.status === 'needs_human') {
         this.transition(mission, node, 'waiting_for_human');
         this.save();
@@ -379,7 +392,7 @@ export class MissionExecutor {
       this.evaluations.delete(key);
     }
     if (node.status !== 'verifying') return;
-    node.report = report;
+    node.evaluation = report;
     if (report.status === 'passed') {
       node.failedChecks = [];
       this.transition(mission, node, 'succeeded');
@@ -436,6 +449,10 @@ export class MissionExecutor {
     const template = mission.envelopes[node.id];
     const payload = parsePayload(template.boundedPrompt) ?? {};
     const provider = payload.sandbox?.provider ?? planNode.sandbox;
+    if (SANDBOX_PROVIDERS.has(provider) && !nonEmpty(payload.sandbox?.sourceRoot)) {
+      await this.failNode(mission, node, `the node asks for a ${provider} sandbox but its envelope names no sourceRoot`);
+      return;
+    }
     if (!node.sandboxLeaseId && SANDBOX_PROVIDERS.has(provider)) {
       // The sandbox path is keyed by the mission run id, so a re-registered or
       // re-run plan never collides with a retained sandbox of an earlier run.
@@ -545,6 +562,8 @@ export class MissionExecutor {
       attempt: Number.isInteger(envelope.missionAttempt) ? envelope.missionAttempt : node.attempts,
       contextText: nonEmpty(payload.contextText) ? payload.contextText : null,
       mock: payload.mock ?? null,
+      nodeId: node.id,
+      outputs: Array.isArray(payload.outputs) ? payload.outputs.map(String) : [],
     };
     let result;
     try {
@@ -554,7 +573,7 @@ export class MissionExecutor {
     }
     const summary = summariseHostResult(result);
     node.hostResult = summary;
-    node.host = summary.hostId ?? node.host;
+    node.host = hostRecord(summary, node.host);
     if (node.status === 'running') {
       this.emit(mission, node.id, 'node_completed');
       if (node.sandboxLeaseId) this.sandboxes.setStatus(node.sandboxLeaseId, 'ready');

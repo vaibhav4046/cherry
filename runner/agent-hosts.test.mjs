@@ -251,6 +251,44 @@ test('the manual host writes a handoff package and needs a person', async () => 
   assert.match(readFileSync(join(root, '.cherry', 'HANDOFF.md'), 'utf8'), /Please review the draft/);
 });
 
+test('the mock host writes the expected outputs when no script is given and honours mock-fail-first', async () => {
+  const hosts = createAgentHosts({ allowMockHost: true, searchPath: false, mockFailFirst: ['flaky'] });
+  const { root } = sandbox();
+  const first = await hosts.run('mock', { text: 'do a', attempt: 1, nodeId: 'a', outputs: ['out/a.txt', 'docs/notes.md'] }, { root }, { timeoutMs: 5000 });
+  assert.equal(first.status, 'completed');
+  assert.equal(readFileSync(join(root, 'out', 'a.txt'), 'utf8'), 'written by the mock host for a attempt 1\n');
+  assert.equal(readFileSync(join(root, 'docs', 'notes.md'), 'utf8'), 'written by the mock host for a attempt 1\n');
+
+  const flakyRoot = sandbox().root;
+  const skipped = await hosts.run('mock', { text: 'do flaky', attempt: 1, nodeId: 'flaky', outputs: ['out/flaky.txt'] }, { root: flakyRoot }, { timeoutMs: 5000 });
+  assert.equal(skipped.status, 'completed', 'the first attempt exits 0 but writes nothing');
+  assert.equal(existsSync(join(flakyRoot, 'out', 'flaky.txt')), false);
+  const second = await hosts.run('mock', { text: 'do flaky', attempt: 2, nodeId: 'flaky', outputs: ['out/flaky.txt'] }, { root: flakyRoot }, { timeoutMs: 5000 });
+  assert.equal(second.status, 'completed');
+  assert.equal(readFileSync(join(flakyRoot, 'out', 'flaky.txt'), 'utf8'), 'written by the mock host for flaky attempt 2\n');
+
+  const escape = await hosts.run('mock', { text: 'x', attempt: 1, nodeId: 'a', outputs: ['../escaped-output.txt'] }, { root }, { timeoutMs: 5000 });
+  assert.equal(escape.status, 'failed');
+  assert.match(escape.reason, /escapes/);
+  assert.equal(existsSync(join(root, '..', 'escaped-output.txt')), false);
+});
+
+test('agent-host maps browser host kinds to hosts: local-runner is the mock, manual hands off', async () => {
+  const root = tempDir('ad-kinds-');
+  const adapters = createAdapters({ allowedRoots: [root], allowedExecutables: new Set(), allowMockHost: true, searchPath: false });
+  const payload = (hostKinds) => JSON.stringify({ nodeId: 'a', title: 'Node a', objective: 'Do a', definitionOfDone: ['done'], hostKinds, outputs: ['out/a.txt'] });
+  const mocked = await adapters.run(envelopeFor({ workingDirectory: root, allowedExecutables: [], boundedPrompt: payload(['local-runner']) }), { timeoutMs: 5000 });
+  assert.equal(mocked.status, 'completed');
+  assert.equal(mocked.hostId, 'mock');
+  assert.equal(readFileSync(join(root, 'out', 'a.txt'), 'utf8'), 'written by the mock host for a attempt 1\n');
+  const manual = await adapters.run(envelopeFor({ workingDirectory: root, allowedExecutables: [], boundedPrompt: payload(['manual']) }), { timeoutMs: 5000 });
+  assert.equal(manual.status, 'needs_human');
+  assert.ok(existsSync(join(root, '.cherry', 'HANDOFF.md')));
+  const noMock = createAdapters({ allowedRoots: [root], allowedExecutables: new Set(), searchPath: false });
+  await assert.rejects(() => noMock.run(envelopeFor({ workingDirectory: root, allowedExecutables: [], boundedPrompt: payload(['local-runner']) })), /mock host/);
+  await assert.rejects(() => noMock.run(envelopeFor({ workingDirectory: root, allowedExecutables: [], boundedPrompt: payload(['telepathy']) })), /no agent host matches/);
+});
+
 // ---------------- checks ----------------
 
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
