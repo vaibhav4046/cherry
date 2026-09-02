@@ -25,7 +25,7 @@ test('records the complete golden loop without cuts', async ({ page }) => {
   test.setTimeout(240_000);
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Turn a lesson into a skill/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /One task. An entire AI team./i })).toBeVisible();
   await beat(page, 2);
 
   await page.getByRole('link', { name: 'Open Studio', exact: true }).first().click();

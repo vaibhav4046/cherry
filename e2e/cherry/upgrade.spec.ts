@@ -1,26 +1,28 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('landing upgrade', () => {
-  test('hero has one primary CTA, a quiet Studio link, and the live lesson card opens the example', async ({ page }) => {
+  test('hero has one primary CTA, a quiet anchor link, a labelled example rail, and the guided example still opens', async ({ page }) => {
     await page.goto('/');
     const ctas = page.getByTestId('hero-ctas');
-    await expect(ctas.getByRole('link', { name: 'Try the guided example' })).toBeVisible();
-    await expect(ctas.getByRole('link', { name: 'Open Studio' })).toBeVisible();
+    await expect(ctas.getByRole('link', { name: 'Run a real mission' })).toHaveAttribute('href', '/studio/control');
+    await expect(ctas.getByRole('link', { name: 'See how Cherry works' })).toHaveAttribute('href', '#how');
+    await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Open Studio' })).toBeVisible();
 
-    // The lesson card renders REAL example data (source title + timestamped evidence).
-    const card = page.getByTestId('lesson-card');
-    await expect(card).toContainText('Accessible landing pages (example lesson)');
-    await expect(card).toContainText('0:40');
-    await expect(card).toContainText('Approved · revision 1');
-    await card.click();
+    // The teammate rail is a labelled example until a runner is paired.
+    const rail = page.getByTestId('teammate-rail');
+    await expect(rail).toHaveAttribute('data-mode', 'example');
+    await expect(rail).toContainText('Example workspace');
+    await expect(rail).toContainText('Codex is working in an isolated repository worktree.');
+
+    await page.getByTestId('guided-example-link').click();
     await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
   });
 
-  test('landing respects reduced motion (lesson card still navigates immediately)', async ({ browser }) => {
+  test('landing respects reduced motion (guided example still navigates immediately)', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     await page.goto('/');
-    await page.getByTestId('lesson-card').click();
+    await page.getByTestId('guided-example-link').click();
     await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
     await context.close();
   });
@@ -49,7 +51,7 @@ test.describe('guided example and walkthrough', () => {
   test('Try the guided example loads the real example workspace and starts the tour', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('/');
-    await page.getByTestId('hero-ctas').getByRole('link', { name: 'Try the guided example' }).click();
+    await page.getByTestId('guided-example-link').click();
 
     // The example is a real import: mission list shows the example mission.
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible({ timeout: 20_000 });

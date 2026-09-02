@@ -20,7 +20,7 @@ const VIEWPORTS = [
 ] as const;
 
 const PUBLIC_ROUTES = [
-  { path: '/', ready: 'Turn a lesson into a skill' },
+  { path: '/', ready: 'One task. An entire AI team.' },
   { path: '/showcase', ready: 'Watch a lesson become a proven skill' },
   { path: '/connect', ready: 'Bring the agent you already pay for' },
   { path: '/compatibility', ready: 'Compatibility & proof' },
