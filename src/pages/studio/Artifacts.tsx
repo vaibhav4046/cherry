@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   deleteArtifactFile,
@@ -7,8 +7,7 @@ import {
   writeArtifactFile,
 } from '../../cherry/artifacts/artifact-service.ts';
 import type { ArtifactFile, ArtifactSet } from '../../cherry/artifacts/artifact-model.ts';
-import { buildPreviewDocument, parsePreviewMessage, PREVIEW_SANDBOX, type PreviewMessage } from '../../cherry/artifacts/preview-protocol.ts';
-import { appendProofEvents } from '../../cherry/persistence/transactions.ts';
+import { buildPreviewDocument, PREVIEW_SANDBOX } from '../../cherry/artifacts/preview-protocol.ts';
 import { Icons } from '../../components/Icons.tsx';
 
 export default function Artifacts() {
@@ -18,9 +17,7 @@ export default function Artifacts() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [previewMessages, setPreviewMessages] = useState<PreviewMessage[]>([]);
   const [previewNonce, setPreviewNonce] = useState(0);
-  const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const load = useCallback(async () => {
     if (!artifactSetId) return;
@@ -39,31 +36,6 @@ export default function Artifacts() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      // Only the sandboxed srcdoc preview may report here: opaque origin ('null')
-      // and a source that is the preview iframe's own contentWindow.
-      if (event.origin !== 'null') return;
-      if (event.source !== previewFrameRef.current?.contentWindow) return;
-      const message = parsePreviewMessage(event.data);
-      if (!message) return;
-      setPreviewMessages((current) => [...current.slice(-19), message]);
-      if (message.kind === 'error' && artifactSet) {
-        void appendProofEvents(artifactSet.workspaceId, [
-          {
-            type: 'artifact.preview_error',
-            actorType: 'system',
-            objectType: 'artifact-set',
-            objectId: artifactSet.id,
-            summary: `Preview error: ${message.message.slice(0, 160)}`,
-          },
-        ]);
-      }
-    }
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, [artifactSet]);
 
   const selectedFile = files.find((file) => file.path === selectedPath) ?? null;
   const entryFile = useMemo(
@@ -91,7 +63,6 @@ export default function Artifacts() {
     const result = await writeArtifactFile(artifactSet!.id, selectedPath, draft, 'human', 'Edited in the file space');
     if (!result.ok) setError(result.error.message);
     setPreviewNonce((nonce) => nonce + 1);
-    setPreviewMessages([]);
     await load();
   }
 
@@ -197,24 +168,14 @@ export default function Artifacts() {
             <>
               <iframe
                 key={previewNonce}
-                ref={previewFrameRef}
-                title="Sandboxed artifact preview (network blocked)"
+                title="Static artifact preview (network blocked)"
                 sandbox={PREVIEW_SANDBOX}
+                referrerPolicy="no-referrer"
                 srcDoc={previewDoc}
                 className="preview-frame"
                 data-testid="artifact-preview"
               />
-              <p style={{ margin: 0, fontSize: 14 }}>Sandboxed · no network · no access to Cherry data</p>
-              {previewMessages.length > 0 ? (
-                <div className="stack" style={{ maxHeight: 140, overflowY: 'auto' }} aria-live="polite">
-                  {previewMessages.map((message, index) => (
-                    <div key={index} className={message.kind === 'error' ? 'field-error' : 'event-row'}>
-                      <span className="mono">{message.kind}</span> {message.message}
-                      {message.detail ? <span className="mono"> · {message.detail}</span> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              <p style={{ margin: 0, fontSize: 14 }}>Static · no scripts · no network · no access to Cherry data</p>
             </>
           ) : (
             <p>No HTML entry file yet. Create {artifactSet.entryPath} to see the preview.</p>

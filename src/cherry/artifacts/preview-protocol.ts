@@ -1,130 +1,116 @@
 import type { ArtifactFile } from './artifact-model.ts';
 
 /**
- * The preview iframe is sandboxed (no same-origin, no popups, no forms, no
- * top-navigation) and carries a CSP that blocks all network egress. Artifact
- * assets are inlined into one srcdoc document so no request ever leaves it.
+ * Static previews intentionally have no sandbox permissions. In particular,
+ * scripts, forms, popups, navigation, storage, and same-origin access stay
+ * disabled even if an artifact contains markup that asks for them.
  */
-export const PREVIEW_SANDBOX = 'allow-scripts';
+export const PREVIEW_SANDBOX = '';
 
+/**
+ * The policy is placed before the first byte of artifact content. The data and
+ * blob image/font/media sources are local document data, not network origins;
+ * every network-capable directive is otherwise closed explicitly.
+ */
 export const PREVIEW_CSP = [
   "default-src 'none'",
-  "script-src 'unsafe-inline'",
+  "script-src 'none'",
   "style-src 'unsafe-inline'",
-  "img-src data: blob:",
-  "font-src data:",
+  'img-src data: blob:',
+  'font-src data:',
+  'media-src data: blob:',
   "connect-src 'none'",
   "form-action 'none'",
   "base-uri 'none'",
+  "object-src 'none'",
+  "frame-src 'none'",
+  "child-src 'none'",
+  "worker-src 'none'",
+  "manifest-src 'none'",
+  "navigate-to 'none'",
 ].join('; ');
 
-const RUNTIME_BRIDGE = `<script>
-(function () {
-  'use strict';
-  function post(kind, message, detail) {
-    try {
-      parent.postMessage({ __cherryPreview: true, kind: kind, message: String(message).slice(0, 2000), detail: detail ? String(detail).slice(0, 4000) : undefined, at: new Date().toISOString() }, '*');
-    } catch (e) { /* parent gone */ }
-  }
-  window.addEventListener('error', function (event) {
-    post('error', event.message || 'Script error', (event.filename || '') + ':' + (event.lineno || 0));
-  });
-  window.addEventListener('unhandledrejection', function (event) {
-    post('error', 'Unhandled promise rejection: ' + (event.reason && event.reason.message ? event.reason.message : event.reason));
-  });
-  var originalError = console.error;
-  console.error = function () {
-    post('log', Array.prototype.map.call(arguments, String).join(' '));
-    return originalError.apply(console, arguments);
-  };
-  window.addEventListener('DOMContentLoaded', function () { post('ready', 'preview loaded'); });
-})();
-</script>`;
+const RESOURCE_ATTRIBUTES = new Set(['src', 'srcset', 'poster', 'background', 'cite', 'action', 'formaction', 'ping', 'href', 'xlink:href']);
+const REMOVED_ELEMENTS = /<(?:iframe|frame|object|embed|portal|form|base|link)\b[^>]*>[\s\S]*?<\/(?:iframe|frame|object|embed|portal|form|base|link)\s*>/gi;
+const REMOVED_VOID_ELEMENTS = /<(?:iframe|frame|object|embed|portal|form|base|link)\b[^>]*\/?>/gi;
 
-function escapeForInline(content: string): string {
-  return content.replace(/<\/(script)/gi, '<\\/$1');
+function sanitizeStylesheet(content: string): string {
+  return content
+    .replace(/@import\b[^;]*(?:;|$)/gi, '')
+    .replace(/url\s*\(\s*(['"]?)(.*?)\1\s*\)/gis, (_match: string, _quote: string, value: string) => (
+      /^(?:data:|blob:)/i.test(value.trim()) ? `url("${value}")` : 'none'
+    ))
+    // Prevent an artifact stylesheet from terminating the trusted style tag.
+    .replace(/<\/style/gi, '<\\/style');
 }
 
-/**
- * Builds a self-contained srcdoc from the artifact set: CSS <link> and JS
- * <script src> references to sibling artifact files are inlined; everything
- * else stays untouched. The CSP meta tag and runtime bridge are prepended.
- */
-export function buildPreviewDocument(entry: ArtifactFile, files: ArtifactFile[]): string {
-  const byPath = new Map(files.map((file) => [file.path, file] as const));
-  let html = entry.content;
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
 
-  html = html.replace(
-    /<link[^>]*href=["']([^"']+)["'][^>]*>/gi,
-    (_match, href: string) => {
-      const target = byPath.get(normalizeRef(entry.path, href));
-      if (target && target.mediaType === 'text/css') {
-        return `<style>\n${escapeForInline(target.content)}\n</style>`;
+function sanitizeTag(tagName: string, attributes: string): string {
+  const safeAttributes = attributes.replace(
+    /\s+([a-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/gi,
+    (whole: string, rawName: string, doubleQuoted: string | undefined, singleQuoted: string | undefined, bare: string | undefined) => {
+      const name = rawName.toLowerCase();
+      const value = (doubleQuoted ?? singleQuoted ?? bare ?? '').trim();
+      if (name.startsWith('on') || name === 'srcdoc' || name === 'target' || name === 'download') return '';
+      if (RESOURCE_ATTRIBUTES.has(name)) {
+        // href is removed even for fragment/data links: an artifact preview is
+        // static and must not become a navigation surface.
+        if (name === 'href' || name === 'xlink:href' || name === 'action' || name === 'formaction' || name === 'ping' || name === 'cite') return '';
+        if (!/^(?:data:|blob:)/i.test(value)) return '';
+        return ` ${name}="${escapeAttribute(value)}"`;
       }
-      // External references are removed: the sandbox blocks them anyway.
-      return `<!-- external link removed by Cherry preview: ${href.slice(0, 120)} -->`;
+      if (name === 'style') return ` style="${escapeAttribute(sanitizeStylesheet(value))}"`;
+      return whole;
     },
   );
+  return `<${tagName}${safeAttributes}>`;
+}
 
-  html = html.replace(
-    /<script([^>]*)src=["']([^"']+)["']([^>]*)>\s*<\/script>/gi,
-    (_match, _pre: string, src: string) => {
-      const target = byPath.get(normalizeRef(entry.path, src));
-      if (target && (target.mediaType === 'text/javascript' || target.path.endsWith('.js'))) {
-        return `<script>\n${escapeForInline(target.content)}\n</script>`;
-      }
-      return `<!-- external script removed by Cherry preview: ${src.slice(0, 120)} -->`;
-    },
-  );
+function sanitizeHtml(content: string): string {
+  let html = content
+    // An unclosed script is removed through EOF, fail-closed, rather than
+    // allowing any script text to become live markup after transformation.
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, '')
+    .replace(/<script\b[\s\S]*$/gi, '')
+    .replace(REMOVED_ELEMENTS, '')
+    .replace(REMOVED_VOID_ELEMENTS, '')
+    .replace(/<meta\b[^>]*\bhttp-equiv\s*=\s*(['"])refresh\1[^>]*>/gi, '')
+    .replace(/<meta\b[^>]*\bhttp-equiv\s*=\s*refresh[^>]*>/gi, '');
 
-  const head = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">${RUNTIME_BRIDGE}`;
-  if (/<head[^>]*>/i.test(html)) {
-    html = html.replace(/<head[^>]*>/i, (match) => `${match}${head}`);
-  } else if (/<html[^>]*>/i.test(html)) {
-    html = html.replace(/<html[^>]*>/i, (match) => `${match}<head>${head}</head>`);
-  } else {
-    html = `<head>${head}</head>${html}`;
-  }
-  return html;
+  html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi, (_match: string, styles: string) => `<style>${sanitizeStylesheet(styles)}</style>`);
+  return html.replace(/<([a-z][\w:-]*)([^>]*)>/gi, (_match: string, tagName: string, attributes: string) => sanitizeTag(tagName, attributes));
 }
 
 function normalizeRef(entryPath: string, ref: string): string {
   const clean = ref.split('?')[0]!.split('#')[0]!;
-  if (/^[a-z]+:/i.test(clean) || clean.startsWith('//')) return clean; // external, never matches
+  if (/^[a-z]+:/i.test(clean) || clean.startsWith('//')) return clean;
   const baseSegments = entryPath.split('/').slice(0, -1);
   const refSegments = clean.split('/');
   const output = [...baseSegments];
   for (const segment of refSegments) {
     if (segment === '' || segment === '.') continue;
-    if (segment === '..') {
-      output.pop();
-    } else {
-      output.push(segment);
-    }
+    if (segment === '..') output.pop();
+    else output.push(segment);
   }
   return output.join('/');
 }
 
-export interface PreviewMessage {
-  kind: 'error' | 'log' | 'ready';
-  message: string;
-  detail?: string;
-  at: string;
-}
+/**
+ * Builds a static, self-contained srcdoc. Only sibling CSS files are inlined;
+ * all executable code and resource/navigation references are discarded.
+ */
+export function buildPreviewDocument(entry: ArtifactFile, files: ArtifactFile[]): string {
+  const byPath = new Map(files.map((file) => [file.path, file] as const));
+  const html = entry.content
+    .replace(/<link\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi, (_match: string, href: string) => {
+      const target = byPath.get(normalizeRef(entry.path, href));
+      return target?.mediaType === 'text/css' ? `<style>${sanitizeStylesheet(target.content)}</style>` : '';
+    });
 
-/** Validates a window message from the preview iframe. */
-export function parsePreviewMessage(data: unknown): PreviewMessage | null {
-  if (!data || typeof data !== 'object') return null;
-  const record = data as Record<string, unknown>;
-  if (record['__cherryPreview'] !== true) return null;
-  const kind = record['kind'];
-  if (kind !== 'error' && kind !== 'log' && kind !== 'ready') return null;
-  const message = typeof record['message'] === 'string' ? record['message'].slice(0, 2000) : '';
-  const result: PreviewMessage = {
-    kind,
-    message,
-    at: typeof record['at'] === 'string' ? record['at'] : new Date().toISOString(),
-  };
-  if (typeof record['detail'] === 'string') result.detail = record['detail'].slice(0, 4000);
-  return result;
+  // The first bytes are trusted policy bytes. No artifact content, including a
+  // doctype or an attacker-controlled head element, precedes this meta tag.
+  return `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">${sanitizeHtml(html)}`;
 }

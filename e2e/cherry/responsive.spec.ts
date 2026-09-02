@@ -64,7 +64,11 @@ test.describe('responsive and accessible shell', () => {
 });
 
 test.describe('artifact preview isolation', () => {
-  test('malicious artifact cannot reach Cherry storage or the network', async ({ page }) => {
+  test('malicious artifact is rendered as static content with no navigation or network', async ({ page }) => {
+    const blockedRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('evil.example')) blockedRequests.push(request.url());
+    });
     await page.goto('/studio');
     await page.getByLabel('Space name').fill('Sandbox test');
     await page.getByRole('button', { name: 'Create space' }).click();
@@ -80,24 +84,29 @@ test.describe('artifact preview isolation', () => {
     await page.getByRole('button', { name: 'Create file' }).click();
     await page.getByTestId('artifact-editor').fill(
       [
-        '<html lang="en"><head><title>evil</title></head><body><h1>probe</h1><script>',
-        'const report = {};',
-        'try { report.idb = indexedDB.databases ? "reachable" : "reachable"; } catch (e) { report.idb = "blocked:" + e.name; }',
-        'try { report.ls = localStorage.length; } catch (e) { report.ls = "blocked:" + e.name; }',
-        'try { fetch("https://example.com").then(() => { document.title = "net-open"; }).catch(() => { document.title = "net-blocked"; }); } catch (e) { document.title = "net-blocked"; }',
-        'try { window.top.location.href = "https://evil.example"; } catch (e) { report.nav = "blocked"; }',
-        'console.error("SANDBOX_REPORT " + JSON.stringify(report));',
-        '</script></body></html>',
+        '<html lang="en"><head><title>evil</title><link rel="stylesheet" href="https://evil.example/evil.css"></head>',
+        '<body onload="fetch(\'https://evil.example/load\')"><h1>probe</h1>',
+        '<a href="https://evil.example/navigate">leave</a><img src="https://evil.example/tracker.gif">',
+        '<form action="https://evil.example/submit"><button type="submit">submit</button></form>',
+        '<script>document.body.textContent = "executed"; fetch("https://evil.example/script");</script>',
+        '</body></html>',
       ].join('\n'),
     );
     await page.getByTestId('save-artifact').click();
 
-    // The preview reports its own console errors through the bridge.
-    const consoleRow = page.locator('.event-row', { hasText: 'SANDBOX_REPORT' });
-    await expect(consoleRow).toBeVisible({ timeout: 10_000 });
-    const reportText = await consoleRow.textContent();
-    // Opaque origin: storage access must throw SecurityError.
-    expect(reportText).toContain('blocked');
+    const preview = page.getByTestId('artifact-preview');
+    await expect(preview).toHaveAttribute('sandbox', '');
+    await expect(preview).toHaveAttribute('referrerpolicy', 'no-referrer');
+    const srcdoc = await preview.getAttribute('srcdoc');
+    expect(srcdoc).toBeTruthy();
+    expect(srcdoc!.startsWith('<meta http-equiv="Content-Security-Policy"')).toBe(true);
+    expect(srcdoc).toContain("script-src 'none'");
+    expect(srcdoc).not.toMatch(/<script\b/i);
+    expect(srcdoc).not.toMatch(/\bon[a-z]+\s*=/i);
+    expect(srcdoc).not.toContain('evil.example');
+    await expect(preview.contentFrame().locator('h1')).toHaveText('probe');
+    await expect(preview.contentFrame().locator('body')).not.toContainText('executed');
+    expect(blockedRequests).toEqual([]);
     // Cherry itself is untouched: still on our origin, workspace intact.
     await expect(page).toHaveURL(/\/studio\/artifacts\//);
   });
