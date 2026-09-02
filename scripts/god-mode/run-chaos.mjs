@@ -325,4 +325,3 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   const results = await runChaos(parseArgs(process.argv.slice(2)));
   process.exitCode = results.some((item) => item.result === 'fail') ? 1 : 0;
 }
-

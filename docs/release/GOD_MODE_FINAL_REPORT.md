@@ -7,19 +7,21 @@ is merged by this branch; the release manager reviews and decides.
 ```text
 Branch: claude/god-mode-v2 (worktree D:\project\cherry-god-mode-v2), rebased onto origin/main
 Base commit: e1d62c5 (origin/main when this report was closed, 2026-09-02)
-Final commit: 03f1134 (last code commit; the closing documentation commit that adds this report is the branch head)
+Final product/claims commit: 3f7e12f (this closeout adds documentation only)
+Commits: 20 commits after e1d62c5 before this documentation closeout
 Mode selected: GREEN (32.1 h to the deadline and 23.1 h to the 12:00 freeze at 12:51 London start; freeze respected, no feature work after this report)
 Tickets completed: GOD-0 (baseline, official-source research, architecture lock, 20 shared fixtures), GOD-1 (validated mission graph, Dexie v6), GOD-2 (host and capability registries), GOD-3 (sandbox manager: directory and git-worktree leases), GOD-4 (probed agent hosts: codex, claude, mock, manual; probe-only endpoints), GOD-5 (mission executor: parallel nodes, independent checks, bounded repair, human decisions, cancellation, crash recovery), GOD-6 (policy-bound execution, exact-revision approvals, evaluation reports), GOD-7 (outcome-first Mission Control, browser mirror of the runner, runner mission client), GOD-8 (five bounded WebMCP mission tools on the control surface, none can approve, every call in Agent View), GOD-9 (landing repositioned as the open AI workforce with Cherry-origin plates), GOD-11 (deterministic 1,000 + 1,000 workload harness with chaos cases), GOD-12 (real Codex capture)
 Tickets not completed: GOD-10 was folded into GOD-7 and GOD-9 (approval-bound routines are exposed as draft recipes only: ChatGPT Work task and Codex Automation text a person creates in the other host; no scheduler change). GOD-12 Claude Code half: not captured, `claude -p` returned "401 OAuth access token has been revoked" on this machine and a sign-in is human-only. Live ChatGPT WebMCP capture: not done (no live host session in this environment).
-Files changed: 143 files changed, 20,761 insertions, 232 deletions before the closing documentation commit (git diff --stat origin/main...HEAD)
+Files changed: 146 files changed, 21,596 insertions, 511 deletions before this documentation closeout (git diff --stat e1d62c5...3f7e12f)
 Dependencies changed: none (package.json and package-lock.json untouched; git diff origin/main...HEAD -- package.json package-lock.json is empty)
-Clean npm ci: fresh worktree of 03f1134 (the last code commit): npm ci exit 0, typecheck 0, lint 0, unit 59 files passed and 1 skipped, runner 125 passed, build exit 0 (56.86 s), release pack verified, verify-sw 5/5, audit-submission 0 FAIL 0 WARN, scale harness 17 passed; worktree removed afterwards. The closing commit on top adds documentation only.
+Clean npm ci: the controller checked out detached `3f7e12f` in a clean worktree: npm ci exit 0 (992 packages), typecheck 0, lint 0, unit 533 passed + 2 skipped (59 files passed + 1 skipped), runner 125 passed / 0 failed, build exit 0 (55.41 s), release pack 6/6, verify-sw 5/5, audit-submission 0 FAIL / 0 WARN, scale harness 17/17. The Windows symlink chaos case remained the documented EPERM platform skip. The clean worktree was removed afterwards.
+Final verification: the controller observed `npm run verify:all` at `3f7e12f` with every stage green.
 Typecheck: 0 errors (tsc --noEmit)
 Lint: 0 problems (eslint .)
-Unit: 530 passed, 2 skipped (532), 59 files passed, 1 skipped (vitest, includes the browser-to-real-runner integration test)
+Unit: 533 passed, 2 skipped (535), 59 files passed, 1 skipped (vitest, includes the browser-to-real-runner integration test)
 Runner/MCP: 125 passed, 0 failed (node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs, which aggregates the sandbox, host, executor, queue and bridge suites)
-Build: tsc -b and vite build succeeded (built in 30.91 s in the pipeline run)
-Playwright: 115 passed, 0 failed, 0 flaky in 6.7 min (desktop 1440x1024 plus the Pixel 7 responsive project, 1 worker); the God Mode specs alone were green three consecutive times before the full run; docs/release/e2e-results.json is that run (expected 115, unexpected 0)
+Build: tsc -b and vite build succeeded in 16.46 s
+Playwright: 115 passed, 0 failed, 0 flaky in 5.6 min (desktop 1440x1024 plus the Pixel 7 responsive project, 1 worker); the God Mode specs alone were green three consecutive times before the full run; docs/release/e2e-results.json records 115 expected, 0 unexpected
 Service worker: verify-sw 5/5 (cherry-shell-v4)
 Pack verification: release pack 6/6 (bundle genuine, tamper-evident, evidence-complete)
 Submission audit: audit-submission 0 FAIL, 0 WARN (13 checks)
@@ -68,7 +70,9 @@ Generated from `git log --reverse origin/main..HEAD` when this report was closed
 | 9931b45 | docs | docs(release): add Mission Control to the evidence and compatibility notes |
 | d57bfce | GOD-7/9 | fix(ui): keep the Studio and public-page gates green with the workforce surfaces |
 | 03f1134 | GOD-9 | docs(release): refresh the landing screenshots |
-| (this commit) | docs | docs(release): close the God Mode branch with measured results |
+| 5c062dc | docs | docs(release): close the God Mode branch with measured results |
+| 3f7e12f | GOD-12 | fix(claims): align God Mode evidence with captured behavior |
+| (this commit) | docs | docs(release): record final God Mode verification |
 
 ## Defects found and fixed during integration
 
@@ -90,6 +94,7 @@ Each row names its regression test; the security report carries the same list wi
 | Dexie versions 5 and 6 had collapsed into one block during lane integration | v5 skillProposals and v6 mission stores restored | tests/cherry/proposal-service.test.ts, tests/cherry/god-mode-persistence.test.ts |
 | A hostile outcome was refused with a generic "invalid plan" message | the refusal names the instruction-injection marker | tests/cherry/webmcp-god-mode.test.ts |
 | The full Playwright suite caught three collisions with existing product gates: the Studio nav had lost its "Command" link and said "Missions" (the plain-language rule bans implementation nouns in Studio copy), the landing teammate rail probed the local runner from a public page, and the landing had lost the "Teach once. Every agent gets better." band with its real-run link | nav restored to Command plus a "Team" entry, the rail asks the runner only when this browser already holds a pairing token, the band lives in the teach chapter | e2e/cherry/golden-manual.spec.ts, plain-language.spec.ts, visual-qa.spec.ts, demo-recording-ui.spec.ts (all green after the fix) |
+| Landing claims overstated multi-host evidence, said four tasks could run in parallel despite the three-worker cap, labelled uncaptured Claude execution Available, and conflated the browser recording with separate host evidence | scoped truthful landing and release-document copy separates the evidence, states the three-worker limit, and keeps Claude execution Experimental pending a human sign-in capture | tests/cherry/landing-god-mode.test.tsx (11), e2e/cherry/landing-god-mode.spec.ts (5/5) |
 
 ## What the owner still has to do
 
