@@ -27,6 +27,9 @@ import { Scheduler, validateRoutine } from './lib/scheduler.mjs';
 import { createAdapters } from './lib/adapters.mjs';
 import { buildChildEnv, isPythonExecutable } from './lib/process-policy.mjs';
 import { probeScraplingRuntime } from './lib/scrapling-probe.mjs';
+import { createAgentHosts } from './lib/agent-hosts.mjs';
+import { SandboxManager } from './lib/sandbox-manager.mjs';
+import { MissionExecutor } from './lib/mission-executor.mjs';
 import {
   SOURCE_WATCH_NAMESPACE,
   SourceWatchTombstoneStore,
@@ -64,6 +67,18 @@ const allowedOrigins = new Set(
 );
 const allowedRoots = (argValues('--root').length > 0 ? argValues('--root') : [process.cwd()]).map((root) => resolve(root));
 const allowedExecutables = new Set(argValues('--allow-exec'));
+/** God Mode hosts: --allow-mock-host enables the scripted test host; --host-command name=<path or url> overrides where a host is found. */
+const allowMockHost = args.includes('--allow-mock-host');
+const hostCommands = {};
+const hostEndpoints = { ollama: 'http://127.0.0.1:11434', omniroute: 'http://127.0.0.1:20128' };
+for (const spec of argValues('--host-command')) {
+  const separator = spec.indexOf('=');
+  if (separator <= 0) continue;
+  const name = spec.slice(0, separator);
+  const value = spec.slice(separator + 1);
+  if (/^https?:\/\//.test(value)) hostEndpoints[name] = value;
+  else hostCommands[name] = value;
+}
 const stateDir = resolve(argValues('--state')[0] ?? join(process.cwd(), '.cherry-runner'));
 mkdirSync(stateDir, { recursive: true });
 const jobsFile = join(stateDir, 'runner-jobs.json');
@@ -287,10 +302,12 @@ async function pump() {
 
 // ---------------- Runner v2: durable queue, events, scheduler ----------------
 const v2Events = new EventsLog(join(dataDir, 'events.log'));
-const v2Adapters = createAdapters({ allowedRoots, allowedExecutables });
+const v2Hosts = createAgentHosts({ commands: hostCommands, endpoints: hostEndpoints, allowMockHost });
+const v2Adapters = createAdapters({ allowedRoots, allowedExecutables, allowMockHost, hosts: v2Hosts });
 const v2Concurrency = Math.min(3, Math.max(1, Number(argValues('--concurrency')[0]) || 1));
 const v2Queue = new DurableQueue({ dataDir, events: v2Events, concurrency: v2Concurrency });
 let v2Scheduler;
+let missionExecutor = null;
 
 const currentSourceWatchForEnvelope = (envelope) => {
   if (envelope?.adapter !== 'youtube-rss-watch') return null;
@@ -299,6 +316,7 @@ const currentSourceWatchForEnvelope = (envelope) => {
 };
 
 const v2Executor = async (envelope, context) => {
+  if (missionExecutor?.owns(envelope)) return missionExecutor.execute(envelope, context);
   if (envelope.adapter === 'youtube-rss-watch' && !currentSourceWatchForEnvelope(envelope)) {
     throw new Error('youtube-rss-watch execution is not bound to the current channel watch');
   }
@@ -365,19 +383,32 @@ function cancelJobsForSourceWatch(routine) {
   for (const job of cancellable) v2Queue.cancel(job.id);
   return cancellable.length;
 }
+const v2Sandboxes = new SandboxManager({ dataDir, allowedRoots });
+void v2Sandboxes.recoverAfterRestart();
+missionExecutor = new MissionExecutor({
+  dataDir,
+  queue: v2Queue,
+  events: v2Events,
+  sandboxes: v2Sandboxes,
+  hosts: v2Hosts,
+  adapters: v2Adapters,
+  allowedExecutables,
+  jobRunner: v2Executor,
+});
 const v2Timer = setInterval(() => {
   v2Queue.expireLeases();
   v2Queue.runPending(v2Executor);
   v2Scheduler.tick();
+  void missionExecutor.tick();
 }, 1000);
 v2Timer.unref();
 
 // ---------------- HTTP API ----------------
-function readJsonBody(request, response, origin, onBody) {
+function readJsonBody(request, response, origin, onBody, limit = 64 * 1024) {
   let raw = '';
   request.on('data', (chunk) => {
     raw += chunk;
-    if (raw.length > 64 * 1024) request.destroy();
+    if (raw.length > limit) request.destroy();
   });
   request.on('end', () => {
     let body;
@@ -434,6 +465,8 @@ const server = createServer((request, response) => {
           concurrency: v2Concurrency,
           queueDepth: v2Queue.list().filter((job) => ['queued', 'leased', 'running'].includes(job.status)).length,
           eventsHead: { seq: v2Events.seq, chain: v2Events.chain },
+          missionAdapters: v2Adapters.missionAdapterNames,
+          missions: missionExecutor.list().length,
         },
       },
       origin,
@@ -668,6 +701,50 @@ const server = createServer((request, response) => {
       const cancelledJobs = cancelJobsForSourceWatch(routine);
       v2Scheduler.removeRoutine(SOURCE_WATCH_NAMESPACE, routine.id);
       return send(response, 200, { removed: true, routineId: routine.id, cancelledJobs }, origin);
+    }
+  }
+
+  // ---------------- God Mode: hosts and missions ----------------
+  if (request.method === 'GET' && url.pathname === '/v2/hosts') {
+    v2Hosts.probe().then(
+      (hosts) => send(response, 200, { hosts, probedAt: v2Hosts.probedAt() }, origin),
+      (error) => send(response, 500, { error: redact(String(error?.message ?? error)) }, origin),
+    );
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/v2/missions') {
+    return send(response, 200, { missions: missionExecutor.list().slice(-50) }, origin);
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v2/missions') {
+    readJsonBody(request, response, origin, (body) => {
+      const outcome = missionExecutor.register({ plan: body?.plan, envelopes: body?.envelopes, hostPreferences: body?.hostPreferences ?? null });
+      if (!outcome.ok) {
+        return send(response, outcome.code === 'conflict' ? 409 : 400, { error: outcome.reason, code: outcome.code, ...(outcome.problems ? { problems: outcome.problems } : {}) }, origin);
+      }
+      return send(response, outcome.existing ? 200 : 201, { missionRunId: outcome.missionRunId }, origin);
+    }, 1024 * 1024);
+    return;
+  }
+
+  const missionMatch = /^\/v2\/missions\/([A-Za-z0-9._-]+)(?:\/(start|cancel|decisions))?$/.exec(url.pathname);
+  if (missionMatch) {
+    const missionRunId = missionMatch[1];
+    const action = missionMatch[2] ?? null;
+    const statusFor = { not_found: 404, conflict: 409, hash_mismatch: 409, not_startable: 409, not_waiting: 409 };
+    const answer = (outcome) => (outcome.ok
+      ? send(response, 200, { mission: outcome.mission }, origin)
+      : send(response, statusFor[outcome.code] ?? 400, { error: outcome.reason, code: outcome.code }, origin));
+    if (request.method === 'GET' && action === null) {
+      const mission = missionExecutor.get(missionRunId);
+      return mission ? send(response, 200, { mission }, origin) : send(response, 404, { error: 'mission not found' }, origin);
+    }
+    if (request.method === 'POST' && action === 'start') return answer(missionExecutor.start(missionRunId));
+    if (request.method === 'POST' && action === 'cancel') return answer(missionExecutor.cancel(missionRunId));
+    if (request.method === 'POST' && action === 'decisions') {
+      readJsonBody(request, response, origin, (body) => answer(missionExecutor.decide(missionRunId, body ?? {})));
+      return;
     }
   }
 

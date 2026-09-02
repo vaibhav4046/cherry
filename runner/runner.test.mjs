@@ -228,3 +228,4 @@ test('output redaction removes secret-shaped strings', async () => {
 await import('./v2.test.mjs');
 await import('./sandbox-manager.test.mjs');
 await import('./agent-hosts.test.mjs');
+await import('./mission-executor.test.mjs');
