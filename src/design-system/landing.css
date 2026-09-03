@@ -373,6 +373,18 @@
   font-size: 13px;
 }
 
+.landing-evidence-status > strong {
+  display: block;
+  font: 850 12px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-evidence-status > p {
+  margin: 12px 0 0;
+  font: 500 15px/1.5 Inter, system-ui, sans-serif;
+}
+
 .landing-panorama { position: relative; }
 
 .landing-overlap {

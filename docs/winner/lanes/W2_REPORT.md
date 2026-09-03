@@ -130,3 +130,26 @@ An earlier independent interactive audit had successfully exercised the lab's av
 W0 should rerun the focused Landing tests, production build, owned Playwright spec, and repository gates after integration; inspect the three target viewports; confirm the four anchor targets still resolve; and ensure no service worker serves an older Landing/Showcase chunk. Deployment and live-origin verification remain W0 responsibilities.
 
 The only open concern is the production-preview GLB download event that did not arrive within 90 seconds in this environment. OBJ/MTL is fully automated and verified, the earlier interactive audit was positive, and no Landing claim depends on GLB. No live deployment, authentication, provider invocation, or consequential action was performed by W2.
+
+## Fix round 1 — fail-closed evidence and live motion preference
+
+Independent review found that the hero rejected an unavailable or invalid replay correctly, but `Landing.tsx` collapsed every non-ready replay state to `null`. Seed, Branch, Glasshouse, and Harvest then interpreted `null` as permission to publish hardcoded mission facts. The same value represented loading, network failure, and digest failure, so those lower surfaces could not fail closed. Review also found that the hero sampled `prefers-reduced-motion` during render without subscribing to later operating-system preference changes.
+
+The fix keeps the complete `ReplayState` discriminant through all four evidence components. Only `status: 'ready'` can expose the mission outcome/status, derived worker count, overlap/concurrency, host version, sandbox boundary, base commit, or passed checks. Loading and failure render ordinary neutral text and no checkmark or success fact. The hero remains the sole loading/error live region, avoiding four duplicate announcements. `usePrefersReducedMotion` now reads the initial preference, subscribes to `MediaQueryList` `change`, passes the current value to the recorded player, and removes the listener on unmount.
+
+### RED evidence
+
+`npm.cmd test -- tests/cherry/landing-winner.test.tsx tests/cherry/landing-god-mode.test.tsx` was run before production changes: **4 failed / 10 passed**. The loading, fetch-rejection, and altered-replay cases each received `2 bounded work items` and `Verified before display` instead of neutral evidence state; the motion case observed zero `change` subscriptions. After the fail-closed implementation, the altered-replay regression was strengthened: it now recomputes the forged fixture's embedded canonical SHA-256, so the final GREEN proves rejection against W3's independent committed trust pin rather than merely a stale self-hash.
+
+The first neutral-state implementation exposed four lower `role="status"` regions. A focused accessibility regression was added and observed RED at **1 failed / 10 skipped** because the Seed placeholder was a live region. Removing live-region semantics from all lower placeholders made the hero the only announcer.
+
+### GREEN and verification evidence
+
+- The final focused command passed **2/2 files, 14/14 tests** on three independent runs after the strengthened forged-self-hash regression.
+- `npm.cmd run typecheck` passed after the final test update.
+- `npm.cmd run lint` passed after the final test update.
+- `npm.cmd run build` passed; existing third-party Privy PURE-annotation and chunk-size warnings remained non-fatal.
+- `npx.cmd playwright test e2e/cherry/final-winner-landing.spec.ts --project=desktop --reporter=line --output=test-results-w2-fix1` passed **6/6 in 2.4 minutes**, including the three first-viewport sizes, keyboard/reduced-motion/axe coverage, claim checks, and non-empty OBJ/MTL downloads.
+- `npm.cmd run gates` passed with typecheck and lint clean, Vitest **61 passed / 1 skipped files; 572 passed / 2 skipped tests**, and runner/MCP **131/131 passed**.
+
+Fix-round tracked changes are limited to the approved W2 paths: `src/pages/Landing.tsx`, `src/components/marketing/ChronicleLanding.tsx`, `src/design-system/landing.css`, `tests/cherry/landing-winner.test.tsx`, and this append-only report. No W1/W3 asset, replay, trust-anchor, runtime, package-manifest, deployment, or release-source file changed.

@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import recordedMission from '../../public/media/cherry-demo/recorded-mission.json';
+import { canonicalJson } from '../../src/components/showcase/recorded-mission.mjs';
 import { Landing } from '../../src/pages/Landing.tsx';
 
 const CHAPTERS = [
@@ -25,6 +27,29 @@ function renderLanding() {
       <Landing />
     </MemoryRouter>,
   );
+}
+
+function expectReplayEvidenceWithheld(container: HTMLElement, stateLabel: string) {
+  const chapter = (id: string) => {
+    const element = container.querySelector<HTMLElement>(`[data-landing-chapter="${id}"]`);
+    expect(element).toBeTruthy();
+    return element!;
+  };
+
+  const seed = chapter('seed');
+  const branch = chapter('branch');
+  const glasshouse = chapter('glasshouse');
+  const harvest = chapter('harvest');
+
+  for (const surface of [seed, branch, glasshouse, harvest]) {
+    expect(surface.textContent).toContain(stateLabel);
+    expect(surface.querySelector('[role="status"], [role="alert"]')).toBeNull();
+  }
+
+  expect(seed.textContent).not.toMatch(/2 bounded work items|Verified before display|succeeded/i);
+  expect(branch.textContent).not.toMatch(/Measured overlap|34,513|2 workers ran at once/i);
+  expect(glasshouse.textContent).not.toMatch(/codex-cli|worktree-process|18774c71|Recorded worker|Isolated worktree/i);
+  expect(harvest.textContent).not.toMatch(/✓|passed|verified|node --test/i);
 }
 
 describe('winner landing', () => {
@@ -150,15 +175,73 @@ describe('winner landing', () => {
     expect(container.innerHTML).not.toMatch(/cherry-editorial|hermes|grok/i);
   });
 
-  it('rejects a replay that does not match the independent W3 digest pin', async () => {
+  it('withholds every replay-derived fact while verification is loading', () => {
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>(() => undefined));
+    const { container } = renderLanding();
+
+    expectReplayEvidenceWithheld(container, 'Recorded evidence loading');
+  });
+
+  it('withholds every replay-derived fact after a fetch failure', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('network unavailable'));
+    const { container } = renderLanding();
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded mission could not be verified/i);
+    expectReplayEvidenceWithheld(container, 'Recorded evidence unavailable');
+  });
+
+  it('withholds every replay-derived fact after a replay fails the independent W3 digest pin', async () => {
     const forged = structuredClone(recordedMission);
     forged.mission.outcome = 'Forged landing claim';
+    const { integrity: omittedIntegrity, ...unsignedReplay } = forged;
+    void omittedIntegrity;
+    forged.integrity.replaySha256 = createHash('sha256').update(canonicalJson(unsignedReplay)).digest('hex');
     vi.mocked(fetch).mockResolvedValueOnce(responseWith(forged) as Response);
-    renderLanding();
+    const { container } = renderLanding();
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/recorded mission could not be verified/i);
     expect(screen.queryByRole('region', { name: 'Recorded real Codex run' })).toBeNull();
     expect(screen.queryByText('Forged landing claim')).toBeNull();
+    expectReplayEvidenceWithheld(container, 'Recorded evidence unavailable');
+  });
+
+  it('updates and cleans up the player reduced-motion preference after mount', async () => {
+    let reducedMotion = false;
+    const listeners = new Set<(event: MediaQueryListEvent) => void>();
+    const addEventListener = vi.fn((_type: string, listener: (event: MediaQueryListEvent) => void) => {
+      listeners.add(listener);
+    });
+    const removeEventListener = vi.fn((_type: string, listener: (event: MediaQueryListEvent) => void) => {
+      listeners.delete(listener);
+    });
+    const mediaQuery = {
+      get matches() { return reducedMotion; },
+      media: '(prefers-reduced-motion: reduce)',
+      onchange: null,
+      addEventListener,
+      removeEventListener,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as unknown as MediaQueryList;
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(mediaQuery));
+
+    const { container, unmount } = renderLanding();
+    await screen.findByRole('region', { name: 'Recorded real Codex run' });
+    const replay = container.querySelector<HTMLElement>('.landing-replay');
+    expect(replay).toBeTruthy();
+    expect(addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+    expect(replay!.dataset.reducedMotion).toBe('false');
+
+    act(() => {
+      reducedMotion = true;
+      for (const listener of listeners) listener({ matches: true } as MediaQueryListEvent);
+    });
+
+    expect(replay!.dataset.reducedMotion).toBe('true');
+    unmount();
+    expect(removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+    expect(listeners.size).toBe(0);
   });
 
   it('keeps claims honest and Landing styling free of prohibited effects', async () => {
