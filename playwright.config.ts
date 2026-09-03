@@ -27,6 +27,9 @@ export default defineConfig({
       VITE_PRIVY_APP_ID: E2E_PRIVY_APP_ID,
     },
     reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
+    // This starts with a full production build. On a loaded machine that alone
+    // can exceed four minutes, and when it does Playwright aborts before a
+    // single test runs and overwrites the report with a zero-test result.
+    timeout: 900_000,
   },
 });
