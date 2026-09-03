@@ -336,7 +336,10 @@ export async function buildRecordedMissionFixture(captureText) {
   invariant(claimedMaxConcurrentNodes === overlap.maxConcurrentNodes, 'maxConcurrentNodes does not match worker intervals');
   invariant(overlap.maxConcurrentNodes >= 2, 'capture does not prove concurrent workers');
   const events = validateRawEvents(capture.events, missionId);
-  const sourceCapture = string(captureText, 'captureText');
+  // Hash the capture as git stores it (LF). A Windows checkout with autocrlf hands this
+  // function CRLF text, and without normalisation the pinned replay digest would differ
+  // between operating systems for byte-identical repository content.
+  const sourceCapture = string(captureText, 'captureText').replace(/\r\n?/g, '\n');
 
   const replay = {
     schemaVersion: 1,

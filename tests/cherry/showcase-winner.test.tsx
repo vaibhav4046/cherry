@@ -21,7 +21,7 @@ import { inspectWebm, writePublicReplay } from '../../scripts/capture-winner-dem
 
 const capturePath = resolve('docs/release/benchmarks/god-mode-hosts.json');
 const captureText = readFileSync(capturePath, 'utf8');
-const expectedReplaySha256 = 'bac2a98278782ea4ad9b937d43b19f18960da0cee720ade3022c8f5878932490';
+const expectedReplaySha256 = 'bd68e563073fc63eb06902ae2747395ec447852f52b825c17b2bac8b5ec1ea23';
 
 interface RawWorkerFixture {
   status?: string;
