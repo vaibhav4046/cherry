@@ -21,6 +21,13 @@ a live host you did not record.
    real onboarding defects for the audit to find).
 3. In the ChatGPT desktop app open the built-in browser at https://cherry-wine.vercel.app/studio/control
    and confirm **Site tools** appears in the address bar.
+4. Loopback check. Modern Chromium asks a public site for permission before it may reach
+   127.0.0.1 (Local Network Access), and an embedded browser may simply refuse. If the start call
+   says no runner is listening while `node runner/server.mjs` is clearly up, serve the same build
+   locally and use that URL for the mission part: in `D:\project\cherry` run `npm run build` then
+   `npm run preview`, open http://127.0.0.1:4173/studio/control in the same built-in browser (the
+   runner already allows that origin), and say on camera that it is the same build served locally.
+   The Site tools shot can still be taken on the live URL.
 
 ## 0:00 to 0:12, hook (landing)
 
