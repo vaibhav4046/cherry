@@ -56,3 +56,27 @@ The live proprietary WebMCP host remains **Experimental**. W2 does not claim a c
 ## Handoff
 
 W7 made no product, dependency, lockfile, protected-runtime, release-source, authentication, merge, or deployment change. The findings above were appended to the shared status ledger for release-authority disposition.
+
+---
+
+## Release authority disposition (2026-09-03, Claude Cowork)
+
+Every blocker above is now closed. This section is appended, not edited into the report body: the
+findings above stand as W7 recorded them.
+
+| W7 finding | Disposition | Commit |
+|---|---|---|
+| Fragment navigation does not reach Showcase proof | Fixed. `RouteMeta` now takes a fragment to its target once the route mounts, respects reduced motion, and moves focus there. A browser test asserts the judge lands on the recorded mission, not at the top of the page. | `db41134` |
+| Chronicle verification is line-ending dependent on Windows | Fixed. Text assets are hashed as git stores them (LF), binaries byte for byte. Verified by simulating a CRLF checkout. That verifier's own test also ran in no gate, so it is part of `test:runner` now. | `db41134` |
+| WebMCP API presence can be misreported as an attached agent | Integrated. The tribunal fix chain is on main: the header pill, Agent View and onboarding read "site tools available" until a host calls a tool or introduces itself. | `6efe318`, `e1ebfdf` |
+| Evidence documentation contains obsolete hashes | Closed by the redaction below, which supersedes every earlier value. | `d0ddefe` |
+| Raw host evidence needs owner privacy review | **Redacted**, not accepted. The capture machine's Windows account name and per-run temporary directory are now `<user>` and `<run>`. No version, exit code, timing, evaluation result or base commit changed. | `d0ddefe` |
+
+Canonical hashes after the redaction, recomputable from what the repository ships:
+
+- Capture file SHA-256: `baed40e34ce702642040e4198c821c0b35a0e7509fe661b0c0a7e486db71b9e5`
+- Compact-JSON content SHA-256: `20fc34e9d11225f1adaf0481a1f0fb08e83f9ea687923d0c3973fb76bf1b6dc2`
+- Replay digest (`recorded-mission-trust.mjs`): `edd88812aaf1c91ad58e542362fb05908a9b0b373803dd7e132980f0284b5cad`
+
+The values listed in W7's own finding were canonical for the pre-redaction artifact and are recorded
+in `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` for anyone comparing against the earlier evidence.
