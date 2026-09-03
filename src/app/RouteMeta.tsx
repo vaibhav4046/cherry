@@ -197,6 +197,10 @@ export function resolveRouteMeta(pathname: string): RouteMetadata {
 
 /** Frames to keep looking for a fragment target while the route finishes mounting. */
 const FRAGMENT_SETTLE_FRAMES = 60;
+/** Rechecks after the first scroll, for content that mounts late and moves the target. */
+const FRAGMENT_REALIGN_DELAYS_MS = [200, 600, 1200];
+/** How far the target may drift before it is worth scrolling again. */
+const FRAGMENT_DRIFT_TOLERANCE_PX = 120;
 
 /**
  * Keeps the browser tab and standard description aligned with the rendered route,
@@ -229,6 +233,20 @@ export function RouteMeta() {
       else window.setTimeout(attempt, 16);
     };
 
+    const timers: number[] = [];
+    const stop = () => {
+      cancelled = true;
+      for (const timer of timers) window.clearTimeout(timer);
+      timers.length = 0;
+    };
+    // The reader wins: once they move the page themselves, no further correction happens.
+    const readerTookOver = () => stop();
+
+    const align = (target: HTMLElement) => {
+      if (cancelled) return;
+      target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    };
+
     const attempt = () => {
       if (cancelled) return;
       const target = document.getElementById(targetId);
@@ -238,15 +256,33 @@ export function RouteMeta() {
         if (framesTried <= FRAGMENT_SETTLE_FRAMES) scheduleNextAttempt(attempt);
         return;
       }
-      target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      align(target);
       // A keyboard visitor must continue from the target, not from the top of the document.
       if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
       target.focus({ preventScroll: true });
+
+      // Content below a fragment can keep mounting after the first scroll and push the
+      // target back down the page, so the alignment is rechecked a few times and only
+      // corrected when it has actually drifted out of view.
+      window.addEventListener('wheel', readerTookOver, { once: true, passive: true });
+      window.addEventListener('touchstart', readerTookOver, { once: true, passive: true });
+      window.addEventListener('keydown', readerTookOver, { once: true });
+      for (const delay of FRAGMENT_REALIGN_DELAYS_MS) {
+        timers.push(window.setTimeout(() => {
+          if (cancelled) return;
+          const settled = document.getElementById(targetId);
+          if (settled === null) return;
+          if (Math.abs(settled.getBoundingClientRect().top) > FRAGMENT_DRIFT_TOLERANCE_PX) align(settled);
+        }, delay));
+      }
     };
 
     scheduleNextAttempt(attempt);
     return () => {
-      cancelled = true;
+      stop();
+      window.removeEventListener('wheel', readerTookOver);
+      window.removeEventListener('touchstart', readerTookOver);
+      window.removeEventListener('keydown', readerTookOver);
     };
   }, [pathname, hash]);
 

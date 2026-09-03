@@ -147,4 +147,25 @@ describe('fragment navigation', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
+
+  it('corrects for a target that late content pushes down the page, and stops when the reader scrolls', async () => {
+    const scrollIntoView = vi.fn();
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(scrollIntoView);
+    vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(() => undefined);
+    // The target sits far below the fold even after the first scroll, as it does when a
+    // section keeps mounting content above it.
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 2800 } as DOMRect);
+
+    renderAt('/showcase#recorded-mission');
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    const afterFirst = scrollIntoView.mock.calls.length;
+
+    await waitFor(() => expect(scrollIntoView.mock.calls.length).toBeGreaterThan(afterFirst), { timeout: 2000 });
+
+    // Once the reader moves the page themselves, Cherry stops correcting.
+    const beforeReader = scrollIntoView.mock.calls.length;
+    window.dispatchEvent(new Event('wheel'));
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    expect(scrollIntoView.mock.calls.length).toBe(beforeReader);
+  });
 });
