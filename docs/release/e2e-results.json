@@ -5,6 +5,7 @@
       "/root/cherry-clone/node_modules/.bin/playwright",
       "test",
       "e2e/cherry/upgrade.spec.ts",
+      "e2e/cherry/performance-meta.spec.ts",
       "--project=desktop"
     ],
     "configFile": "/root/cherry-clone/playwright.config.ts",
@@ -95,6 +96,201 @@
   },
   "suites": [
     {
+      "title": "cherry/performance-meta.spec.ts",
+      "file": "cherry/performance-meta.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "guest performance boundary",
+          "file": "cherry/performance-meta.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "configured guest routes never request the Privy SDK or its services",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3420,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T12:34:57.921Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-eb90d0ea6897b1672754",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 7,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "route metadata",
+          "file": "cherry/performance-meta.spec.ts",
+          "line": 38,
+          "column": 6,
+          "specs": [
+            {
+              "title": "uses specific metadata for real public and Studio routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2669,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T12:35:01.503Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-895599e630a1da908818",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 39,
+              "column": 3
+            },
+            {
+              "title": "prefix lookalikes and unknown Studio children keep 404 metadata",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1197,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T12:35:04.191Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-3d1259d5e430048b4adc",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 80,
+              "column": 3
+            },
+            {
+              "title": "serves the valid Open Graph image and wine SVG favicon",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 631,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T12:35:05.403Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-b6429e88837089b70b3a",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 92,
+              "column": 3
+            },
+            {
+              "title": "keeps the custom 404 available from the cached offline shell",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1254,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T12:35:06.055Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-7b7fa72f7b4d627bc6d9",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 111,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "cherry/upgrade.spec.ts",
       "file": "cherry/upgrade.spec.ts",
       "column": 0,
@@ -123,12 +319,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 744,
+                      "duration": 625,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:39.943Z",
+                      "startTime": "2026-09-03T12:35:07.354Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -157,12 +353,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 603,
+                      "duration": 670,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:40.829Z",
+                      "startTime": "2026-09-03T12:35:08.002Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -191,12 +387,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 807,
+                      "duration": 822,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:41.448Z",
+                      "startTime": "2026-09-03T12:35:08.689Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -233,12 +429,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3356,
+                      "duration": 3509,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:42.276Z",
+                      "startTime": "2026-09-03T12:35:09.530Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -267,12 +463,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1930,
+                      "duration": 1902,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:45.653Z",
+                      "startTime": "2026-09-03T12:35:13.068Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -309,12 +505,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1815,
+                      "duration": 1893,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:47.604Z",
+                      "startTime": "2026-09-03T12:35:15.004Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -343,12 +539,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2692,
+                      "duration": 2339,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:49.451Z",
+                      "startTime": "2026-09-03T12:35:16.921Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -385,12 +581,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2035,
+                      "duration": 2263,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:52.170Z",
+                      "startTime": "2026-09-03T12:35:19.278Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -419,12 +615,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3005,
+                      "duration": 3326,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:54.225Z",
+                      "startTime": "2026-09-03T12:35:21.560Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -461,12 +657,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2354,
+                      "duration": 2634,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:57.248Z",
+                      "startTime": "2026-09-03T12:35:24.909Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -495,12 +691,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1343,
+                      "duration": 1403,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:38:59.630Z",
+                      "startTime": "2026-09-03T12:35:27.560Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -537,12 +733,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2572,
+                      "duration": 2615,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T11:39:00.989Z",
+                      "startTime": "2026-09-03T12:35:28.977Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -562,9 +758,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-03T11:37:36.675Z",
-    "duration": 87015.996,
-    "expected": 12,
+    "startTime": "2026-09-03T12:33:46.679Z",
+    "duration": 105045.935,
+    "expected": 17,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

@@ -167,9 +167,9 @@ export function Connect() {
             </h2>
             <p style={{ margin: 0 }}>
               Most agent-ready sites let an agent operate them. Cherry inverts it: the site upgrades
-              the agent. Three always-on read tools serve your library to whoever visits, and the
-              limited tool set (at most five mutation tools per surface) keeps everything else
-              state-gated with approvals that only a human can grant.
+              the agent. Seven tools are available on every page, and three of them hand your approved
+              skills to whoever visits. Everything that changes anything is limited to five tools per
+              page, and the decisions that matter can only be granted by you.
             </p>
             <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
               <li><span className="mono">list_skills</span> <span className="quiet">: the whole library with status, revisions, and approval hashes</span></li>
