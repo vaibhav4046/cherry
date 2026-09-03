@@ -102,7 +102,8 @@ test.describe('Mission Control without a runner', () => {
     await expect(page.getByTestId('mission-status')).toHaveText('Planned');
     const nodes = page.getByTestId('mission-node');
     expect(await nodes.count()).toBeGreaterThanOrEqual(5);
-    await expect(page.getByTestId('mission-node').filter({ hasText: 'Publish approval' })).toContainText('human decision');
+    await expect(page.getByTestId('mission-node').filter({ hasText: 'Publish approval' })).toContainText('you decide this one');
+    await expect(page.getByTestId('mission-node').filter({ hasText: 'Publish approval' })).toContainText('no agent does this');
 
     // Fail-closed: with no runner paired in this browser, no live start is offered, before or after approval.
     // (The refusal text itself is exercised through the WebMCP start tool in webmcp-god-mode.spec.ts.)

@@ -70,7 +70,9 @@ function NodeRow({ view, onDecide, deciding }: { view: MissionNodeView; onDecide
       </div>
       <p style={{ margin: 0, fontSize: 14 }}>{node.objective}</p>
       <div className="row" style={{ gap: 'var(--sp-3)', fontSize: 13 }}>
-        <span>{runner?.host ? `${runner.host.kind}${runner.host.version ? ` ${runner.host.version}` : ''}` : node.preferredHostKinds.length > 0 ? `prefers ${node.preferredHostKinds.join(' or ')}` : 'any agent you have signed in'}</span>
+        {node.kind === 'human_decision'
+          ? <span>no agent does this</span>
+          : <span>{runner?.host ? `${runner.host.kind}${runner.host.version ? ` ${runner.host.version}` : ''}` : node.preferredHostKinds.length > 0 ? `prefers ${node.preferredHostKinds.join(' or ')}` : 'any agent you have signed in'}</span>}
         <span className="mono">{boundary}</span>
         {node.dependencyIds.length > 0 ? <span>waits for {node.dependencyIds.map(readableNodeId).join(' and ')}</span> : <span>can start first</span>}
         {runner ? <span className="tnum">attempt {runner.attempts} of {node.maxAttempts}</span> : null}
