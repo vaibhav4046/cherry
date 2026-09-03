@@ -26,6 +26,18 @@ function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
+/**
+ * SVG is text, and a Windows checkout with core.autocrlf=true stores it with CRLF
+ * line endings. The manifest records what git stores, so text assets are measured
+ * after normalising to LF; binary assets are measured byte for byte.
+ */
+function canonicalBytes(buffer, filePath) {
+  if (!filePath.toLowerCase().endsWith('.svg')) return buffer;
+  const text = buffer.toString('utf8');
+  const normalized = text.replace(/\r\n/g, '\n');
+  return normalized === text ? buffer : Buffer.from(normalized, 'utf8');
+}
+
 function requireString(errors, value, label) {
   if (typeof value !== 'string' || value.trim() === '') errors.push(`${label} must be a non-empty string`);
 }
@@ -143,8 +155,9 @@ async function verifyFile({ assetRoot, entry, label, expectedDimensions, maxByte
     errors.push(`${label}: missing file ${entry.file}`);
     return null;
   }
-  if (buffer.byteLength !== entry.bytes) errors.push(`${label}: byte-size mismatch for ${entry.file}; manifest=${entry.bytes}, actual=${buffer.byteLength}`);
-  const actualHash = sha256(buffer);
+  const canonical = canonicalBytes(buffer, entry.file);
+  if (canonical.byteLength !== entry.bytes) errors.push(`${label}: byte-size mismatch for ${entry.file}; manifest=${entry.bytes}, actual=${canonical.byteLength}`);
+  const actualHash = sha256(canonical);
   if (actualHash !== entry.sha256) errors.push(`${label}: SHA-256 mismatch for ${entry.file}; manifest=${entry.sha256}, actual=${actualHash}`);
   const dimensions = dimensionsFor(buffer, entry.file);
   if (!dimensions) {

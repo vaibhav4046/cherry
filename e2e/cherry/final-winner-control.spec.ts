@@ -82,6 +82,13 @@ test.describe('final winner Mission Control', () => {
     await page.goto('/studio/control');
     await page.getByRole('link', { name: /Replay the verified Codex mission/i }).click();
     await expect(page).toHaveURL(/\/showcase#recorded-mission$/);
+
+    // The link has to land the judge on the evidence, not at the top of the page.
+    const anchor = page.locator('#recorded-mission');
+    await expect(anchor).toBeVisible();
+    await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 10_000 }).toBeGreaterThan(200);
+    await expect.poll(async () => anchor.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeLessThan(200);
+    await expect(page.getByRole('region', { name: 'Recorded real Codex run' })).toBeVisible();
     expect(consoleErrors).toEqual([]);
   });
 

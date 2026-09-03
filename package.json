@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "record:demo": "playwright test --config=playwright.demo.config.ts && node scripts/promote-demo-recording.mjs",
-    "test:runner": "node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs",
+    "test:runner": "node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs tests/assets/cherry-chronicle-assets.test.mjs",
     "verify:pack": "node scripts/verify-release.mjs",
     "verify:sw": "node scripts/verify-sw.mjs dist",
     "audit:submission": "node scripts/audit-submission.mjs"

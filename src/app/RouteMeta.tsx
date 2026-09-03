@@ -195,9 +195,18 @@ export function resolveRouteMeta(pathname: string): RouteMetadata {
   }
 }
 
-/** Keeps the browser tab and standard description aligned with the rendered route. */
+/** Frames to keep looking for a fragment target while the route finishes mounting. */
+const FRAGMENT_SETTLE_FRAMES = 60;
+
+/**
+ * Keeps the browser tab and standard description aligned with the rendered route,
+ * and takes a fragment link to its target. Client-side navigation renders the new
+ * route after the URL changes, so the browser's own fragment scroll finds nothing:
+ * without this, /showcase#recorded-mission lands at the top of the page and the
+ * linked proof is thousands of pixels below the fold.
+ */
 export function RouteMeta() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
     const entry = resolveRouteMeta(pathname);
@@ -205,6 +214,41 @@ export function RouteMeta() {
     const description = document.querySelector('meta[name="description"]');
     if (description !== null) description.setAttribute('content', entry.description);
   }, [pathname]);
+
+  useEffect(() => {
+    const targetId = hash.startsWith('#') ? decodeURIComponent(hash.slice(1)) : '';
+    if (targetId === '') return;
+
+    let cancelled = false;
+    let framesTried = 0;
+    const reducedMotion = typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const scheduleNextAttempt = (attempt: () => void) => {
+      if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(attempt);
+      else window.setTimeout(attempt, 16);
+    };
+
+    const attempt = () => {
+      if (cancelled) return;
+      const target = document.getElementById(targetId);
+      if (target === null) {
+        // The section may still be mounting; look again for a bounded number of frames.
+        framesTried += 1;
+        if (framesTried <= FRAGMENT_SETTLE_FRAMES) scheduleNextAttempt(attempt);
+        return;
+      }
+      target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      // A keyboard visitor must continue from the target, not from the top of the document.
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    };
+
+    scheduleNextAttempt(attempt);
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, hash]);
 
   return null;
 }

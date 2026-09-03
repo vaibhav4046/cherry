@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
-import { resolveRouteMeta } from '../../src/app/RouteMeta.tsx';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { RouteMeta, resolveRouteMeta } from '../../src/app/RouteMeta.tsx';
 
 describe('route metadata', () => {
   it.each([
@@ -89,5 +91,60 @@ describe('route metadata', () => {
     } finally {
       warning.mockRestore();
     }
+  });
+});
+
+describe('fragment navigation', () => {
+  function renderAt(entry: string) {
+    return render(
+      <MemoryRouter initialEntries={[entry]}>
+        <RouteMeta />
+        <div style={{ height: 4000 }} />
+        <section id="recorded-mission">The recorded mission</section>
+      </MemoryRouter>,
+    );
+  }
+
+  // jsdom implements no layout, so scrollIntoView is absent until a test provides it.
+  beforeEach(() => {
+    HTMLElement.prototype.scrollIntoView = () => undefined;
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it('takes a fragment link to its target and leaves focus there', async () => {
+    const scrollIntoView = vi.fn();
+    const focus = vi.fn();
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(scrollIntoView);
+    vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(focus);
+
+    renderAt('/showcase#recorded-mission');
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+
+    expect(scrollIntoView.mock.calls[0]![0]).toMatchObject({ block: 'start' });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    // A keyboard visitor continues from the target, so it must be focusable.
+    expect(document.getElementById('recorded-mission')!.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('does nothing without a fragment', async () => {
+    const scrollIntoView = vi.fn();
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(scrollIntoView);
+
+    renderAt('/showcase');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('gives up quietly when the fragment names nothing on the page', async () => {
+    const scrollIntoView = vi.fn();
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(scrollIntoView);
+
+    renderAt('/showcase#no-such-section');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
