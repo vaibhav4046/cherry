@@ -18,6 +18,7 @@ import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/libr
 import type { EvidenceRecord } from '../../cherry/evidence/evidence-model.ts';
 import { listSkillEvidence } from '../../cherry/skillgraph/skill-evidence.ts';
 import { getWorkspace } from '../../cherry/mission/mission-service.ts';
+import { listVerifications } from '../../cherry/verify/verification-service.ts';
 import { useAppState } from '../../app/AppState.tsx';
 
 const FAILURE_LABELS: Record<string, string> = {
@@ -115,6 +116,7 @@ export default function SkillDetail() {
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
   const [isSample, setIsSample] = useState(false);
+  const [bundleReady, setBundleReady] = useState(false);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -124,18 +126,24 @@ export default function SkillDetail() {
     const loaded = await getSkillGraph(skillId);
     setGraph(loaded ?? null);
     if (loaded) {
-      const [loadedVersions, workspaceApprovals, loadedEvidence, workspace] = await Promise.all([
+      const [loadedVersions, workspaceApprovals, loadedEvidence, workspace, verifications] = await Promise.all([
         listSkillGraphVersions(loaded.id),
         listApprovals(loaded.workspaceId),
         listSkillEvidence(loaded),
         getWorkspace(loaded.workspaceId),
+        listVerifications(loaded.workspaceId, loaded.missionId ?? undefined),
       ]);
       setVersions(loadedVersions);
       setApprovals(workspaceApprovals.filter((approval) => approval.objectId === loaded.id));
       setEvidence(loadedEvidence);
       setIsSample(workspace?.isExample === true);
+      // The zip bundle carries a verified receipt, so it exists only once a passed
+      // verification of this exact revision does; the button says so instead of failing.
+      const exact = verifications.filter((report) => report.skillGraphId === loaded.id && report.skillGraphRevision === loaded.revision);
+      setBundleReady(exact.length > 0 && exact[0]!.status === 'passed'); // newest first
     } else {
       setIsSample(false);
+      setBundleReady(false);
     }
   }, [skillId]);
 
@@ -271,10 +279,16 @@ export default function SkillDetail() {
           className="btn"
           data-testid="compile-bundle"
           onClick={() => void handleCompile()}
-          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'Download the portable skill bundle'}
+          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision || !bundleReady}
+          title={
+            graph.status !== 'approved' || graph.approvedRevision !== graph.revision
+              ? 'Download requires approval of the current version'
+              : bundleReady
+                ? 'Download the portable skill bundle'
+                : 'The bundle carries a verified receipt. Run checks on this version first.'
+          }
         >
-          Download bundle (.zip)
+          {graph.status === 'approved' && graph.approvedRevision === graph.revision && !bundleReady ? 'Bundle needs a passed verification first' : 'Download bundle (.zip)'}
         </button>
         <button
           type="button"

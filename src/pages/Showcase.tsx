@@ -168,7 +168,7 @@ export function Showcase() {
         </div>
         <div className="winner-showcase__film">
           <MissionFilm reducedMotion={reducedMotion} />
-          <p>Silent browser-session recording · visual summary · 27 seconds</p>
+          <p>Silent animated summary, recorded in a browser · 27 seconds</p>
         </div>
       </header>
 

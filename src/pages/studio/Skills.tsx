@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../app/AppState.tsx';
 import { filterLibraryEntries, listLibraryEntries, type LibraryEntry } from '../../cherry/library/library-service.ts';
 import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
@@ -19,6 +19,9 @@ export default function Skills() {
     })();
   }, [activeWorkspace]);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The Showcase sends people here right after loading the sample library; say so once.
+  const sampleLoaded = searchParams.get('sample') === 'loaded';
   const visible = useMemo(() => filterLibraryEntries(entries, { query, status }), [entries, query, status]);
   const installReadyCount = useMemo(() => entries.filter((entry) => entry.installReady).length, [entries]);
 
@@ -31,6 +34,13 @@ export default function Skills() {
           Codex or Claude Code, use it in a routine, or send it to a connected agent.
         </p>
       </header>
+
+      {sampleLoaded ? (
+        <p className="sticker sticker-pass" role="status" data-testid="sample-loaded-notice">
+          Sample library loaded: eight approved sample skills and one followed sample creator, all labelled sample.{' '}
+          <button type="button" className="link-quiet" onClick={() => setSearchParams({}, { replace: true })}>Dismiss</button>
+        </p>
+      ) : null}
 
       {entries.length > 0 ? (
         <div className="row" role="search" style={{ gap: 'var(--sp-3)', flexWrap: 'wrap' }}>

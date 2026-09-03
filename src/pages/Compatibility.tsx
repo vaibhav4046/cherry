@@ -47,7 +47,7 @@ const ROWS: Row[] = [
   {
     surface: 'ChatGPT / Codex in-app browser (live WebMCP host)',
     status: 'experimental',
-    evidence: 'Implemented against the current registerTool API and feature-detected. NOT yet exercised inside a live proprietary client from this environment — the Agent View and Connections diagnostics show live registration state the moment one attaches. We say this plainly instead of claiming it.',
+    evidence: 'Implemented against the current registerTool API and feature-detected. Not yet exercised inside a live proprietary client from this environment; the Agent View and Connections diagnostics show live registration state the moment one attaches. We say this plainly instead of claiming it.',
   },
   {
     surface: 'Chrome with the WebMCP flag',
@@ -77,7 +77,7 @@ const ROWS: Row[] = [
   {
     surface: 'Claude Code skill install (live host)',
     status: 'validated',
-    evidence: "A Cherry-compiled bundle was unzipped into a real Claude Code host's ~/.claude/skills/ on 2026-08-29; the host discovered it and listed it as an available skill in a live session. The bundle's standalone verify.mjs passed all 22 file hashes first.",
+    evidence: "A Cherry-compiled bundle was unzipped into a real Claude Code host's ~/.claude/skills/ on 2026-08-29; the host discovered it and listed it as an available skill in a live session. The bundle's standalone verify.mjs passed all 22 file hashes first. Recorded in the decision log (docs/CHERRY_DECISIONS.md, D-012) and the 2026-08-30 addendum in CHERRY_RELEASE_EVIDENCE.md with the returned hashes; no transcript file was captured.",
   },
   {
     surface: 'Codex install target',
@@ -87,17 +87,17 @@ const ROWS: Row[] = [
   {
     surface: 'Native MCP bridge (stdio, read/verify)',
     status: 'validated',
-    evidence: '6 stdio JSON-RPC integration tests, PLUS a live registration in a real Claude Code host on 2026-08-29: claude mcp add cherry-wine … → claude mcp list reported Connected against a real workspace export.',
+    evidence: '6 stdio JSON-RPC integration tests, plus a live registration in a real Claude Code host on 2026-08-29 (claude mcp add cherry-wine, then claude mcp list reported Connected against a real workspace export), recorded in the decision log rather than a captured transcript. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md.',
   },
   {
     surface: 'Local runner (pairing, allowlists, deterministic jobs)',
     status: 'validated',
-    evidence: '9 integration tests: loopback-only, pairing token required, origin allowlist, root/executable allowlists, no shell strings, output caps + secret redaction, crash recovery, real bundle verify incl. tamper detection.',
+    evidence: '11 runner integration tests (131 across the runner, sandbox, host, executor and bridge suites): loopback-only, pairing token required, origin allowlist, root/executable allowlists, no shell strings, output caps + secret redaction, crash recovery, real bundle verify incl. tamper detection.',
   },
   {
     surface: 'Artifact preview isolation',
     status: 'validated',
-    evidence: 'E2E hostile artifact attempts storage access, external fetch, and parent navigation from inside the preview: all blocked, errors surfaced to the visible console and the proof ledger.',
+    evidence: 'E2E: a hostile artifact with scripts, handlers, forms and remote resources renders as inert static content: empty sandbox, CSP script-src and connect-src none, remote references stripped, zero outbound requests, Cherry\'s own origin untouched.',
   },
   {
     surface: 'Proof receipts (RFC 8785 + SHA-256)',
@@ -115,9 +115,9 @@ const ROWS: Row[] = [
     evidence: 'Manifest + service worker (static shell only; never caches workspace data). Valid on the live HTTPS deployment; install prompt behaviour is browser-controlled.',
   },
   {
-    surface: 'Codex CLI / Claude CLI runner adapters',
+    surface: 'Routine adapters for Codex CLI and Claude CLI (runner/lib/adapters.mjs)',
     status: 'shipped',
-    evidence: 'Adapters run only when the CLI exists on PATH; exit codes are recorded with verifiedSeparately=true and never count as verification. Not exercised here — this machine intentionally holds no provider credentials.',
+    evidence: 'These routine adapters run only when the CLI is on PATH; exit codes are recorded with verifiedSeparately=true and never count as verification. They were not exercised against a live host. Mission Control uses the separate agent-host path, whose real Codex run is captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md; Claude Code mission execution is not captured.',
   },
   {
     surface: 'Encrypted cross-device sync',
@@ -146,10 +146,10 @@ export function Compatibility() {
           <h1 className="display-sm">Compatibility & proof</h1>
           <p className="subhead" style={{ maxWidth: 760 }}>
             Every claim below is labelled by what actually happened. <strong>Validated</strong> means
-            automated tests in this repository exercised it. <strong>Shipped</strong> means implemented
-            and covered, but the external end of the wire was not automated. <strong>Experimental</strong>{' '}
-            means built to the documented contract, awaiting a live host. <strong>Roadmap</strong> means
-            it does not exist yet — and no screen pretends it does.
+            automated tests in this repository, or a captured live session recorded here, exercised it.{' '}
+            <strong>Shipped</strong> means implemented and covered, but the external end of the wire was not
+            automated. <strong>Experimental</strong> means built to the documented contract, awaiting a live
+            host. <strong>Roadmap</strong> means it does not exist yet, and no screen pretends it does.
           </p>
           <p className="row" aria-label="Status legend" style={{ margin: 0 }}>
             {(Object.keys(STATUS_STYLE) as Status[]).map((status) => (

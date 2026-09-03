@@ -45,7 +45,8 @@ test('starter library loads once, serves cited skills to the host, and resets co
   await expect.poll(async () => page.evaluate(() => window.__starterHost.tools.has('recommend_skills'))).toBe(true);
 
   await page.getByTestId('showcase-load-starter-library').click();
-  await expect(page).toHaveURL(/\/studio\/skills$/);
+  await expect(page).toHaveURL(/\/studio\/skills(\?sample=loaded)?$/);
+  await expect(page.getByTestId('sample-loaded-notice')).toContainText('Sample library loaded');
   await expect(page.getByTestId('library-card')).toHaveCount(8);
   await expect(page.getByTestId('library-card').filter({ hasText: 'install-ready' })).toHaveCount(8);
   await expect(page.getByTestId('library-card').filter({ hasText: 'sample state' })).toHaveCount(8);
@@ -98,7 +99,7 @@ test('starter library loads once, serves cited skills to the host, and resets co
   // Loading again reuses the persisted example instead of duplicating skills.
   await page.goto('/showcase');
   await page.getByTestId('showcase-load-starter-library').click();
-  await expect(page).toHaveURL(/\/studio\/skills$/);
+  await expect(page).toHaveURL(/\/studio\/skills(\?sample=loaded)?$/);
   await expect(page.getByTestId('library-card')).toHaveCount(8);
 
   await page.goto('/showcase');

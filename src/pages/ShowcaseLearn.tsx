@@ -221,7 +221,7 @@ export function ShowcaseLearn() {
       }
       setActiveWorkspace(result.value.workspaceId);
       await refresh();
-      navigate('/studio/skills');
+      navigate('/studio/skills?sample=loaded');
     } catch (importError) {
       setError(importError instanceof Error ? importError.message : 'The starter library could not be loaded. Try again.');
     } finally {

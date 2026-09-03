@@ -76,8 +76,8 @@ const HOSTS: HostCard[] = [
     status: 'experimental',
     statusNote: 'Built to the documented registerTool contract and feature-detected; awaiting a captured live-host session.',
     steps: [
-      'Open this site in the built-in browser of the ChatGPT desktop app, ChatGPT Work or Codex (site tools currently need GPT-5.6 Sol or Terra), then choose Site tools in the address bar to see what Cherry provides.',
-      'Cherry’s tools appear automatically — no setup. Ask for a status check: the agent calls get_cherry_status.',
+      'Open this site in the built-in browser of the ChatGPT desktop app, ChatGPT Work or Codex (the challenge resources, as of 2 September, name GPT-5.6 Sol or Terra for site tools), then choose Site tools in the address bar to see what Cherry provides.',
+      'Cherry’s tools appear automatically, no setup. Ask for a status check: the agent calls get_cherry_status.',
       'Mid-task, the agent can call recommend_skills with what it is doing and receive your approved skills, pinned to exact revisions.',
       'Watch every call land in Agent View (Studio → Agent View).',
     ],
@@ -90,7 +90,7 @@ const HOSTS: HostCard[] = [
     steps: [
       'Enable chrome://flags/#enable-webmcp-testing and relaunch.',
       'Open this site; an agent connected to the browser sees the same bounded tool surface.',
-      'No WebMCP? The complete product works manually — the agent path and the human path are the same product.',
+      'No WebMCP? The complete product works manually. The agent path and the human path are the same product.',
     ],
   },
   {
@@ -101,7 +101,7 @@ const HOSTS: HostCard[] = [
       'Validated in a live Codex CLI host on 2026-09-01: the stdio bridge was registered with codex mcp add, the host listed Cherry’s tools, read the workspace export, and verified the compiled bundle’s SHA-256 (transcript: docs/release/CODEX_MCP_CAPTURE.md).',
     steps: [
       'In the Studio, export your workspace (Settings → Connections → Export) and compile skill bundles from the Skill Library.',
-      'Add the bridge to Codex with the config below — your Codex subscription is the reasoning engine; Cherry is the memory it reads.',
+      'Add the bridge to Codex with the config below. Your Codex subscription is the reasoning engine; Cherry is the memory it reads.',
       'Codex can then list your skills, read exact approved revisions, and verify bundle hashes locally.',
     ],
     block: { label: 'config.toml (or use the one-liner)', name: 'Codex configuration', text: `${CODEX_TOML}\n\n# one-liner alternative\n${CODEX_CLI}` },
@@ -110,7 +110,7 @@ const HOSTS: HostCard[] = [
     id: 'claude',
     title: 'Claude Code (skills + MCP)',
     status: 'validated',
-    statusNote: 'A Cherry-compiled bundle was installed into a real Claude Code host (2026-08-29): discovered and listed as an available skill; the MCP bridge registered and reported Connected in the same host.',
+    statusNote: 'A Cherry-compiled bundle was installed into a real Claude Code host (2026-08-29): discovered and listed as an available skill; the MCP bridge registered and reported Connected in the same host. Recorded in the decision log (docs/CHERRY_DECISIONS.md, D-012); no transcript file was captured. Mission execution on Claude Code is not captured and stays Experimental.',
     steps: [
       'Download SKILL.md or the full bundle from any approved skill in the Skill Library.',
       'Drop the bundle folder into .claude/skills/ (project) or ~/.claude/skills/ (global).',
@@ -147,9 +147,10 @@ export function Connect() {
           <div className="stack" style={{ gap: 'var(--sp-3)' }}>
             <h1 className="display-sm">Bring the agent you already pay for</h1>
             <p className="subhead" style={{ maxWidth: 760 }}>
-              Cherry never calls a model and never asks for an API key. Your agents connect to
-              Cherry over open standards — WebMCP in the browser, MCP on your machine, Agent
-              Skills bundles everywhere — and leave with the skills you approved. Teach once.
+              Cherry makes no model API calls of its own and never asks for an API key. Reasoning
+              comes from the agent hosts you already pay for; transcription, when you choose it, runs
+              on your device. Your agents connect to Cherry over open standards (WebMCP in the browser,
+              MCP on your machine, Agent Skills bundles everywhere) and leave with the skills you approved. Teach once.
               Every agent gets better.
             </p>
             <div className="row" style={{ flexWrap: 'wrap' }}>
@@ -171,9 +172,9 @@ export function Connect() {
               state-gated with approvals that only a human can grant.
             </p>
             <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-              <li><span className="mono">list_skills</span> <span className="quiet">— the whole library with status, revisions, and approval hashes</span></li>
-              <li><span className="mono">recommend_skills</span> <span className="quiet">— &ldquo;here is my task&rdquo; → ranked approved skills with explainable matches</span></li>
-              <li><span className="mono">get_skill</span> <span className="quiet">— install-ready SKILL.md / AGENTS.md / CLAUDE.md, only for human-approved exact revisions</span></li>
+              <li><span className="mono">list_skills</span> <span className="quiet">: the whole library with status, revisions, and approval hashes</span></li>
+              <li><span className="mono">recommend_skills</span> <span className="quiet">: &ldquo;here is my task&rdquo; returns ranked approved skills with explainable matches</span></li>
+              <li><span className="mono">get_skill</span> <span className="quiet">: install-ready SKILL.md / AGENTS.md / CLAUDE.md, only for human-approved exact revisions</span></li>
             </ul>
           </section>
 

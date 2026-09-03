@@ -12,6 +12,7 @@ const SYNC_INTERVAL_MS = 5000;
 
 type Column = MissionCard['column'];
 const COLUMNS: Array<{ id: Column; title: string; empty: string }> = [
+  { id: 'planned', title: 'Planned', empty: 'No plan is waiting to start.' },
   { id: 'working', title: 'Working', empty: 'Nothing is running.' },
   { id: 'needs_you', title: 'Needs you', empty: 'Nothing is waiting on you.' },
   { id: 'completed', title: 'Completed', empty: 'No finished missions yet.' },
@@ -19,7 +20,7 @@ const COLUMNS: Array<{ id: Column; title: string; empty: string }> = [
 
 /** Mission Control: one outcome becomes a durable, reviewable plan. */
 export default function MissionControl() {
-  const { ready, activeWorkspace, refresh, setActiveWorkspace, setActiveMission } = useAppState();
+  const { ready, activeWorkspace, workspaces, refresh, setActiveWorkspace, setActiveMission } = useAppState();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [outcome, setOutcome] = useState(() => searchParams.get('outcome') ?? '');
@@ -70,6 +71,22 @@ export default function MissionControl() {
     }
   }
 
+  // The space a new plan goes to: the active space when it is the person's own,
+  // otherwise an existing own space (My Cherry first), otherwise none yet.
+  const planningWorkspace =
+    activeWorkspace && activeWorkspace.isExample !== true
+      ? activeWorkspace
+      : workspaces.find((workspace) => workspace.isExample !== true && workspace.name === 'My Cherry')
+        ?? workspaces.find((workspace) => workspace.isExample !== true)
+        ?? null;
+  const planningLine = planningWorkspace
+    ? activeWorkspace?.isExample === true
+      ? `Planning in ${planningWorkspace.name}. Sample spaces are never used for your own plans.`
+      : `Planning in ${planningWorkspace.name}`
+    : activeWorkspace?.isExample === true
+      ? 'Your first plan creates My Cherry. Sample spaces are never used for your own plans.'
+      : 'Your first plan creates My Cherry here.';
+
   async function handlePlan(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!ready) return;
@@ -95,18 +112,21 @@ export default function MissionControl() {
       try {
         const cleanup = await deleteWorkspace(createdWorkspaceId);
         if (!cleanup.ok) {
-          setError(`${message} Cherry could not remove the unfinished My Cherry space: ${cleanup.error.message}. Your outcome is still here—try again.`);
+          setError(`${message} Cherry could not remove the unfinished My Cherry space: ${cleanup.error.message}. Your outcome is still here; try again.`);
           return;
         }
-        setError(`${message} The unfinished My Cherry space was removed. Your outcome is still here—try again.`);
+        setError(`${message} The unfinished My Cherry space was removed. Your outcome is still here; try again.`);
       } catch (reason) {
         const detail = reason instanceof Error ? reason.message : 'cleanup failed unexpectedly';
-        setError(`${message} Cherry could not remove the unfinished My Cherry space: ${detail}. Your outcome is still here—try again.`);
+        setError(`${message} Cherry could not remove the unfinished My Cherry space: ${detail}. Your outcome is still here; try again.`);
       }
     }
 
     try {
-      let workspaceId = activeWorkspace?.id ?? null;
+      // A plan is the person's own work, so it never lands in a sample space:
+      // Reset demo removes sample spaces, and it must never remove a real plan.
+      let workspaceId = planningWorkspace?.id ?? null;
+      const switchWorkspace = planningWorkspace !== null && planningWorkspace.id !== activeWorkspace?.id;
       let missionResult: Awaited<ReturnType<typeof createMission>>;
 
       try {
@@ -139,13 +159,13 @@ export default function MissionControl() {
       const savedMissionId = missionResult.value.mission.id;
 
       try {
-        if (createdWorkspaceId) setActiveWorkspace(workspaceId);
+        if (createdWorkspaceId || switchWorkspace) setActiveWorkspace(workspaceId);
         setActiveMission(savedMissionId);
         await refresh();
         if (searchParams.get('outcome')) setSearchParams({}, { replace: true });
         await navigate(`/studio/control/${savedMissionId}`);
       } catch {
-        setError('The mission was saved, but Cherry could not refresh Mission Control or open it. Your outcome is still here—reload to continue.');
+        setError('The mission was saved, but Cherry could not refresh Mission Control or open it. Your outcome is still here; reload to continue.');
       }
     } finally {
       setBusy(false);
@@ -227,7 +247,7 @@ export default function MissionControl() {
 
         <div className="chronicle-composer__footer">
           <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>
-            {activeWorkspace ? `Planning in ${activeWorkspace.name}` : 'Your first plan creates My Cherry here.'}
+            {planningLine}
           </span>
           <button type="submit" className="btn btn-primary" disabled={!ready || busy} aria-busy={busy} data-testid="plan-mission">
             {!ready ? 'Opening Cherry' : busy ? 'Planning' : 'Plan the mission'}

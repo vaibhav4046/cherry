@@ -1707,7 +1707,7 @@ const SHIPPED_EXAMPLE_IDENTITIES: Record<ShippedExampleKind, {
     descriptionMarker: 'Shipped labelled example workspace',
   },
   'starter-library': {
-    payloadSha256: '0edec554fdf756007a8c799b729757cc3e2d271893c5fd6f541cb3e895c4e86d',
+    payloadSha256: 'b9f7a25dc420eef82c0668a6d5b2fe63e6047b4718b48405e8be603bd8d44384',
     workspaceName: 'EXAMPLE — Creator skills starter library',
     descriptionMarker: 'starter-library-v1',
   },

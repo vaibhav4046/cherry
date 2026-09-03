@@ -27,21 +27,34 @@ export interface QuickSkillInput {
   keepStepIndices?: number[];
 }
 
-/** Derive a human-friendly skill name from the lesson + first concrete step. */
+const TASK_TITLE =
+  /^(plan|turn|make|build|write|create|edit|record|film|script|design|grow|launch|ship|set|use|run|start|learn|repurpose|rank|optimi[sz]e|automate|manage|organi[sz]e|track|improve|double|scale|prepare|avoid|clean|batch|outline|structure|host|monetize|monetise|negotiate|research|review|map|draft|shoot|light|mix|master|animate|post|convert|close|book|land|win|keep|reach|send|sort|rename|resize|crop|trim|how to)\b/i;
+/** A step whose object starts like this names nothing on its own ("Your calendar and add ..."). */
+const WEAK_STEP_OBJECT = /^(your|my|our|their|his|her|its|this|that|these|those|it|them|one|some|each|every|all)\b/i;
+
+/**
+ * Derive a human-friendly skill name. A lesson title that already reads as a task
+ * ("Plan a week of content in one sitting") is the best name there is; otherwise the
+ * first concrete step lends its object, unless that object cannot stand alone.
+ */
 export function autoNameSkill(lessonTitle: string, draft: DerivedSkillDraft): string {
+  const title = lessonTitle.replace(/[.!?…]+$/, '').trim();
+  if (title.length >= 12 && TASK_TITLE.test(title)) {
+    return `${title.slice(0, 100)} skill`;
+  }
   const step = draft.steps.find((candidate) => candidate.kind === 'build') ?? draft.steps[0];
   if (step) {
-    // "Create a new frame for the hero section." → "Frame for the hero section workflow"
-    const stripped = step.title
-      .replace(/^\W*(create|add|open|make|build|write|set|use|wrap|run|click|install|import|export|start|go|select|choose|apply|configure)\s+(a|an|the|new)?\s*/i, '')
+    // "Create a new frame for the hero section." becomes "Frame for the hero section workflow"
+    const firstClause = step.title.split(/\s+(?:and|then|,)\s+|[;,]\s+/i)[0] ?? step.title;
+    const stripped = firstClause
+      .replace(/^\W*(create|add|open|make|build|write|set|use|wrap|run|click|install|import|export|start|go|select|choose|apply|configure)\s+(?:(?:a|an|the)\s+)?(?:new\s+)?/i, '')
       .replace(/[.!?…]+$/, '')
       .trim();
-    if (stripped.length >= 6) {
+    if (stripped.length >= 6 && !WEAK_STEP_OBJECT.test(stripped)) {
       const base = stripped.charAt(0).toUpperCase() + stripped.slice(1);
       return `${base.slice(0, 90)} workflow`;
     }
   }
-  const title = lessonTitle.replace(/[.!?…]+$/, '').trim();
   return `${(title || 'Learned').slice(0, 100)} skill`;
 }
 

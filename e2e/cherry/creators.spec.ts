@@ -35,7 +35,7 @@ test.describe('Creators watch engine', () => {
     // The labelled sample library carries one synthetic followed creator and two uploads.
     await page.goto('/showcase');
     await page.getByTestId('showcase-load-starter-library').click();
-    await expect(page).toHaveURL(/\/studio\/skills$/);
+    await expect(page).toHaveURL(/\/studio\/skills(\?sample=loaded)?$/);
     await page.goto('/studio/creators');
     await expect(page.getByTestId('creator-row')).toHaveCount(1);
     await expect(page.getByTestId('creator-row')).toContainText('Sample Creator (synthetic)');

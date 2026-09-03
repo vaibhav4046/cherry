@@ -18,8 +18,16 @@ interface LiveStartGateProps {
  * authority at click time; this gate only decides whether a truthful action can
  * be offered before then.
  */
+type Blocker = 'runner' | 'host' | null;
+
+const BLOCKER_COPY: Record<Exclude<Blocker, null>, string> = {
+  runner: 'No paired runner found. Pair one under Connect to start here, or hand the plan to another surface below.',
+  host: 'Runner paired, but no eligible agent host is signed in. Install or sign in to Codex and it appears here.',
+};
+
 export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, busy, onStart }: LiveStartGateProps) {
   const [liveReady, setLiveReady] = useState(false);
+  const [blocker, setBlocker] = useState<Blocker>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,6 +35,7 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
 
     if (!canStart || !policyAllows) {
       setLiveReady(false);
+      setBlocker(null);
       return () => {
         cancelled = true;
       };
@@ -38,10 +47,18 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
       setLiveReady(false);
       try {
         const status = await runnerStatus();
-        if (!status.reachable || !status.paired || cancelled) return;
+        if (cancelled) return;
+        if (!status.reachable || !status.paired) {
+          setBlocker('runner');
+          return;
+        }
 
         const probed = await listRunnerHosts();
-        if (!probed.ok || cancelled) return;
+        if (cancelled) return;
+        if (!probed.ok) {
+          setBlocker('host');
+          return;
+        }
         const now = Date.now();
         const eligibleHosts = probed.value.hosts.filter((host) => {
           const checkedAt = host.checkedAt ? Date.parse(host.checkedAt) : Number.NaN;
@@ -56,9 +73,15 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
         const hasEligibleHost = eligibleHosts.length > 0 && requiredCapabilitySets.every((required) =>
           eligibleHosts.some((host) => required.every((capability) => host.capabilities.includes(capability))),
         );
-        if (!cancelled) setLiveReady(hasEligibleHost);
+        if (!cancelled) {
+          setLiveReady(hasEligibleHost);
+          setBlocker(hasEligibleHost ? null : 'host');
+        }
       } catch {
-        if (!cancelled) setLiveReady(false);
+        if (!cancelled) {
+          setLiveReady(false);
+          setBlocker('runner');
+        }
       } finally {
         probing = false;
       }
@@ -84,7 +107,15 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
     };
   }, [canStart, policyAllows, requiredCapabilitySets]);
 
-  if (!liveReady) return null;
+  if (!liveReady) {
+    // Say why there is nothing to press, instead of leaving the plan at a dead end.
+    if (blocker === null) return null;
+    return (
+      <p className="label" style={{ textTransform: 'none', letterSpacing: 0, margin: 0 }} data-testid="live-start-blocker">
+        {BLOCKER_COPY[blocker]}
+      </p>
+    );
+  }
 
   return (
     <button

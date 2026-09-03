@@ -14670,18 +14670,18 @@
       "occurredAt": "2026-09-02T12:23:34.650Z",
       "objectType": "skill_proposal",
       "objectId": "src-01M1H166S9360TQ0C8HJMQ5WDF",
-      "summary": "Skill proposal \"Your calendar and add three recording slots for the week workflow\" is now draft-ready",
+      "summary": "Skill proposal \"Plan a week of content in one sitting skill\" is now draft-ready",
       "payload": {
         "sourceId": "src-01M1H166S9360TQ0C8HJMQ5WDF",
         "readiness": "draft-ready",
-        "name": "Your calendar and add three recording slots for the week workflow",
+        "name": "Plan a week of content in one sitting skill",
         "candidateSteps": 7,
         "missionId": null,
         "skillGraphId": null,
         "sourceOrigin": "manual",
         "previousReadiness": "needs-transcript"
       },
-      "payloadHash": "39b81bd921806fe4520da9a8d7c42cdb2f3b14f77c2451ec426f76a4dce7dcb2"
+      "payloadHash": "0f938f7dbe2b8bc297a56bc2e069c7c2783cf14a352f3b3de618ee47ec49b067"
     },
     {
       "id": "pe-01M1H166ZTA9R08AAFDWNJZSE9",
@@ -15222,7 +15222,7 @@
       "creatorName": "Sample Creator (synthetic)",
       "sourceTitle": "Plan a week of content in one sitting",
       "publishedAt": "2026-09-02T12:23:34.441Z",
-      "name": "Your calendar and add three recording slots for the week workflow",
+      "name": "Plan a week of content in one sitting skill",
       "teaches": "How to plan a week of content in one sitting.",
       "candidateSteps": [
         "Open your calendar and add three recording slots for the week.",
@@ -15266,6 +15266,6 @@
   "integrity": {
     "canonicalization": "JCS-RFC8785",
     "hashAlgorithm": "SHA-256",
-    "payloadSha256": "0edec554fdf756007a8c799b729757cc3e2d271893c5fd6f541cb3e895c4e86d"
+    "payloadSha256": "b9f7a25dc420eef82c0668a6d5b2fe63e6047b4718b48405e8be603bd8d44384"
   }
 }

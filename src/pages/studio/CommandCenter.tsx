@@ -17,6 +17,9 @@ import { AddToCherry } from './AddToCherry.tsx';
 import { loadExampleWorkspace } from '../../cherry/persistence/example-workspace-loader.ts';
 import { listChannelWatches } from '../../cherry/source/channel-watch-service.ts';
 import { listProposals } from '../../cherry/source/proposal-service.ts';
+import { listMissionPlans } from '../../cherry/workforce/mission-plan-service.ts';
+import type { MissionPlan } from '../../cherry/workforce/mission-plan-model.ts';
+import { missionStatusLabel } from './MissionCardView.tsx';
 
 function approvalObjectLabel(objectType: ApprovalRecord['objectType']): string {
   if (objectType === 'skillgraph') return 'skill';
@@ -82,6 +85,7 @@ export default function CommandCenter() {
   const [runner, setRunner] = useState<RunnerStatus | null>(null);
   const [creatorsFollowed, setCreatorsFollowed] = useState(0);
   const [proposalsWaiting, setProposalsWaiting] = useState(0);
+  const [plansByMission, setPlansByMission] = useState<Record<string, MissionPlan>>({});
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -91,7 +95,7 @@ export default function CommandCenter() {
     let cancelled = false;
     (async () => {
       if (!activeWorkspace) return;
-      const [loadedEvents, loadedApprovals, inbox, runs, runnerState, watches, proposals] = await Promise.all([
+      const [loadedEvents, loadedApprovals, inbox, runs, runnerState, watches, proposals, plans] = await Promise.all([
         listProofEvents(activeWorkspace.id, 12),
         listApprovals(activeWorkspace.id),
         listMemories(activeWorkspace.id, { status: 'proposed' }),
@@ -99,8 +103,10 @@ export default function CommandCenter() {
         runnerStatus(),
         listChannelWatches(activeWorkspace.id),
         listProposals(activeWorkspace.id),
+        listMissionPlans(activeWorkspace.id),
       ]);
       if (cancelled) return;
+      setPlansByMission(Object.fromEntries(plans.map((plan) => [plan.missionId, plan])));
       setEvents(loadedEvents.reverse());
       setApprovals(loadedApprovals.filter((approval) => approval.decision === 'pending'));
       setMemoryInboxCount(inbox.length);
@@ -272,7 +278,10 @@ export default function CommandCenter() {
             Create space
           </button>
         </form>
-        <AddToCherry />
+        <div className="row" style={{ justifyContent: 'center' }}>
+          <Link to="/studio/control" className="btn" data-testid="give-outcome">Give Cherry an outcome instead</Link>
+          <AddToCherry />
+        </div>
         {error ? <p className="field-error" role="alert">{error}</p> : null}
         <details className="stack" style={{ textAlign: 'center' }}>
           <summary className="link-quiet">Already use Cherry?</summary>
@@ -309,6 +318,7 @@ export default function CommandCenter() {
         <h1 className="display-sm title-3d">Command Center</h1>
         <div className="row">
           <AddToCherry className="btn btn-primary" />
+          <Link to="/studio/control" className="btn" data-testid="give-outcome">Give Cherry an outcome</Link>
           <Link to="/studio/missions/new" className="btn">Create project</Link>
           <button type="button" className="btn" onClick={() => startTour()} data-testid="replay-walkthrough">
             Replay walkthrough
@@ -343,18 +353,28 @@ export default function CommandCenter() {
             </>
           ) : (
             <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {missions.map((mission) => (
-                <li key={mission.id} className="row" style={{ justifyContent: 'space-between' }}>
-                  <Link
-                    to={`/studio/missions/${mission.id}`}
-                    onClick={() => setActiveMission(mission.id)}
-                    style={{ fontWeight: 700 }}
-                  >
-                    {mission.title}
-                  </Link>
-                  <span className="sticker">{PROJECT_STATUS_LABEL[mission.state]}</span>
-                </li>
-              ))}
+              {missions.map((mission) => {
+                // A mission with a plan lives in Mission Control; the sample library's
+                // fixture missions are labelled as samples, never as running work.
+                const plan = plansByMission[mission.id];
+                const label = activeWorkspace?.isExample === true
+                  ? 'Sample'
+                  : plan
+                    ? missionStatusLabel(plan.status)
+                    : PROJECT_STATUS_LABEL[mission.state];
+                return (
+                  <li key={mission.id} className="row" style={{ justifyContent: 'space-between' }}>
+                    <Link
+                      to={plan ? `/studio/control/${mission.id}` : `/studio/missions/${mission.id}`}
+                      onClick={() => setActiveMission(mission.id)}
+                      style={{ fontWeight: 700 }}
+                    >
+                      {mission.title}
+                    </Link>
+                    <span className="sticker">{label}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

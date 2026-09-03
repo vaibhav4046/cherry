@@ -137,8 +137,8 @@ describe('proposeFromSource (pure, deterministic)', () => {
       'Create a new sequence for the cold email campaign.',
       'Add a follow-up step three days later.',
     ]);
-    // Same rule Quick Skill applies: the leading verb and article go, the rest is the workflow.
-    expect(proposal.name).toBe('New sequence for the cold email campaign workflow');
+    // Same rule Quick Skill applies: a task-shaped upload title is the name; the step object is the fallback.
+    expect(proposal.name).toBe('Set up a cold-email sequence that gets replies skill');
   });
 
   it('rejects an empty title', () => {
@@ -237,7 +237,7 @@ describe('proposal persistence and lifecycle', () => {
     let [proposal] = await syncProposals(workspace.id);
     expect(proposal).toMatchObject({ readiness: 'draft-ready' });
     expect(proposal!.candidateSteps.length).toBeGreaterThan(0);
-    expect(proposal!.name).toMatch(/workflow$/);
+    expect(proposal!.name).toMatch(/(workflow|skill)$/);
 
     const mission = unwrap(await createMission({ workspaceId: workspace.id, title: 'Cold email', objective: 'Learn it', definitionOfDone: ['Approved'] }));
     unwrap(await updateMission(mission.id, { lessonId: source.lessonId }));

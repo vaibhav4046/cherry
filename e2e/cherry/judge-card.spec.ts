@@ -26,7 +26,7 @@ test.describe('the 90-second judge path on /showcase', () => {
 
     // Step 1 is the real loader: the sample library lands and Creators shows the sample creator.
     await card.getByTestId('judge-step-library').click();
-    await expect(page).toHaveURL(/\/studio\/skills$/);
+    await expect(page).toHaveURL(/\/studio\/skills(\?sample=loaded)?$/);
     await expect(page.getByTestId('library-card')).toHaveCount(8);
     await page.goto('/studio/creators');
     await expect(page.getByTestId('creator-row')).toHaveCount(1);

@@ -6,7 +6,7 @@ import MissionControl from '../../src/pages/studio/MissionControl.tsx';
 import MissionControlDetail from '../../src/pages/studio/MissionControlDetail.tsx';
 import { LiveStartGate } from '../../src/components/studio/mission-control/LiveStartGate.tsx';
 import { unwrap } from '../../src/cherry/core/result.ts';
-import { createWorkspace, listMissions, listWorkspaces } from '../../src/cherry/mission/mission-service.ts';
+import { createExampleWorkspace, createWorkspace, listMissions, listWorkspaces } from '../../src/cherry/mission/mission-service.ts';
 import { createMission, listMissionCards } from '../../src/cherry/workforce/mission-control-service.ts';
 import { listMissionPlans } from '../../src/cherry/workforce/mission-plan-service.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
@@ -179,6 +179,46 @@ describe('Mission Control first run', () => {
       expect(workspaces).toHaveLength(1);
       expect(workspaces[0]!.name).toBe('My Cherry');
       expect(await listMissionPlans(workspaces[0]!.id)).toHaveLength(1);
+    });
+  });
+
+  it('never plans inside a sample space: the plan lands in My Cherry and the sample stays untouched', async () => {
+    const sample = unwrap(await createExampleWorkspace({ name: 'EXAMPLE Creator skills starter library' }));
+    localStorage.setItem('cherry.activeWorkspaceId', sample.id);
+    renderControl();
+
+    const input = await screen.findByTestId('outcome-input');
+    expect((await screen.findByText(/Sample spaces are never used for your own plans/)).textContent).toMatch(/My Cherry/);
+    fireEvent.change(input, { target: { value: 'Research this market and produce an evidence-backed launch brief.' } });
+    fireEvent.click(screen.getByTestId('plan-mission'));
+
+    await screen.findByTestId('detail-route');
+    await waitFor(async () => {
+      const workspaces = await listWorkspaces();
+      const own = workspaces.filter((workspace) => workspace.isExample !== true);
+      expect(own).toHaveLength(1);
+      expect(own[0]!.name).toBe('My Cherry');
+      expect(await listMissionPlans(own[0]!.id)).toHaveLength(1);
+      expect(await listMissionPlans(sample.id)).toHaveLength(0);
+      expect(localStorage.getItem('cherry.activeWorkspaceId')).toBe(own[0]!.id);
+    });
+  });
+
+  it('reuses an existing own space instead of creating a second My Cherry', async () => {
+    const own = unwrap(await createWorkspace({ name: 'Existing Cherry' }));
+    const sample = unwrap(await createExampleWorkspace({ name: 'EXAMPLE Creator skills starter library' }));
+    localStorage.setItem('cherry.activeWorkspaceId', sample.id);
+    renderControl();
+
+    const input = await screen.findByTestId('outcome-input');
+    fireEvent.change(input, { target: { value: 'Research this market and produce an evidence-backed launch brief.' } });
+    fireEvent.click(screen.getByTestId('plan-mission'));
+
+    await screen.findByTestId('detail-route');
+    await waitFor(async () => {
+      expect(await listWorkspaces()).toHaveLength(2);
+      expect(await listMissionPlans(own.id)).toHaveLength(1);
+      expect(localStorage.getItem('cherry.activeWorkspaceId')).toBe(own.id);
     });
   });
 
@@ -360,14 +400,17 @@ describe('Mission Control first run', () => {
   });
 
   it('restores the persisted mission board after a remount', async () => {
-    const seeded = await seedMission('Research this market and produce an evidence-backed launch brief.');
+    // A consequential plan waits for a person, so its card sits in Needs you. A never-started
+    // plan that needs no approval is filed under the planned column instead.
+    const outcome = 'Ship the release, fix the onboarding defect, and prepare launch content.';
+    const seeded = await seedMission(outcome);
     const first = renderControl();
-    await waitFor(async () => expect(await listMissionCards(seeded.workspace.id)).toHaveLength(1));
-    await screen.findByText('Research this market and produce an evidence-backed launch brief.');
+    await waitFor(async () => expect((await listMissionCards(seeded.workspace.id)).map((card) => card.column)).toEqual(['needs_you']));
+    await screen.findByText(outcome);
 
     first.unmount();
     renderControl();
-    expect(await screen.findByText('Research this market and produce an evidence-backed launch brief.')).toBeTruthy();
+    expect(await screen.findByText(outcome)).toBeTruthy();
   });
 });
 
@@ -385,13 +428,14 @@ describe('Mission Control live-start gate', () => {
     cleanup();
   });
 
-  it('does not offer live start when the runner is unavailable', async () => {
+  it('does not offer live start when the runner is unavailable, and says why', async () => {
     runnerApi.status.mockResolvedValue({ reachable: false, paired: false });
     const seeded = await seedMission('Research this market and produce an evidence-backed launch brief.');
     renderDetail(seeded.mission.id);
 
     await screen.findByTestId('mission-status');
     await waitFor(() => expect(screen.queryByTestId('start-mission')).toBeNull());
+    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/No paired runner found/);
   });
 
   it('does not offer live start when the paired runner has no eligible host', async () => {
@@ -408,6 +452,7 @@ describe('Mission Control live-start gate', () => {
 
     await screen.findByTestId('mission-status');
     await waitFor(() => expect(screen.queryByTestId('start-mission')).toBeNull());
+    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/no eligible agent host/);
   });
 
   it('offers live start only when runner, pairing, host, plan and policy all allow it', async () => {

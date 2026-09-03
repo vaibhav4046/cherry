@@ -192,7 +192,7 @@ export default function MissionControlDetail() {
           busy={busy}
           onStart={() => void run(() => startMission(workspaceId, missionId, plan.revision), 'Started on your paired runner.')}
         />
-        <button type="button" className="btn" disabled={busy} onClick={() => void run(() => syncMission(workspaceId, missionId), 'Synced from the runner.')} data-testid="sync-mission">Sync now</button>
+        <button type="button" className="btn" disabled={busy} onClick={() => void run(() => syncMission(workspaceId, missionId), binding ? 'Synced from the runner.' : 'Nothing to sync. This mission is not on a runner.')} data-testid="sync-mission">Sync now</button>
         {canCancel ? <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void run(() => cancelMission(workspaceId, missionId, 'human'), 'Cancelled.')} data-testid="cancel-mission">Cancel</button> : null}
         <label className="row" style={{ gap: 'var(--sp-2)' }}>
           <input type="checkbox" checked={liveSync} onChange={(event) => setLiveSync(event.target.checked)} data-testid="live-sync" />

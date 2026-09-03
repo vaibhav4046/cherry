@@ -28,12 +28,12 @@ const META_ROUTES: RouteObject[] = [
     path: '/',
     handle: meta(
       'Cherry · One task. An entire AI team.',
-      'Cherry turns Codex, Claude, Kimi and local models into teammates with tools, memory and isolated workspaces. They work in parallel and return with verified results. Open source, local-first.',
+      'Cherry turns the agent hosts you already use into teammates with tools, memory and isolated workspaces. Codex execution is captured today; Claude Code and local models are labelled experimental. Work runs in parallel on your paired runner and returns with checked results. Open source, local-first.',
     ),
   },
   {
     path: '/showcase',
-    handle: meta(`Showcase · ${SITE}`, 'See a source become a proven skill, end to end, in one guided journey.'),
+    handle: meta(`Showcase · ${SITE}`, 'A recorded real Codex mission, replayed from a digest-pinned fixture, then the guided source-to-skill journey.'),
   },
   {
     path: '/connect',

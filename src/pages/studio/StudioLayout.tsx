@@ -17,7 +17,7 @@ interface NavItem {
 
 const NAV_PRIMARY: NavItem[] = [
   { to: '/studio', label: 'Command', end: true, icon: Icons.command, title: 'Overview' },
-  { to: '/studio/control', label: 'Team', end: false, icon: Icons.agent, title: 'Give Cherry an outcome and watch the team work' },
+  { to: '/studio/control', label: 'Missions', end: false, icon: Icons.agent, title: 'Give Cherry an outcome and watch the team work' },
   { to: '/studio/quick', label: 'Quick skill', end: false, icon: Icons.quick, hint: 'add a source' },
   { to: '/studio/sources', label: 'Sources', end: false, icon: Icons.watch },
   { to: '/studio/creators', label: 'Creators', end: false, icon: Icons.pin },
@@ -98,17 +98,23 @@ export function StudioLayout() {
       ? 'Awaiting your approval'
       : PRODUCT_STATE_LABEL[productState];
 
-  const hostPill = webmcp.supported
+  const hostPill = webmcp.supported && webmcp.agent.attached
     ? {
         text: `Agent connected · ${webmcp.registered.length} tools`,
         className: 'sticker sticker-pass tnum',
         title: `An agent is connected. ${webmcp.registered.length} tools are available now.`,
       }
+    : webmcp.supported
+      ? {
+          text: `Site tools available · ${webmcp.registered.length}`,
+          className: 'sticker tnum',
+          title: `This browser exposes WebMCP site tools. ${webmcp.registered.length} Cherry tools are registered; no agent has called one yet.`,
+        }
     : !isOnline
       ? {
           text: 'Offline',
           className: 'sticker sticker-wait',
-          title: 'This device is offline. Cherry keeps working — everything lives in this browser.',
+          title: 'This device is offline. Cherry keeps working; everything lives in this browser.',
         }
       : {
           text: 'Manual mode',

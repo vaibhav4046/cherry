@@ -250,6 +250,11 @@ button.link-quiet:disabled { color: var(--color-ash); cursor: default; }
   padding: 20px 14px;
 }
 .studio-main { background: var(--color-frost); padding: clamp(24px, 4vw, 48px); }
+/* The fixed bottom bar on phones needs the reserved space below the content; this
+   rule runs after the token sheet, so it restates the mobile padding it would reset. */
+@media (max-width: 833px) {
+  .studio-main { padding: var(--sp-4); padding-bottom: 96px; }
+}
 .studio-rail .rail-link,
 .rail-link {
   border-radius: var(--radius-inputs);

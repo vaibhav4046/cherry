@@ -220,3 +220,16 @@ describe('multi-source ingestion and auto-naming', () => {
     expect(generated.graph.name.length).toBeLessThanOrEqual(120);
   });
 });
+
+describe('autoNameSkill', () => {
+  it('keeps a task-shaped lesson title and never strands a possessive step object', async () => {
+    const { autoNameSkill } = await import('../../src/cherry/skillgraph/quick-skill.ts');
+    const draft = {
+      steps: [{ kind: 'build', title: 'Open your calendar and add three recording slots for the week.' }],
+    } as unknown as Parameters<typeof autoNameSkill>[1];
+    expect(autoNameSkill('Plan a week of content in one sitting', draft)).toBe('Plan a week of content in one sitting skill');
+    expect(autoNameSkill('Ep. 12', draft)).toBe('Ep. 12 skill');
+    const hero = { steps: [{ kind: 'build', title: 'Create a new frame for the hero section, then name it.' }] } as unknown as Parameters<typeof autoNameSkill>[1];
+    expect(autoNameSkill('Ep. 12', hero)).toBe('Frame for the hero section workflow');
+  });
+});

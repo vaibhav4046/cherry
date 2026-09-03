@@ -15,6 +15,7 @@ export default function Onboarding() {
   const { webmcp } = useAppState();
   const [checks, setChecks] = useState<CapabilityCheck[]>([]);
   const agentConnected = webmcp.agent?.attached ?? false;
+  const siteToolsExposed = webmcp.supported && !agentConnected;
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +27,9 @@ export default function Onboarding() {
         status: agentConnected ? 'pass' : 'warn',
         detail: agentConnected
           ? 'Connected. Your agent can use the Cherry tools available on this page.'
-          : 'Not connected. You can keep using Cherry yourself.',
+          : siteToolsExposed
+            ? 'This browser exposes site tools. Ask your agent to use one and this turns Connected.'
+            : 'Not connected. You can keep using Cherry yourself.',
         fallback: 'Open Cherry inside a compatible ChatGPT or Codex browser when you want an agent to use it.',
         badge: agentConnected ? 'Connected' : 'Not connected',
       });
