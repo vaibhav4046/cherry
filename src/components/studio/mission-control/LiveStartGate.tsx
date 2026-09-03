@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { listRunnerHosts, runnerStatus } from '../../../cherry/runner-client/runner-api.ts';
 
 // The runner caches host probes for 60 s, so a fresh answer can already be a minute old; two minutes is the staleness line.
@@ -21,8 +22,8 @@ interface LiveStartGateProps {
 type Blocker = 'runner' | 'host' | null;
 
 const BLOCKER_COPY: Record<Exclude<Blocker, null>, string> = {
-  runner: 'No paired runner found. Pair one under Connect to start here, or hand the plan to another surface below.',
-  host: 'Runner paired, but no eligible agent host is signed in. Install or sign in to Codex and it appears here.',
+  runner: 'This plan is ready. Doing the work needs your own computer, because Cherry runs the agents you already pay for rather than a model of its own: pair a computer under Connect and a Start button appears here.',
+  host: 'Your computer is paired, but no agent is signed in on it. Sign in to Codex there and a Start button appears here.',
 };
 
 export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, busy, onStart }: LiveStartGateProps) {
@@ -108,11 +109,13 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
   }, [canStart, policyAllows, requiredCapabilitySets]);
 
   if (!liveReady) {
-    // Say why there is nothing to press, instead of leaving the plan at a dead end.
+    // Say why there is nothing to press, and offer the one thing that does work here,
+    // instead of leaving a visitor without a paired computer at a dead end.
     if (blocker === null) return null;
     return (
-      <p className="label" style={{ textTransform: 'none', letterSpacing: 0, margin: 0 }} data-testid="live-start-blocker">
-        {BLOCKER_COPY[blocker]}
+      <p className="label" style={{ textTransform: 'none', letterSpacing: 0, margin: 0, maxWidth: '64ch' }} data-testid="live-start-blocker">
+        {BLOCKER_COPY[blocker]}{' '}
+        <Link to="/showcase#recorded-mission">Watch a real run that already happened</Link>, recorded with two agents working at once.
       </p>
     );
   }

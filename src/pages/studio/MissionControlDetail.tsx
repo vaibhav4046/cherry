@@ -45,9 +45,23 @@ const NODE_CLASS: Record<PlanNodeRunStatus, string> = {
 
 const SYNC_INTERVAL_MS = 5000;
 
+/** The ledger stores an actor type; a person reads who that was. */
+function actorLabel(actorType: string): string {
+  if (actorType === 'human') return 'you';
+  if (actorType === 'agent') return 'agent';
+  if (actorType === 'runner') return 'your computer';
+  return actorType;
+}
+
+/** Task ids are kebab-case handles; a person reads the words, not the handle. */
+function readableNodeId(id: string): string {
+  return id.replace(/-/g, ' ');
+}
+
 function NodeRow({ view, onDecide, deciding }: { view: MissionNodeView; onDecide: (nodeId: string, decision: 'approved' | 'rejected') => void; deciding: boolean }) {
   const { node, status, runner } = view;
-  const boundary = runner?.sandbox?.boundary ?? (node.kind === 'human_decision' ? 'human decision' : node.sandbox === 'none' ? 'process' : 'allocated at start');
+  const boundary = runner?.sandbox?.boundary
+    ?? (node.kind === 'human_decision' ? 'you decide this one' : node.sandbox === 'none' ? 'process' : 'gets its own workspace when it starts');
   return (
     <li className="stack" style={{ border: 'var(--border)', borderRadius: 'var(--radius-cards)', padding: 'var(--sp-3)', gap: 'var(--sp-2)' }} data-testid="mission-node" data-node-id={node.id} data-node-status={status}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -56,9 +70,9 @@ function NodeRow({ view, onDecide, deciding }: { view: MissionNodeView; onDecide
       </div>
       <p style={{ margin: 0, fontSize: 14 }}>{node.objective}</p>
       <div className="row" style={{ gap: 'var(--sp-3)', fontSize: 13 }}>
-        <span>{runner?.host ? `${runner.host.kind}${runner.host.version ? ` ${runner.host.version}` : ''}` : node.preferredHostKinds.length > 0 ? `prefers ${node.preferredHostKinds.join(' or ')}` : 'any capable host'}</span>
+        <span>{runner?.host ? `${runner.host.kind}${runner.host.version ? ` ${runner.host.version}` : ''}` : node.preferredHostKinds.length > 0 ? `prefers ${node.preferredHostKinds.join(' or ')}` : 'any agent you have signed in'}</span>
         <span className="mono">{boundary}</span>
-        {node.dependencyIds.length > 0 ? <span>after {node.dependencyIds.join(', ')}</span> : <span>starts immediately</span>}
+        {node.dependencyIds.length > 0 ? <span>waits for {node.dependencyIds.map(readableNodeId).join(' and ')}</span> : <span>can start first</span>}
         {runner ? <span className="tnum">attempt {runner.attempts} of {node.maxAttempts}</span> : null}
       </div>
       {runner?.sandbox ? <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>Workspace: {runner.sandbox.root}{runner.sandbox.branchName ? ` on ${runner.sandbox.branchName}` : ''}{runner.sandbox.baseCommit ? ` from ${runner.sandbox.baseCommit.slice(0, 10)}` : ''}</span> : null}
@@ -174,10 +188,10 @@ export default function MissionControlDetail() {
         <h1 className="display-sm">{plan.outcome}</h1>
         <div className="row">
           <span className={missionStatusClass(card.status)} data-testid="mission-status">{missionStatusLabel(card.status)}</span>
-          <span className="sticker tnum">plan r{plan.revision}</span>
-          <span className="sticker mono" title="Content hash of this exact plan">{plan.contentHash.slice(0, 12)}</span>
+          <span className="sticker tnum">version {plan.revision}</span>
+          <span className="sticker mono" title="Fingerprint of this exact plan. Change one word and it changes.">fingerprint {plan.contentHash.slice(0, 8)}</span>
           {card.approved ? <span className="sticker sticker-pass">Approved at r{plan.revision}</span> : card.requiresApproval ? <span className="sticker sticker-wait">Needs your approval before it starts</span> : null}
-          {binding ? <span className="sticker">Runner {binding.missionRunId.slice(0, 14)}</span> : <span className="sticker">Not on a runner yet</span>}
+          {binding ? <span className="sticker">Running on your computer</span> : <span className="sticker">Not running yet</span>}
         </div>
       </header>
 
@@ -192,12 +206,16 @@ export default function MissionControlDetail() {
           busy={busy}
           onStart={() => void run(() => startMission(workspaceId, missionId, plan.revision), 'Started on your paired runner.')}
         />
-        <button type="button" className="btn" disabled={busy} onClick={() => void run(() => syncMission(workspaceId, missionId), binding ? 'Synced from the runner.' : 'Nothing to sync. This mission is not on a runner.')} data-testid="sync-mission">Sync now</button>
+        {binding ? (
+          <button type="button" className="btn" disabled={busy} onClick={() => void run(() => syncMission(workspaceId, missionId), 'Synced from your computer.')} data-testid="sync-mission">Refresh from my computer</button>
+        ) : null}
         {canCancel ? <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void run(() => cancelMission(workspaceId, missionId, 'human'), 'Cancelled.')} data-testid="cancel-mission">Cancel</button> : null}
-        <label className="row" style={{ gap: 'var(--sp-2)' }}>
-          <input type="checkbox" checked={liveSync} onChange={(event) => setLiveSync(event.target.checked)} data-testid="live-sync" />
-          <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>Sync every 5 seconds</span>
-        </label>
+        {binding ? (
+          <label className="row" style={{ gap: 'var(--sp-2)' }}>
+            <input type="checkbox" checked={liveSync} onChange={(event) => setLiveSync(event.target.checked)} data-testid="live-sync" />
+            <span className="label" style={{ textTransform: 'none', letterSpacing: 0 }}>Keep refreshing while it runs</span>
+          </label>
+        ) : null}
       </div>
       {error ? <p className="field-error" role="alert" data-testid="mission-error">{error}</p> : null}
       {notice ? <p className="sticker sticker-pass" role="status">{notice}</p> : null}
@@ -205,15 +223,21 @@ export default function MissionControlDetail() {
 
       <section className="card stack" aria-labelledby="graph-heading">
         <h2 id="graph-heading" className="subhead" style={{ margin: 0 }}>The team and its work</h2>
-        <p style={{ margin: 0, fontSize: 14 }}>{card.activeWorkers} working now · hosts {card.hosts.join(', ') || 'chosen at start'} · boundaries {card.boundaries.join(', ') || 'allocated at start'}</p>
+        <p style={{ margin: 0, fontSize: 14 }}>
+          {card.activeWorkers > 0
+            ? `${card.activeWorkers} of these are being worked on right now.`
+            : binding
+              ? 'Nothing is being worked on at this moment.'
+              : 'This is the plan. Nothing has run, and nothing will until you approve it and start it on your computer.'}
+        </p>
         <ol className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }} data-testid="mission-graph">
           {nodes.map((node) => <NodeRow key={node.node.id} view={node} onDecide={(nodeId, decision) => void decide(nodeId, decision)} deciding={busy} />)}
         </ol>
       </section>
 
       <section className="card stack" aria-labelledby="handoff-heading">
-        <h2 id="handoff-heading" className="subhead" style={{ margin: 0 }}>Run it somewhere else</h2>
-        <p style={{ margin: 0, fontSize: 14 }}>Cherry writes the recipe. You create the task in the host. Each recipe states where it actually runs.</p>
+        <h2 id="handoff-heading" className="subhead" style={{ margin: 0 }}>Hand this plan to another tool</h2>
+        <p style={{ margin: 0, fontSize: 14 }}>Cherry writes the instructions; you paste them into the tool you already use. Each one says plainly where the work would actually run.</p>
         <div className="row">
           <button type="button" className="btn btn-sm" onClick={() => setRecipe(renderRecipeText(buildWorkTaskRecipe(recipeSource, { kind: 'schedule', description: 'every weekday at 08:00' })))} data-testid="recipe-work">Run with ChatGPT Work</button>
           <button type="button" className="btn btn-sm" onClick={() => setRecipe(renderRecipeText(buildCodexAutomationRecipe(recipeSource, 'every weekday at 08:00')))} data-testid="recipe-codex">Run as Codex Automation</button>
@@ -234,7 +258,7 @@ export default function MissionControlDetail() {
               <div key={event.id} className="event-row">
                 <span className="mono">#{event.sequence}</span>
                 <span className="mono">{event.occurredAt.slice(11, 19)}</span>
-                <span className="sticker" style={{ padding: '2px 8px' }}>{event.actorType}</span>
+                <span className="sticker" style={{ padding: '2px 8px' }}>{actorLabel(event.actorType)}</span>
                 <span>{event.summary}</span>
               </div>
             ))}

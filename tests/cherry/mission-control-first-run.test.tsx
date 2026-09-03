@@ -379,10 +379,10 @@ describe('Mission Control first run', () => {
 
     await screen.findByTestId('outcome-composer');
     fireEvent.click(screen.getByText('Execution settings'));
-    expect(await screen.findByText(/No runner detected/)).toBeTruthy();
+    expect(await screen.findByText(/No paired computer on this device/)).toBeTruthy();
     fireEvent.click(screen.getByText('Execution settings'));
     fireEvent.click(screen.getByText('Execution settings'));
-    expect(await screen.findByText(/Runner paired/)).toBeTruthy();
+    expect(await screen.findByText(/Your computer is paired/)).toBeTruthy();
     expect(runnerApi.status).toHaveBeenCalledTimes(2);
   });
 
@@ -435,7 +435,7 @@ describe('Mission Control live-start gate', () => {
 
     await screen.findByTestId('mission-status');
     await waitFor(() => expect(screen.queryByTestId('start-mission')).toBeNull());
-    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/No paired runner found/);
+    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/needs your own computer/);
   });
 
   it('does not offer live start when the paired runner has no eligible host', async () => {
@@ -452,7 +452,7 @@ describe('Mission Control live-start gate', () => {
 
     await screen.findByTestId('mission-status');
     await waitFor(() => expect(screen.queryByTestId('start-mission')).toBeNull());
-    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/no eligible agent host/);
+    expect((await screen.findByTestId('live-start-blocker')).textContent).toMatch(/no agent is signed in/);
   });
 
   it('offers live start only when runner, pairing, host, plan and policy all allow it', async () => {
@@ -509,13 +509,15 @@ describe('Mission Control live-start gate', () => {
       value: { hosts: [eligibleHost(now.toISOString())], probedAt: now.toISOString() },
     });
     render(
-      <LiveStartGate
-        canStart
-        policyAllows
-        requiredCapabilitySets={[['repository_read']]}
-        busy={false}
-        onStart={() => undefined}
-      />,
+      <MemoryRouter>
+        <LiveStartGate
+          canStart
+          policyAllows
+          requiredCapabilitySets={[['repository_read']]}
+          busy={false}
+          onStart={() => undefined}
+        />
+      </MemoryRouter>,
     );
 
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -524,5 +526,24 @@ describe('Mission Control live-start gate', () => {
     expect(screen.queryByTestId('start-mission')).toBeNull();
     expect(runnerApi.status.mock.calls.length).toBeGreaterThan(1);
     vi.useRealTimers();
+  });
+});
+
+describe('Mission Control in an agent browser', () => {
+  beforeEach(async () => {
+    freshDb();
+    localStorage.clear();
+    await resetServiceDoubles();
+    runnerApi.status.mockReset().mockResolvedValue({ reachable: false, paired: false });
+    runnerApi.hosts.mockReset().mockResolvedValue({ ok: false, error: { code: 'temporary', message: 'no runner' } });
+  });
+
+  afterEach(cleanup);
+
+  it('tells a visitor whose browser exposes site tools what their agent can and cannot do', async () => {
+    renderControl();
+    await screen.findByTestId('outcome-input');
+    // jsdom exposes no WebMCP host, so the note must stay off rather than claim one.
+    expect(screen.queryByTestId('site-tools-note')).toBeNull();
   });
 });

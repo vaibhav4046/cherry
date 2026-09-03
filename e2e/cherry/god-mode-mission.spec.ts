@@ -111,7 +111,7 @@ test.describe('Mission Control without a runner', () => {
     await page.getByTestId('approve-plan').click();
     await expect(page.getByText(/Approved at r\d+/)).toBeVisible();
     await expect(page.getByTestId('start-mission')).toHaveCount(0);
-    await expect(page.getByText('Not on a runner yet')).toBeVisible();
+    await expect(page.getByText('Not running yet')).toBeVisible();
 
     // Reload keeps the plan.
     await page.reload();
@@ -174,7 +174,7 @@ test.describe('Mission Control with a paired mock runner', () => {
     // The repository field and the runner line live behind Execution settings, closed by default.
     await page.getByText('Execution settings', { exact: true }).click();
     await expect(page.getByTestId('execution-settings')).toHaveAttribute('open', '');
-    await expect(page.getByTestId('runner-line')).toContainText('Runner paired');
+    await expect(page.getByTestId('runner-line')).toContainText('Your computer is paired');
 
     await page.getByTestId('outcome-input').fill(OUTCOME);
     await page.getByTestId('repository-input').fill(repo);

@@ -208,7 +208,7 @@ function releaseMissionNodes(repositoryRoot: string | null): NodeSeed[] {
     agentNode({
       id: 'research-competitor',
       title: 'Research the competitor',
-      objective: 'Summarise what comparable products do for the outcome, using only the approved context and sources in the bundle.',
+      objective: 'Summarise what comparable products do for the outcome, using only the material you approved for this mission.',
       definitionOfDone: ['artifacts/competitor-brief.md summarises at least three comparable approaches', 'Every claim names the source excerpt it came from'],
       verificationPlan: [fileCheck('competitor-brief', 'artifacts/competitor-brief.md', 'Competitor brief written')],
     }),
@@ -279,7 +279,7 @@ function researchBriefNodes(repositoryRoot: string | null): NodeSeed[] {
     agentNode({
       id: 'gather-sources',
       title: 'Gather the sources',
-      objective: 'Collect the relevant excerpts from the approved context bundle for the outcome.',
+      objective: 'Collect the passages that matter for this outcome, from the material you approved.',
       definitionOfDone: ['artifacts/sources.md lists each source with its trust label'],
       verificationPlan: [fileCheck('sources', 'artifacts/sources.md', 'Sources written')],
     }),
@@ -322,7 +322,7 @@ function creatorDraftNodes(repositoryRoot: string | null): NodeSeed[] {
     agentNode({
       id: 'collect-project-updates',
       title: 'Collect project updates',
-      objective: 'Gather what changed in the project recently from the approved context.',
+      objective: 'Gather what changed in the project recently, from the material you approved.',
       definitionOfDone: ['content/project-updates.md lists the updates worth sharing'],
       verificationPlan: [fileCheck('project-updates', 'content/project-updates.md', 'Project updates written')],
     }),

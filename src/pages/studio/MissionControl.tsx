@@ -20,7 +20,7 @@ const COLUMNS: Array<{ id: Column; title: string; empty: string }> = [
 
 /** Mission Control: one outcome becomes a durable, reviewable plan. */
 export default function MissionControl() {
-  const { ready, activeWorkspace, workspaces, refresh, setActiveWorkspace, setActiveMission } = useAppState();
+  const { ready, activeWorkspace, workspaces, webmcp, refresh, setActiveWorkspace, setActiveMission } = useAppState();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [outcome, setOutcome] = useState(() => searchParams.get('outcome') ?? '');
@@ -173,14 +173,14 @@ export default function MissionControl() {
   }
 
   const runnerLine = runnerChecking
-    ? 'Checking for a paired runner.'
+    ? 'Looking for a paired computer.'
     : runner === null
-      ? 'Open these settings to check this device for a paired runner.'
+      ? 'Open these settings to look for a paired computer.'
       : runner.reachable && runner.paired
-        ? 'Runner paired. Live start appears only when an eligible host, plan, and policy are ready.'
+        ? 'Your computer is paired. A Start button appears on a plan once an agent is signed in there and you have approved the plan.'
         : runner.reachable
-          ? 'Runner found but not paired. Pair it in Connections before live start can appear.'
-          : 'No runner detected. Planning and the recorded replay still work here.';
+          ? 'A computer was found but is not paired yet. Pair it under Connect before work can start.'
+          : 'No paired computer on this device. Planning and the recorded run work here without one.';
 
   return (
     <section className="chronicle-control" data-testid="mission-control" aria-labelledby="mission-control-heading">
@@ -255,6 +255,16 @@ export default function MissionControl() {
         </div>
         {error ? <p className="field-error" role="alert">{error}</p> : null}
       </form>
+
+      {webmcp.supported ? (
+        <aside className="chronicle-replay" aria-label="Site tools for your agent" data-testid="site-tools-note">
+          <span>
+            <strong>Your agent can drive this page.</strong> This browser exposes site tools, so the assistant you are
+            talking to can write the outcome, plan the mission and ask to start it. It cannot approve anything: that
+            stays with you. Every call it makes appears in <Link to="/studio/agent">Agent</Link>.
+          </span>
+        </aside>
+      ) : null}
 
       <aside className="chronicle-replay" aria-label="Recorded mission replay">
         <span>
