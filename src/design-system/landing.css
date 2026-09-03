@@ -62,7 +62,7 @@
 
 .chronicle-landing :where(a, button):focus-visible,
 .chronicle-landing main:focus-visible {
-  outline: 3px solid var(--chronicle-proof);
+  outline: 3px solid var(--color-accent);
   outline-offset: 4px;
 }
 

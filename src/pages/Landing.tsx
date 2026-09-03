@@ -82,7 +82,7 @@ export function Landing() {
             <GlasshouseEvidence replay={replay} />
           </StoryChapter>
 
-          <VerifiedDemoCabinet />
+          <VerifiedDemoCabinet replay={replay} />
 
           <StoryChapter
             id="harvest"
