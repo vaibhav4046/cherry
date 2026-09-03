@@ -11,6 +11,11 @@ import './design-system/landing.css';
 import { App } from './app/App.tsx';
 import { AppStateProvider } from './app/AppState.tsx';
 import { AuthBoundary } from './cherry/auth/auth-boundary.tsx';
+import { installStandInHostIfRequested } from './cherry/webmcp/stand-in-host.ts';
+
+// Opt-in, per-tab, and skipped when a real host exists. Must run before the app
+// boots because Cherry feature-detects document.modelContext exactly once.
+installStandInHostIfRequested();
 
 // PWA: register the service worker for the static shell only. Workspace data
 // lives in IndexedDB and is never cached by the worker.

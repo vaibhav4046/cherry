@@ -12,11 +12,11 @@ https://cherry-wine.vercel.app.
 
 | Quantity | Value |
 | --- | --- |
-| Total spoken words | **334** |
+| Total spoken words | **341** |
 | Narration rate assumed | 150 wpm |
-| Narration duration | 334 / 150 = 2.2267 min = **133.6 s** |
+| Narration duration | 341 / 150 = 2.2733 min = **136.4 s** |
 | Total runtime budget | 2:40 = **160.0 s** |
-| Slack left for clicks, page loads and transitions | 160.0 - 133.6 = **26.4 s** |
+| Slack left for clicks, page loads and transitions | 160.0 - 136.4 = **23.6 s** |
 
 The previous script was about 472 words, which is 3:09 of narration alone before a single click. It
 did not fit. This one fits, with 26.4 seconds of deliberate dead air distributed across the beats.
@@ -31,7 +31,7 @@ where the clicking, scrolling and page loads happen.
 | 1 | 0:00 - 0:18 | Landing at `/`. Hero, then a slow scroll toward `02 / PARALLEL WORK`. | "Every agent you pay for is capable, and none of them share your tools, your memory, or your judgement. And when an agent says a job is done, that is a claim, not a fact. This is Cherry." | 38 | 15.2 | 2.8 |
 | 2 | 0:18 - 0:46 | `/studio/control` with the outcome **already typed**. Click **Plan the mission**. The plan renders. | "I give Cherry an outcome. It returns a bounded plan: tasks with dependencies, a definition of done, and a real check on every one. That is why this use case fits WebMCP. Planning work is a page with live state, and a visiting agent should drive that state through the site's own tools instead of guessing at buttons." | 58 | 23.2 | 4.8 |
 | 3 | 0:46 - 1:10 | Mission detail. Hover the human-decision node, then click **Approve plan r1**. Hold on the confirmation. | "Here is the gate. Site tools let an agent create a mission, plan it, start it, cancel it, and request a decision. None of them can approve. That is the better experience: I stop typing prompts and start reading decisions, and every agent call lands in a log I can read." | 51 | 20.4 | 3.6 |
-| 4 | 1:10 - 1:34 | `/studio/agent`. Show the **Manual mode, no agent host** sticker, then scroll to the aperture table and hold on the Global row of seven tools. | "How it is implemented: the page calls document.modelContext.registerTool. Seven tools are always on, six reads plus introduce_agent, which only labels the session, and at most five more per surface, registered and retired as state changes. This browser has no WebMCP host, so nothing is registered, and the page says so." | 50 | 20.0 | 4.0 |
+| 4 | 1:10 - 1:34 | `/studio/agent`. Show the **Manual mode, no agent host** sticker. Open the disclosure, paste the stand-in host into the console, reload. The sticker flips and the aperture fills. Run `cherryTools()`. | "How it is implemented: the page calls document.modelContext.registerTool, and it registers nothing until a host exists. Watch. That is a stand-in host, not a real one, and the page still says the live row is Experimental. But those registrations are real, and so are the seven always-on tools plus at most five for the surface you are on." | 57 | 22.8 | 1.2 |
 | 5 | 1:34 - 2:02 | `/showcase`. Scroll to `02 / Parallel work`, hold on the 34,513 ms overlap and the two worktree cards, then `03 / Verification` and its checks. | "This is a real Codex run, committed to the repository and replayed here from evidence checked against its fingerprint. Two agents, thirty-four and a half seconds of measured overlap, each in its own git worktree. The boundary is a worktree process, never a virtual machine. Completion came from the host. Success came from the runner's own checks." | 57 | 22.8 | 5.2 |
 | 6 | 2:02 - 2:26 | `/studio/skills` with the sample library loaded. Open one skill. Hold on **Download SKILL.md** and **Copy AGENTS.md (Codex)**. | "Most agent-ready sites let an agent operate them. Cherry's site upgrades the agent. recommend_skills hands a visiting agent my approved methods, pinned to the revision I read, with a hash it verifies. People and agents could not build one library together before. Now they can, and only I approve what enters it." | 52 | 20.8 | 3.2 |
 | 7 | 2:26 - 2:40 | `/studio/proof`, click **Recompute hashes**, then cut to `/compatibility` and hold on the Experimental row for a live host. | "Every claim is labelled by the test or capture behind it. A live browser host is still Experimental, and we say so. No API key. MIT licensed. Cherry." | 28 | 11.2 | 2.8 |
@@ -67,10 +67,13 @@ never says there is.
 
 Action: 2.0 s of route change and settle, 2.0 s of scroll to the aperture table.
 
-**FALLBACK:** if the page has no active space and the table renders empty, go to `/studio/control`
-once to create a space, come back, and re-take. Do not switch to a browser that claims a WebMCP
-host. **Never say the tools are registered.** The sticker on screen must read "Manual mode, no
-agent host" and the words must match it.
+**FALLBACK:** if the console paste or the reload misbehaves, do not fight it. Say instead: "This
+browser has no WebMCP host, so nothing is registered, and the page says so," hold on the aperture
+table, and move on - that is the original beat and it still lands.
+
+**Do not overclaim here.** The stand-in host proves the registrations and the closures are real. It
+is not a proprietary WebMCP client. Say "stand-in" out loud. Never switch to a browser that claims
+a real host you have not verified.
 
 ### Beat 5, 1:34 - 2:02 (5.2 s of action slack)
 

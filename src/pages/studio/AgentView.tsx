@@ -29,24 +29,7 @@ const AUTOPILOT_BRIEF = [
  * host would not: it stores registrations, honours the abort signal Cherry
  * passes, and forwards calls to Cherry's own execute function.
  */
-const STAND_IN_HOST_SNIPPET = `// Paste in the console, then reload this page.
-(() => {
-  const tools = new Map();
-  document.modelContext = {
-    registerTool(tool, options) {
-      tools.set(tool.name, tool);
-      options?.signal?.addEventListener('abort', () => tools.delete(tool.name));
-      return { name: tool.name };
-    },
-  };
-  window.cherryTools = () => [...tools.keys()].sort();
-  window.cherryCall = (name, input = {}) => {
-    const tool = tools.get(name);
-    if (!tool) throw new Error(name + ' is not registered right now. Try cherryTools().');
-    return tool.execute(input);
-  };
-  console.log('Stand-in host installed. Reload, then run cherryTools().');
-})();`;
+const STAND_IN_HOST_SNIPPET = `sessionStorage.setItem('cherry.standInHost', '1'); location.reload();`;
 
 const PHASE_ORDER: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
 
@@ -122,10 +105,12 @@ export default function AgentView() {
             </summary>
             <div className="stack" style={{ marginTop: 12 }}>
               <p style={{ fontSize: 14, margin: 0 }}>
-                Cherry only needs <code className="mono">document.modelContext.registerTool</code> to exist.
-                Paste this into the browser console and reload: it installs a minimal stand-in host, so the
-                aperture below fills with the real registrations and the call log records real executions.
-                It runs entirely in your tab, calls nothing external, and disappears on the next reload.
+                Cherry only needs <code className="mono">document.modelContext.registerTool</code> to exist,
+                and it checks exactly once, at boot. Paste this into the browser console: it asks Cherry to
+                install a minimal stand-in host on the next load, so the aperture below fills with the real
+                registrations and the call log records real executions. It is scoped to this tab, calls
+                nothing external, is skipped whenever a real host is present, and adds no capability — it
+                forwards to Cherry&rsquo;s own tool functions and drops a tool when Cherry retires it.
               </p>
               <pre className="mono" data-testid="agent-standin-snippet" style={{ fontSize: 12, overflowX: 'auto', whiteSpace: 'pre', margin: 0 }}>{STAND_IN_HOST_SNIPPET}</pre>
               <button
@@ -135,6 +120,10 @@ export default function AgentView() {
               >
                 Copy the stand-in host
               </button>
+              <p style={{ fontSize: 13, margin: 0 }}>
+                To turn it off: <code className="mono">sessionStorage.removeItem('cherry.standInHost')</code>,
+                then reload. Closing the tab clears it too.
+              </p>
               <p style={{ fontSize: 13, margin: 0 }}>
                 Then call one: <code className="mono">await cherryCall('read_cherry_context')</code>, or
                 <code className="mono"> await cherryCall('recommend_skills', {'{'} task: 'write a landing page' {'}'})</code>.
