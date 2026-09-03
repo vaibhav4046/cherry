@@ -103,7 +103,7 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 604 unit tests, 131 runner and MCP bridge tests, and a 123-journey browser matrix including
+- 612 unit tests, 135 runner and MCP bridge tests, and a 129-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
   browser-to-real-runner integration test, and a service-worker redeploy check, all green from a
   clean install.

@@ -2,7 +2,7 @@
 
 **Assembled:** 2026-09-02, London morning cycle; **amended** 2026-09-02 afternoon after the Creators engine and the judge card shipped; **amended again** 2026-09-03 at 02:00 London after God Mode v2 and the Winner OS lanes went live
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** `a109593` (morning amendment after the landing lane and the red team; earlier signatures were `b6b7d11`, `e81dbc3`, `deb6c0c` and `48f82e7`)
+**Signed against commit:** `74b26ff` (morning amendment after the landing lane and the red team; earlier signatures were `b6b7d11`, `e81dbc3`, `deb6c0c` and `48f82e7`)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -159,7 +159,7 @@ returns 200 anonymously, which is only possible on a public repository, and `REA
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **610 passed**, 2 opt-in skips |
+| Unit | `npm run test` | **612 passed**, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | **135 passed**, 0 failed (now includes the Chronicle asset verifier's own test) |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
