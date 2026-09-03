@@ -1,29 +1,22 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('landing upgrade', () => {
-  test('hero has one primary CTA, a quiet anchor link, a labelled example rail, and the guided example still opens', async ({ page }) => {
+  test('hero leads to Mission Control and the recorded evidence cabinet', async ({ page }) => {
     await page.goto('/');
-    const ctas = page.getByTestId('hero-ctas');
-    await expect(ctas.getByRole('link', { name: 'Run a real mission' })).toHaveAttribute('href', '/studio/control');
-    await expect(ctas.getByRole('link', { name: 'See how Cherry works' })).toHaveAttribute('href', '#how');
-    await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Open Studio' })).toBeVisible();
-
-    // The teammate rail is a labelled example until a runner is paired.
-    const rail = page.getByTestId('teammate-rail');
-    await expect(rail).toHaveAttribute('data-mode', 'example');
-    await expect(rail).toContainText('Example workspace');
-    await expect(rail).toContainText('Codex is working in an isolated repository worktree.');
-
-    await page.getByTestId('guided-example-link').click();
-    await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
+    const actions = page.getByTestId('hero-actions');
+    await expect(actions.getByRole('link', { name: 'Run the verified mission' })).toHaveAttribute('href', '/studio/control');
+    await expect(actions.getByRole('link', { name: 'Watch 90 seconds' })).toHaveAttribute('href', '/showcase#recorded-mission');
+    await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Mission Control' })).toBeVisible();
+    await expect(page.getByTestId('proof-cabinet').locator('[data-verified-demo]')).toHaveCount(4);
   });
 
-  test('landing respects reduced motion (guided example still navigates immediately)', async ({ browser }) => {
+  test('landing respects reduced motion and leaves the replay paused', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     await page.goto('/');
-    await page.getByTestId('guided-example-link').click();
-    await expect(page).toHaveURL(/\/studio/, { timeout: 10_000 });
+    const player = page.getByRole('region', { name: 'Recorded real Codex run' });
+    await expect(player).toBeVisible();
+    await expect(player).toHaveAttribute('data-playing', 'false');
     await context.close();
   });
 
@@ -48,10 +41,9 @@ test.describe('landing upgrade', () => {
 });
 
 test.describe('guided example and walkthrough', () => {
-  test('Try the guided example loads the real example workspace and starts the tour', async ({ page }) => {
+  test('the guided demo route loads the real example workspace and starts the tour', async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto('/');
-    await page.getByTestId('guided-example-link').click();
+    await page.goto('/studio?demo=1');
 
     // The example is a real import: mission list shows the example mission.
     await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible({ timeout: 20_000 });

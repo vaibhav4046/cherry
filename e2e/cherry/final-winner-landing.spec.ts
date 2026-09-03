@@ -95,7 +95,7 @@ test('story chapters, Chronicle art, and recorded facts stay honest', async ({ p
   await expect(threeLab).not.toContainText(/GLB/i);
   await expect(cabinet.getByRole('link', { name: /Uncut skill workflow/i })).toHaveAttribute('href', '/showcase#real-run');
   await expect(cabinet.getByRole('link', { name: /Codex \+ Cherry MCP proof/i })).toHaveAttribute('href', '/compatibility');
-  await expect(cabinet).not.toContainText(/AAA|Sora|Sol|Terra|Luna|live ChatGPT/i);
+  await expect(page.locator('main')).not.toContainText(/AAA|Sora|live ChatGPT|works in ChatGPT|runs inside ChatGPT|(?:Sol|Terra|Luna) (?:executes|runs)/i);
   await expect(page.getByText(/Download for Windows|24\/7|laptop is closed|Connected to LinkedIn/i)).toHaveCount(0);
   expect(failures).toEqual([]);
 });
@@ -121,6 +121,16 @@ test('mobile keyboard, reduced motion, and accessibility remain usable', async (
   await expect(player.locator('.recorded-mission__counter')).toHaveText(/Step 2 of \d+/);
   const outlineStyle = await next.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(outlineStyle).not.toBe('none');
+  const proofText = page.locator([
+    '.landing-recording-label',
+    '.recorded-mission__heading .showcase-kicker',
+    '.recorded-mission__seal',
+    '.recorded-mission__progress li span',
+    '.recorded-mission__controls button',
+  ].map((selector) => `.chronicle-landing ${selector}`).join(', '));
+  const proofFontSizes = await proofText.evaluateAll((elements) => elements.map((element) => parseFloat(getComputedStyle(element).fontSize)));
+  expect(proofFontSizes.length).toBeGreaterThan(0);
+  expect(Math.min(...proofFontSizes)).toBeGreaterThanOrEqual(10);
 
   const runningAnimations = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running').length);
   expect(runningAnimations).toBe(0);

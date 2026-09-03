@@ -14,7 +14,8 @@ test.describe('golden manual journey', () => {
 
     // Landing → Studio
     await expect(page.getByRole('heading', { name: /One task. An entire AI team./i })).toBeVisible();
-    await page.getByRole('link', { name: 'Open Studio', exact: true }).first().click();
+    await page.getByRole('link', { name: 'Mission Control', exact: true }).click();
+    await page.getByLabel('Studio sections', { exact: true }).getByRole('link', { name: 'Command', exact: true }).click();
 
     // Empty state: create workspace
     await expect(page.getByRole('heading', { name: 'Teach Cherry something' })).toBeVisible();

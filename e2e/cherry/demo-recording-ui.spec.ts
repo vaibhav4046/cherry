@@ -58,11 +58,13 @@ test.describe('real-run recording presentation', () => {
     expect(serious.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([]);
   });
 
-  test('landing links the every-agent band to the real run', async ({ page }) => {
+  test('landing links the proof cabinet to the real run', async ({ page }) => {
     await page.goto('/');
 
-    const band = page.getByRole('heading', { name: 'Teach once. Every agent gets better.' }).locator('..');
-    const link = band.getByRole('link', { name: 'Watch the real run' });
+    const link = page
+      .getByTestId('proof-cabinet')
+      .getByRole('link', { name: /Uncut skill workflow/i });
+
     await expect(link).toHaveAttribute('href', '/showcase#real-run');
   });
 });
