@@ -1,119 +1,139 @@
-# Devpost submission kit (paste-ready draft)
+# Devpost submission kit (paste-ready)
 
-Submit at https://webmcp.devpost.com/ before 3 Sep 2026, 1:00 PM PT.
+Submit at https://webmcp.devpost.com/ before 3 Sep 2026, 1:00 PM PT (21:00 London). Every claim
+below is backed by a test, a capture, or a live page; the compatibility page says which.
 
 ## Project name
 
 Cherry
 
-## Tagline (≤ 60 chars)
+## Tagline (60 chars or fewer)
 
-Teach once. Cherry remembers. Every agent gets better.
+One task. An entire AI team. Human authority intact.
 
 ## Links
 
-- Live app: https://getcherry.vercel.app (public production alias; canonical domain:
-  https://cherry-wine.vercel.app)
-- Judge route (fresh linear story): https://getcherry.vercel.app/showcase
+- Live app: https://cherry-wine.vercel.app (canonical; public alias https://getcherry.vercel.app)
+- Judge route: https://cherry-wine.vercel.app/showcase (a recorded real mission, evidence first)
+- Mission Control: https://cherry-wine.vercel.app/studio/control
+- What is proven: https://cherry-wine.vercel.app/compatibility
 - Repository (MIT): https://github.com/vaibhav4046/cherry
-- Video: (add after recording — script in docs/release/DEMO_SCRIPT.md)
+- Video: (add after recording; script in docs/release/DEMO_SCRIPT.md)
 
 ## Inspiration
 
-You learn your craft from creators — YouTube videos, articles, posts. Your agents can't: every
-useful thing we teach an AI agent dies in a chat transcript. The process, the corrections, the
-"no, do it this way" — gone next session, unusable in the next tool. And when an agent says "done",
-we're expected to take its word for it. We wanted the layer underneath: user-owned memory of how work
-gets done, with approval boundaries and receipts.
+Every agent we use is capable. Our tools, memory, and ways of working are not shared between
+them, and every useful thing we teach an agent dies in a chat transcript. We also noticed that
+"done" from an agent is a claim, not a fact. Cherry is the layer underneath: a person states an
+outcome, the agents they already pay for do the work in bounded workspaces, nothing counts as done
+until an independent check passes, and nothing consequential happens without a human decision.
+The site itself is an agent-facing surface: a visiting agent leaves with the person's approved
+skills instead of merely operating the page.
 
 ## What it does
 
-Cherry is the apprenticeship, memory, mission, and verification layer for AI agents. One persistent
-journey: load a permitted lesson (official YouTube player or manual material) → import your
-transcript → record timestamped observations → evidence with trust labels (everything external starts
-untrusted) → an editable, versioned SkillGraph → exact-revision human approval → real artifacts in a
-sandboxed workspace → deterministic verification with honest fail/repair/pass → a tamper-evident
-proof receipt (SHA-256 over RFC 8785 canonical JSON, recomputable by anyone) → a portable Agent
-Skills bundle with Codex and Claude Code install targets.
+**Mission Control.** A person types an outcome. Cherry turns it into a validated plan: an acyclic,
+bounded graph of tasks with dependencies, a definition of done and a real check on every task, and
+a human decision before anything public. The paired local runner leases one sandbox per task (a
+directory or a git worktree; the boundary is labelled process or worktree-process, never a VM),
+runs up to three tasks at once, hands finished artifacts to dependants, and never marks a task
+succeeded on provider completion alone: only its own checks or a person can. A failed check gets
+one bounded repair with the failure as data. Real Codex CLI execution is captured in the repo (two
+workers in two worktrees with measured overlap); Claude Code execution is labelled Experimental
+because it needs a human sign-in that was not available on the build machine.
 
-The WebMCP part: Cherry registers state-aware site tools — at most 5 per surface plus global reads.
-Learning tools exist only while learning; export tools only after verification passes. Tools
-register and unregister live as the mission's state machine advances, agents can request but never
-grant approvals, and every tool call lands in a visible inspector (Agent View). In a browser without
-WebMCP, the complete product works manually — the agent path and the human path are the same product.
-Browser-host WebMCP remains Experimental: its registration contract and closures are covered by
-unit and Playwright mock-host tests, but no live proprietary browser-host capture exists yet.
+**Creators and skills.** Follow a creator and the paired runner checks the channel's public feed
+daily; each new upload arrives with a deterministic skill proposal. Cherry never downloads a video
+or captions and never calls a model: the person adds the transcript (or transcribes on-device with
+Whisper), Cherry drafts the steps, and approval binds to the exact revision the person read.
+Approved skills live in a cross-workspace Skill Library and export as SKILL.md, AGENTS.md, or
+CLAUDE.md, or as a zip bundle whose standalone verifier fails on tampering.
 
-And the inversion we think judges haven't seen: most WebMCP sites let an agent operate them —
-Cherry's site upgrades the agent. Seven always-on read tools include three that serve your cross-workspace
-Skill Library to whoever visits: `list_skills`, `recommend_skills` (deterministic, explainable ranking —
-no hidden model call), and `get_skill`, which streams install-ready SKILL.md / AGENTS.md / CLAUDE.md
-in bounded parts with a full-file sha256 the agent recomputes after joining. Only human-approved
-exact revisions are installable, each pinned to its approval hash. `/connect` onboards each host
-honestly (ChatGPT in-app browser, Chrome flag, Codex `config.toml` for the MCP bridge, Claude Code,
-Hermes-class skills dirs), and opt-in Privy sign-in exists without ever putting a login wall in
-front of judges — guest mode is the complete product.
+**Proof.** Every mutation writes a ProofEvent in the same transaction. Verification runs
+deterministic checks that can genuinely fail; the shipped example's first artifact does fail and is
+repaired. Receipts are SHA-256 over RFC 8785 canonical JSON, recomputable by anyone. Approvals,
+trust promotion, and memory activation are human-only code paths.
 
-On top sits a workforce layer: a crew of named agent seats, a work inbox with legal state
-transitions (an agent can never mark its own work SUCCEEDED), routines with action-hash approvals,
-and an optional paired local runner for visible, user-triggered jobs. Timed routines fail closed
-without an approved local executor. Lessons transcribe on-device with Whisper (WebGPU, WASM
-fallback) — still no API key.
+**The WebMCP part.** Cherry registers state-aware site tools on `document.modelContext`: seven
+always-on reads (`read_cherry_context`, `list_cherry_capabilities`, `get_cherry_status`,
+`introduce_agent`, `list_skills`, `recommend_skills`, `get_skill`) plus at most five contextual
+tools per mission state or route surface, registered and retired as the product's state machine
+moves. On the control surface a visiting agent can `create_outcome_mission`,
+`plan_current_mission`, `start_current_mission`, `cancel_current_mission`, and
+`request_mission_action`; no tool approves anything. Every call lands in the Agent View inspector.
+In a browser without WebMCP the complete product works manually, because the agent path and the
+human path share one implementation.
+
+The inversion: most agent-ready sites let an agent operate them. Cherry's site upgrades the agent.
+`recommend_skills` returns the person's approved skills for the task at hand, and `get_skill`
+streams the install file in bounded parts with a full-file sha256, pinned to the approved
+revision. The same skills reach Codex through the stdio MCP bridge (validated in a live Codex CLI
+session) and Claude Code or Hermes-class agents through Agent Skills bundles (installed into a
+live Claude Code host).
 
 ## How we built it
 
-React 19 + TypeScript strict + Vite, with a framework-independent domain layer (`src/cherry/*`) that
-the UI, the WebMCP tool layer, and a native stdio MCP bridge all call — an agent can never do
-something the UI would refuse. IndexedDB (Dexie) with versioned migrations; every mutation emits a
-ProofEvent in the same transaction. Zero-dollar core: no AI API key, no cloud database, no account.
-Optional dependency-free Node runner (loopback-only, pairing tokens, allowlists, no shell strings).
+React 19, TypeScript strict, Vite. A framework-independent domain layer (`src/cherry/*`) that
+the UI, the WebMCP layer, and the native MCP bridge all call, so an agent can never do something
+the UI would refuse. Dexie over IndexedDB with versioned migrations; every mutation emits a
+ProofEvent inside the same transaction. A zero-dependency Node runner: loopback-only, pairing
+token, exact-origin CORS, allowlisted executables, argument arrays and no shell, minimal child
+environment, output caps with redaction, physical-path guards that refuse symlink and junction
+traversal, hash-chained event log, per-task sandbox leases. No model API key anywhere: the
+reasoning engine is the agent the person already pays for.
 
 ## Challenges
 
-- WebMCP tool lifecycle: registering/unregistering by product state with AbortController, without
-  stale closures — tools re-read persisted state at execution time.
-- Honest verification: checks test actual files and state; the demo mission's first artifact
-  genuinely fails and the repair is part of the receipt.
-- Sandboxing generated artifacts inside a strict-CSP world (srcdoc CSP inheritance is unforgiving).
-- Making id-remapped workspace import collision-proof while keeping every internal reference intact.
+- Making "sandbox" mean something honest: per-task directories and git worktrees give isolation
+  of work, not OS containment, so the product labels the boundary as process or worktree-process
+  and never claims a VM.
+- Keeping provider completion out of the trust chain: adapters return completed, never verified;
+  only a passed evaluation report or a person can move a task to succeeded.
+- A WebMCP tool lifecycle that registers and retires by real product state without stale
+  closures; tools re-read persisted state at execution time.
+- Portability of the verification harness itself: two defects that Windows hides (an unflushed
+  pipe in a test fixture, an 11 px overflow from an unbreakable file path) were found by
+  re-running the gates from a fresh Linux clone before release.
 
 ## Accomplishments
 
-- 385 unit (+2 opt-in skips) + 69 runner/bridge + 94 e2e tests, including a hostile-artifact sandbox probe, axe
-  audits, keyboard-only journeys, and an end-to-end guided-walkthrough test.
-- A compatibility page that labels every surface Validated / Shipped / Experimental / Roadmap with
-  the actual test behind the label — including what we did NOT test.
-- Proof receipts a stranger can recompute; `npm run verify:pack` proves it — a one-byte tamper or a
-  deleted evidence file fails verification.
-- The native MCP bridge is covered by deterministic runner/bridge tests; no live external host
-  session is claimed by this release pass.
-- An adversarial security pass that tried to refute our own claims — and the one it broke
-  (postMessage origin wording) was fixed the same day and documented.
-- The library host-path e2e proves the inversion end to end: the visiting agent asks
-  `recommend_skills` mid-task, receives the human-approved skill with revision + approval hash,
-  streams the install file in parts, and verifies the joined sha256 in-page.
+- A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
+  overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
+  validated evidence fixture.
+- 539 unit tests, 131 runner and MCP bridge tests, and a 115-journey browser matrix including
+  hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
+  browser-to-real-runner integration test, and a service-worker redeploy check, all green from a
+  clean install.
+- A compatibility page that labels every surface Validated, Shipped, Available, Experimental, or
+  Roadmap with the test or capture behind the label, including what was not tested.
+- Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
+- An adversarial review of the runtime that failed its own release once, then closed three
+  critical boundary defects test-first (command execution, link traversal, plan contract parity)
+  before the branch was allowed to merge.
 
 ## What's next
 
-Live-host validation in WebMCP-enabled clients, creator channel watchers (new upload → transcript →
-draft skill in your review queue, on a schedule you approved), creator-published verified skill
-packs, team libraries, encrypted cross-device sync on the opt-in auth, and a community skill
-registry built on the same receipts.
+A live WebMCP browser-host capture (the registration contract is covered by unit and mock-host
+tests; the compatibility page keeps the surface Experimental until a real host session is
+recorded), Claude Code mission execution once a signed-in capture exists, container and remote
+workers behind the same lease interface, connectors behind official APIs only, and a local vision
+model over videos the person owns.
 
 ## Built with
 
 react, typescript, vite, dexie (indexeddb), zod, jszip, web-crypto, webmcp (document.modelContext),
 mcp (stdio), node, playwright, vitest
 
-## Judging-criteria cheat sheet (for the form / video description)
+## Judging-criteria cheat sheet (for the form and the video description)
 
-- **Use of WebMCP:** state-aware tool aperture (≤5+7), live register/unregister on a real state
-  machine, runtime re-validation, cancellation, untrusted-content hints, visible Agent View
-  inspector with a real call log.
-- **Real product:** local-first persistence, refresh-safe, import/export, no fake states — the
-  guided example is a genuine exported workspace.
-- **Safety story:** untrusted-by-default evidence, human-only trust/approval/memory promotion,
-  exact-revision approvals, sandboxed previews, recomputable proof.
-- **The inversion:** the site makes the visiting agent smarter — library reads are global, installs
-  are hash-pinned to human approvals, and the same skills follow you into Codex, Claude Code, and
-  Hermes-class agents through open conventions (WebMCP, MCP, Agent Skills).
+- **Use of WebMCP:** seven always-on reads plus at most five state-scoped tools, registered and
+  retired live on a real state machine, runtime re-validation, cancellation, untrusted-content
+  hints, and a visible Agent View call log. Mission tools let a visiting agent create, plan, start
+  and cancel a mission but never approve one.
+- **Real product:** local-first persistence, refresh-safe, import and export with hash-verified
+  archives, no fake states. The showcase replays a real captured mission.
+- **Safety story:** untrusted-by-default evidence, human-only approvals, exact-revision
+  approvals, fail-closed runner policy, per-task sandboxes labelled honestly, recomputable proof.
+- **The inversion:** the site makes the visiting agent smarter. Library reads are global,
+  installs are hash-pinned to human approvals, and the same skills follow the person into Codex,
+  Claude Code, and Hermes-class agents through WebMCP, MCP, and Agent Skills.
