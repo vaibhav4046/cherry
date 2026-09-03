@@ -6,6 +6,7 @@ import {
   HarvestEvidence,
   HumanSealEvidence,
   LandingFinalAction,
+  RecordedRunSummary,
   RecordedMissionHero,
   SeedBankEvidence,
   SeedEvidence,
@@ -19,44 +20,63 @@ export function Landing() {
 
   return (
     <div className="chronicle-landing">
-      <a className="landing-skip-link" href="#landing-story">Skip to the Cherry story</a>
+      <a className="landing-skip-link" href="#landing-story">Skip to main content</a>
       <header className="landing-header">
         <nav className="landing-nav" aria-label="Main navigation">
-          <CherryHomeLink />
-          <div className="landing-nav__links">
-            <a href="#seed">How it works</a>
-            <Link to="/showcase#recorded-mission">Recorded run</Link>
-            <Link to="/compatibility">Evidence</Link>
+          <div className="landing-nav__brand">
+            <CherryHomeLink />
+            <span className="landing-nav__wordmark" aria-hidden="true">Cherry</span>
           </div>
-          <Link className="landing-nav__studio" to="/studio/control">Mission Control</Link>
+          <div className="landing-nav__navigation">
+            <div className="landing-nav__links">
+              <a href="#seed">How it works</a>
+              <Link to="/showcase#recorded-mission">Recorded run</Link>
+              <Link to="/compatibility">Compatibility</Link>
+            </div>
+            <details
+              className="landing-nav__menu"
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+                event.currentTarget.removeAttribute('open');
+                event.currentTarget.querySelector<HTMLElement>('summary')?.focus();
+              }}
+            >
+              <summary>Explore</summary>
+              <div>
+                <a href="#seed" onClick={(event) => event.currentTarget.closest('details')?.removeAttribute('open')}>How it works</a>
+                <Link to="/showcase#recorded-mission" onClick={(event) => event.currentTarget.closest('details')?.removeAttribute('open')}>Recorded run</Link>
+                <Link to="/compatibility" onClick={(event) => event.currentTarget.closest('details')?.removeAttribute('open')}>Compatibility</Link>
+              </div>
+            </details>
+          </div>
+          <Link className="landing-nav__studio" to="/studio/control">Plan a project</Link>
         </nav>
       </header>
 
       <main id="landing-story" tabIndex={-1}>
         <section className="landing-hero" aria-labelledby="landing-hero-heading">
           <div className="landing-hero__copy">
-            <p className="landing-eyebrow">Cherry / Open AI workforce</p>
+            <p className="landing-eyebrow">Supervised work on your computer</p>
             <h1 id="landing-hero-heading">One task. An entire AI team.</h1>
             <p className="landing-hero__summary">
-              Give Cherry an outcome. On a paired computer, Cherry creates the mission, sends Codex workers into
-              separate workspaces, checks the result, and returns when your authority is needed.
+              Give Cherry a goal. It creates a reviewable plan, runs independent tasks on your paired computer,
+              checks the result, and returns to you when a decision needs your approval.
             </p>
             <div className="landing-hero__actions" data-testid="hero-actions">
-              <Link className="landing-primary-action" to="/studio/control">Open Mission Control</Link>
-              <Link className="landing-secondary-action" to="/showcase#recorded-mission">Watch 90 seconds</Link>
+              <Link className="landing-primary-action" to="/studio/control">Plan a project</Link>
+              <Link className="landing-secondary-action" to="/showcase#recorded-mission">See the recorded run</Link>
             </div>
-            <p className="landing-trust-line">Real Codex run · separate worktrees · independent checks</p>
+            <RecordedRunSummary replay={replay} />
           </div>
           <RecordedMissionHero replay={replay} />
         </section>
 
         <div className="landing-story">
-          <div id="seed" />
           <StoryChapter
             id="seed"
-            marker="01 / SEED"
-            heading="Describe the result. Cherry forms the team."
-            body="Start with an outcome, not a prompt sequence. Cherry turns that result into a bounded mission with work items and explicit checks."
+            marker="01 / PLAN"
+            heading="Describe the goal. Review the plan."
+            body="Tell Cherry what you want done, what must stay off-limits, and how success will be checked. Cherry creates a reviewable plan before anything runs."
             composition="split"
           >
             <SeedEvidence replay={replay} />
@@ -64,9 +84,9 @@ export function Landing() {
 
           <StoryChapter
             id="branch"
-            marker="02 / BRANCH"
-            heading="Work in parallel without becoming the project manager."
-            body="Independent work can overlap when its dependencies allow. Cherry keeps the plan and the evidence connected while workers stay focused."
+            marker="02 / PARALLEL WORK"
+            heading="Independent tasks can run at the same time."
+            body="Cherry runs tasks together when they do not depend on each other. When one task needs another result, it waits and carries that result forward."
             composition="panorama"
           >
             <BranchEvidence replay={replay} />
@@ -74,9 +94,9 @@ export function Landing() {
 
           <StoryChapter
             id="glasshouse"
-            marker="03 / GLASSHOUSE"
-            heading="Every worker gets a boundary."
-            body="Each worker receives its own workspace, host identity, execution boundary, and base revision. Separation is part of the record."
+            marker="03 / SEPARATE WORK AREAS"
+            heading="Each task gets its own work area."
+            body="On your paired computer, each task runs in a separate folder or Git worktree. Cherry records where it ran and which saved revision it started from."
             composition="split"
           >
             <GlasshouseEvidence replay={replay} />
@@ -86,9 +106,9 @@ export function Landing() {
 
           <StoryChapter
             id="harvest"
-            marker="04 / HARVEST"
-            heading="“Done” is not a result."
-            body="The mission closes only after its named checks run at the worker boundary. Failures return to correction instead of becoming polished claims."
+            marker="04 / CHECKS"
+            heading="Work is complete only when its checks pass."
+            body="Each task must pass its required checks. A failed result stays failed until it is repaired and checked again."
             composition="panorama"
           >
             <HarvestEvidence replay={replay} />
@@ -96,9 +116,9 @@ export function Landing() {
 
           <StoryChapter
             id="human-seal"
-            marker="05 / HUMAN SEAL"
-            heading="Routine work continues. Consequential work comes back to you."
-            body="Agents can prepare and verify work. Authority-changing actions stay visible, explicit, and human."
+            marker="05 / YOUR APPROVAL"
+            heading="Cherry pauses when your approval is required."
+            body="Workers can prepare files and run checks. Only you can approve a skill, publish work, or promote saved guidance."
             composition="seal"
           >
             <HumanSealEvidence />
@@ -106,9 +126,9 @@ export function Landing() {
 
           <StoryChapter
             id="seed-bank"
-            marker="06 / SEED BANK"
-            heading="Successful work improves the next mission."
-            body="A reviewed procedure can become a reusable skill. Its approved revision travels with the workflow, while the original evidence stays inspectable."
+            marker="06 / REUSE"
+            heading="Save approved methods as reusable skills."
+            body="Turn a reviewed process into an installable skill. Cherry keeps the exact version you approved and the source it came from so your workers can reuse it later."
             composition="archive"
           >
             <SeedBankEvidence />
@@ -119,9 +139,9 @@ export function Landing() {
       </main>
 
       <footer className="landing-footer">
-        <span>Cherry · local-first mission orchestration</span>
+        <span>Cherry · work stays local by default</span>
         <Link className="landing-footer__demo" to="/studio?demo=1">Try the guided example</Link>
-        <span>MIT licensed · evidence before claims</span>
+        <span>MIT licensed · pair a computer for live work</span>
       </footer>
     </div>
   );

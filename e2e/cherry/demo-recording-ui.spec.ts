@@ -63,7 +63,7 @@ test.describe('real-run recording presentation', () => {
 
     const link = page
       .getByTestId('proof-cabinet')
-      .getByRole('link', { name: /Uncut skill workflow/i });
+      .getByRole('link', { name: /Recorded skill workflow/i });
 
     await expect(link).toHaveAttribute('href', '/showcase#real-run');
   });

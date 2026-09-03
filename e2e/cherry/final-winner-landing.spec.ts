@@ -35,7 +35,7 @@ for (const viewport of viewports) {
 
     const player = page.getByRole('region', { name: 'Recorded real Codex run' });
     await expect(player).toBeVisible();
-    const recordingLabel = page.getByText('Recording · committed evidence · not live', { exact: true });
+    const recordingLabel = page.getByText('Recorded run · verified before display · not live', { exact: true });
     await expect(recordingLabel).toBeVisible();
     await expect(player.locator('.recorded-mission__counter')).toHaveText(/Step 1 of \d+/);
     await expect(player.getByRole('heading', { name: 'Outcome recorded' })).toBeVisible();
@@ -81,20 +81,20 @@ test('story chapters, Chronicle art, and recorded facts stay honest', async ({ p
     'human-seal',
     'seed-bank',
   ]);
-  await expect(page.getByTestId('recorded-overlap')).toContainText('34,513 ms');
-  await expect(page.getByText('codex-cli 0.152.1', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('worktree-process', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/an agent cannot approve or publish/i)).toBeVisible();
+  await expect(page.getByTestId('recorded-overlap')).toContainText('34.5 seconds');
+  await expect(page.getByText('Codex CLI', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Separate Git worktree', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/Cherry does not publish without you/i)).toBeVisible();
   await expect(page.locator('[data-chronicle-art] img')).toHaveCount(5);
   const cabinet = page.getByTestId('proof-cabinet');
   await expect(cabinet.locator('[data-verified-demo]')).toHaveCount(4);
-  await expect(cabinet.getByRole('link', { name: /Real Codex team run/i })).toHaveAttribute('href', '/showcase#recorded-mission');
-  const threeLab = cabinet.getByRole('link', { name: /Interactive Three\.js lab/i });
+  await expect(cabinet.getByRole('link', { name: /Recorded parallel run/i })).toHaveAttribute('href', '/showcase#recorded-mission');
+  const threeLab = cabinet.getByRole('link', { name: /Interactive 3D lab/i });
   await expect(threeLab).toHaveAttribute('href', '/lab/cherry-3d/');
-  await expect(threeLab).toContainText('Explore three procedural brand scenes and export OBJ/MTL.');
+  await expect(threeLab).toContainText('Move through three procedural scenes and export their geometry.');
   await expect(threeLab).not.toContainText(/GLB/i);
-  await expect(cabinet.getByRole('link', { name: /Uncut skill workflow/i })).toHaveAttribute('href', '/showcase#real-run');
-  await expect(cabinet.getByRole('link', { name: /Codex \+ Cherry MCP proof/i })).toHaveAttribute('href', '/compatibility');
+  await expect(cabinet.getByRole('link', { name: /Recorded skill workflow/i })).toHaveAttribute('href', '/showcase#real-run');
+  await expect(cabinet.getByRole('link', { name: /Codex and Cherry connection/i })).toHaveAttribute('href', '/compatibility');
   await expect(page.locator('main')).not.toContainText(/AAA|Sora|live ChatGPT|works in ChatGPT|runs inside ChatGPT|(?:Sol|Terra|Luna) (?:executes|runs)/i);
   await expect(page.getByText(/Download for Windows|24\/7|laptop is closed|Connected to LinkedIn/i)).toHaveCount(0);
   expect(failures).toEqual([]);
@@ -110,7 +110,7 @@ test('mobile keyboard, reduced motion, and accessibility remain usable', async (
   await expect(player).toHaveAttribute('data-playing', 'false');
 
   await page.keyboard.press('Tab');
-  const skipLink = page.getByRole('link', { name: 'Skip to the Cherry story' });
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
   await expect(skipLink).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#landing-story')).toBeFocused();

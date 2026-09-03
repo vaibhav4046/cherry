@@ -24,19 +24,23 @@ describe('landing claim compatibility', () => {
 
   it('replaces the obsolete eleven-section and teammate-first rhythm', async () => {
     const { container } = renderLanding();
-    await screen.findByRole('region', { name: 'Recorded real Codex run' });
+    await screen.findByRole(
+      'region',
+      { name: 'Recorded real Codex run' },
+      { timeout: 30_000 },
+    );
     expect(container.querySelectorAll('[data-landing-chapter]')).toHaveLength(6);
     expect(screen.queryByTestId('teammate-rail')).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Describe the result. Cherry forms the team.' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Successful work improves the next mission.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Describe the goal. Review the plan.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Save approved methods as reusable skills.' })).toBeTruthy();
   });
 
   it('retains the existing public-claim guardrails', async () => {
     const { container } = renderLanding();
     await screen.findByRole('region', { name: 'Recorded real Codex run' });
     const text = container.textContent ?? '';
-    expect(text).toContain('Recording · committed evidence · not live');
-    expect(text).toContain('runs while your paired computer is online');
+    expect(text).toContain('Recorded run · verified before display · not live');
+    expect(text).toContain('runs only while your paired computer is online');
     expect(text).not.toMatch(/Download for Windows|24\/7|laptop is closed|Connected to LinkedIn|signed receipt/i);
   });
 

@@ -104,17 +104,17 @@ export function RecordedMissionHero({ replay }: { replay: ReplayState }) {
       aria-busy={replay.status === 'loading'}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
     >
-      <p className="landing-recording-label">Recording · committed evidence · not live</p>
+      <p className="landing-recording-label">Recorded run · verified before display · not live</p>
       {replay.status === 'loading' ? (
         <div className="landing-replay-status" role="status">
-          <strong>Opening the committed mission record</strong>
-          <span>The player appears after its independent digest pin is verified.</span>
+          <strong>Checking the recorded run</strong>
+          <span>It appears after Cherry verifies that the saved recording has not changed.</span>
         </div>
       ) : null}
       {replay.status === 'error' ? (
         <div className="landing-replay-status" role="alert">
-          <strong>The recorded mission could not be verified.</strong>
-          <span>Open the showcase to inspect the evidence source directly.</span>
+          <strong>The recorded run could not be verified.</strong>
+          <span>Use the Recorded run link to inspect its source details.</span>
         </div>
       ) : null}
       {replay.status === 'ready' ? (
@@ -128,16 +128,53 @@ export function RecordedMissionHero({ replay }: { replay: ReplayState }) {
   );
 }
 
+export function RecordedRunSummary({ replay }: { replay: ReplayState }) {
+  if (replay.status !== 'ready') {
+    return (
+      <p className="landing-trust-line" data-replay-state={replay.status}>
+        {replay.status === 'loading' ? 'Checking recorded run' : 'Recorded run proof unavailable'}
+      </p>
+    );
+  }
+
+  const workAreaCount = replay.fixture.workers.filter((worker) => worker.boundary === 'worktree-process').length;
+  const passedCheckCount = replay.fixture.workers
+    .flatMap((worker) => worker.checks)
+    .filter((check) => check.status === 'passed').length;
+  const overlapSeconds = (replay.fixture.overlap.durationMs / 1000).toFixed(1);
+
+  return (
+    <dl className="landing-proof-rail" aria-label="Recorded run summary">
+      <div>
+        <dt>Tasks</dt>
+        <dd><a href="#seed"><strong>{replay.fixture.workers.length}</strong> tasks</a></dd>
+      </div>
+      <div>
+        <dt>Work areas</dt>
+        <dd><a href="#glasshouse"><strong>{workAreaCount}</strong> separate work areas</a></dd>
+      </div>
+      <div>
+        <dt>Parallel time</dt>
+        <dd><a href="#branch"><strong>{overlapSeconds}</strong> seconds together</a></dd>
+      </div>
+      <div>
+        <dt>Checks</dt>
+        <dd><a href="#harvest"><strong>{passedCheckCount}</strong> checks passed</a></dd>
+      </div>
+    </dl>
+  );
+}
+
 function ReplayEvidenceStatus({ replay, className }: { replay: ReplayState; className: string }) {
   if (replay.status === 'ready') return null;
   const loading = replay.status === 'loading';
   return (
     <div className={`${className} landing-evidence-status`}>
-      <strong>{loading ? 'Recorded evidence loading' : 'Recorded evidence unavailable'}</strong>
+      <strong>{loading ? 'Checking recorded run' : 'Recorded run unavailable'}</strong>
       <p>
         {loading
-          ? 'Mission details remain withheld while integrity checks run.'
-          : 'Mission details remain withheld because the committed evidence could not be validated.'}
+          ? 'Details appear after Cherry verifies that the saved recording has not changed.'
+          : 'Details are hidden because the recording did not pass verification.'}
       </p>
     </div>
   );
@@ -147,6 +184,7 @@ export function StoryChapter({ id, marker, heading, body, composition, children 
   const headingId = `landing-${id}-heading`;
   return (
     <section
+      id={id}
       className={`landing-chapter landing-chapter--${composition}`}
       data-landing-chapter={id}
       aria-labelledby={headingId}
@@ -166,14 +204,14 @@ export function SeedEvidence({ replay }: { replay: ReplayState }) {
     <div className="landing-evidence-pair">
       <ChronicleArt
         id="seed-outcome"
-        alt="A historic cherry study overlaid with a seed opening into a two-branch mission graph."
+        alt="A botanical cherry illustration beside a plan split into two tasks."
       />
       {replay.status === 'ready' ? (
         <div className="landing-live-note">
-          <span className="landing-note-label">Recorded outcome</span>
+          <span className="landing-note-label">Recorded result</span>
           <p>{replay.fixture.mission.outcome}</p>
           <dl>
-            <div><dt>Plan</dt><dd>{replay.fixture.workers.length} bounded work items</dd></div>
+            <div><dt>Plan</dt><dd>{replay.fixture.workers.length} tasks</dd></div>
             <div><dt>Result</dt><dd>{replay.fixture.mission.status}</dd></div>
           </dl>
         </div>
@@ -187,13 +225,13 @@ export function BranchEvidence({ replay }: { replay: ReplayState }) {
     <div className="landing-panorama">
       <ChronicleArt
         id="branches-workforce"
-        alt="A cherry branch aligned with a parallel task graph ending in independently checked fruit-like nodes."
+        alt="A cherry branch beside two tasks running at the same time, each ending with a check."
       />
       {replay.status === 'ready' ? (
         <div className="landing-overlap" data-testid="recorded-overlap">
-          <span>Measured overlap</span>
-          <strong>{replay.fixture.overlap.durationMs.toLocaleString('en-US')} ms</strong>
-          <p>{replay.fixture.overlap.maxConcurrentNodes} workers ran at once. The timeline comes from the committed run.</p>
+          <span>Time both tasks ran</span>
+          <strong>{(replay.fixture.overlap.durationMs / 1000).toFixed(1)} seconds</strong>
+          <p>{replay.fixture.overlap.maxConcurrentNodes} tasks ran at the same time. Timing comes from this recorded run.</p>
         </div>
       ) : (
         <ReplayEvidenceStatus replay={replay} className="landing-overlap" />
@@ -207,23 +245,21 @@ export function GlasshouseEvidence({ replay }: { replay: ReplayState }) {
     <div className="landing-evidence-pair landing-evidence-pair--reverse">
       <ChronicleArt
         id="glasshouse-sandboxes"
-        alt="A botanical cherry specimen contained within three visibly isolated glasshouse workspaces."
+        alt="A botanical cherry illustration divided into three separate work areas."
       />
       {replay.status === 'ready' ? (
-        <div className="landing-workspaces" aria-label="Recorded worker boundaries">
-          {replay.fixture.workers.map((worker) => (
+        <div className="landing-workspaces" aria-label="Recorded task work areas">
+          {replay.fixture.workers.map((worker, index) => (
             <article key={worker.id}>
-              <span>{worker.workspaceLabel}</span>
-              <strong>{worker.label}</strong>
+              <span>Separate work area {index + 1}</span>
+              <strong>{worker.id === 'developer-fix' ? 'Fix the defect' : worker.id === 'review-notes' ? 'Review the change' : worker.label.replaceAll('-', ' ')}</strong>
               <dl>
-                <div><dt>Host</dt><dd>{worker.hostVersion}</dd></div>
-                <div><dt>Boundary</dt><dd>{worker.boundary}</dd></div>
+                <div><dt>Runner</dt><dd>{worker.hostVersion.startsWith('codex-cli') ? 'Codex CLI' : 'Recorded runner'}</dd></div>
+                <div><dt>Work area</dt><dd>{worker.boundary === 'worktree-process' ? 'Separate Git worktree' : 'Separate process'}</dd></div>
               </dl>
             </article>
           ))}
-          <p className="landing-commit">
-            Base <code>{replay.fixture.workers[0]?.baseCommit}</code>
-          </p>
+          <p className="landing-commit">Both tasks started from the same saved revision.</p>
         </div>
       ) : (
         <ReplayEvidenceStatus replay={replay} className="landing-workspaces" />
@@ -238,14 +274,17 @@ export function HarvestEvidence({ replay }: { replay: ReplayState }) {
     <div className="landing-panorama landing-panorama--proof">
       <ChronicleArt
         id="harvest-proof"
-        alt="A public-domain cherry watercolor beside an independent inspection mark and a separate correction route."
+        alt="A cherry watercolor beside a completed check and a separate repair path."
       />
       {replay.status === 'ready' ? (
-        <div className="landing-checks" aria-label="Checks from the recorded mission">
+        <div className="landing-checks" aria-label="Checks from the recorded run">
           {checks.map((check) => (
             <div key={check.id}>
               <span aria-hidden="true">✓</span>
-              <p><strong>{check.name}</strong><small>{check.detail}</small></p>
+              <p>
+                <strong>{check.id === 'tests' ? 'Test suite' : check.id === 'review-exists' ? 'Review notes' : check.name}</strong>
+                <small>{check.id === 'tests' ? 'Completed successfully' : check.id === 'review-exists' ? 'Verdict found' : check.detail}</small>
+              </p>
               <span>{check.status}</span>
             </div>
           ))}
@@ -262,10 +301,10 @@ export function HumanSealEvidence() {
     <div className="landing-human-seal">
       <span className="landing-seal-mark" aria-hidden="true">05</span>
       <div>
-        <p className="landing-note-label">Release boundary</p>
-        <h3>Human authority is not delegated.</h3>
-        <p>The recorded mission made no public release action; an agent cannot approve or publish on a human’s behalf.</p>
-        <p>Cherry runs while your paired computer is online. Consequential actions return with context for a human decision.</p>
+        <p className="landing-note-label">Your approval</p>
+        <h3>Cherry does not publish without you.</h3>
+        <p>In this recorded run, Cherry published nothing. Only you can approve or publish work.</p>
+        <p>Live work runs only while your paired computer is online. Cherry brings approval and publishing decisions back to you.</p>
       </div>
     </div>
   );
@@ -274,28 +313,32 @@ export function HumanSealEvidence() {
 const VERIFIED_DEMOS = [
   {
     href: '/showcase#recorded-mission',
-    title: 'Real Codex team run',
-    description: 'Replay two Codex tasks overlapping in separate worktrees, then inspect the source evidence.',
+    title: 'Recorded parallel run',
+    description: 'See two tasks run at the same time in separate work areas, then inspect the saved run details.',
     labels: ['RECORDED', 'VERIFIED'],
+    action: 'Watch recording',
   },
   {
     href: '/lab/cherry-3d/',
-    title: 'Interactive Three.js lab',
-    description: 'Explore three procedural brand scenes and export OBJ/MTL.',
-    labels: ['RUNNABLE PROTOTYPE'],
+    title: 'Interactive 3D lab',
+    description: 'Move through three procedural scenes and export their geometry.',
+    labels: ['RUNNABLE DEMO'],
+    action: 'Open 3D lab',
   },
   {
     href: '/showcase#real-run',
-    title: 'Uncut skill workflow',
-    description: 'Watch an automated browser test create, verify, repair, approve, export and reload a reusable skill.',
+    title: 'Recorded skill workflow',
+    description: 'Watch Cherry create, check, repair, and export a reusable skill, pausing for a person to approve it.',
     note: 'No AI provider or model was involved in this recorded browser workflow.',
     labels: ['RECORDED'],
+    action: 'Watch workflow',
   },
   {
     href: '/compatibility',
-    title: 'Codex + Cherry MCP proof',
-    description: 'Inspect the capture where a ChatGPT-authenticated Codex CLI used Cherry’s local STDIO MCP bridge to read and verify a shipped workspace and skill bundle.',
+    title: 'Codex and Cherry connection',
+    description: 'See a captured Codex CLI session read and verify a Cherry workspace and skill bundle through the local MCP connection.',
     labels: ['CAPTURED'],
+    action: 'See compatibility',
   },
 ] as const;
 
@@ -303,9 +346,9 @@ export function VerifiedDemoCabinet({ replay }: { replay: ReplayState }) {
   return (
     <section className="landing-proof-cabinet" data-testid="proof-cabinet" aria-labelledby="proof-cabinet-heading">
       <header className="landing-proof-cabinet__heading">
-        <p className="landing-note-label">OPEN EVIDENCE CABINET</p>
-        <h2 id="proof-cabinet-heading">Four artifacts. Four bounded claims.</h2>
-        <p>Every card names only what its artifact proves.</p>
+        <p className="landing-note-label">EXPLORE THE PRODUCT</p>
+        <h2 id="proof-cabinet-heading">Four demos. Each shows what Cherry actually did.</h2>
+        <p>Each demo links to the details behind it.</p>
       </header>
       <div className="landing-proof-cabinet__grid">
         {VERIFIED_DEMOS.map((demo, index) => {
@@ -313,10 +356,10 @@ export function VerifiedDemoCabinet({ replay }: { replay: ReplayState }) {
           const presentedDemo = replayPending
             ? {
                 ...demo,
-                title: 'Recorded mission evidence',
+                title: 'Recorded run',
                 description: replay.status === 'loading'
-                  ? 'Checking the committed replay before showing mission claims.'
-                  : 'Mission claims are withheld because this view could not verify the committed replay.',
+                  ? 'Checking the saved recording before showing its details.'
+                  : 'Recording details are hidden because verification failed.',
                 labels: [replay.status === 'loading' ? 'CHECKING' : 'UNAVAILABLE'],
               }
             : demo;
@@ -329,7 +372,7 @@ export function VerifiedDemoCabinet({ replay }: { replay: ReplayState }) {
               <h3>{presentedDemo.title}</h3>
               <p>{presentedDemo.description}</p>
               {'note' in presentedDemo ? <small>{presentedDemo.note}</small> : null}
-              <strong>Open evidence</strong>
+              <strong>{presentedDemo.action}</strong>
             </a>
           );
         })}
@@ -343,17 +386,17 @@ export function SeedBankEvidence() {
     <div className="landing-seed-bank">
       <ChronicleArt
         id="seed-bank-memory"
-        alt="Seven botanical archive cards preserve cherry seeds and connect into a visible version-history line."
+        alt="Seven botanical archive cards connected by a version history."
       />
       <div className="landing-archive-note">
-        <p className="landing-note-label">Reusable learning</p>
-        <h3>Approval binds the lesson to a revision.</h3>
-        <p>An exact-revision approved skill can be installed by future teammates without turning outside content into instructions.</p>
+        <p className="landing-note-label">Reusable skill</p>
+        <h3>Approve the exact version you reviewed.</h3>
+        <p>Once you approve a version, your workers can install that skill later. Source material stays reference data, not instructions.</p>
         <ol aria-label="Skill promotion path">
-          <li>Mission succeeds</li>
-          <li>Human reviews</li>
-          <li>Revision is approved</li>
-          <li>Future missions reuse it</li>
+          <li>Checks pass</li>
+          <li>You review it</li>
+          <li>You approve that version</li>
+          <li>Your workers reuse the skill</li>
         </ol>
       </div>
     </div>
@@ -363,10 +406,10 @@ export function SeedBankEvidence() {
 export function LandingFinalAction() {
   return (
     <section className="landing-final" data-testid="final-action" aria-labelledby="landing-final-heading">
-      <p className="landing-chapter__marker">THE NEXT OUTCOME</p>
-      <h2 id="landing-final-heading">Start with the result you want returned.</h2>
-      <p>Mission Control forms the plan, shows the boundaries, and keeps live execution gated until your runner is paired.</p>
-      <Link className="landing-primary-action" to="/studio/control">Open Mission Control</Link>
+      <p className="landing-chapter__marker">START A PROJECT</p>
+      <h2 id="landing-final-heading">What should Cherry take care of?</h2>
+      <p>Cherry turns your goal into a reviewable plan before anything runs. Pair your computer when you are ready to start live work.</p>
+      <Link className="landing-primary-action" to="/studio/control">Plan a project</Link>
     </section>
   );
 }

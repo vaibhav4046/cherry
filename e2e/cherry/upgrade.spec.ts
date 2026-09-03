@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('landing upgrade', () => {
-  test('hero leads to Mission Control and the recorded evidence cabinet', async ({ page }) => {
+  test('hero leads to Mission Control and the recorded product demos', async ({ page }) => {
     await page.goto('/');
     const actions = page.getByTestId('hero-actions');
-    await expect(actions.getByRole('link', { name: 'Open Mission Control' })).toHaveAttribute('href', '/studio/control');
-    await expect(actions.getByRole('link', { name: 'Watch 90 seconds' })).toHaveAttribute('href', '/showcase#recorded-mission');
-    await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Mission Control' })).toBeVisible();
+    await expect(actions.getByRole('link', { name: 'Plan a project' })).toHaveAttribute('href', '/studio/control');
+    await expect(actions.getByRole('link', { name: 'See the recorded run' })).toHaveAttribute('href', '/showcase#recorded-mission');
+    await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Plan a project' })).toBeVisible();
     await expect(page.getByTestId('proof-cabinet').locator('[data-verified-demo]')).toHaveCount(4);
   });
 

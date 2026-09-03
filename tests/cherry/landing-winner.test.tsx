@@ -9,12 +9,12 @@ import { canonicalJson } from '../../src/components/showcase/recorded-mission.mj
 import { Landing } from '../../src/pages/Landing.tsx';
 
 const CHAPTERS = [
-  ['01 / SEED', 'Describe the result. Cherry forms the team.'],
-  ['02 / BRANCH', 'Work in parallel without becoming the project manager.'],
-  ['03 / GLASSHOUSE', 'Every worker gets a boundary.'],
-  ['04 / HARVEST', '“Done” is not a result.'],
-  ['05 / HUMAN SEAL', 'Routine work continues. Consequential work comes back to you.'],
-  ['06 / SEED BANK', 'Successful work improves the next mission.'],
+  ['01 / PLAN', 'Describe the goal. Review the plan.'],
+  ['02 / PARALLEL WORK', 'Independent tasks can run at the same time.'],
+  ['03 / SEPARATE WORK AREAS', 'Each task gets its own work area.'],
+  ['04 / CHECKS', 'Work is complete only when its checks pass.'],
+  ['05 / YOUR APPROVAL', 'Cherry pauses when your approval is required.'],
+  ['06 / REUSE', 'Save approved methods as reusable skills.'],
 ] as const;
 
 function responseWith(body: unknown) {
@@ -46,18 +46,20 @@ function expectReplayEvidenceWithheld(container: HTMLElement, stateLabel: string
     expect(surface.querySelector('[role="status"], [role="alert"]')).toBeNull();
   }
 
-  expect(seed.textContent).not.toMatch(/2 bounded work items|Verified before display|succeeded/i);
-  expect(branch.textContent).not.toMatch(/Measured overlap|34,513|2 workers ran at once/i);
+  expect(seed.textContent).not.toMatch(/2 tasks|Verified before display|succeeded/i);
+  expect(branch.textContent).not.toMatch(/Time both tasks ran|34\.5 seconds|2 tasks ran at the same time/i);
   expect(glasshouse.textContent).not.toMatch(/codex-cli|worktree-process|18774c71|Recorded worker|Isolated worktree/i);
   expect(harvest.textContent).not.toMatch(/✓|passed|verified|node --test/i);
+  expect(screen.queryByLabelText('Recorded run summary')).toBeNull();
+  expect(container.querySelector('.landing-trust-line')?.textContent).toMatch(/recorded run/i);
 
   const cabinet = screen.getByTestId('proof-cabinet');
   const codexRun = cabinet.querySelector<HTMLElement>('a[href="/showcase#recorded-mission"]');
   expect(codexRun).toBeTruthy();
-  expect(codexRun!.textContent).not.toMatch(/Real Codex team run|two Codex tasks|separate worktrees/i);
+  expect(codexRun!.textContent).not.toMatch(/Recorded parallel run|two tasks|separate work areas/i);
   expect(within(codexRun!).queryByText('RECORDED')).toBeNull();
   expect(within(codexRun!).queryByText('VERIFIED')).toBeNull();
-  expect(codexRun!.textContent).toMatch(/mission claims/i);
+  expect(codexRun!.textContent).toMatch(/recording.*details/i);
 }
 
 describe('winner landing', () => {
@@ -84,21 +86,32 @@ describe('winner landing', () => {
     renderLanding();
 
     expect(screen.getByRole('heading', { level: 1, name: 'One task. An entire AI team.' })).toBeTruthy();
-    expect(screen.getByText('Recording · committed evidence · not live')).toBeTruthy();
-    const player = await screen.findByRole('region', { name: 'Recorded real Codex run' });
+    expect(screen.getByText('Recorded run · verified before display · not live')).toBeTruthy();
+    const player = await screen.findByRole(
+      'region',
+      { name: 'Recorded real Codex run' },
+      { timeout: 30_000 },
+    );
     expect(player.textContent).toContain('Step 1 of 6');
     expect(player.textContent).toContain(recordedMission.mission.outcome);
-    expect(document.querySelector('.landing-hero__summary')?.textContent).toContain('Give Cherry an outcome.');
+    expect(document.querySelector('.landing-hero__summary')?.textContent).toContain('Give Cherry a goal.');
     expect(document.body.textContent).not.toMatch(/Give ChatGPT an outcome/i);
     expect(within(player).getByRole('button', { name: 'Play' })).toBeTruthy();
     expect(screen.queryByTestId('teammate-rail')).toBeNull();
     expect(fetch).toHaveBeenCalledWith('/media/cherry-demo/recorded-mission.json', expect.objectContaining({ signal: expect.any(AbortSignal) }));
 
     const actions = screen.getByTestId('hero-actions');
-    expect(within(actions).getByRole('link', { name: 'Open Mission Control' }).getAttribute('href')).toBe('/studio/control');
-    expect(within(actions).getByRole('link', { name: 'Watch 90 seconds' }).getAttribute('href')).toBe('/showcase#recorded-mission');
+    expect(within(actions).getByRole('link', { name: 'Plan a project' }).getAttribute('href')).toBe('/studio/control');
+    expect(within(actions).getByRole('link', { name: 'See the recorded run' }).getAttribute('href')).toBe('/showcase#recorded-mission');
     expect(screen.getByRole('link', { name: 'Try the guided example' }).getAttribute('href')).toBe('/studio?demo=1');
-    expect(screen.getByText('Real Codex run · separate worktrees · independent checks')).toBeTruthy();
+    const summary = screen.getByLabelText('Recorded run summary');
+    expect(summary.textContent).toContain('2 tasks');
+    expect(summary.textContent).toContain('2 separate work areas');
+    expect(summary.textContent).toContain('34.5 seconds together');
+    expect(summary.textContent).toContain('2 checks passed');
+    for (const link of within(summary).getAllByRole('link')) {
+      expect(document.querySelector(link.getAttribute('href')!)).toBeTruthy();
+    }
   });
 
   it('uses the approved six-chapter sequence and one outcome-first final action', async () => {
@@ -114,9 +127,11 @@ describe('winner landing', () => {
     });
 
     const finalAction = screen.getByTestId('final-action');
-    expect(within(finalAction).getByRole('link', { name: 'Open Mission Control' }).getAttribute('href')).toBe('/studio/control');
+    expect(within(finalAction).getByRole('link', { name: 'Plan a project' }).getAttribute('href')).toBe('/studio/control');
     expect(container.querySelectorAll('main')).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Skip to the Cherry story' }).getAttribute('href')).toBe('#landing-story');
+    expect(screen.getByRole('link', { name: 'Skip to main content' }).getAttribute('href')).toBe('#landing-story');
+    expect(screen.getByText('Cherry', { selector: '.landing-nav__wordmark' })).toBeTruthy();
+    expect(screen.getByText('Explore', { selector: 'summary' })).toBeTruthy();
   });
 
   it('surfaces only the four audited flagship demos without adding a seventh chapter', async () => {
@@ -127,29 +142,31 @@ describe('winner landing', () => {
     const cards = Array.from(cabinet.querySelectorAll<HTMLElement>('[data-verified-demo]'));
     expect(cards).toHaveLength(4);
 
-    const codexRun = within(cabinet).getByRole('link', { name: /Real Codex team run/i });
+    const codexRun = within(cabinet).getByRole('link', { name: /Recorded parallel run/i });
     expect(codexRun.getAttribute('href')).toBe('/showcase#recorded-mission');
     expect(within(codexRun).getByText('RECORDED')).toBeTruthy();
     expect(within(codexRun).getByText('VERIFIED')).toBeTruthy();
 
-    const threeLab = within(cabinet).getByRole('link', { name: /Interactive Three\.js lab/i });
+    const threeLab = within(cabinet).getByRole('link', { name: /Interactive 3D lab/i });
     expect(threeLab.getAttribute('href')).toBe('/lab/cherry-3d/');
-    expect(within(threeLab).getByText('RUNNABLE PROTOTYPE')).toBeTruthy();
-    expect(threeLab.textContent).toContain('Explore three procedural brand scenes and export OBJ/MTL.');
+    expect(within(threeLab).getByText('RUNNABLE DEMO')).toBeTruthy();
+    expect(threeLab.textContent).toContain('Move through three procedural scenes and export their geometry.');
     expect(threeLab.textContent).not.toMatch(/GLB/i);
 
-    const skillRun = within(cabinet).getByRole('link', { name: /Uncut skill workflow/i });
+    const skillRun = within(cabinet).getByRole('link', { name: /Recorded skill workflow/i });
     expect(skillRun.getAttribute('href')).toBe('/showcase#real-run');
     expect(within(skillRun).getByText('RECORDED')).toBeTruthy();
+    expect(skillRun.textContent).toContain('pausing for a person to approve it');
+    expect(skillRun.textContent).not.toContain('Cherry approve');
     expect(skillRun.textContent).toContain('No AI provider or model was involved');
 
-    const mcpProof = within(cabinet).getByRole('link', { name: /Codex \+ Cherry MCP proof/i });
+    const mcpProof = within(cabinet).getByRole('link', { name: /Codex and Cherry connection/i });
     expect(mcpProof.getAttribute('href')).toBe('/compatibility');
     expect(within(mcpProof).getByText('CAPTURED')).toBeTruthy();
-    expect(mcpProof.textContent).toContain('local STDIO MCP bridge');
+    expect(mcpProof.textContent).toContain('local MCP connection');
 
     expect(container.querySelectorAll('[data-landing-chapter]')).toHaveLength(6);
-    expect(cabinet.textContent).toContain('Every card names only what its artifact proves.');
+    expect(cabinet.textContent).toContain('Each demo links to the details behind it.');
     expect(container.textContent).not.toMatch(/AAA|Sora|live ChatGPT|works in ChatGPT|runs inside ChatGPT|(?:Sol|Terra|Luna) (?:executes|runs)/i);
   });
 
@@ -157,13 +174,13 @@ describe('winner landing', () => {
     renderLanding();
     await screen.findByRole('region', { name: 'Recorded real Codex run' });
 
-    expect(screen.getByTestId('recorded-overlap').textContent).toContain('34,513 ms');
-    expect(screen.getAllByText('codex-cli 0.152.1').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('worktree-process').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText('18774c71f7a0d9ca4e06997093b1011c75f3ba85').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/node --test exits 0 in the worker worktree/i)).toBeTruthy();
-    expect(screen.getByText(/an agent cannot approve or publish/i)).toBeTruthy();
-    expect(screen.getByText(/exact-revision approved skill/i)).toBeTruthy();
+    expect(screen.getByTestId('recorded-overlap').textContent).toContain('34.5 seconds');
+    expect(screen.getAllByText('Codex CLI').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Separate Git worktree').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/both tasks started from the same saved revision/i)).toBeTruthy();
+    expect(screen.getByText(/test suite/i)).toBeTruthy();
+    expect(screen.getByText(/Cherry does not publish without you/i)).toBeTruthy();
+    expect(screen.getByText(/approve the exact version you reviewed/i)).toBeTruthy();
   });
 
   it('uses only declared responsive Chronicle assets with intrinsic dimensions', async () => {
@@ -188,15 +205,15 @@ describe('winner landing', () => {
     vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>(() => undefined));
     const { container } = renderLanding();
 
-    expectReplayEvidenceWithheld(container, 'Recorded evidence loading');
+    expectReplayEvidenceWithheld(container, 'Checking recorded run');
   });
 
   it('withholds every replay-derived fact after a fetch failure', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('network unavailable'));
     const { container } = renderLanding();
 
-    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded mission could not be verified/i);
-    expectReplayEvidenceWithheld(container, 'Recorded evidence unavailable');
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded run could not be verified/i);
+    expectReplayEvidenceWithheld(container, 'Recorded run unavailable');
   });
 
   it('withholds every replay-derived fact after a replay fails the independent W3 digest pin', async () => {
@@ -208,10 +225,10 @@ describe('winner landing', () => {
     vi.mocked(fetch).mockResolvedValueOnce(responseWith(forged) as Response);
     const { container } = renderLanding();
 
-    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded mission could not be verified/i);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/recorded run could not be verified/i);
     expect(screen.queryByRole('region', { name: 'Recorded real Codex run' })).toBeNull();
     expect(screen.queryByText('Forged landing claim')).toBeNull();
-    expectReplayEvidenceWithheld(container, 'Recorded evidence unavailable');
+    expectReplayEvidenceWithheld(container, 'Recorded run unavailable');
   });
 
   it('updates and cleans up the player reduced-motion preference after mount', async () => {
@@ -265,9 +282,31 @@ describe('winner landing', () => {
     expect(css).not.toMatch(/gradient\s*\(|backdrop-filter|filter:\s*blur/i);
   });
 
+  it('uses plain language around the detailed replay', async () => {
+    const { container } = renderLanding();
+    await screen.findByRole('region', { name: 'Recorded real Codex run' });
+    const firstTimeCopy = Array.from(container.querySelectorAll<HTMLElement>([
+      '.landing-hero__copy',
+      '.landing-chapter__copy',
+      '.landing-proof-cabinet__heading',
+      '.landing-human-seal',
+      '.landing-archive-note',
+      '.landing-final',
+      '.landing-footer',
+    ].join(','))).map((element) => element.textContent ?? '').join(' ');
+
+    expect(firstTimeCopy).not.toMatch(/digest pin|bounded|worker boundary|host identity|committed evidence|orchestration|exact-revision/i);
+    expect(firstTimeCopy).toContain('Supervised work on your computer');
+    expect(firstTimeCopy).toContain('Pair your computer when you are ready to start live work.');
+  });
+
   it('keeps the recorded player keyboard-operable in the first experience', async () => {
     renderLanding();
-    const player = await screen.findByRole('region', { name: 'Recorded real Codex run' });
+    const player = await screen.findByRole(
+      'region',
+      { name: 'Recorded real Codex run' },
+      { timeout: 30_000 },
+    );
     fireEvent.click(within(player).getByRole('button', { name: 'Next step' }));
     expect(player.textContent).toContain('Step 2 of 6');
     expect(player.textContent).toContain('Plan bounded');

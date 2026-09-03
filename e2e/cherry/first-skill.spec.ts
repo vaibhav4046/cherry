@@ -15,7 +15,7 @@ test.describe('first skill', () => {
     };
 
     await page.goto('/');
-    await page.getByLabel('Main navigation').getByRole('link', { name: 'Mission Control' }).click();
+    await page.getByLabel('Main navigation').getByRole('link', { name: 'Plan a project', exact: true }).click();
     await page.getByRole('link', { name: 'Quick skill' }).click();
     await expect(page).toHaveURL(/\/studio\/quick$/);
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill(rawLesson);
@@ -34,7 +34,7 @@ test.describe('first skill', () => {
 
   test('uses the official YouTube player and a user-supplied transcript', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('Main navigation').getByRole('link', { name: 'Mission Control' }).click();
+    await page.getByLabel('Main navigation').getByRole('link', { name: 'Plan a project', exact: true }).click();
     await page.getByRole('link', { name: 'Quick skill' }).click();
     await page.getByLabel('Paste a YouTube link, an article link, or raw text.').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await page.getByRole('button', { name: 'Create a skill' }).click();
