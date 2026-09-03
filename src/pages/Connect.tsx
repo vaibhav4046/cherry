@@ -76,7 +76,7 @@ const HOSTS: HostCard[] = [
     status: 'experimental',
     statusNote: 'Built to the documented registerTool contract and feature-detected; awaiting a captured live-host session.',
     steps: [
-      'Open this site inside ChatGPT’s in-app browser.',
+      'Open this site in the built-in browser of the ChatGPT desktop app, ChatGPT Work or Codex (site tools currently need GPT-5.6 Sol or Terra), then choose Site tools in the address bar to see what Cherry provides.',
       'Cherry’s tools appear automatically — no setup. Ask for a status check: the agent calls get_cherry_status.',
       'Mid-task, the agent can call recommend_skills with what it is doing and receive your approved skills, pinned to exact revisions.',
       'Watch every call land in Agent View (Studio → Agent View).',
