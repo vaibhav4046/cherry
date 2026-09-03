@@ -8,6 +8,7 @@ import {
 
 const REPLAY_URL = '/media/cherry-demo/recorded-mission.json';
 const CHRONICLE_ROOT = '/media/cherry-chronicle/artifacts';
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 export type ReplayState =
   | { status: 'loading' }
@@ -56,6 +57,23 @@ export function useRecordedMission(): ReplayState {
   return state;
 }
 
+export function usePrefersReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(() => (
+    typeof window !== 'undefined' && Boolean(window.matchMedia?.(REDUCED_MOTION_QUERY).matches)
+  ));
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    setReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return reducedMotion;
+}
+
 export function ChronicleArt({ id, alt }: ChronicleArtProps) {
   return (
     <picture className="landing-chronicle-art" data-chronicle-art>
@@ -78,11 +96,14 @@ export function ChronicleArt({ id, alt }: ChronicleArtProps) {
 }
 
 export function RecordedMissionHero({ replay }: { replay: ReplayState }) {
-  const reducedMotion = typeof window !== 'undefined'
-    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = usePrefersReducedMotion();
 
   return (
-    <div className="landing-replay" aria-busy={replay.status === 'loading'}>
+    <div
+      className="landing-replay"
+      aria-busy={replay.status === 'loading'}
+      data-reduced-motion={reducedMotion ? 'true' : 'false'}
+    >
       <p className="landing-recording-label">Recording · committed evidence · not live</p>
       {replay.status === 'loading' ? (
         <div className="landing-replay-status" role="status">
@@ -100,9 +121,24 @@ export function RecordedMissionHero({ replay }: { replay: ReplayState }) {
         <RecordedMissionPlayer
           fixture={replay.fixture}
           autoplay={false}
-          reducedMotion={Boolean(reducedMotion)}
+          reducedMotion={reducedMotion}
         />
       ) : null}
+    </div>
+  );
+}
+
+function ReplayEvidenceStatus({ replay, className }: { replay: ReplayState; className: string }) {
+  if (replay.status === 'ready') return null;
+  const loading = replay.status === 'loading';
+  return (
+    <div className={`${className} landing-evidence-status`}>
+      <strong>{loading ? 'Recorded evidence loading' : 'Recorded evidence unavailable'}</strong>
+      <p>
+        {loading
+          ? 'Mission details remain withheld while integrity checks run.'
+          : 'Mission details remain withheld because the committed evidence could not be validated.'}
+      </p>
     </div>
   );
 }
@@ -125,85 +161,98 @@ export function StoryChapter({ id, marker, heading, body, composition, children 
   );
 }
 
-export function SeedEvidence({ fixture }: { fixture: RecordedMissionFixture | null }) {
+export function SeedEvidence({ replay }: { replay: ReplayState }) {
   return (
     <div className="landing-evidence-pair">
       <ChronicleArt
         id="seed-outcome"
         alt="A historic cherry study overlaid with a seed opening into a two-branch mission graph."
       />
-      <div className="landing-live-note">
-        <span className="landing-note-label">Recorded outcome</span>
-        <p>{fixture?.mission.outcome ?? 'The verified mission outcome appears with the committed replay.'}</p>
-        <dl>
-          <div><dt>Plan</dt><dd>2 bounded work items</dd></div>
-          <div><dt>Result</dt><dd>{fixture?.mission.status ?? 'Verified before display'}</dd></div>
-        </dl>
-      </div>
+      {replay.status === 'ready' ? (
+        <div className="landing-live-note">
+          <span className="landing-note-label">Recorded outcome</span>
+          <p>{replay.fixture.mission.outcome}</p>
+          <dl>
+            <div><dt>Plan</dt><dd>{replay.fixture.workers.length} bounded work items</dd></div>
+            <div><dt>Result</dt><dd>{replay.fixture.mission.status}</dd></div>
+          </dl>
+        </div>
+      ) : <ReplayEvidenceStatus replay={replay} className="landing-live-note" />}
     </div>
   );
 }
 
-export function BranchEvidence({ fixture }: { fixture: RecordedMissionFixture | null }) {
+export function BranchEvidence({ replay }: { replay: ReplayState }) {
   return (
     <div className="landing-panorama">
       <ChronicleArt
         id="branches-workforce"
         alt="A cherry branch aligned with a parallel task graph ending in independently checked fruit-like nodes."
       />
-      <div className="landing-overlap" data-testid="recorded-overlap">
-        <span>Measured overlap</span>
-        <strong>{fixture ? fixture.overlap.durationMs.toLocaleString('en-US') : '34,513'} ms</strong>
-        <p>{fixture?.overlap.maxConcurrentNodes ?? 2} workers ran at once. The timeline comes from the committed run.</p>
-      </div>
+      {replay.status === 'ready' ? (
+        <div className="landing-overlap" data-testid="recorded-overlap">
+          <span>Measured overlap</span>
+          <strong>{replay.fixture.overlap.durationMs.toLocaleString('en-US')} ms</strong>
+          <p>{replay.fixture.overlap.maxConcurrentNodes} workers ran at once. The timeline comes from the committed run.</p>
+        </div>
+      ) : (
+        <ReplayEvidenceStatus replay={replay} className="landing-overlap" />
+      )}
     </div>
   );
 }
 
-export function GlasshouseEvidence({ fixture }: { fixture: RecordedMissionFixture | null }) {
-  const workers = fixture?.workers ?? [];
+export function GlasshouseEvidence({ replay }: { replay: ReplayState }) {
   return (
     <div className="landing-evidence-pair landing-evidence-pair--reverse">
       <ChronicleArt
         id="glasshouse-sandboxes"
         alt="A botanical cherry specimen contained within three visibly isolated glasshouse workspaces."
       />
-      <div className="landing-workspaces" aria-label="Recorded worker boundaries">
-        {(workers.length > 0 ? workers : [null, null]).map((worker, index) => (
-          <article key={worker?.id ?? index}>
-            <span>{worker?.workspaceLabel ?? `Isolated worktree ${index + 1}`}</span>
-            <strong>{worker?.label ?? 'Recorded worker'}</strong>
-            <dl>
-              <div><dt>Host</dt><dd>{worker?.hostVersion ?? 'codex-cli 0.152.1'}</dd></div>
-              <div><dt>Boundary</dt><dd>{worker?.boundary ?? 'worktree-process'}</dd></div>
-            </dl>
-          </article>
-        ))}
-        <p className="landing-commit">
-          Base <code>{fixture?.workers[0]?.baseCommit ?? '18774c71f7a0d9ca4e06997093b1011c75f3ba85'}</code>
-        </p>
-      </div>
+      {replay.status === 'ready' ? (
+        <div className="landing-workspaces" aria-label="Recorded worker boundaries">
+          {replay.fixture.workers.map((worker) => (
+            <article key={worker.id}>
+              <span>{worker.workspaceLabel}</span>
+              <strong>{worker.label}</strong>
+              <dl>
+                <div><dt>Host</dt><dd>{worker.hostVersion}</dd></div>
+                <div><dt>Boundary</dt><dd>{worker.boundary}</dd></div>
+              </dl>
+            </article>
+          ))}
+          <p className="landing-commit">
+            Base <code>{replay.fixture.workers[0]?.baseCommit}</code>
+          </p>
+        </div>
+      ) : (
+        <ReplayEvidenceStatus replay={replay} className="landing-workspaces" />
+      )}
     </div>
   );
 }
 
-export function HarvestEvidence({ fixture }: { fixture: RecordedMissionFixture | null }) {
-  const checks = fixture?.workers.flatMap((worker) => worker.checks) ?? [];
+export function HarvestEvidence({ replay }: { replay: ReplayState }) {
+  const checks = replay.status === 'ready' ? replay.fixture.workers.flatMap((worker) => worker.checks) : [];
   return (
     <div className="landing-panorama landing-panorama--proof">
       <ChronicleArt
         id="harvest-proof"
         alt="A public-domain cherry watercolor beside an independent inspection mark and a separate correction route."
       />
-      <div className="landing-checks" aria-label="Checks from the recorded mission">
-        {(checks.length > 0 ? checks : [{ id: 'pending', name: 'Committed checks', status: 'verified', detail: 'Shown after replay verification' }]).map((check) => (
-          <div key={check.id}>
-            <span aria-hidden="true">✓</span>
-            <p><strong>{check.name}</strong><small>{check.detail}</small></p>
-            <span>{check.status}</span>
-          </div>
-        ))}
-      </div>
+      {replay.status === 'ready' ? (
+        <div className="landing-checks" aria-label="Checks from the recorded mission">
+          {checks.map((check) => (
+            <div key={check.id}>
+              <span aria-hidden="true">✓</span>
+              <p><strong>{check.name}</strong><small>{check.detail}</small></p>
+              <span>{check.status}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ReplayEvidenceStatus replay={replay} className="landing-checks" />
+      )}
     </div>
   );
 }

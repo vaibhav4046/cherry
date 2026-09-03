@@ -16,7 +16,6 @@ import {
 
 export function Landing() {
   const replay = useRecordedMission();
-  const fixture = replay.status === 'ready' ? replay.fixture : null;
 
   return (
     <div className="chronicle-landing">
@@ -60,7 +59,7 @@ export function Landing() {
             body="Start with an outcome, not a prompt sequence. Cherry turns that result into a bounded mission with work items and explicit checks."
             composition="split"
           >
-            <SeedEvidence fixture={fixture} />
+            <SeedEvidence replay={replay} />
           </StoryChapter>
 
           <StoryChapter
@@ -70,7 +69,7 @@ export function Landing() {
             body="Independent work can overlap when its dependencies allow. Cherry keeps the plan and the evidence connected while workers stay focused."
             composition="panorama"
           >
-            <BranchEvidence fixture={fixture} />
+            <BranchEvidence replay={replay} />
           </StoryChapter>
 
           <StoryChapter
@@ -80,7 +79,7 @@ export function Landing() {
             body="Each worker receives its own workspace, host identity, execution boundary, and base revision. Separation is part of the record."
             composition="split"
           >
-            <GlasshouseEvidence fixture={fixture} />
+            <GlasshouseEvidence replay={replay} />
           </StoryChapter>
 
           <VerifiedDemoCabinet />
@@ -92,7 +91,7 @@ export function Landing() {
             body="The mission closes only after its named checks run at the worker boundary. Failures return to correction instead of becoming polished claims."
             composition="panorama"
           >
-            <HarvestEvidence fixture={fixture} />
+            <HarvestEvidence replay={replay} />
           </StoryChapter>
 
           <StoryChapter
