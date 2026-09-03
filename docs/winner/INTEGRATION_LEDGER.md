@@ -45,3 +45,4 @@ W0 accepts and integrates only after two-stage lane review, in the prescribed or
 ## Event log
 
 - 2026-09-02 19:30:44 +01:00 | W0 | Ledger created after clean full baseline. All file locks above are exclusive. No lane worktree exists yet.
+- 2026-09-03 04:41:03 +01:00 | W0 | Conductor-owned post-rebase integration correction is limited to `e2e/cherry/demo-recording-ui.spec.ts`, `e2e/cherry/demo-recording.spec.ts`, `e2e/cherry/first-skill.spec.ts`, `e2e/cherry/golden-manual.spec.ts`, `e2e/cherry/landing-god-mode.spec.ts`, `e2e/cherry/upgrade.spec.ts`, and the previously recorded temporary exact lock on `tests/cherry/landing-god-mode.test.tsx`. W0 also maintains `docs/winner/lanes/W2_REPORT.md` under its existing `docs/winner/**` ownership. No production, runtime, W3, W4, dependency, merge, or deployment ownership is transferred.

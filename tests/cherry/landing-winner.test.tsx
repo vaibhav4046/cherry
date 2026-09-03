@@ -87,8 +87,9 @@ describe('winner landing', () => {
     expect(fetch).toHaveBeenCalledWith('/media/cherry-demo/recorded-mission.json', expect.objectContaining({ signal: expect.any(AbortSignal) }));
 
     const actions = screen.getByTestId('hero-actions');
-    expect(within(actions).getByRole('link', { name: 'Run the verified mission' }).getAttribute('href')).toBe('/studio/control');
+    expect(within(actions).getByRole('link', { name: 'Open Mission Control' }).getAttribute('href')).toBe('/studio/control');
     expect(within(actions).getByRole('link', { name: 'Watch 90 seconds' }).getAttribute('href')).toBe('/showcase#recorded-mission');
+    expect(screen.getByRole('link', { name: 'Try the guided example' }).getAttribute('href')).toBe('/studio?demo=1');
     expect(screen.getByText('Real Codex run · separate worktrees · independent checks')).toBeTruthy();
   });
 

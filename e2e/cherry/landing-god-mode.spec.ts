@@ -81,7 +81,7 @@ test.describe('landing: evidence-led AI workforce', () => {
 
   test('keyboard: the primary CTA and recorded run are reachable with a visible focus ring', async ({ page }) => {
     await page.goto('/');
-    const primary = page.getByTestId('hero-actions').getByRole('link', { name: 'Run the verified mission' });
+    const primary = page.getByTestId('hero-actions').getByRole('link', { name: 'Open Mission Control' });
     for (let index = 0; index < 12; index += 1) {
       await page.keyboard.press('Tab');
       if (await primary.evaluate((element) => element === document.activeElement)) break;

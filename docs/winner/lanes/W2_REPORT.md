@@ -1,4 +1,4 @@
-# W2 — Product Story and Landing Director
+# W2: Product Story and Landing Director
 
 Status: **DONE_WITH_CONCERNS**
 
@@ -34,9 +34,9 @@ No Showcase/player/demo-media, W1 Chronicle asset, runtime/workforce, package-ma
 
 Landing imports W3's `RecordedMissionPlayer` and `verifyRecordedMissionFixture` directly; it does not copy or alter them. It fetches `/media/cherry-demo/recorded-mission.json`, lets the W3 verifier recompute its canonical digest, and renders recorded facts only after the digest matches W3's independently committed trust anchor in `src/components/showcase/recorded-mission-trust.mjs`:
 
-`bac2a98278782ea4ad9b937d43b19f18960da0cee720ade3022c8f5878932490`
+`bd68e563073fc63eb06902ae2747395ec447852f52b825c17b2bac8b5ec1ea23`
 
-The fixture identifies a committed real-host capture at commit `be0e713156b2c98b4c19ecfa0c77cd544a0ca715`, capture SHA-256 `0224e3789c1fe953eef3616238ae478389c7a07c6636810e2bf5cb9ce0ce3f34`, and `codex-cli 0.152.1`. Landing exposes the verified outcome, two bounded work items, two `worktree-process` boundaries at base `18774c71f7a0d9ca4e06997093b1011c75f3ba85`, **34,513 ms** of measured overlap, two passed checks, and the fact that the recording performed no public release action. It does not call the recording live, does not autoplay it, and preserves W3's keyboard controls, polite announcements, numbered progress, evidence drawer, and reduced-motion behavior.
+The fixture identifies a committed real-host capture at commit `be0e713156b2c98b4c19ecfa0c77cd544a0ca715`, canonical LF-normalized capture SHA-256 `c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3`, and `codex-cli 0.152.1`. Landing exposes the verified outcome, two bounded work items, two `worktree-process` boundaries at base `18774c71f7a0d9ca4e06997093b1011c75f3ba85`, **34,513 ms** of measured overlap, two passed checks, and the fact that the recording performed no public release action. It does not call the recording live, does not autoplay it, and preserves W3's keyboard controls, polite announcements, numbered progress, evidence drawer, and reduced-motion behavior.
 
 The loader owns one `AbortController` per request and checks its signal again after asynchronous digest verification before publishing state. Loading and failure states do not promote unverified fixture claims.
 
@@ -60,10 +60,10 @@ The cabinet is a set of links/previews, not another heavy video embed:
 
 | Destination | Public title and boundary |
 | --- | --- |
-| `/showcase#recorded-mission` | **Real Codex team run** — `RECORDED` + `VERIFIED`; two overlapping Codex tasks in separate worktrees with source evidence |
-| `/lab/cherry-3d/` | **Interactive Three.js lab** — `RUNNABLE PROTOTYPE`; three procedural brand scenes and OBJ/MTL export |
-| `/showcase#real-run` | **Uncut skill workflow** — `RECORDED`; automated browser creation, verification, repair, approval, export and reload, explicitly without an AI provider/model |
-| `/compatibility` | **Codex + Cherry MCP proof** — `CAPTURED`; a ChatGPT-authenticated Codex CLI using Cherry's local STDIO MCP bridge, not ChatGPT-site WebMCP and not a video |
+| `/showcase#recorded-mission` | **Real Codex team run**: `RECORDED` + `VERIFIED`; two overlapping Codex tasks in separate worktrees with source evidence |
+| `/lab/cherry-3d/` | **Interactive Three.js lab**: `RUNNABLE PROTOTYPE`; three procedural brand scenes and OBJ/MTL export |
+| `/showcase#real-run` | **Uncut skill workflow**: `RECORDED`; automated browser creation, verification, repair, approval, export and reload, explicitly without an AI provider/model |
+| `/compatibility` | **Codex + Cherry MCP proof**: `CAPTURED`; a ChatGPT-authenticated Codex CLI using Cherry's local STDIO MCP bridge, not ChatGPT-site WebMCP and not a video |
 
 The cabinet says that every card names only what its artifact proves. Tests exclude AAA, Sora, Sol/Terra/Luna, and `live ChatGPT` wording. The hero likewise asks the user to give **Cherry** an outcome and names pairing rather than implying a captured proprietary ChatGPT browser host.
 
@@ -106,15 +106,15 @@ An earlier independent interactive audit had successfully exercised the lab's av
 
 ## Final verification
 
-- `npm.cmd run typecheck` — passed.
-- Focused ESLint over all W2-owned TypeScript/TSX — passed.
-- `npm.cmd run build` — passed; final Vite build completed in **21.98 s**. Existing third-party Privy PURE-annotation and large-chunk warnings remained non-fatal.
-- `npm.cmd run gates` — passed:
+- `npm.cmd run typecheck`: passed.
+- Focused ESLint over all W2-owned TypeScript/TSX: passed.
+- `npm.cmd run build`: passed; final Vite build completed in **21.98 s**. Existing third-party Privy PURE-annotation and large-chunk warnings remained non-fatal.
+- `npm.cmd run gates`: passed:
   - typecheck passed;
   - full lint passed;
   - Vitest: **61 passed / 1 skipped files; 569 passed / 2 skipped tests**;
   - runner/MCP: **131/131 passed**, 0 failed.
-- `git diff --check` — passed (Git reports only the repository's Windows LF→CRLF checkout advisory).
+- `git diff --check`: passed (Git reports only the repository's Windows LF→CRLF checkout advisory).
 
 ## Rejected variants and design decisions
 
@@ -131,7 +131,7 @@ W0 should rerun the focused Landing tests, production build, owned Playwright sp
 
 The only open concern is the production-preview GLB download event that did not arrive within 90 seconds in this environment. OBJ/MTL is fully automated and verified, the earlier interactive audit was positive, and no Landing claim depends on GLB. No live deployment, authentication, provider invocation, or consequential action was performed by W2.
 
-## Fix round 1 — fail-closed evidence and live motion preference
+## Fix round 1: fail-closed evidence and live motion preference
 
 Independent review found that the hero rejected an unavailable or invalid replay correctly, but `Landing.tsx` collapsed every non-ready replay state to `null`. Seed, Branch, Glasshouse, and Harvest then interpreted `null` as permission to publish hardcoded mission facts. The same value represented loading, network failure, and digest failure, so those lower surfaces could not fail closed. Review also found that the hero sampled `prefers-reduced-motion` during render without subscribing to later operating-system preference changes.
 
@@ -165,3 +165,24 @@ Hostile review also measured 7 to 8 px proof labels at 390 px. A browser regress
 Fresh targeted integration verification passed **31/31 Playwright tests in 3.4 minutes** across `demo-recording-ui`, the opt-in recording journey, final Landing, first skill, golden manual, Landing God Mode, and upgrade. This includes the real Three.js OBJ/MTL export and the persisted golden journey. Generated `docs/release/e2e-results.json` and `tsconfig.tsbuildinfo` were restored and are not part of the change.
 
 The integration correction touches only this report plus `e2e/cherry/demo-recording-ui.spec.ts`, `e2e/cherry/demo-recording.spec.ts`, `e2e/cherry/final-winner-landing.spec.ts`, `e2e/cherry/first-skill.spec.ts`, `e2e/cherry/golden-manual.spec.ts`, `e2e/cherry/landing-god-mode.spec.ts`, `e2e/cherry/upgrade.spec.ts`, `src/design-system/landing.css`, and `tests/cherry/landing-winner.test.tsx`. It changes no runtime, dependency, package manifest, lockfile, protected W3/W4 surface, release-authority file, merge target, or deployment configuration.
+
+## Independent review remediation
+
+The two-stage review and hostile W7 pass found four W2-owned defects. The evidence cabinet and hero trust copy could render at 8 to 9 px on a 390 px viewport, the primary CTA promised to run a mission while opening an empty Mission Control composer, the required guided example link had been removed, and this report carried stale evidence hashes plus prohibited U+2014 punctuation.
+
+Test-first remediation was observed before production changes:
+
+- The expanded browser legibility guard failed first at 8 px, then at 9 px after it was extended to the eyebrow and trust line.
+- The CTA contract failed **1/11** because `Open Mission Control` was absent and the overstated label remained.
+- The guided-example contract failed **1/11** because `Try the guided example` was absent.
+
+After the fixes:
+
+- Focused Landing unit tests passed **14/14**.
+- `npm.cmd run audit:submission` passed with **0 FAIL / 0 WARN**, including the visible `/studio?demo=1` link.
+- The focused mobile, keyboard, reduced-motion, and accessibility browser test passed **1/1 in 2.7 seconds** against a fresh production build.
+- Focused ESLint passed.
+- The W2 report now records replay pin `bd68e563073fc63eb06902ae2747395ec447852f52b825c17b2bac8b5ec1ea23` and canonical LF-normalized capture SHA-256 `c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3`.
+- The append-only integration ledger records the exact W0 correction scope. No production runtime, W3/W4 surface, dependency, merge target, or deployment ownership was transferred.
+
+The Showcase cross-route fragment-scroll defect remains outside W2's lock in protected W3/release-authority code. W2 does not change or conceal it; W7 reports it as an integration blocker with exact sources and targets.
