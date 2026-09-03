@@ -136,11 +136,10 @@ drifted lockfile is what produced the one blank-page outage this project had.
 
 **Repository:** `https://github.com/vaibhav4046/cherry`, MIT.
 
-**Deploy of record:** `dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv`, prebuilt from the fresh clone at `deb6c0c` with the Vercel production env; the live entry chunk `index-BjqxL7nx.js` matches the built output.
+**Deploy of record:** `dpl_EQRAXjqxQHL5nPgzHicg2we9on4S`, prebuilt from the fresh clone at `d8c1efe` (the verified `deb6c0c` tree plus one Connect copy line naming where the site tools appear) with the Vercel production env; the live entry chunk `index-B4HdKDl9.js` matches the built output. The previous deploy of the night, `dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv`, was `deb6c0c` exactly.
 
-**GitHub push state:** pushed and verified. `origin/main` is `deb6c0c` plus the documentation
-commits that follow it (this amendment among them); the application code on the live deployment is
-exactly `deb6c0c`. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
+**GitHub push state:** pushed and verified. `origin/main` is `d8c1efe` plus the documentation
+commits that follow it; the application code on the live deployment is exactly `d8c1efe`. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
 returns 200 anonymously, which is only possible on a public repository, and `README.md`,
 `docs/HARNESS.md`, and `docs/media/cherry-landing.png` do the same.
 
