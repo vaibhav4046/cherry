@@ -3,11 +3,7 @@
     "argv": [
       "D:\\node.exe",
       "D:\\project\\cherry\\node_modules\\@playwright\\test\\cli.js",
-      "test",
-      "e2e/cherry/responsive.spec.ts",
-      "e2e/cherry/visual-qa.spec.ts",
-      "e2e/cherry/landing-god-mode.spec.ts",
-      "e2e/cherry/final-winner-landing.spec.ts"
+      "test"
     ],
     "configFile": "D:\\project\\cherry\\playwright.config.ts",
     "rootDir": "D:/project/cherry/e2e",
@@ -97,6 +93,737 @@
   },
   "suites": [
     {
+      "title": "cherry\\add-to-cherry.spec.ts",
+      "file": "cherry/add-to-cherry.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Add to Cherry",
+          "file": "cherry/add-to-cherry.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "puts every honest ingestion path behind the Command Center entry point",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9539,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:28.399Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-2518907c97c1ac69d2be",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "uploads a supported file locally and records its provenance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1618,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:43.964Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-a5dace3749f5e2483849",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 31,
+              "column": 3
+            },
+            {
+              "title": "makes all seven paths actionable on the second click",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6457,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:45.594Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-d7126446aa42c0e6a48b",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 76,
+              "column": 3
+            },
+            {
+              "title": "rejects unsupported files even when the browser picker filter is bypassed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1580,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:52.064Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-8eea33411f4c06cf3d01",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 106,
+              "column": 3
+            },
+            {
+              "title": "does not add a duplicate Back entry for a same-page source action",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2776,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:53.653Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-2cf1ec08d50657b3d71e",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 130,
+              "column": 3
+            },
+            {
+              "title": "continues the channel path into the human-approved runner step",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2209,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:56.437Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-93c45c1631d336b8a860",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 142,
+              "column": 3
+            },
+            {
+              "title": "keeps the seven-choice dialog keyboard-safe and axe-clean at phone width",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3677,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:09:58.656Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-7377e92522ac1c9afdcd",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 173,
+              "column": 3
+            },
+            {
+              "title": "uses the same entry point on Quick Skill and Sources",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3603,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:02.345Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e98576eb927fec2d7ec6-99939da14062bdb2c30e",
+              "file": "cherry/add-to-cherry.spec.ts",
+              "line": 188,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\channel-watch.spec.ts",
+      "file": "cherry/channel-watch.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "public YouTube channel watches",
+          "file": "cherry/channel-watch.spec.ts",
+          "line": 20,
+          "column": 6,
+          "specs": [
+            {
+              "title": "does nothing while unpaired and explains how to enable channel checks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3016,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:05.990Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ad095c448554a5a49b88-a598c10cb0d0e9f59f7d",
+              "file": "cherry/channel-watch.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "reconciles a paired runner result into one transcript-needed draft",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7548,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:09.051Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ad095c448554a5a49b88-f3b55ad3f2e9a086400e",
+              "file": "cherry/channel-watch.spec.ts",
+              "line": 41,
+              "column": 3
+            },
+            {
+              "title": "keeps a rejected daily registration recoverable before stopping and archiving",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5018,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:16.677Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ad095c448554a5a49b88-78cb94ee67ee0d3f5eb9",
+              "file": "cherry/channel-watch.spec.ts",
+              "line": 161,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\creators.spec.ts",
+      "file": "cherry/creators.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Creators watch engine",
+          "file": "cherry/creators.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "empty state, sample creator, transcript changes readiness, set aside persists, reset removes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 150000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 23701,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:21.756Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "21c89cde5e6780fb818d-09e77ab6f6ef4fad906d",
+              "file": "cherry/creators.spec.ts",
+              "line": 10,
+              "column": 3
+            },
+            {
+              "title": "keyboard-only: Follow a creator reaches the channel-watch dialog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3068,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:45.479Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "21c89cde5e6780fb818d-88dd83f87e9d90fcd984",
+              "file": "cherry/creators.spec.ts",
+              "line": 114,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\demo-recording-ui.spec.ts",
+      "file": "cherry/demo-recording-ui.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "real-run recording presentation",
+          "file": "cherry/demo-recording-ui.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "showcase exposes the labelled, accessible native recording",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4551,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:48.622Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "181b0dfd3ae04c5bc467-8480ddcc0eff2491b289",
+              "file": "cherry/demo-recording-ui.spec.ts",
+              "line": 8,
+              "column": 3
+            },
+            {
+              "title": "landing links the proof cabinet to the real run",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 991,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:53.184Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "181b0dfd3ae04c5bc467-28fcb754cc6dfa8fe4cd",
+              "file": "cherry/demo-recording-ui.spec.ts",
+              "line": 61,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\final-winner-control.spec.ts",
+      "file": "cherry/final-winner-control.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "final winner Mission Control",
+          "file": "cherry/final-winner-control.spec.ts",
+          "line": 33,
+          "column": 6,
+          "specs": [
+            {
+              "title": "fresh IndexedDB reaches a durable mission from one outcome",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3327,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:54.203Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "108a6f8e6fb82f5b33f1-2c1d98987726c3a461ff",
+              "file": "cherry/final-winner-control.spec.ts",
+              "line": 34,
+              "column": 3
+            },
+            {
+              "title": "a recoverable storage error leaves the outcome ready to retry",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1797,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:57.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "108a6f8e6fb82f5b33f1-595d8edff6d22d6bf75c",
+              "file": "cherry/final-winner-control.spec.ts",
+              "line": 56,
+              "column": 3
+            },
+            {
+              "title": "recorded replay works without a runner",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3437,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:10:59.349Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "108a6f8e6fb82f5b33f1-670c3e6fd0528e63a39a",
+              "file": "cherry/final-winner-control.spec.ts",
+              "line": 80,
+              "column": 3
+            },
+            {
+              "title": "390x844 is keyboard-safe, reduced-motion-safe, axe-clean and overflow-free",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3371,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:11:02.797Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "108a6f8e6fb82f5b33f1-c1ac3e070e50f380a764",
+              "file": "cherry/final-winner-control.spec.ts",
+              "line": 95,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "cherry\\final-winner-landing.spec.ts",
       "file": "cherry/final-winner-landing.spec.ts",
       "column": 0,
@@ -118,12 +845,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1896,
+                  "duration": 3836,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:23.923Z",
+                  "startTime": "2026-09-03T16:11:06.231Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -152,12 +879,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1265,
+                  "duration": 4006,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:26.992Z",
+                  "startTime": "2026-09-03T16:11:10.084Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -186,12 +913,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 991,
+                  "duration": 3362,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:28.266Z",
+                  "startTime": "2026-09-03T16:11:14.141Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -220,12 +947,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 447,
+                  "duration": 1367,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:29.271Z",
+                  "startTime": "2026-09-03T16:11:17.523Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -254,12 +981,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1468,
+                  "duration": 5026,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:29.728Z",
+                  "startTime": "2026-09-03T16:11:18.905Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -288,12 +1015,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 7403,
+                  "duration": 22078,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-03T15:58:31.205Z",
+                  "startTime": "2026-09-03T16:11:23.977Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -305,6 +1032,763 @@
           "file": "cherry/final-winner-landing.spec.ts",
           "line": 153,
           "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cherry\\final-winner-showcase.spec.ts",
+      "file": "cherry/final-winner-showcase.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "fresh showcase tells the evidence-first mission story and retains the Learn chapter",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5610,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:11:46.082Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bef802e5d6f169dab47-9b45ab57ab380c23fb17",
+          "file": "cherry/final-winner-showcase.spec.ts",
+          "line": 16,
+          "column": 1
+        },
+        {
+          "title": "recorded mission controls work from the keyboard and expose evidence",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2189,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:11:51.705Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bef802e5d6f169dab47-96347d333d862614a234",
+          "file": "cherry/final-winner-showcase.spec.ts",
+          "line": 43,
+          "column": 1
+        },
+        {
+          "title": "reduced motion shows a still and never autoplays the replay",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5037,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:11:53.905Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bef802e5d6f169dab47-48e2a1cebfc47c9afc35",
+          "file": "cherry/final-winner-showcase.spec.ts",
+          "line": 61,
+          "column": 1
+        },
+        {
+          "title": "390px presentation has no horizontal overflow or broken assets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:11:58.954Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6bef802e5d6f169dab47-a50c2be81a1a3b46e272",
+          "file": "cherry/final-winner-showcase.spec.ts",
+          "line": 73,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cherry\\first-skill.spec.ts",
+      "file": "cherry/first-skill.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "first skill",
+          "file": "cherry/first-skill.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "turns pasted text into an install-ready library skill in five clicks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3373,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:00.820Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5ff6bc05a8f9da273fa8-cca697f3926d4a5e1daa",
+              "file": "cherry/first-skill.spec.ts",
+              "line": 10,
+              "column": 3
+            },
+            {
+              "title": "uses the official YouTube player and a user-supplied transcript",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3710,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:04.205Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5ff6bc05a8f9da273fa8-0f49d0d7e01233db1d8f",
+              "file": "cherry/first-skill.spec.ts",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "keeps every file from an initial multi-file transcript upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4056,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:07.930Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5ff6bc05a8f9da273fa8-fa5d2cf5c6e9a49da327",
+              "file": "cherry/first-skill.spec.ts",
+              "line": 54,
+              "column": 3
+            },
+            {
+              "title": "keeps local capture secondary to the transcript review action",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2805,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:12.003Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5ff6bc05a8f9da273fa8-b6cf08fb4356054a6ed4",
+              "file": "cherry/first-skill.spec.ts",
+              "line": 78,
+              "column": 3
+            },
+            {
+              "title": "uses replace for the first successful file when an earlier batch file is malformed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4100,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:14.828Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5ff6bc05a8f9da273fa8-89ab4c70084c2add0753",
+              "file": "cherry/first-skill.spec.ts",
+              "line": 88,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\god-mode-mission.spec.ts",
+      "file": "cherry/god-mode-mission.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Mission Control without a runner",
+          "file": "cherry/god-mode-mission.spec.ts",
+          "line": 89,
+          "column": 6,
+          "specs": [
+            {
+              "title": "plans a mission from an outcome, refuses to start honestly, keeps it across reload, cancels",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7525,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:18.963Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ea2267adb04f6488957a-5b8a8d31294bc31682d8",
+              "file": "cherry/god-mode-mission.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "keyboard: the composer submits with Enter on the button and mobile has no overflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5485,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:26.533Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ea2267adb04f6488957a-e35c73a09e7221ac452d",
+              "file": "cherry/god-mode-mission.spec.ts",
+              "line": 133,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "Mission Control with a paired mock runner",
+          "file": "cherry/god-mode-mission.spec.ts",
+          "line": 147,
+          "column": 6,
+          "specs": [
+            {
+              "title": "two workers overlap, a failed check repairs once, the human decides, the mission completes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [
+                    {
+                      "type": "parallel-overlap",
+                      "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 59974,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:12:32.029Z",
+                      "annotations": [
+                        {
+                          "type": "parallel-overlap",
+                          "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ea2267adb04f6488957a-91a6f04813e6941734bb",
+              "file": "cherry/god-mode-mission.spec.ts",
+              "line": 168,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\golden-manual.spec.ts",
+      "file": "cherry/golden-manual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "golden manual journey",
+          "file": "cherry/golden-manual.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "a fresh user completes the full loop with real persisted state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 19938,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:13:39.035Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "417ea86cbde4b6cab3c9-3678f8e5665e0a4349bb",
+              "file": "cherry/golden-manual.spec.ts",
+              "line": 11,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\ingest.spec.ts",
+      "file": "cherry/ingest.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Save to Cherry ingest",
+          "file": "cherry/ingest.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "prefills a fresh article, waits for permission, and persists normalized provenance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3456,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:13:59.025Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "571b9a2d3f9e79848449-fc6f3da3c8613f820ef7",
+              "file": "cherry/ingest.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "saves text as a note without presenting or recording a permission assertion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2071,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:02.499Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "571b9a2d3f9e79848449-485d6cae9518651708d5",
+              "file": "cherry/ingest.spec.ts",
+              "line": 28,
+              "column": 3
+            },
+            {
+              "title": "selects YouTube only for an official YouTube query",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1450,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:04.615Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "571b9a2d3f9e79848449-67bcd43b10bb32d818c2",
+              "file": "cherry/ingest.spec.ts",
+              "line": 40,
+              "column": 3
+            },
+            {
+              "title": "renders the exact draggable bookmarklet without executing it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1273,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:06.080Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "571b9a2d3f9e79848449-53daf6b013b994465cac",
+              "file": "cherry/ingest.spec.ts",
+              "line": 46,
+              "column": 3
+            },
+            {
+              "title": "keeps the bookmarklet href after navigating from ingest to Sources",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2354,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:07.367Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "571b9a2d3f9e79848449-292d0268b62d05432caf",
+              "file": "cherry/ingest.spec.ts",
+              "line": 58,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\judge-card.spec.ts",
+      "file": "cherry/judge-card.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "the 90-second judge path on /showcase",
+          "file": "cherry/judge-card.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders on a fresh visit with four real steps, dismisses and restores across reloads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14862,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:09.779Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9a5b3e8b82cdca839325-127daa9c5972d39b8b74",
+              "file": "cherry/judge-card.spec.ts",
+              "line": 15,
+              "column": 3
+            }
+          ]
         }
       ]
     },
@@ -337,12 +1821,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1801,
+                      "duration": 5413,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:38.635Z",
+                      "startTime": "2026-09-03T16:14:24.670Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -371,12 +1855,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1913,
+                      "duration": 3568,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:40.446Z",
+                      "startTime": "2026-09-03T16:14:30.420Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -405,12 +1889,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 407,
+                      "duration": 1391,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:42.369Z",
+                      "startTime": "2026-09-03T16:14:34.076Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -439,12 +1923,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 457,
+                      "duration": 1753,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:42.784Z",
+                      "startTime": "2026-09-03T16:14:35.515Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -473,12 +1957,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 379,
+                      "duration": 1354,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:43.249Z",
+                      "startTime": "2026-09-03T16:14:37.278Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -507,12 +1991,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 435,
+                      "duration": 1428,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:43.635Z",
+                      "startTime": "2026-09-03T16:14:38.643Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -523,6 +2007,643 @@
               "id": "6f318cf4b286eb016bb4-a1d2aff4f5aca50a256e",
               "file": "cherry/landing-god-mode.spec.ts",
               "line": 175,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\library-actions.spec.ts",
+      "file": "cherry/library-actions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Library workflow actions",
+          "file": "cherry/library-actions.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "opens a prefilled disabled routine from an install-ready Library card",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7949,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:40.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f248addefedc6e593dda-5a74e57c2d37e3b32970",
+              "file": "cherry/library-actions.spec.ts",
+              "line": 17,
+              "column": 3
+            },
+            {
+              "title": "switches to the skill workspace before prefilling and never drafts automatically",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6194,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:48.141Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f248addefedc6e593dda-a1ee10744314be1c8225",
+              "file": "cherry/library-actions.spec.ts",
+              "line": 82,
+              "column": 3
+            },
+            {
+              "title": "fails closed when a shared routine link points to unavailable local data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1853,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:54.348Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f248addefedc6e593dda-8ee6dcd6dbeed1579461",
+              "file": "cherry/library-actions.spec.ts",
+              "line": 131,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\memory-routine.spec.ts",
+      "file": "cherry/memory-routine.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "memory and routine surfaces",
+          "file": "cherry/memory-routine.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "empty memory and run states teach one next step",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2111,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:56.258Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-04dd0ed7e189ce28fd93",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "unknown routes render a not-found page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 588,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:58.415Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-865ef482495c6c20a4a9",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 16,
+              "column": 3
+            },
+            {
+              "title": "memory vault exposes graph fallback and no overflow on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2521,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:14:59.015Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-bf3f12bc5e022de33d96",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "memory choices bind to the active project and keep approvals quiet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4123,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:01.549Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-75052cfb8745009a4fb0",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 40,
+              "column": 3
+            },
+            {
+              "title": "multiple runnable rows keep dispatch actions quiet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3500,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:05.721Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "49a1ccec214198d092ce-98cf0133ad6871caf726",
+              "file": "cherry/memory-routine.spec.ts",
+              "line": 97,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\performance-meta.spec.ts",
+      "file": "cherry/performance-meta.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "guest performance boundary",
+          "file": "cherry/performance-meta.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "configured guest routes never request the Privy SDK or its services",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4462,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:09.275Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-eb90d0ea6897b1672754",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 7,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "route metadata",
+          "file": "cherry/performance-meta.spec.ts",
+          "line": 38,
+          "column": 6,
+          "specs": [
+            {
+              "title": "uses specific metadata for real public and Studio routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3579,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:13.753Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-895599e630a1da908818",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 39,
+              "column": 3
+            },
+            {
+              "title": "prefix lookalikes and unknown Studio children keep 404 metadata",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1882,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:17.387Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-3d1259d5e430048b4adc",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 80,
+              "column": 3
+            },
+            {
+              "title": "serves the valid Open Graph image and wine SVG favicon",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1305,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:19.312Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-b6429e88837089b70b3a",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 92,
+              "column": 3
+            },
+            {
+              "title": "keeps the custom 404 available from the cached offline shell",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1959,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:20.638Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba0f12340033bd3c3103-7b7fa72f7b4d627bc6d9",
+              "file": "cherry/performance-meta.spec.ts",
+              "line": 111,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\plain-language.spec.ts",
+      "file": "cherry/plain-language.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "plain-language Studio",
+          "file": "cherry/plain-language.spec.ts",
+          "line": 20,
+          "column": 6,
+          "specs": [
+            {
+              "title": "keeps the first skill path focused on user outcomes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16171,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:22.660Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5f506c2edaca99e191ec-6f310afe32563c5323a0",
+              "file": "cherry/plain-language.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "keeps the guided walkthrough free of implementation nouns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4105,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:38.876Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5f506c2edaca99e191ec-e00cd295bfa985b4a93e",
+              "file": "cherry/plain-language.spec.ts",
+              "line": 121,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\quick-skill-resume.spec.ts",
+      "file": "cherry/quick-skill-resume.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Quick Skill recovery",
+          "file": "cherry/quick-skill-resume.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "survives refresh and history navigation without restoring authority from local storage",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10681,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:15:43.039Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3618732b7e1770231ef5-9b0872c709bdbb589e88",
+              "file": "cherry/quick-skill-resume.spec.ts",
+              "line": 10,
               "column": 3
             }
           ]
@@ -558,12 +2679,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 764,
+                      "duration": 2186,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:44.090Z",
+                      "startTime": "2026-09-03T16:15:53.751Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -592,12 +2713,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 751,
+                      "duration": 2056,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:44.861Z",
+                      "startTime": "2026-09-03T16:15:55.948Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -626,12 +2747,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 897,
+                      "duration": 1991,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:45.619Z",
+                      "startTime": "2026-09-03T16:15:58.051Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -660,12 +2781,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 789,
+                      "duration": 2110,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:46.522Z",
+                      "startTime": "2026-09-03T16:16:00.052Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -694,12 +2815,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 649,
+                      "duration": 1658,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:47.319Z",
+                      "startTime": "2026-09-03T16:16:02.238Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -728,12 +2849,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 219,
+                      "duration": 1034,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:47.976Z",
+                      "startTime": "2026-09-03T16:16:03.910Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -762,12 +2883,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1209,
+                      "duration": 4267,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:48.203Z",
+                      "startTime": "2026-09-03T16:16:04.992Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -796,12 +2917,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1054,
+                      "duration": 3242,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:49.421Z",
+                      "startTime": "2026-09-03T16:16:09.272Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -830,12 +2951,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1112,
+                      "duration": 2173,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:50.481Z",
+                      "startTime": "2026-09-03T16:16:12.559Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -864,12 +2985,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 978,
+                      "duration": 1926,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:55.683Z",
+                      "startTime": "2026-09-03T16:20:02.434Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -898,12 +3019,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 872,
+                      "duration": 2313,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:56.871Z",
+                      "startTime": "2026-09-03T16:20:05.347Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -932,12 +3053,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 903,
+                      "duration": 1882,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:57.760Z",
+                      "startTime": "2026-09-03T16:20:07.715Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -966,12 +3087,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 795,
+                      "duration": 1888,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:58.672Z",
+                      "startTime": "2026-09-03T16:20:09.609Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1000,12 +3121,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 716,
+                      "duration": 1834,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:59.475Z",
+                      "startTime": "2026-09-03T16:20:11.507Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1034,12 +3155,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 281,
+                      "duration": 1078,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T16:00:00.202Z",
+                      "startTime": "2026-09-03T16:20:13.385Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1068,12 +3189,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1173,
+                      "duration": 3651,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T16:00:00.494Z",
+                      "startTime": "2026-09-03T16:20:14.477Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1102,12 +3223,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1554,
+                      "duration": 2766,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T16:00:01.676Z",
+                      "startTime": "2026-09-03T16:20:18.140Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1136,12 +3257,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1130,
+                      "duration": 2079,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T16:00:03.240Z",
+                      "startTime": "2026-09-03T16:20:20.997Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1178,12 +3299,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1885,
+                      "duration": 3901,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:51.601Z",
+                      "startTime": "2026-09-03T16:16:14.759Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1212,12 +3333,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1655,
+                      "duration": 3561,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T16:00:04.378Z",
+                      "startTime": "2026-09-03T16:20:23.122Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1228,6 +3349,1065 @@
               "id": "764551a30f0c3008a13d-5292380c48981586da9d",
               "file": "cherry/responsive.spec.ts",
               "line": 67,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\showcase-host.spec.ts",
+      "file": "cherry/showcase-host.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "showcase: fresh journey through registered WebMCP closures",
+          "file": "cherry/showcase-host.spec.ts",
+          "line": 56,
+          "column": 6,
+          "specs": [
+            {
+              "title": "clear storage → discover → start → lesson → evidence → approval (human) → agent continues",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3807,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:18.696Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6d8e5e06fac85e388c9f-e85bfd21a61f8fa64d45",
+              "file": "cherry/showcase-host.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "showcase without a WebMCP host is honest and fully usable manually",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2859,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:22.553Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6d8e5e06fac85e388c9f-28a41d1f48be29dec301",
+              "file": "cherry/showcase-host.spec.ts",
+              "line": 189,
+              "column": 3
+            },
+            {
+              "title": "sample workspace is opt-in and visibly labelled",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2976,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:25.427Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6d8e5e06fac85e388c9f-5e148731d59ddbec2da8",
+              "file": "cherry/showcase-host.spec.ts",
+              "line": 198,
+              "column": 3
+            },
+            {
+              "title": "reset demo removes only demo workspaces and returns to a fresh session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4252,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:28.417Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6d8e5e06fac85e388c9f-cf79cff17fe77c91d90b",
+              "file": "cherry/showcase-host.spec.ts",
+              "line": 206,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\sources.spec.ts",
+      "file": "cherry/sources.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Source Inbox",
+          "file": "cherry/sources.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "saves user-selected note and article sources, survives reload, and reuses a lesson",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5370,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:32.726Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f974a77bec87ccd83aa8-06b1d88394d7f72e1dd9",
+              "file": "cherry/sources.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "surfaces explicit fetch limits without starting a request",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2212,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:38.111Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f974a77bec87ccd83aa8-c30fbe2655581b9d6f12",
+              "file": "cherry/sources.spec.ts",
+              "line": 33,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\starter-library.spec.ts",
+      "file": "cherry/starter-library.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "starter library loads once, serves cited skills to the host, and resets completely",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6486,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:16:40.399Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "36b8b1979d9c4dbeb8d2-cdc8fc6bfb555676a70e",
+          "file": "cherry/starter-library.spec.ts",
+          "line": 41,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cherry\\t11-misc-copy.spec.ts",
+      "file": "cherry/t11-misc-copy.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "T11 Studio copy surfaces",
+          "file": "cherry/t11-misc-copy.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "crew and connections explain the first run in plain language",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4329,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:46.945Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "32ec064f343afb6ea5b4-4808fa73cb7c4267f324",
+              "file": "cherry/t11-misc-copy.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "project, proof, and work thread empty states return to the one required first step",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2625,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:51.286Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "32ec064f343afb6ea5b4-bb2796c39b2c18863c2b",
+              "file": "cherry/t11-misc-copy.spec.ts",
+              "line": 58,
+              "column": 3
+            },
+            {
+              "title": "watch returns to the project and states its evidence limit as a sentence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2484,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:53.920Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "32ec064f343afb6ea5b4-b8ebb44c755a48ab4c73",
+              "file": "cherry/t11-misc-copy.spec.ts",
+              "line": 72,
+              "column": 3
+            },
+            {
+              "title": "file space uses project language and names a human edit as yours",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2907,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:16:56.414Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "32ec064f343afb6ea5b4-9e0655862e7772712c37",
+              "file": "cherry/t11-misc-copy.spec.ts",
+              "line": 90,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\t11-proof-copy.spec.ts",
+      "file": "cherry/t11-proof-copy.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "proof detail presents stored technical records in plain human-facing labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3063,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T16:16:59.377Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "607efd9179298f7330af-c9ebdc50c3aa89172cae",
+          "file": "cherry/t11-proof-copy.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cherry\\upgrade.spec.ts",
+      "file": "cherry/upgrade.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "landing upgrade",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "hero leads to Mission Control and the recorded product demos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 856,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:02.482Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-43e8c7d5e5382fc836bd",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "landing respects reduced motion and leaves the replay paused",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1162,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:03.377Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-def4167e96584a870440",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 13,
+              "column": 3
+            },
+            {
+              "title": "compatibility page renders honest status labels",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 847,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:04.555Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-d90fc5630af95342741b",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 23,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "guided example and walkthrough",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 43,
+          "column": 6,
+          "specs": [
+            {
+              "title": "the guided demo route loads the real example workspace and starts the tour",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4315,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:05.413Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-dd6cc1321428442b2c43",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "walkthrough is replayable from the Command Center",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3033,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:09.773Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-aedc51a44eede660a3ac",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 86,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "agent view (MCP inspector)",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 98,
+          "column": 6,
+          "specs": [
+            {
+              "title": "manual mode shows the honest aperture story with zero fake activity",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2852,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:12.818Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-bf21e9df9952a90899df",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 99,
+              "column": 3
+            },
+            {
+              "title": "teach CTA routes into the Quick Skill wizard once a workspace exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2463,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:15.714Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-4295e3d79de3dd71a1d3",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 123,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "upgrade accessibility",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 133,
+          "column": 6,
+          "specs": [
+            {
+              "title": "compatibility page has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2781,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:18.189Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-f5ececc79a897b84dafa",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 134,
+              "column": 3
+            },
+            {
+              "title": "agent view has no serious axe violations and the tour card is a labelled dialog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4453,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:20.981Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-d32e87de9c9d80414232",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 143,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "quick skill wizard",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 157,
+          "column": 6,
+          "specs": [
+            {
+              "title": "URL to installable skill: transcript in, approved bundle out",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2267,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:25.477Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-486040bf4604448a3d49",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 158,
+              "column": 3
+            },
+            {
+              "title": "wizard refuses an empty transcript path honestly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1857,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:27.756Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-9125a997b5c9cea45a43",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 195,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "notebook (sources · overview · studio)",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 203,
+          "column": 6,
+          "specs": [
+            {
+              "title": "drop sources, get an instant overview, generate a real briefing artifact",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3161,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:29.625Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-10236cdd3e41512f2113",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 204,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\upload-preflight.spec.ts",
+      "file": "cherry/upload-preflight.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "upload preflight boundaries",
+          "file": "cherry/upload-preflight.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "rejects an empty transcript before entering the notebook",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1857,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:32.843Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9936f63d3be36f58fa6a-02c4344bb0530b504b8d",
+              "file": "cherry/upload-preflight.spec.ts",
+              "line": 11,
+              "column": 3
+            },
+            {
+              "title": "keeps mixed-batch failures visible after importing valid files",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1951,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:34.710Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9936f63d3be36f58fa6a-392c555c7c3978ec142c",
+              "file": "cherry/upload-preflight.spec.ts",
+              "line": 32,
+              "column": 3
+            },
+            {
+              "title": "rejects unsupported and empty workspace files without importing a space",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1588,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:17:36.673Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9936f63d3be36f58fa6a-bb52e0326c6b57b2600c",
+              "file": "cherry/upload-preflight.spec.ts",
+              "line": 52,
               "column": 3
             }
           ]
@@ -1263,12 +4443,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 7941,
+                      "duration": 21681,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:58:53.510Z",
+                      "startTime": "2026-09-03T16:17:38.313Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1297,7 +4477,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 10298,
+                      "duration": 17801,
                       "errors": [],
                       "stdout": [
                         {
@@ -1306,7 +4486,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:01.465Z",
+                      "startTime": "2026-09-03T16:18:00.014Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1335,7 +4515,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12185,
+                      "duration": 20449,
                       "errors": [],
                       "stdout": [
                         {
@@ -1344,7 +4524,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:11.772Z",
+                      "startTime": "2026-09-03T16:18:17.844Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1373,12 +4553,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6514,
+                      "duration": 17753,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:23.965Z",
+                      "startTime": "2026-09-03T16:18:38.303Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1407,7 +4587,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 11367,
+                      "duration": 14082,
                       "errors": [],
                       "stdout": [
                         {
@@ -1416,7 +4596,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:30.489Z",
+                      "startTime": "2026-09-03T16:18:56.073Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1445,7 +4625,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12869,
+                      "duration": 16376,
                       "errors": [],
                       "stdout": [
                         {
@@ -1454,7 +4634,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T15:59:41.865Z",
+                      "startTime": "2026-09-03T16:19:10.199Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1470,13 +4650,455 @@
           ]
         }
       ]
+    },
+    {
+      "title": "cherry\\watch-history.spec.ts",
+      "file": "cherry/watch-history.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Local YouTube watch-history import",
+          "file": "cherry/watch-history.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "uses a modal keyboard path and restores focus on Escape",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1624,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:26.595Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c385bb933e96a3fed348-14660f2d1d991448913b",
+              "file": "cherry/watch-history.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "ranks a local Takeout file without network activity and saves only the chosen source",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3264,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:28.262Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c385bb933e96a3fed348-a757b9eee20e1cb3f690",
+              "file": "cherry/watch-history.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "offers a deterministic pasted-URL fallback without inventing titles",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2769,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:31.536Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c385bb933e96a3fed348-10fe726a7a6555d219fe",
+              "file": "cherry/watch-history.spec.ts",
+              "line": 64,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\webmcp-god-mode.spec.ts",
+      "file": "cherry/webmcp-god-mode.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "WebMCP mission tools on Mission Control",
+          "file": "cherry/webmcp-god-mode.spec.ts",
+          "line": 59,
+          "column": 6,
+          "specs": [
+            {
+              "title": "tools appear only on Mission Control, drive a mission, refuse an unpaired start, and land in Agent View",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4581,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:34.451Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "060c5eae5f6f79d24336-f13b1ef77686e3094f60",
+              "file": "cherry/webmcp-god-mode.spec.ts",
+              "line": 60,
+              "column": 3
+            },
+            {
+              "title": "a visiting agent can still reach the approved skill library from Mission Control",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 936,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:39.043Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "060c5eae5f6f79d24336-62921640e30f5b655046",
+              "file": "cherry/webmcp-god-mode.spec.ts",
+              "line": 129,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\workforce.spec.ts",
+      "file": "cherry/workforce.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "workforce: crew, inbox, work thread",
+          "file": "cherry/workforce.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "starter crew → handoff → thread → legal transitions only",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4374,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:40.075Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5f7db527ef0c540abae1-ebdc0b57fa04429dabdf",
+              "file": "cherry/workforce.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "routines page renders honestly with no routines yet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2499,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:44.466Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5f7db527ef0c540abae1-68eb75cbe26bb1df453b",
+              "file": "cherry/workforce.spec.ts",
+              "line": 57,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\youtube-source.spec.ts",
+      "file": "cherry/youtube-source.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "YouTube source polish",
+          "file": "cherry/youtube-source.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "fetches a title only on click and offers the transcript paths on the saved source",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2999,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:47.018Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0ca8cbfcc614ef32dfb6-6ac46e0e5179d8d663e3",
+              "file": "cherry/youtube-source.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "does not apply a delayed title after the user edits the form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2556,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:50.060Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0ca8cbfcc614ef32dfb6-949330eb81d47e84ec1e",
+              "file": "cherry/youtube-source.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "closes the modal with Escape and returns focus to its trigger",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1715,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:52.628Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0ca8cbfcc614ef32dfb6-0ac7c0ec2d59779a8686",
+              "file": "cherry/youtube-source.spec.ts",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "keeps a save failure visible and focused inside the modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3576,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:19:54.393Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0ca8cbfcc614ef32dfb6-4c7dacfe6f4c72271506",
+              "file": "cherry/youtube-source.spec.ts",
+              "line": 90,
+              "column": 3
+            }
+          ]
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-03T15:58:23.204Z",
-    "duration": 103014.603,
-    "expected": 38,
+    "startTime": "2026-09-03T16:07:13.656Z",
+    "duration": 794612.125,
+    "expected": 130,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
