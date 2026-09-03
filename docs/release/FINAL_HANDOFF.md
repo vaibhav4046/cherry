@@ -2,7 +2,7 @@
 
 **Assembled:** 2026-09-02, London morning cycle; **amended** 2026-09-02 afternoon after the Creators engine and the judge card shipped; **amended again** 2026-09-03 at 02:00 London after God Mode v2 and the Winner OS lanes went live
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** `74b26ff` (morning amendment after the landing lane and the red team; earlier signatures were `b6b7d11`, `e81dbc3`, `deb6c0c` and `48f82e7`)
+**Signed against commit:** `9d906b5` (morning amendment after the landing lane and the red team; earlier signatures were `b6b7d11`, `e81dbc3`, `deb6c0c` and `48f82e7`)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -146,12 +146,9 @@ path.
 
 **Repository:** `https://github.com/vaibhav4046/cherry`, MIT.
 
-**Deploy of record:** `dpl_EQRAXjqxQHL5nPgzHicg2we9on4S`, prebuilt from the fresh clone at `d8c1efe` (the verified `deb6c0c` tree plus one Connect copy line naming where the site tools appear) with the Vercel production env. Since the Vercel Git integration also deploys on push, the live deploy serves the current `main` tree; chunk names vary with the build environment, so a chunk name is not the check. The release manager verifies the live site after every deploy. The previous deploy of the night, `dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv`, was `deb6c0c` exactly.
+**Deploy of record:** `dpl_DvMdxNXjskwbZSfdK18rzZ6E4hs8`, prebuilt from the verified clone at `9d906b5` with the Vercel production env; the live entry chunk matches the built output, and the release manager checks the live routes after every deploy. Git-triggered production builds are disabled for main (`vercel.json`), so production only ever comes from output that passed the gates.
 
-**GitHub push state:** pushed and verified. `origin/main` is `d8c1efe` plus the documentation
-commits that follow it; the live deployment tracks `main`. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
-returns 200 anonymously, which is only possible on a public repository, and `README.md`,
-`docs/HARNESS.md`, and `docs/media/cherry-landing.png` do the same.
+**GitHub push state:** the repository is public and current as of `599ec39`. Pushes from the owner's machine began hanging on the afternoon of 3 September (reads answer instantly, `git push` does not return), so the last copy commits may reach `origin/main` after this signature; the live deployment is built from the release manager's verified clone and does not depend on that push. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md` returns 200 anonymously, which is only possible on a public repository.
 
 **Gate counts on the signed commit:**
 
