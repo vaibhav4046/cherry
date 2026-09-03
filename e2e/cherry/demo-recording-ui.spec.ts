@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const RECORDING_LABEL =
-  'Uncut recording of the automated end-to-end test driving the real product. Nothing staged.';
+  'Uncut recording of the automated end-to-end test driving the real app.';
 
 test.describe('real-run recording presentation', () => {
   test('showcase exposes the labelled, accessible native recording', async ({ page }) => {

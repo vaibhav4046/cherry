@@ -304,7 +304,7 @@ export function HumanSealEvidence() {
         <p className="landing-note-label">Your approval</p>
         <h3>Cherry does not publish without you.</h3>
         <p>In this recorded run, Cherry published nothing. Only you can approve or publish work.</p>
-        <p>Live work runs only while your paired computer is online. Cherry brings approval and publishing decisions back to you.</p>
+        <p>Live work runs only while your paired computer is online.</p>
       </div>
     </div>
   );
@@ -346,9 +346,9 @@ export function VerifiedDemoCabinet({ replay }: { replay: ReplayState }) {
   return (
     <section className="landing-proof-cabinet" data-testid="proof-cabinet" aria-labelledby="proof-cabinet-heading">
       <header className="landing-proof-cabinet__heading">
-        <p className="landing-note-label">EXPLORE THE PRODUCT</p>
-        <h2 id="proof-cabinet-heading">Four demos. Each shows what Cherry actually did.</h2>
-        <p>Each demo links to the details behind it.</p>
+        <p className="landing-note-label">DEMOS</p>
+        <h2 id="proof-cabinet-heading">Four demos you can open now.</h2>
+        <p>Each opens the recording, page or file it came from.</p>
       </header>
       <div className="landing-proof-cabinet__grid">
         {VERIFIED_DEMOS.map((demo, index) => {
@@ -391,7 +391,7 @@ export function SeedBankEvidence() {
       <div className="landing-archive-note">
         <p className="landing-note-label">Reusable skill</p>
         <h3>Approve the exact version you reviewed.</h3>
-        <p>Once you approve a version, your workers can install that skill later. Source material stays reference data, not instructions.</p>
+        <p>Once you approve a version, your workers can install that skill later. Text from a source is treated as data, never as instructions.</p>
         <ol aria-label="Skill promotion path">
           <li>Checks pass</li>
           <li>You review it</li>

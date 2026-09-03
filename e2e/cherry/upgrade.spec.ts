@@ -104,7 +104,7 @@ test.describe('agent view (MCP inspector)', () => {
 
     await expect(page.getByTestId('agent-mode')).toContainText('Manual mode');
     await expect(page.getByTestId('agent-phase')).toContainText('Verified, export ready');
-    await expect(page.getByRole('heading', { name: 'Agent brief, guided by you' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Agent brief' })).toBeVisible();
     await expect(page.getByTestId('autopilot-card')).toContainText('Do not claim to watch or understand video frames.');
     await expect(page.getByTestId('autopilot-card')).not.toContainText(/browser vision|WATCH the embedded/i);
     await expect(page.getByTestId('autopilot-card')).toContainText(

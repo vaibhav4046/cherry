@@ -47,7 +47,7 @@ const ROWS: Row[] = [
   {
     surface: 'ChatGPT and Codex built-in browsers (a live WebMCP host)',
     status: 'experimental',
-    evidence: 'Implemented against the current registerTool API and feature-detected. Not yet exercised inside a live proprietary client from this environment; the Agent View and Connections diagnostics show live registration state the moment one attaches. We say this plainly instead of claiming it.',
+    evidence: 'Implemented against the current registerTool API and feature-detected. Not yet exercised inside a live proprietary client from this environment; the Agent View and Connections diagnostics show live registration state the moment one attaches.',
   },
   {
     surface: 'Chrome with the WebMCP flag',
@@ -122,7 +122,7 @@ const ROWS: Row[] = [
   {
     surface: 'Syncing between your devices',
     status: 'roadmap',
-    evidence: 'Deliberately outside golden v1. No UI pretends it exists.',
+    evidence: 'Out of scope for v1. No screen pretends it exists.',
   },
   {
     surface: 'Accounts (Privy, opt-in)',
@@ -145,26 +145,26 @@ export function Compatibility() {
         <div className="band-inner stack" style={{ gap: 'var(--sp-6)' }}>
           <h1 className="display-sm">What is proven, and what is not</h1>
           <p className="subhead" style={{ maxWidth: 760 }}>
-            Every claim below is labelled by what actually happened. <strong>Validated</strong> means
+            Each row says what was actually run. <strong>Validated</strong> means
             automated tests in this repository, or a captured live session recorded here, exercised it.{' '}
             <strong>Shipped</strong> means implemented and covered, but the external end of the wire was not
             automated. <strong>Experimental</strong> means built to the documented contract, awaiting a live
             host. <strong>Roadmap</strong> means it does not exist yet, and no screen pretends it does.
           </p>
           <div className="card stack" style={{ maxWidth: 760 }}>
-            <h2 className="subhead" style={{ margin: 0 }}>Who this is for, concretely</h2>
+            <h2 className="subhead" style={{ margin: 0 }}>Who this is for</h2>
             <p style={{ margin: 0 }}>
-              The first user is a solo builder who already pays for Codex or ChatGPT and learns their craft
-              from other builders on YouTube and in long posts. Today they watch forty minutes to extract a
-              six-step process, apply it by hand, and then re-explain it from scratch to every agent, in every
-              tool, every time — because the useful part died in a chat transcript. Nothing they teach an agent
-              is versioned, portable, or checkable, so they cannot safely let it run unattended either.
+              The first user is a solo builder who already pays for Codex or ChatGPT and learns from other
+              builders on YouTube and in long posts. They watch forty minutes to get a six-step process,
+              apply it by hand, then explain it again from scratch to every agent, in every tool, every
+              time. Nothing they teach an agent is versioned, portable, or checkable, so they cannot leave
+              it running unattended either.
             </p>
             <p style={{ margin: 0 }}>
-              Cherry is the layer that keeps it: the method becomes a versioned skill with its evidence, the
-              person approves an exact revision, and from then on any agent that speaks WebMCP, MCP, or the
-              Agent Skills format can use it — pinned to that approved revision, with a hash it can verify.
-              We have not run a formal user study, and this page does not claim one.
+              Cherry stores the method as a versioned skill with its evidence. You approve one exact
+              revision, and any agent that speaks WebMCP, MCP, or the Agent Skills format can use that
+              revision and check its hash. We have not run a formal user study, and this page does not
+              claim one.
             </p>
           </div>
           <p className="row" aria-label="Status legend" style={{ margin: 0 }}>

@@ -11,6 +11,23 @@
    because they damage a warm editorial brand. */
 
 :root {
+  /* Family tokens live here, not in fonts.css, because tokens.css redefines
+     --font-sf-pro-* after fonts.css loads and would win on source order. The
+     old alias names are kept pointing at the new faces so nothing that
+     referenced them breaks. Faces themselves are declared in fonts.css. */
+  --font-display: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif', Georgia, serif;
+  --font-ui: 'Figtree', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, monospace;
+  --font-sf-pro-display: var(--font-display);
+  --font-sf-pro-text: var(--font-ui);
+  --font-script: var(--font-display);
+
+  /* --color-ash shipped as #707070, which cleared 4.5:1 on pure frost by 0.05
+     and failed on any tinted surface (4.39:1 on the panel). Every consumer of
+     it inherits the fix, which is why this belongs on the token rather than on
+     the handful of classes that happened to fail first. Warm, to suit cream. */
+  --color-ash: #5f5750;
+
   /* One hairline, warm rather than neutral: a grey rule reads dirty on cream. */
   --hairline: 1px solid rgba(46, 20, 24, 0.12);
   --hairline-strong: 1px solid rgba(46, 20, 24, 0.20);
@@ -139,6 +156,75 @@
   font-size: 12px;
   text-transform: none;
   letter-spacing: 0;
+}
+
+/* ---- Uppercase is for labels, not for prose ----------------------------- */
+
+/* `.label` and the showcase kicker were carrying whole sentences in 12px
+   uppercase with label tracking - one of them 171 characters long. Uppercase
+   removes word shape, which is exactly the cue a reader uses to skim, so long
+   runs of it read as an internal tool and are genuinely harder to read. Short
+   status chips (.sticker) keep their uppercase; running text does not. */
+.label,
+.showcase-kicker,
+.showcase-authority-note,
+.showcase-learn__legacy-title {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+/* --color-ash (#707070) cleared 4.5:1 on pure frost by 0.05 and failed the
+   moment a card carried any tint: on the panel surface it measures 4.39:1.
+   A warm graphite clears it with real margin (about 6.5:1) and matches the
+   brand better than a neutral grey on cream. */
+.label {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #574e4a;
+}
+
+/* Sections that paint a dark ground need the inverse, or the same rule would
+   make these labels unreadable. */
+.landing-chapter--seal .label,
+.landing-proof-cabinet .label,
+.recorded-mission .label,
+.landing-footer .label,
+.studio-rail .label {
+  color: var(--paper-2);
+}
+
+/* ---- One showcase scale, not five --------------------------------------- */
+
+/* The page carried five different H2 sizes at the same semantic level (51.5,
+   38, 35.5, 34 and 21px). Two tiers is a system; five is an accumulation. */
+.winner-showcase__story > h2,
+.showcase-learn > h2,
+.showcase-recording > h2,
+.showcase-chapter > h2 {
+  font-size: clamp(30px, 3.2vw, 40px);
+  line-height: 1.15;
+}
+
+.showcase-learn .card > h2,
+.winner-showcase .card > h2,
+main .card > h2 {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+/* Depth by hairline, matching the rest of the system. */
+.mission-film,
+.showcase-proof-chapter__art,
+.recorded-mission {
+  box-shadow: none;
+}
+
+/* Translucent panels pick up whatever is behind them, so the same card reads as
+   a different colour in different sections. Opaque, so a card is one colour. */
+main .card,
+.showcase-rail,
+.showcase-chapter {
+  background-color: var(--surface-panel);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -14,12 +14,12 @@ function meta(title: string, description: string): RouteMetadata {
 
 const STUDIO_META = meta(
   `Studio · ${SITE}`,
-  'Teach, approve, verify, and ship skills to every agent you use.',
+  'Turn what you know into skills your agents can install.',
 );
 
 const NOT_FOUND_META = meta(
   `Page not found · ${SITE}`,
-  'That page does not exist. The rest of Cherry does.',
+  'That page does not exist.',
 );
 
 /** Metadata routes mirror App and inherit React Router's matching semantics. */
@@ -28,12 +28,12 @@ const META_ROUTES: RouteObject[] = [
     path: '/',
     handle: meta(
       'Cherry · One task. An entire AI team.',
-      'Cherry turns the agent hosts you already use into teammates with tools, memory and isolated workspaces. Codex execution is captured today; Claude Code and local models are labelled experimental. Work runs in parallel on your paired runner and returns with checked results. Open source, local-first.',
+      'Cherry hands one goal to several agents at once, each in its own workspace on your computer, and checks what comes back. Codex execution is captured. Claude Code and local models are labelled experimental. Open source and local-first.',
     ),
   },
   {
     path: '/showcase',
-    handle: meta(`Showcase · ${SITE}`, 'A recorded real Codex mission, replayed from evidence checked against its fingerprint, then the guided source-to-skill journey.'),
+    handle: meta(`Showcase · ${SITE}`, 'A recorded Codex run, replayed from a file checked against its hash, then the same lesson walkthrough by hand.'),
   },
   {
     path: '/connect',
@@ -44,7 +44,7 @@ const META_ROUTES: RouteObject[] = [
   },
   {
     path: '/compatibility',
-    handle: meta(`What's proven · ${SITE}`, 'Every capability labeled by the test that actually backs it.'),
+    handle: meta(`What's proven · ${SITE}`, 'Each capability, and the test that backs it.'),
   },
   {
     path: '/ingest',
@@ -57,7 +57,7 @@ const META_ROUTES: RouteObject[] = [
       { index: true, handle: STUDIO_META },
       {
         path: 'control',
-        handle: meta(`Missions · ${SITE}`, 'Give Cherry an outcome. It plans the team, runs the work on your paired runner, checks the result, and returns when your decision is needed.'),
+        handle: meta(`Missions · ${SITE}`, 'Describe what you want. Cherry plans the tasks, runs them on your paired runner, and comes back when it needs a decision.'),
       },
       {
         path: 'control/:missionId',
@@ -90,7 +90,7 @@ const META_ROUTES: RouteObject[] = [
       },
       {
         path: 'inbox',
-        handle: meta(`Work inbox · ${SITE}`, 'Work items, owners, and honest state transitions.'),
+        handle: meta(`Work inbox · ${SITE}`, 'Work items, who owns them, and every state change.'),
       },
       {
         path: 'work/:workItemId',
@@ -165,7 +165,7 @@ const META_ROUTES: RouteObject[] = [
       },
       {
         path: 'agent',
-        handle: meta(`Agent view · ${SITE}`, 'Live WebMCP registrations and the real tool call log.'),
+        handle: meta(`Agent view · ${SITE}`, 'Live WebMCP registrations and the tool call log.'),
       },
       {
         path: 'settings/connections',

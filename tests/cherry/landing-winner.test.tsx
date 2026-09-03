@@ -166,7 +166,7 @@ describe('winner landing', () => {
     expect(mcpProof.textContent).toContain('local MCP connection');
 
     expect(container.querySelectorAll('[data-landing-chapter]')).toHaveLength(6);
-    expect(cabinet.textContent).toContain('Each demo links to the details behind it.');
+    expect(cabinet.textContent).toContain('Each opens the recording, page or file it came from.');
     expect(container.textContent).not.toMatch(/AAA|Sora|live ChatGPT|works in ChatGPT|runs inside ChatGPT|(?:Sol|Terra|Luna) (?:executes|runs)/i);
   });
 

@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+// Self-hosted faces must register before the token sheet reads them.
+import './design-system/fonts.css';
 import './design-system/tokens.css';
 import './design-system/ui-foundation.css';
 import './design-system/shell.css';

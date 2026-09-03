@@ -50,7 +50,7 @@
 }
 
 .landing-nav__wordmark {
-  font: 500 19px/1 Georgia, 'Times New Roman', serif;
+  font: 500 19px/1 var(--font-display);
   letter-spacing: -0.03em;
 }
 
@@ -117,11 +117,11 @@
 .landing-hero h1 {
   max-width: 9ch;
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: clamp(48px, 5.4vw, 80px);
   font-weight: 500;
-  letter-spacing: -0.055em;
-  line-height: 0.94;
+  letter-spacing: -0.005em;
+  line-height: 1.06;
 }
 
 .landing-hero__summary {
@@ -209,7 +209,7 @@
 .landing-proof-rail strong {
   margin-right: 2px;
   color: var(--chronicle-wine);
-  font: 500 18px/1 Georgia, 'Times New Roman', serif;
+  font: 500 18px/1 var(--font-display);
 }
 
 .landing-replay {
@@ -312,11 +312,11 @@
 .landing-final h2 {
   max-width: 18ch;
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: clamp(38px, 5vw, 68px);
   font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 1;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
 }
 
 .landing-chapter__copy > p:last-child,
@@ -399,7 +399,7 @@
 
 .landing-live-note > p {
   margin: 14px 0 18px;
-  font: 500 clamp(19px, 2vw, 26px)/1.25 Georgia, serif;
+  font: 500 clamp(19px, 2vw, 26px)/1.25 var(--font-display);
 }
 
 .landing-live-note dl,
@@ -464,7 +464,7 @@
 
 .landing-overlap strong {
   margin-top: 6px;
-  font: 500 clamp(34px, 4vw, 52px)/1 Georgia, serif;
+  font: 500 clamp(34px, 4vw, 52px)/1 var(--font-display);
 }
 
 .landing-overlap p { margin: 10px 0 0; line-height: 1.45; }
@@ -488,7 +488,7 @@
 
 .landing-workspaces article > strong {
   margin: 5px 0 10px;
-  font: 500 24px/1 Georgia, serif;
+  font: 500 24px/1 var(--font-display);
 }
 
 .landing-commit {
@@ -538,13 +538,13 @@
   display: grid;
   place-items: center;
   color: #f2b5c2;
-  font: 500 clamp(36px, 5vw, 62px)/1 Georgia, serif;
+  font: 500 clamp(36px, 5vw, 62px)/1 var(--font-display);
 }
 
 .landing-human-seal h3,
 .landing-archive-note h3 {
   margin: 12px 0;
-  font: 500 clamp(30px, 4vw, 52px)/1.04 Georgia, serif;
+  font: 500 clamp(30px, 4vw, 52px)/1.04 var(--font-display);
 }
 
 .landing-human-seal p:not(.landing-note-label) {
@@ -572,7 +572,7 @@
 .landing-proof-cabinet__heading h2 {
   grid-row: span 2;
   margin: 0;
-  font: 500 clamp(38px, 5vw, 66px)/1 Georgia, serif;
+  font: 500 clamp(38px, 5vw, 66px)/1 var(--font-display);
   letter-spacing: -0.04em;
 }
 
@@ -617,7 +617,7 @@
 .landing-proof-cabinet__index {
   display: block;
   color: #b9a9a0;
-  font: 500 24px/1 Georgia, serif;
+  font: 500 24px/1 var(--font-display);
 }
 
 .landing-proof-cabinet__labels {
@@ -641,7 +641,7 @@
 
 .landing-proof-cabinet__grid h3 {
   margin: 18px 0 10px;
-  font: 500 clamp(23px, 2.4vw, 32px)/1.05 Georgia, serif;
+  font: 500 clamp(23px, 2.4vw, 32px)/1.05 var(--font-display);
 }
 
 .landing-proof-cabinet__grid p {

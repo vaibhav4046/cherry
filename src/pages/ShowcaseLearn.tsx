@@ -155,7 +155,7 @@ export function ShowcaseLearn() {
         return;
       }
       setActiveWorkspace(workspace.value.id);
-      setNotice('Fresh workspace created. An attached agent can now call start_apprenticeship — or use the buttons above.');
+      setNotice('Fresh workspace created. An attached agent can call start_apprenticeship, or use the buttons above.');
     } catch (startError) {
       setError(startError instanceof Error ? startError.message : 'Unable to create a workspace.');
     } finally {
@@ -245,7 +245,7 @@ export function ShowcaseLearn() {
       setNotice(
         result.value.deleted > 0
           ? `Reset: removed ${result.value.deleted} demo workspace(s). Your own workspaces were not touched.`
-          : 'Nothing to reset — no demo workspaces exist.',
+          : 'Nothing to reset. No demo workspaces exist.',
       );
     } catch (resetError) {
       setError(resetError instanceof Error ? resetError.message : 'Unable to reset the showcase.');
@@ -280,8 +280,8 @@ export function ShowcaseLearn() {
     {
       title: '1 · Source permission',
       detail: data.lesson
-        ? `${data.lesson.kind === 'youtube' ? 'YouTube (official player)' : 'Manual material'} — "${data.lesson.title}"`
-        : 'No source yet. Load a permitted lesson — rights are acknowledged explicitly, never assumed.',
+        ? `${data.lesson.kind === 'youtube' ? 'YouTube (official player)' : 'Manual material'}: "${data.lesson.title}"`
+        : 'No source yet. Load a lesson you are allowed to use. Cherry records that you said so and never assumes it.',
       status: data.lesson ? 'done' : 'todo',
       href: data.lesson ? `/studio/watch/${data.lesson.id}` : undefined,
     },
@@ -296,7 +296,7 @@ export function ShowcaseLearn() {
       title: '3 · Timestamped evidence',
       detail:
         data.evidence.length + data.transcriptCount + data.observationCount > 0
-          ? `${data.evidence.length} evidence records · ${data.transcriptCount} transcript segments · ${data.observationCount} observations — external content starts untrusted`
+          ? `${data.evidence.length} evidence records · ${data.transcriptCount} transcript segments · ${data.observationCount} observations. Text from outside starts untrusted.`
           : 'No evidence yet. Everything a source says stays data until you promote it.',
       status: data.evidence.length + data.transcriptCount + data.observationCount > 0 ? 'done' : 'todo',
     },
@@ -311,7 +311,7 @@ export function ShowcaseLearn() {
     {
       title: '5 · Exact revision',
       detail: data.skillGraph?.versionHash
-        ? `Revision r${data.skillGraph.revision} · hash ${data.skillGraph.versionHash.slice(0, 12)}… — any edit invalidates approval`
+        ? `Revision r${data.skillGraph.revision} · hash ${data.skillGraph.versionHash.slice(0, 12)}…. Any edit invalidates the approval.`
         : 'Approval is pinned to the exact revision you read. Any edit makes it stale.',
       status: data.skillGraph ? 'done' : 'todo',
     },
@@ -320,7 +320,7 @@ export function ShowcaseLearn() {
       detail: approvedExact
         ? `Approved at exactly r${data.skillGraph!.approvedRevision}`
         : data.pendingApproval
-          ? `PENDING for r${data.pendingApproval.objectRevision} — only you can decide, in the inspector`
+          ? `PENDING for r${data.pendingApproval.objectRevision}. Only you can decide, in the inspector.`
           : `${data.decidedApprovals} decided · no pending request`,
       status: approvedExact ? 'done' : data.pendingApproval ? 'now' : 'todo',
     },
@@ -337,15 +337,15 @@ export function ShowcaseLearn() {
       title: '8 · Honest failure',
       detail:
         failedVerifications.length > 0
-          ? `${failedVerifications.length} failed run(s) preserved — ${failedVerifications[0]!.blockingFailures} blocking failure(s) recorded, never hidden`
-          : 'No failure recorded yet. If the first run passes, that is the truth too.',
+          ? `${failedVerifications.length} failed run(s) kept, with ${failedVerifications[0]!.blockingFailures} blocking failure(s) recorded.`
+          : 'No failure recorded yet. A first-run pass is recorded the same way.',
       status: failedVerifications.length > 0 ? 'done' : 'todo',
     },
     {
       title: '9 · Repair',
       detail:
         failedVerifications.length > 0 && passedVerification
-          ? 'Repaired and re-verified — the failure stays in the receipt'
+          ? 'Repaired and re-verified. The failure stays in the receipt.'
           : 'A repair only counts when the same assertions pass afterwards.',
       status: failedVerifications.length > 0 && passedVerification ? 'done' : 'todo',
     },
@@ -353,14 +353,14 @@ export function ShowcaseLearn() {
       title: '10 · Verified pass',
       detail: passedVerification
         ? `${passedVerification.totalAssertions - passedVerification.blockingFailures}/${passedVerification.totalAssertions} assertions passed`
-        : 'Deterministic checks over the real files — no provider says "looks good".',
+        : 'Checks run over the real files. No model is asked for an opinion.',
       status: passedVerification ? 'done' : 'todo',
     },
     {
       title: '11 · Portable bundle',
       detail:
         activeMission?.state === 'COMPLETE'
-          ? 'Compile from the skill page — installs into Claude Code and Codex, verifier included'
+          ? 'Compile from the skill page. Installs into Claude Code and Codex, with the verifier included.'
           : 'Unlocked after verification passes.',
       status: activeMission?.state === 'COMPLETE' ? 'done' : 'todo',
       href: data.skillGraph ? `/studio/skills/${data.skillGraph.id}` : undefined,
@@ -368,7 +368,7 @@ export function ShowcaseLearn() {
     {
       title: '12 · Proof receipt',
       detail: latestReceipt
-        ? `${latestReceipt.receiptId} · ${latestReceipt.receiptHash.slice(0, 16)}… (recomputable, tamper-evident — not a signature)`
+        ? `${latestReceipt.receiptId} · ${latestReceipt.receiptHash.slice(0, 16)}… (recomputable and tamper-evident, not a signature)`
         : 'SHA-256 over RFC 8785 canonical JSON. Anyone can recompute it.',
       status: latestReceipt ? 'done' : 'todo',
       href: latestReceipt ? `/studio/proof/${latestReceipt.receiptId}` : undefined,
@@ -405,7 +405,7 @@ export function ShowcaseLearn() {
   const verificationStatus = passedVerification
     ? 'Verified'
     : failedVerifications.length > 0
-      ? 'This run failed one check · repair is ready'
+      ? 'This run failed one check. Repair is ready.'
       : 'Not run yet';
   const exportStatus = latestReceipt ? 'Bundle verified' : 'Not exported yet';
   const lastCall = webmcp.recentCalls.length > 0 ? webmcp.recentCalls[webmcp.recentCalls.length - 1]! : null;
@@ -422,10 +422,10 @@ export function ShowcaseLearn() {
     <section className="showcase-learn band band-cream" aria-labelledby="showcase-learn-heading">
       <div className="band-inner stack" style={{ gap: 'var(--sp-6)' }}>
         <header className="stack" style={{ gap: 'var(--sp-3)' }}>
-          <p className="kicker">Learn / Secondary chapter</p>
+          <p className="kicker">Learn</p>
           <h2 id="showcase-learn-heading" className="home-headline" style={{ maxWidth: 720 }}>How Cherry learns a procedure</h2>
           <h1 className="showcase-learn__legacy-title">Watch a lesson become a proven skill</h1>
-          <p className="subhead" style={{ maxWidth: 620 }}>Explore the original source-to-skill journey with a labelled offline lesson.</p>
+          <p className="subhead" style={{ maxWidth: 620 }}>Walk the same path by hand, using a labelled offline lesson.</p>
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={() => void startFresh()} disabled={busy} data-testid="showcase-start-fresh">
               Start fresh
@@ -449,7 +449,7 @@ export function ShowcaseLearn() {
             </button>
           </div>
           <p className="label" style={{ margin: 0 }}>
-            The starter library is a labelled synthetic reference snapshot; its approval state is not your decision. Reset demo removes only registered examples — never your own work.
+            The starter library is labelled sample data. Its approvals are examples, not decisions you made. Reset demo removes only the registered examples, never your own work.
           </p>
           {notice ? <p className="label" role="status">{notice}</p> : null}
           {error ? <p className="field-error" role="alert">{error}</p> : null}
@@ -504,8 +504,8 @@ export function ShowcaseLearn() {
               ) : (
                 <p style={{ margin: 0 }}>
                   <span className="sticker sticker-wait">No WebMCP host</span> This browser exposes no{' '}
-                  <span className="mono">modelContext</span>. Every step still works manually — the agent
-                  path and the human path are the same product.
+                  <span className="mono">modelContext</span>. Every step still works by hand. The buttons
+                  do the same things the tools do.
                 </p>
               )}
               {lastCall ? (
@@ -522,10 +522,10 @@ export function ShowcaseLearn() {
 
             {data.pendingApproval ? (
               <section className="card stack showcase-approval" aria-labelledby="approval-heading" data-testid="showcase-approval">
-                <h2 id="approval-heading" className="subhead">Approval checkpoint — human only</h2>
+                <h2 id="approval-heading" className="subhead">Approval, human only</h2>
                 <p style={{ margin: 0 }}>
                   The agent requested approval for revision r{data.pendingApproval.objectRevision}. No tool can
-                  decide this; the buttons below are the only path.
+                  decide it, so these buttons are the only way.
                 </p>
                 <div className="row">
                   <button type="button" className="btn btn-primary" onClick={() => void decideApproval('approved')} disabled={busy}>
@@ -564,15 +564,15 @@ export function ShowcaseLearn() {
                   </li>
                   <li>
                     <Link to="/studio/quick" className="link-quiet" data-testid="judge-step-approve">Draft and approve one skill</Link>
-                    {' '}to meet the human gate: approval binds to the exact revision you read, and no agent can press it.
+                    {' '}yourself. Approval binds to the exact revision you read, and no agent can press the button.
                   </li>
                   <li>
                     <Link to="/studio/proof" className="link-quiet" data-testid="judge-step-proof">Open Proof and recompute</Link>
-                    {' '}the hash yourself; change one byte anywhere and it turns red.
+                    {' '}the hash yourself. Change one byte anywhere and it turns red.
                   </li>
                 </ol>
                 <p className="label" style={{ margin: 0 }}>
-                  The host panel on the left shows live tools when a compatible agent is attached, and says so plainly when one is not.
+                  The host panel on the left lists live tools when a compatible agent is attached, and says when none is.
                 </p>
               </section>
             )}
@@ -635,7 +635,7 @@ export function ShowcaseLearn() {
             <section className="card stack" aria-labelledby="timeline-heading">
               <h2 id="timeline-heading" className="subhead">Event timeline (append-only)</h2>
               {data.events.length === 0 ? (
-                <p className="label" style={{ margin: 0 }}>No events yet — every mutation will land here with its actor.</p>
+                <p className="label" style={{ margin: 0 }}>No events yet. Every change lands here with whoever made it.</p>
               ) : (
                 <div
                   className="stack"
@@ -667,7 +667,7 @@ export function ShowcaseLearn() {
               Watch the real run
             </h2>
             <p className="subhead" style={{ margin: 0 }}>
-              Uncut recording of the automated end-to-end test driving the real product. Nothing staged.
+              Uncut recording of the automated end-to-end test driving the real app.
             </p>
           </div>
           <video

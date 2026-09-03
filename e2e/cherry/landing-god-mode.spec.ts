@@ -17,7 +17,7 @@ const REQUIRED_HEADINGS = [
   'Describe the goal. Review the plan.',
   'Independent tasks can run at the same time.',
   'Each task gets its own work area.',
-  'Four demos. Each shows what Cherry actually did.',
+  'Four demos you can open now.',
   'Work is complete only when its checks pass.',
   'Cherry pauses when your approval is required.',
   'Save approved methods as reusable skills.',

@@ -93,7 +93,7 @@ export default function AgentView() {
 
       {!webmcp.supported ? (
         <div className="card stack">
-          <h2 className="subhead">No agent is attached. Nothing is lost.</h2>
+          <h2 className="subhead">No agent is attached.</h2>
           <p>
             This browser does not expose <code className="mono">document.modelContext</code>, so no site
             tools are registered. Open Cherry in a compatible agent client and the tools below register
@@ -109,7 +109,7 @@ export default function AgentView() {
                 and it checks exactly once, at boot. Paste this into the browser console: it asks Cherry to
                 install a minimal stand-in host on the next load, so the aperture below fills with the real
                 registrations and the call log records real executions. It is scoped to this tab, calls
-                nothing external, is skipped whenever a real host is present, and adds no capability — it
+                nothing external, and is skipped whenever a real host is present. It adds nothing: it
                 forwards to Cherry&rsquo;s own tool functions and drops a tool when Cherry retires it.
               </p>
               <pre className="mono" data-testid="agent-standin-snippet" style={{ fontSize: 12, overflowX: 'auto', whiteSpace: 'pre', margin: 0 }}>{STAND_IN_HOST_SNIPPET}</pre>
@@ -239,7 +239,7 @@ export default function AgentView() {
       </div>
 
       <section className="card card-wash-cherry stack" aria-labelledby="autopilot-heading" data-testid="autopilot-card">
-        <h2 id="autopilot-heading" className="subhead">Agent brief, guided by you</h2>
+        <h2 id="autopilot-heading" className="subhead">Agent brief</h2>
         <p style={{ fontSize: 14, margin: 0 }}>
           Choose a source, provide its transcript, captions, or timestamped notes, then paste this brief
           in a compatible agent client. Your agent can organize only the material you supplied. Cherry

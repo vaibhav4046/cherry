@@ -1,0 +1,86 @@
+/* Self-hosted type system.
+ *
+ * Before this, the stack was 'SF Pro Display' with a system-ui fallback, which
+ * resolves to SF Pro only on Apple hardware and falls through to Segoe UI on
+ * Windows and Roboto on Android. In other words: on most machines the site was
+ * set in the operating system's default UI font, which is the single most
+ * recognisable "generated site" tell there is.
+ *
+ * Three families, each with a job:
+ *   EB Garamond   display and headlines - an old-style serif with real
+ *                 character, and the same face the brand film is set in
+ *   Figtree       interface and body - a warm geometric sans, deliberately not
+ *                 Inter, which every AI builder defaults to
+ *   IBM Plex Mono data only - hashes, ids, timestamps, counts
+ *
+ * All three are SIL Open Font Licence 1.1, which permits self-hosting and
+ * redistribution; see public/fonts/LICENSE.md. Served from our own origin, so
+ * they satisfy the 'self'-only CSP with no external request and no font CDN
+ * watching our visitors.
+ *
+ * font-display: swap so text is readable immediately and never invisible while
+ * a face loads.
+ */
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The family tokens live in premium.css, which is imported last: tokens.css
+   redefines --font-sf-pro-* after this file, so setting them here loses. */
+
+
+/* Data belongs in the mono face: hashes, ids, counts and timestamps line up in
+   columns and stop being mistaken for prose. */
+.mono,
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

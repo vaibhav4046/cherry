@@ -61,7 +61,7 @@ function MissionStory() {
         <article className="showcase-proof-chapter" data-showcase-chapter>
           <div className="showcase-proof-chapter__copy">
             <p className="showcase-chapter-number">01 / Outcome</p>
-            <h2>Start with the result, then bound the work.</h2>
+            <h2>The result the run was given.</h2>
             <p>{fixture.mission.outcome}</p>
             <dl className="showcase-proof-facts">
               <div><dt>Mission</dt><dd>{fixture.mission.status}</dd></div>
@@ -77,10 +77,10 @@ function MissionStory() {
         <article className="showcase-proof-chapter showcase-proof-chapter--reverse" data-showcase-chapter>
           <div className="showcase-proof-chapter__copy">
             <p className="showcase-chapter-number">02 / Parallel work</p>
-            <h2>Two agents worked at the same time, in separate boundaries.</h2>
+            <h2>Two agents worked at the same time, in separate worktrees.</h2>
             <p>
               {fixture.overlap.workerIds.join(' and ')} overlapped for{' '}
-              <strong>{fixture.overlap.durationMs.toLocaleString('en-US')} ms</strong>. Each ran in its own worktree-process boundary.
+              <strong>{fixture.overlap.durationMs.toLocaleString('en-US')} ms</strong>. Each ran in its own git worktree and its own process.
             </p>
             <div className="showcase-worker-pair">
               {fixture.workers.map((worker) => (
@@ -101,8 +101,8 @@ function MissionStory() {
         <article className="showcase-proof-chapter" data-showcase-chapter>
           <div className="showcase-proof-chapter__copy">
             <p className="showcase-chapter-number">03 / Verification</p>
-            <h2>Completion was checked, not inferred.</h2>
-            <p>The host reports completion. Cherry separately records whether each required check passed.</p>
+            <h2>Every check was run and recorded separately.</h2>
+            <p>The host reports that it finished. Cherry records separately whether each required check passed.</p>
             <div className="showcase-checks">
               {checks.map((check) => (
                 <p key={check.id}><span aria-hidden="true">✓</span><strong>{check.name}</strong><small>{check.detail}</small></p>
@@ -117,12 +117,13 @@ function MissionStory() {
 
         <article className="showcase-proof-chapter showcase-proof-chapter--reverse" data-showcase-chapter>
           <div className="showcase-proof-chapter__copy">
-            <p className="showcase-chapter-number">04 / Human authority</p>
-            <h2>The agents could finish the work. They could not release it.</h2>
+            <p className="showcase-chapter-number">04 / Approval</p>
+            <h2>Neither agent could publish anything.</h2>
             <p>
-              This capture contains no public action. Approval and publication remain separate human decisions, bound to the evidence a person reviews.
+              Nothing in this capture left the machine. Approving and publishing are still yours to do,
+              against the evidence on this page.
             </p>
-            <p className="showcase-authority-note"><span aria-hidden="true">◇</span> Human gate · no delegated approval</p>
+            <p className="showcase-authority-note"><span aria-hidden="true">◇</span> Approval is not delegated</p>
           </div>
           <ChroniclePicture
             artifact="glasshouse-sandboxes"
@@ -149,20 +150,20 @@ export function Showcase() {
         <CherryHomeLink />
         <div>
           <Link to="/studio">Open Studio</Link>
-          <Link to="/compatibility">Evidence boundaries</Link>
+          <Link to="/compatibility">What's proven</Link>
         </div>
       </nav>
 
       <header className="winner-showcase__hero">
         <div className="winner-showcase__hero-copy">
-          <p className="showcase-kicker">Cherry · Mission Chronicle No. 01</p>
-          <h1>One outcome. Two agents. Human authority intact.</h1>
+          <p className="showcase-kicker">Cherry · recorded run</p>
+          <h1>Two agents ran one job. Neither could publish.</h1>
           <p className="winner-showcase__lede">
-            Judging Cherry? See the entire mission in 90 seconds.
+            Judging this? The whole run is below, and takes about 90 seconds to read.
           </p>
           <p>
-            This is a replay of a committed real Codex run: concurrent work, isolated boundaries,
-            independent checks, and an honest stop before public action.
+            A replay of a real Codex run recorded into this repository. Two tasks overlapped in
+            separate worktrees, both checks passed, and nothing was published.
           </p>
           <a className="winner-showcase__jump" href="#recorded-mission">Inspect the recorded run ↓</a>
         </div>
@@ -175,8 +176,8 @@ export function Showcase() {
       <section className="winner-showcase__story" aria-labelledby="mission-story-heading">
         <div className="winner-showcase__story-intro">
           <p className="showcase-kicker">The recorded mission</p>
-          <h2 id="mission-story-heading">Evidence, in the order a judge needs it.</h2>
-          <p>Every number below comes from the public projection of the committed host capture.</p>
+          <h2 id="mission-story-heading">What the run produced, in order.</h2>
+          <p>Every number below is read out of the committed capture file, not typed in by hand.</p>
         </div>
         <MissionStory />
       </section>

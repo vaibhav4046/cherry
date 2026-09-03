@@ -84,7 +84,7 @@ test.describe('route metadata', () => {
       await expect(page).toHaveTitle('Page not found · Cherry Wine');
       await expect(page.locator(DESCRIPTION)).toHaveAttribute(
         'content',
-        'That page does not exist. The rest of Cherry does.',
+        'That page does not exist.',
       );
     }
   });

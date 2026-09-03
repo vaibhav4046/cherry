@@ -77,7 +77,7 @@ describe('route metadata', () => {
   ])('uses 404 metadata for %s', (path) => {
     expect(resolveRouteMeta(path)).toEqual({
       title: 'Page not found · Cherry Wine',
-      description: 'That page does not exist. The rest of Cherry does.',
+      description: 'That page does not exist.',
     });
   });
 
@@ -86,7 +86,7 @@ describe('route metadata', () => {
     try {
       expect(resolveRouteMeta('/%E0%A4%A')).toEqual({
         title: 'Page not found · Cherry Wine',
-        description: 'That page does not exist. The rest of Cherry does.',
+        description: 'That page does not exist.',
       });
     } finally {
       warning.mockRestore();

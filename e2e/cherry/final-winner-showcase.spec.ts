@@ -17,8 +17,8 @@ test('fresh showcase tells the evidence-first mission story and retains the Lear
   const failures = watchPageFailures(page);
   await page.goto('/showcase');
 
-  await expect(page.getByRole('heading', { name: 'One outcome. Two agents. Human authority intact.' })).toBeVisible();
-  await expect(page.getByText('Judging Cherry? See the entire mission in 90 seconds.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Two agents ran one job. Neither could publish.' })).toBeVisible();
+  await expect(page.getByText('Judging this? The whole run is below, and takes about 90 seconds to read.')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Recorded real Codex run' })).toBeVisible();
 
   const chapters = page.locator('[data-showcase-chapter]');
@@ -26,7 +26,7 @@ test('fresh showcase tells the evidence-first mission story and retains the Lear
   await expect(chapters.nth(0)).toContainText('Outcome');
   await expect(chapters.nth(1)).toContainText('Parallel work');
   await expect(chapters.nth(2)).toContainText('Verification');
-  await expect(chapters.nth(3)).toContainText('Human authority');
+  await expect(chapters.nth(3)).toContainText('Approval');
 
   const film = page.getByLabel('Silent mission film');
   await expect(film).toHaveAttribute('src', '/media/cherry-demo/mission-hero.webm');
@@ -74,7 +74,7 @@ test('390px presentation has no horizontal overflow or broken assets', async ({ 
   const failures = watchPageFailures(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/showcase');
-  await expect(page.getByRole('heading', { name: 'One outcome. Two agents. Human authority intact.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Two agents ran one job. Neither could publish.' })).toBeVisible();
   const sizes = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
     viewportWidth: document.documentElement.clientWidth,

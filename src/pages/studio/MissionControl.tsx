@@ -186,10 +186,10 @@ export default function MissionControl() {
     <section className="chronicle-control" data-testid="mission-control" aria-labelledby="mission-control-heading">
       <header className="chronicle-control__masthead">
         <div>
-          <p className="chronicle-control__kicker">Mission Control · Outcome desk</p>
+          <p className="chronicle-control__kicker">Mission Control</p>
           <h1 id="mission-control-heading" className="display-sm">What should Cherry take care of?</h1>
           <p className="chronicle-control__intro">
-            Describe the result. Cherry turns it into a durable plan, with the team, checks, and decisions recorded before anything runs.
+            Describe the result you want. Cherry writes a plan you can read first: who does what, which checks must pass, and where it stops for you.
           </p>
         </div>
         <picture aria-hidden="true">
