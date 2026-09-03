@@ -33,7 +33,7 @@ const META_ROUTES: RouteObject[] = [
   },
   {
     path: '/showcase',
-    handle: meta(`Showcase · ${SITE}`, 'A recorded real Codex mission, replayed from a digest-pinned fixture, then the guided source-to-skill journey.'),
+    handle: meta(`Showcase · ${SITE}`, 'A recorded real Codex mission, replayed from evidence checked against its fingerprint, then the guided source-to-skill journey.'),
   },
   {
     path: '/connect',

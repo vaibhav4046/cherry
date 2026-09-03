@@ -22,18 +22,18 @@ test.describe('landing upgrade', () => {
 
   test('compatibility page renders honest status labels', async ({ page }) => {
     await page.goto('/compatibility');
-    await expect(page.getByRole('heading', { name: 'Compatibility & proof' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What is proven, and what is not' })).toBeVisible();
     const rows = page.getByTestId('compat-rows');
-    await expect(rows.getByText('Manual golden journey (no AI provider)')).toBeVisible();
+    await expect(rows.getByText('The whole journey by hand, with no AI provider involved')).toBeVisible();
     // The live-host row is honestly labelled Experimental, not Validated.
-    const chatgptRow = rows.locator('.card', { hasText: 'ChatGPT / Codex in-app browser' });
+    const chatgptRow = rows.locator('.card', { hasText: 'ChatGPT and Codex built-in browsers' });
     await expect(chatgptRow.getByText('Experimental')).toBeVisible();
     const authRow = rows.locator('.card', { hasText: 'Accounts (Privy, opt-in)' });
     await expect(authRow.getByText('Shipped')).toBeVisible();
-    const libraryRow = rows.locator('.card', { hasText: 'Skill Library + global library tools' });
+    const libraryRow = rows.locator('.card', { hasText: 'Your skill library, and the tools that hand it to an agent' });
     await expect(libraryRow.getByText('Validated')).toBeVisible();
     // The Creators engine is labelled by what is tested, and says what is not captured.
-    const creatorsRow = rows.locator('.card', { hasText: 'Creators watch engine' });
+    const creatorsRow = rows.locator('.card', { hasText: 'Following a creator, and the skills that come back proposed' });
     await expect(creatorsRow.getByText('Validated')).toBeVisible();
     await expect(creatorsRow).toContainText('never downloads a video or captions');
     await expect(creatorsRow).toContainText('was not captured');
@@ -134,7 +134,7 @@ test.describe('upgrade accessibility', () => {
   test('compatibility page has no serious axe violations', async ({ page }) => {
     const { default: AxeBuilder } = await import('@axe-core/playwright');
     await page.goto('/compatibility');
-    await expect(page.getByRole('heading', { name: 'Compatibility & proof' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What is proven, and what is not' })).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
     expect(serious.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([]);

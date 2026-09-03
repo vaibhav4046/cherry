@@ -25,27 +25,27 @@ interface Row {
  */
 const ROWS: Row[] = [
   {
-    surface: 'Workforce: inbox, crew, routines (local)',
+    surface: 'Your work inbox, your crew and your routines',
     status: 'validated',
     evidence: 'Work items run a strict state machine (no shortcut to success), the five-agent starter crew is editable, and routine schedules are DST-aware with exact-revision approval. Covered by the workforce and routine unit suites and a Playwright journey.',
   },
   {
-    surface: 'Mission Control: outcome to validated graph to parallel workers to independent checks (paired local runner)',
+    surface: 'One outcome becomes a plan, agents work it in parallel, and checks decide whether it is done',
     status: 'validated',
     evidence: 'A plan is validated (acyclic, bounded, every task with a definition of done and a real check) and hashed; the paired runner leases one sandbox per task (directory or git worktree, boundary stated as process or worktree-process, never a VM), runs up to three tasks at once, hands finished artifacts to dependants, and only its own checks or a person move a task to succeeded. Covered by the mission plan, orchestrator and evaluation unit suites, the runner executor suite, a browser-to-real-runner integration test and the Mission Control Playwright journey. Real Codex CLI execution captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md (two worktrees, measured overlap); Claude Code execution not captured on this machine (sign-in required).',
   },
   {
-    surface: 'Manual golden journey (no AI provider)',
+    surface: 'The whole journey by hand, with no AI provider involved',
     status: 'validated',
     evidence: 'Playwright e2e walks workspace → lesson → transcript → evidence → SkillGraph → exact-revision approval → artifact → honest fail → repair → pass → receipt → hash recompute → export → import → reload, in the e2e suite of this repository.',
   },
   {
-    surface: 'Tools the agent can use right now (registered and retired by state)',
+    surface: 'The tools a visiting agent can use right now',
     status: 'validated',
     evidence: 'Mock-host tests exercise the document.modelContext contract with up to 5 state-specific tools plus 7 always-on tools: AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, and a full journey through the same persisted state as the UI.',
   },
   {
-    surface: 'ChatGPT / Codex in-app browser (live WebMCP host)',
+    surface: 'ChatGPT and Codex built-in browsers (a live WebMCP host)',
     status: 'experimental',
     evidence: 'Implemented against the current registerTool API and feature-detected. Not yet exercised inside a live proprietary client from this environment; the Agent View and Connections diagnostics show live registration state the moment one attaches. We say this plainly instead of claiming it.',
   },
@@ -55,72 +55,72 @@ const ROWS: Row[] = [
     evidence: 'Same code path as above; feature detection means Cherry lights up wherever document.modelContext exists. Not tested against a flagged Chrome build in this release.',
   },
   {
-    surface: 'Skill Library + global library tools (list / recommend / get)',
+    surface: 'Your skill library, and the tools that hand it to an agent',
     status: 'validated',
     evidence: 'Cross-workspace library with install-ready gating, unit-tested aggregation/ranking/exports, and a host-path e2e where the visiting agent asks recommend_skills mid-task, streams the install file in bounded parts, and recomputes the full-file sha256. State-specific tools stay bounded to 5; 7 always-on tools remain available.',
   },
   {
-    surface: 'Creators watch engine (follow a creator, proposed skills)',
+    surface: 'Following a creator, and the skills that come back proposed',
     status: 'validated',
     evidence: 'A human follows a channel; the paired runner checks its public feed daily; every new upload arrives as a source with a deterministic skill proposal (title, one-sentence "teaches", candidate steps once a transcript exists) that only a person can dismiss, and that follows the exact-revision approval of the draft it becomes. Unit-tested proposal lifecycle, migration, and archive round-trip; Playwright drives empty state, the labelled sample creator, transcript-changes-readiness, set-aside persistence, mobile overflow, axe, and reset. Cherry never downloads a video or captions and never calls a model; a live real-channel feed check was not captured in this repository, so the daily check itself stays proven only by runner tests.',
   },
   {
-    surface: 'Agent Skills bundle export (SKILL.md + targets)',
+    surface: 'Exporting a skill as a bundle other agents can install',
     status: 'validated',
     evidence: 'Unit tests: frontmatter name matches directory, < 500 lines, full required tree, every MANIFEST hash recomputes, embedded receipt hash recomputable, unapproved graphs refuse to compile, traversal archives rejected.',
   },
   {
-    surface: 'Bundle verification script (scripts/verify.mjs)',
+    surface: 'The check that proves a downloaded bundle was not tampered with',
     status: 'validated',
     evidence: 'Runner integration test executes the real script inside a real bundle: passes clean, exits non-zero after a one-byte tamper.',
   },
   {
-    surface: 'Claude Code skill install (live host)',
+    surface: 'Installing a Cherry skill into Claude Code',
     status: 'validated',
     evidence: "A Cherry-compiled bundle was unzipped into a real Claude Code host's ~/.claude/skills/ on 2026-08-29; the host discovered it and listed it as an available skill in a live session. The bundle's standalone verify.mjs passed all 22 file hashes first. Recorded in the decision log (docs/CHERRY_DECISIONS.md, D-012) and the 2026-08-30 addendum in CHERRY_RELEASE_EVIDENCE.md with the returned hashes; no transcript file was captured.",
   },
   {
-    surface: 'Codex install target',
+    surface: 'Installing a Cherry skill into Codex',
     status: 'validated',
     evidence: "Validated in a live Codex CLI host on 2026-09-01 (codex-cli 0.151.0-alpha.7.2, signed in through ChatGPT): the stdio bridge was registered with codex mcp add, the host listed Cherry's tools, read the workspace export, and verified the compiled bundle's SHA-256. Full transcript with exact hashes and reproduction steps: docs/release/CODEX_MCP_CAPTURE.md. The workspace used is the labelled example, so its approval is reference state, not a live human approval.",
   },
   {
-    surface: 'Native MCP bridge (stdio, read/verify)',
+    surface: 'The bridge that lets a local agent read and verify your work',
     status: 'validated',
     evidence: '6 stdio JSON-RPC integration tests, plus a live registration in a real Claude Code host on 2026-08-29 (claude mcp add cherry-wine, then claude mcp list reported Connected against a real workspace export), recorded in the decision log rather than a captured transcript. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md.',
   },
   {
-    surface: 'Local runner (pairing, allowlists, deterministic jobs)',
+    surface: 'The runner on your own computer',
     status: 'validated',
     evidence: '11 runner integration tests (131 across the runner, sandbox, host, executor and bridge suites): loopback-only, pairing token required, origin allowlist, root/executable allowlists, no shell strings, output caps + secret redaction, crash recovery, real bundle verify incl. tamper detection.',
   },
   {
-    surface: 'Artifact preview isolation',
+    surface: 'Previewing a file an agent produced, safely',
     status: 'validated',
     evidence: 'E2E: a hostile artifact with scripts, handlers, forms and remote resources renders as inert static content: empty sandbox, CSP script-src and connect-src none, remote references stripped, zero outbound requests, Cherry\'s own origin untouched.',
   },
   {
-    surface: 'Proof receipts (RFC 8785 + SHA-256)',
+    surface: 'Receipts anyone can recompute',
     status: 'validated',
     evidence: 'Unit + e2e: recomputation matches; one-byte tamper flips the verdict; real receipts validate against the canonical JSON Schema. Labelled tamper-evident, never "signed".',
   },
   {
-    surface: 'Workspace export/import round trip',
+    surface: 'Taking your space out of Cherry and putting it back',
     status: 'validated',
     evidence: 'Unit + e2e: id-remapped import, internal references preserved, integrity hash verified, corrupted files rejected with zero writes.',
   },
   {
-    surface: 'PWA install + offline shell',
+    surface: 'Installing Cherry as an app, and working offline',
     status: 'shipped',
     evidence: 'Manifest + service worker (static shell only; never caches workspace data). Valid on the live HTTPS deployment; install prompt behaviour is browser-controlled.',
   },
   {
-    surface: 'Routine adapters for Codex CLI and Claude CLI (runner/lib/adapters.mjs)',
+    surface: 'The simpler routine adapters for Codex CLI and Claude CLI',
     status: 'shipped',
     evidence: 'These routine adapters run only when the CLI is on PATH; exit codes are recorded with verifiedSeparately=true and never count as verification. They were not exercised against a live host. Mission Control uses the separate agent-host path, whose real Codex run is captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md; Claude Code mission execution is not captured.',
   },
   {
-    surface: 'Encrypted cross-device sync',
+    surface: 'Syncing between your devices',
     status: 'roadmap',
     evidence: 'Deliberately outside golden v1. No UI pretends it exists.',
   },
@@ -143,7 +143,7 @@ export function Compatibility() {
       </header>
       <main className="band band-cream" style={{ minHeight: '100vh' }}>
         <div className="band-inner stack" style={{ gap: 'var(--sp-6)' }}>
-          <h1 className="display-sm">Compatibility & proof</h1>
+          <h1 className="display-sm">What is proven, and what is not</h1>
           <p className="subhead" style={{ maxWidth: 760 }}>
             Every claim below is labelled by what actually happened. <strong>Validated</strong> means
             automated tests in this repository, or a captured live session recorded here, exercised it.{' '}

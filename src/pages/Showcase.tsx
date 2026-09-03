@@ -164,7 +164,7 @@ export function Showcase() {
             This is a replay of a committed real Codex run: concurrent work, isolated boundaries,
             independent checks, and an honest stop before public action.
           </p>
-          <a className="winner-showcase__jump" href="#recorded-mission">Inspect the digest-pinned replay ↓</a>
+          <a className="winner-showcase__jump" href="#recorded-mission">Inspect the recorded run ↓</a>
         </div>
         <div className="winner-showcase__film">
           <MissionFilm reducedMotion={reducedMotion} />

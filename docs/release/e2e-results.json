@@ -4,7 +4,7 @@
       "/opt/node22/bin/node",
       "/root/cherry-clone/node_modules/.bin/playwright",
       "test",
-      "e2e/cherry/god-mode-mission.spec.ts",
+      "e2e/cherry/upgrade.spec.ts",
       "--project=desktop"
     ],
     "configFile": "/root/cherry-clone/playwright.config.ts",
@@ -95,20 +95,20 @@
   },
   "suites": [
     {
-      "title": "cherry/god-mode-mission.spec.ts",
-      "file": "cherry/god-mode-mission.spec.ts",
+      "title": "cherry/upgrade.spec.ts",
+      "file": "cherry/upgrade.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Mission Control without a runner",
-          "file": "cherry/god-mode-mission.spec.ts",
-          "line": 89,
+          "title": "landing upgrade",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 3,
           "column": 6,
           "specs": [
             {
-              "title": "plans a mission from an outcome, refuses to start honestly, keeps it across reload, cancels",
+              "title": "hero leads to Mission Control and the recorded evidence cabinet",
               "ok": true,
               "tags": [],
               "tests": [
@@ -123,12 +123,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5064,
+                      "duration": 744,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T10:47:13.970Z",
+                      "startTime": "2026-09-03T11:38:39.943Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -136,13 +136,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "ea2267adb04f6488957a-5b8a8d31294bc31682d8",
-              "file": "cherry/god-mode-mission.spec.ts",
-              "line": 90,
+              "id": "db8d97f7fe057b185ab1-0a835dfc2cefa8b90ff8",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 4,
               "column": 3
             },
             {
-              "title": "keyboard: the composer submits with Enter on the button and mobile has no overflow",
+              "title": "landing respects reduced motion and leaves the replay paused",
               "ok": true,
               "tags": [],
               "tests": [
@@ -157,12 +157,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1989,
+                      "duration": 603,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T10:47:19.215Z",
+                      "startTime": "2026-09-03T11:38:40.829Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -170,32 +170,61 @@
                   "status": "expected"
                 }
               ],
-              "id": "ea2267adb04f6488957a-e35c73a09e7221ac452d",
-              "file": "cherry/god-mode-mission.spec.ts",
-              "line": 133,
+              "id": "db8d97f7fe057b185ab1-def4167e96584a870440",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 13,
+              "column": 3
+            },
+            {
+              "title": "compatibility page renders honest status labels",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 807,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:41.448Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-d90fc5630af95342741b",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 23,
               "column": 3
             }
           ]
         },
         {
-          "title": "Mission Control with a paired mock runner",
-          "file": "cherry/god-mode-mission.spec.ts",
-          "line": 147,
+          "title": "guided example and walkthrough",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 43,
           "column": 6,
           "specs": [
             {
-              "title": "two workers overlap, a failed check repairs once, the human decides, the mission completes",
+              "title": "the guided demo route loads the real example workspace and starts the tour",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
-                  "annotations": [
-                    {
-                      "type": "parallel-overlap",
-                      "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
-                    }
-                  ],
+                  "timeout": 120000,
+                  "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
@@ -204,27 +233,326 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 46353,
+                      "duration": 3356,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T10:47:21.220Z",
-                      "annotations": [
-                        {
-                          "type": "parallel-overlap",
-                          "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
-                        }
-                      ],
+                      "startTime": "2026-09-03T11:38:42.276Z",
+                      "annotations": [],
                       "attachments": []
                     }
                   ],
                   "status": "expected"
                 }
               ],
-              "id": "ea2267adb04f6488957a-91a6f04813e6941734bb",
-              "file": "cherry/god-mode-mission.spec.ts",
-              "line": 168,
+              "id": "db8d97f7fe057b185ab1-dd6cc1321428442b2c43",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "walkthrough is replayable from the Command Center",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1930,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:45.653Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-aedc51a44eede660a3ac",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 86,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "agent view (MCP inspector)",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 98,
+          "column": 6,
+          "specs": [
+            {
+              "title": "manual mode shows the honest aperture story with zero fake activity",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1815,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:47.604Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-bf21e9df9952a90899df",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 99,
+              "column": 3
+            },
+            {
+              "title": "teach CTA routes into the Quick Skill wizard once a workspace exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2692,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:49.451Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-4295e3d79de3dd71a1d3",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 123,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "upgrade accessibility",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 133,
+          "column": 6,
+          "specs": [
+            {
+              "title": "compatibility page has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2035,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:52.170Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-f5ececc79a897b84dafa",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 134,
+              "column": 3
+            },
+            {
+              "title": "agent view has no serious axe violations and the tour card is a labelled dialog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3005,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:54.225Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-d32e87de9c9d80414232",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 143,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "quick skill wizard",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 157,
+          "column": 6,
+          "specs": [
+            {
+              "title": "URL to installable skill: transcript in, approved bundle out",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2354,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:57.248Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-486040bf4604448a3d49",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 158,
+              "column": 3
+            },
+            {
+              "title": "wizard refuses an empty transcript path honestly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1343,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:38:59.630Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-9125a997b5c9cea45a43",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 195,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "notebook (sources · overview · studio)",
+          "file": "cherry/upgrade.spec.ts",
+          "line": 203,
+          "column": 6,
+          "specs": [
+            {
+              "title": "drop sources, get an instant overview, generate a real briefing artifact",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2572,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T11:39:00.989Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "db8d97f7fe057b185ab1-10236cdd3e41512f2113",
+              "file": "cherry/upgrade.spec.ts",
+              "line": 204,
               "column": 3
             }
           ]
@@ -234,9 +562,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-03T10:46:05.187Z",
-    "duration": 123339.01999999999,
-    "expected": 3,
+    "startTime": "2026-09-03T11:37:36.675Z",
+    "duration": 87015.996,
+    "expected": 12,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

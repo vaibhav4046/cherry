@@ -77,7 +77,7 @@ export function RecordedMissionPlayer({
     >
       <div className="recorded-mission__heading">
         <div>
-          <p className="showcase-kicker">Recorded mission · digest-pinned replay</p>
+          <p className="showcase-kicker">Recorded mission · replay checked against its fingerprint</p>
           <h2>{fixture.label}</h2>
         </div>
         <span className="recorded-mission__seal">SHA-256 pin verified</span>

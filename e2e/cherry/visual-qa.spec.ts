@@ -23,7 +23,7 @@ const PUBLIC_ROUTES = [
   { path: '/', ready: 'One task. An entire AI team.' },
   { path: '/showcase', ready: 'Watch a lesson become a proven skill' },
   { path: '/connect', ready: 'Bring the agent you already pay for' },
-  { path: '/compatibility', ready: 'Compatibility & proof' },
+  { path: '/compatibility', ready: 'What is proven, and what is not' },
 ] as const;
 
 const STUDIO_ROUTES = [
