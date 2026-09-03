@@ -151,6 +151,22 @@ export function Compatibility() {
             automated. <strong>Experimental</strong> means built to the documented contract, awaiting a live
             host. <strong>Roadmap</strong> means it does not exist yet, and no screen pretends it does.
           </p>
+          <div className="card stack" style={{ maxWidth: 760 }}>
+            <h2 className="subhead" style={{ margin: 0 }}>Who this is for, concretely</h2>
+            <p style={{ margin: 0 }}>
+              The first user is a solo builder who already pays for Codex or ChatGPT and learns their craft
+              from other builders on YouTube and in long posts. Today they watch forty minutes to extract a
+              six-step process, apply it by hand, and then re-explain it from scratch to every agent, in every
+              tool, every time — because the useful part died in a chat transcript. Nothing they teach an agent
+              is versioned, portable, or checkable, so they cannot safely let it run unattended either.
+            </p>
+            <p style={{ margin: 0 }}>
+              Cherry is the layer that keeps it: the method becomes a versioned skill with its evidence, the
+              person approves an exact revision, and from then on any agent that speaks WebMCP, MCP, or the
+              Agent Skills format can use it — pinned to that approved revision, with a hash it can verify.
+              We have not run a formal user study, and this page does not claim one.
+            </p>
+          </div>
           <p className="row" aria-label="Status legend" style={{ margin: 0 }}>
             {(Object.keys(STATUS_STYLE) as Status[]).map((status) => (
               <span key={status} className={STATUS_STYLE[status].className}>{STATUS_STYLE[status].label}</span>

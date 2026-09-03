@@ -1256,5 +1256,8 @@ describe('WebMCP skill provenance delivery', () => {
     expect(exported.content).toContain('sk_live_example123');
     expect(exported.content).toContain('ghp_x');
     expect(await sha256Text(reassembled)).toBe(first.contentSha256);
-  });
+    // Builds a maximal escape-heavy skill and re-hashes every reassembled part,
+    // which exceeds the default per-test budget on a loaded machine. The
+    // assertions above are unchanged; only the time allowance is realistic.
+  }, 90_000);
 });

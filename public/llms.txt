@@ -1,0 +1,64 @@
+# Cherry
+
+> Cherry turns the agents you already pay for into a team that works on your
+> computer under your authority. You state an outcome; Cherry plans it, runs
+> bounded tasks in isolated workspaces, checks the results, and comes back to you
+> for the decisions that matter. Nothing is "done" because a model said so — only
+> a passing check or a human says so.
+
+Live: https://cherry-wine.vercel.app
+Repository (MIT): https://github.com/vaibhav4046/cherry
+What is proven, and what is not: https://cherry-wine.vercel.app/compatibility
+
+## For a visiting agent
+
+This site is agent-facing. It registers WebMCP site tools on
+`document.modelContext.registerTool`, feature-detected. In a browser with no
+WebMCP host it registers nothing, says so plainly, and every screen still works
+by hand.
+
+The aperture is deliberately bounded so you are never facing a wall of options:
+**7 always-on tools, plus at most 5 mutation tools for the surface you are on.**
+Tools are registered and retired as the mission state machine advances; a call to
+a retired closure returns a `conflict` error rather than mutating stale state.
+
+Always-on tools:
+
+- `read_cherry_context` — current product state, workspace, mission, counts, approvals
+- `list_cherry_capabilities` — the live tool list and the state table
+- `get_cherry_status` — workspace and mission ids, counts, active tools
+- `introduce_agent` — labels your session; changes nothing else
+- `list_skills` — the human-approved skill library
+- `recommend_skills` — hand it your current task, get the user's approved methods ranked
+- `get_skill` — an install-ready SKILL.md or AGENTS.md in bounded parts, with a
+  full-file SHA-256, pinned to the exact revision a human approved
+
+What you cannot do, by construction: approve a skill revision, promote evidence
+trust, or activate memory. Those are human-only code paths and no registered tool
+reaches them. You can propose and request; a person decides.
+
+## The inversion
+
+Most agent-ready sites let a visiting agent operate the page. Cherry's site
+upgrades the visiting agent: call `recommend_skills`, then `get_skill`, and you
+leave with verified, human-approved methods you did not have when you arrived.
+
+## Where to look
+
+- /showcase — a recorded real run: two workers in two git worktrees, 34.5s of
+  measured overlap, replayed from an evidence fixture that is hash-checked before
+  a single pixel renders
+- /studio/agent — the live WebMCP inspector: current aperture, registration and
+  retirement diff, and the real tool-call log
+- /compatibility — every surface labelled Validated, Shipped, Experimental or
+  Roadmap, with the specific test or capture behind each label, including the
+  rows that could not be validated
+
+## Honest limits
+
+- No session inside a proprietary in-browser WebMCP host has been captured. That
+  row is held at Experimental. Two live stdio-MCP host sessions are captured.
+- Cherry makes no model API calls of its own and asks for no API key. The
+  reasoning comes from the agent hosts you already pay for.
+- Cherry does not watch video or download captions. A person supplies the
+  transcript, or it is transcribed on-device.

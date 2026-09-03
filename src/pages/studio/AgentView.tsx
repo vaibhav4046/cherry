@@ -21,6 +21,33 @@ const AUTOPILOT_BRIEF = [
   'Never claim completion without a passed verification. Recent tool calls appear in Agent View for this browser session. Exported proof records verified product events and hashes.',
 ].join('\n');
 
+/**
+ * A minimal stand-in for a WebMCP host, offered to anyone auditing this page in
+ * an ordinary browser. Cherry feature-detects `document.modelContext`, so
+ * supplying one is enough to make the real registrations and the real closures
+ * observable without a proprietary client. It deliberately does nothing that a
+ * host would not: it stores registrations, honours the abort signal Cherry
+ * passes, and forwards calls to Cherry's own execute function.
+ */
+const STAND_IN_HOST_SNIPPET = `// Paste in the console, then reload this page.
+(() => {
+  const tools = new Map();
+  document.modelContext = {
+    registerTool(tool, options) {
+      tools.set(tool.name, tool);
+      options?.signal?.addEventListener('abort', () => tools.delete(tool.name));
+      return { name: tool.name };
+    },
+  };
+  window.cherryTools = () => [...tools.keys()].sort();
+  window.cherryCall = (name, input = {}) => {
+    const tool = tools.get(name);
+    if (!tool) throw new Error(name + ' is not registered right now. Try cherryTools().');
+    return tool.execute(input);
+  };
+  console.log('Stand-in host installed. Reload, then run cherryTools().');
+})();`;
+
 const PHASE_ORDER: ProductState[] = ['empty', 'onboarding', 'learning', 'planning', 'execution', 'verification', 'passed'];
 
 const PHASE_LABEL: Record<ProductState, string> = {
@@ -89,6 +116,34 @@ export default function AgentView() {
             tools are registered. Open Cherry in a compatible agent client and the tools below register
             for the current project stage. Until then, every operation remains available in the Studio.
           </p>
+          <details>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              See the tools register in this browser, without an agent host
+            </summary>
+            <div className="stack" style={{ marginTop: 12 }}>
+              <p style={{ fontSize: 14, margin: 0 }}>
+                Cherry only needs <code className="mono">document.modelContext.registerTool</code> to exist.
+                Paste this into the browser console and reload: it installs a minimal stand-in host, so the
+                aperture below fills with the real registrations and the call log records real executions.
+                It runs entirely in your tab, calls nothing external, and disappears on the next reload.
+              </p>
+              <pre className="mono" data-testid="agent-standin-snippet" style={{ fontSize: 12, overflowX: 'auto', whiteSpace: 'pre', margin: 0 }}>{STAND_IN_HOST_SNIPPET}</pre>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => { void navigator.clipboard?.writeText(STAND_IN_HOST_SNIPPET); }}
+              >
+                Copy the stand-in host
+              </button>
+              <p style={{ fontSize: 13, margin: 0 }}>
+                Then call one: <code className="mono">await cherryCall('read_cherry_context')</code>, or
+                <code className="mono"> await cherryCall('recommend_skills', {'{'} task: 'write a landing page' {'}'})</code>.
+                This is a stand-in, not a WebMCP host: it proves the registrations and the closures are real,
+                which is exactly what the mock-host tests assert. It is not evidence that a proprietary
+                browser host has run Cherry, and the compatibility page still says so.
+              </p>
+            </div>
+          </details>
         </div>
       ) : null}
 
