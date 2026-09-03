@@ -2,7 +2,7 @@
 
 **Assembled:** 2026-09-02, London morning cycle; **amended** 2026-09-02 afternoon after the Creators engine and the judge card shipped; **amended again** 2026-09-03 at 02:00 London after God Mode v2 and the Winner OS lanes went live
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** `48f82e7` (night amendment after the tribunal; earlier signatures were `b6b7d11`, `e81dbc3` and `deb6c0c`)
+**Signed against commit:** `a109593` (morning amendment after the landing lane and the red team; earlier signatures were `b6b7d11`, `e81dbc3`, `deb6c0c` and `48f82e7`)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -83,7 +83,8 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | W1 Chronicle assets (Sol lane) | VERIFIED | `fb3d13e`, integrated as `144fe1e..` | `public/media/cherry-chronicle/`, `tests/assets/cherry-chronicle-assets.test.mjs` |
 | W3 evidence-first showcase and digest-pinned replay (Sol lane) | VERIFIED, one fix | `7f00e16`; fix `a9887e6` (rebased) | `/showcase` opens on the recorded Codex run; replay pinned to `replaySha256 edd88812…` (was `bd68e563…` before the 2026-09-03 evidence redaction); the lane pinned a CRLF digest that failed on Linux, fixed by normalising line endings before hashing. `e2e/cherry/final-winner-showcase.spec.ts`, `tests/cherry/showcase-winner.test.tsx`. |
 | W4 Mission Control first run (Sol lane) | VERIFIED, one fix | `7ced434`; fix `b6bd8ab` | No space wall; the first plan creates the space. The lane's live-start gate could never render for a real runner (it demanded the runner-native `verification` capability from a host); the gate now considers agent nodes only, mirroring the mission service. `e2e/cherry/final-winner-control.spec.ts`, `tests/cherry/mission-control-first-run.test.tsx`. |
-| W2 six-chapter landing (Sol lane) | **PENDING** | none on main | Cutoff 14:00 London on 3 September; after that the tree is frozen. |
+| W2 six-chapter landing (Sol lane) | VERIFIED | `57f3d48` and follow-ups, rebased onto main as `875c20b..04b87e4` | The landing leads with the digest-pinned recorded Codex run and fails closed when that evidence is missing or forged; six numbered chapters plus an evidence cabinet of four bounded demonstrations. Rebased onto main by the release authority (the lane was cut from `35f8d33` and would otherwise have reverted the tribunal fixes), then verified from the merged tree. `tests/cherry/landing-winner.test.tsx`, `e2e/cherry/final-winner-landing.spec.ts`. |
+| W7 hostile release audit (Sol lane) | ACCEPTED, all blockers closed | `04b87e4`; fixes `d0ddefe`, `db41134` | Five blockers outside the landing's scope: fragment links never reached the Showcase proof, the Chronicle verifier was line-ending dependent, WebMCP API presence read as an attached agent (already fixed by the tribunal), stale evidence hashes, and local identity in the public capture record. Each is fixed or redacted; `docs/winner/lanes/W7_REPORT.md` carries the disposition. |
 | Devpost kit and demo script for the God Mode product | DONE | `59d551b` | `docs/release/DEVPOST_SUBMISSION.md`, `docs/release/DEMO_SCRIPT.md` with a do-not-say list |
 
 ---
@@ -158,12 +159,12 @@ returns 200 anonymously, which is only possible on a public repository, and `REA
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **604 passed**, 2 opt-in skips |
-| Runner and MCP bridge | `npm run test:runner` | **131 passed**, 0 failed |
+| Unit | `npm run test` | **610 passed**, 2 opt-in skips |
+| Runner and MCP bridge | `npm run test:runner` | **135 passed**, 0 failed (now includes the Chronicle asset verifier's own test) |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
 | Submission audit | `npm run audit:submission` | **0 FAIL, 0 WARN** |
-| End to end (Playwright) | `npx playwright test` | **123 passed**, 0 failed, 0 flaky, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission |
+| End to end (Playwright) | `npx playwright test` | **129 passed**, 0 failed, 0 flaky, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission |
 | Clean install | `npm ci` | exit 0, 996 packages |
 | Dependency advisories | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 | Service worker behaviour | `npm run verify:sw` | 5/5 (icon fetch never poisons the shell, redeploy reaches returning visitors, offline serves the freshest shell) |
