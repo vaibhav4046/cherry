@@ -1,5 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+/** Lets finite entry animations (the chapter step fade) finish so axe measures settled colours, not mid-fade blends. */
+async function settleAnimations(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const iterations = animation.effect?.getTiming().iterations;
+      return animation.playState !== 'running' || iterations === Infinity;
+    }),
+  );
+}
 
 test.describe('the 90-second judge path on /showcase', () => {
   test('renders on a fresh visit with four real steps, dismisses and restores across reloads', async ({ page }) => {
@@ -42,6 +52,7 @@ test.describe('the 90-second judge path on /showcase', () => {
     await expect(page.getByTestId('showcase-judge-card')).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
+    await settleAnimations(page);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')).toEqual([]);
     await page.getByTestId('judge-step-creators').focus();

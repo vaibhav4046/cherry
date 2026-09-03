@@ -83,7 +83,8 @@ function eligibleHost(checkedAt = new Date().toISOString()) {
   authenticated: true,
   version: 'codex 1.0.0',
   modes: ['worktree'],
-  capabilities: ['repository_read', 'repository_write', 'command_execution', 'artifact_write', 'verification'],
+  // Exactly what the runner advertises for Codex, Claude and the mock host: no host claims 'verification'.
+  capabilities: ['repository_read', 'repository_write', 'command_execution', 'artifact_write'],
   boundary: 'worktree-process',
   checkedAt,
   details: 'ready',
@@ -474,7 +475,7 @@ describe('Mission Control live-start gate', () => {
 
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(screen.getByTestId('start-mission')).toBeTruthy();
-    await act(async () => { await vi.advanceTimersByTimeAsync(61_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(121_000); });
     expect(screen.queryByTestId('start-mission')).toBeNull();
     expect(runnerApi.status.mock.calls.length).toBeGreaterThan(1);
     vi.useRealTimers();

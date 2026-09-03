@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { listRunnerHosts, runnerStatus } from '../../../cherry/runner-client/runner-api.ts';
 
-const HOST_PROBE_MAX_AGE_MS = 60_000;
+// The runner caches host probes for 60 s, so a fresh answer can already be a minute old; two minutes is the staleness line.
+const HOST_PROBE_MAX_AGE_MS = 120_000;
 const LIVE_READINESS_REFRESH_MS = 15_000;
 
 interface LiveStartGateProps {

@@ -239,7 +239,7 @@ export default function MissionControl() {
       <aside className="chronicle-replay" aria-label="Recorded mission replay">
         <span>
           <Link to="/showcase#recorded-mission">Replay the verified Codex mission</Link>
-          {' '}— a recorded, read-only walkthrough that needs no runner.
+          {' '}(a recorded, read-only walkthrough that needs no runner).
         </span>
       </aside>
 

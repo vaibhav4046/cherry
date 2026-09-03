@@ -90,9 +90,9 @@ test.describe('Mission Control without a runner', () => {
   test('plans a mission from an outcome, refuses to start honestly, keeps it across reload, cancels', async ({ page }, testInfo) => {
     const errors = watchConsole(page);
     await page.goto('/studio/control');
-    await page.getByLabel('Space name').fill('Missions e2e');
-    await page.getByRole('button', { name: 'Create space' }).click();
+    // The first run asks for the outcome directly; the first plan creates the space.
     await expect(page.getByRole('heading', { name: 'What should Cherry take care of?' })).toBeVisible();
+    await expect(page.getByLabel('Space name')).toHaveCount(0);
     if (CAPTURE) mkdirSync(OUT_DIR, { recursive: true });
     await page.screenshot({ path: CAPTURE ? `${OUT_DIR}/control-empty.png` : testInfo.outputPath('control-empty.png'), fullPage: true });
 
@@ -104,15 +104,14 @@ test.describe('Mission Control without a runner', () => {
     expect(await nodes.count()).toBeGreaterThanOrEqual(5);
     await expect(page.getByTestId('mission-node').filter({ hasText: 'Publish approval' })).toContainText('human decision');
 
-    // Approval comes first: the release mission carries consequential work, so an unapproved start is refused.
-    await page.getByTestId('start-mission').click();
-    await expect(page.getByTestId('mission-error')).toContainText(/approve/i);
+    // Fail-closed: with no runner paired in this browser, no live start is offered, before or after approval.
+    // (The refusal text itself is exercised through the WebMCP start tool in webmcp-god-mode.spec.ts.)
+    await expect(page.getByText('Needs your approval before it starts')).toBeVisible();
+    await expect(page.getByTestId('start-mission')).toHaveCount(0);
     await page.getByTestId('approve-plan').click();
     await expect(page.getByText(/Approved at r\d+/)).toBeVisible();
-
-    // Honest refusal: no runner is paired in this browser.
-    await page.getByTestId('start-mission').click();
-    await expect(page.getByTestId('mission-error')).toContainText(/runner/i);
+    await expect(page.getByTestId('start-mission')).toHaveCount(0);
+    await expect(page.getByText('Not on a runner yet')).toBeVisible();
 
     // Reload keeps the plan.
     await page.reload();
@@ -133,8 +132,6 @@ test.describe('Mission Control without a runner', () => {
   test('keyboard: the composer submits with Enter on the button and mobile has no overflow', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/studio/control');
-    await page.getByLabel('Space name').fill('Keyboard e2e');
-    await page.keyboard.press('Enter');
     await expect(page.getByTestId('outcome-composer')).toBeVisible();
     await page.getByTestId('outcome-input').focus();
     await page.keyboard.type('Research this market and produce an evidence-backed launch brief.');
@@ -172,8 +169,11 @@ test.describe('Mission Control with a paired mock runner', () => {
     const errors = watchConsole(page);
     await pair(page);
     await page.goto('/studio/control');
-    await page.getByLabel('Space name').fill('Runner e2e');
-    await page.getByRole('button', { name: 'Create space' }).click();
+    await expect(page.getByTestId('outcome-composer')).toBeVisible();
+
+    // The repository field and the runner line live behind Execution settings, closed by default.
+    await page.getByText('Execution settings', { exact: true }).click();
+    await expect(page.getByTestId('execution-settings')).toHaveAttribute('open', '');
     await expect(page.getByTestId('runner-line')).toContainText('Runner paired');
 
     await page.getByTestId('outcome-input').fill(OUTCOME);

@@ -94,9 +94,12 @@ export default function MissionControlDetail() {
   const [busy, setBusy] = useState(false);
   const [liveSync, setLiveSync] = useState(false);
   const [recipe, setRecipe] = useState<string | null>(null);
+  // Only agent nodes need an eligible host. Verify nodes run the runner's own deterministic checks
+  // (their 'verification' capability is runner-native, never advertised by a host) and human
+  // decisions are made in this UI, so neither may gate the live start.
   const requiredCapabilitySets = useMemo(
     () => view?.plan.nodes
-      .filter((node) => node.kind !== 'human_decision')
+      .filter((node) => node.kind === 'agent')
       .map((node) => node.requiredCapabilities) ?? [],
     [view],
   );

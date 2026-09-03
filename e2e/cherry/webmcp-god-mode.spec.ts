@@ -61,7 +61,7 @@ test.describe('WebMCP mission tools on Mission Control', () => {
     test.setTimeout(120_000);
     await installMockHost(page);
     await page.goto('/studio/control');
-    await expect(page.getByRole('heading', { name: 'Missions' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'What should Cherry take care of?' })).toBeVisible();
 
     // 1 and 2: the control surface exposes the five mission tools plus exactly the seven globals.
     await expect.poll(() => hostTools(page)).toEqual([...GLOBALS, ...MISSION_TOOLS].sort());
