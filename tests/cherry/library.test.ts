@@ -123,6 +123,23 @@ describe('skill library (cross-workspace read layer)', () => {
     expect(rankSkillsForTask(entries, 'bake a sourdough loaf')).toHaveLength(0);
   });
 
+  it('grants the install-ready bonus only to a name match or two distinct matched words', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Bonus workspace' }));
+    const oneCommonWord = await makeApprovedSkill(workspace.id, 'Outreach cadence', 'Write a small three-touch cold outreach sequence');
+    const twoPurposeWords = await makeApprovedSkill(workspace.id, 'Conversion review', 'Audit a landing page for conversion problems');
+    const nameMatch = unwrap(await draftSkillGraph({ workspaceId: workspace.id, name: 'Landing page teardown', purpose: 'Find what stops visitors from converting', nodes: ONE_NODE }));
+
+    const ranked = rankSkillsForTask(await listLibraryEntries(), 'Build a small landing page');
+    const scoreOf = (skillId: string) => ranked.find((match) => match.skillId === skillId)?.score;
+    // One shared purpose word ("small") is a weak signal: no bonus, score stays at 1.
+    expect(scoreOf(oneCommonWord.id)).toBe(1);
+    // Two distinct purpose words ("landing", "page") earn the install-ready bonus.
+    expect(scoreOf(twoPurposeWords.id)).toBe(4);
+    // A draft still outranks the weak install-ready match on its name tokens alone.
+    expect(scoreOf(nameMatch.id)).toBe(6);
+    expect(ranked.map((match) => match.skillId)).toEqual([nameMatch.id, twoPurposeWords.id, oneCommonWord.id]);
+  });
+
   it('matches a singular thumbnail query to a skill that says thumbnails', async () => {
     const workspace = unwrap(await createWorkspace({ name: 'Starter library' }));
     const graph = await makeApprovedSkill(

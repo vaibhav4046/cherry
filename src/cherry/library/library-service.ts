@@ -164,19 +164,26 @@ export function rankSkillsForTask(entries: LibraryEntry[], task: string, limit =
     const nameTokens = new Set(tokenize(entry.name));
     const purposeTokens = new Set(tokenize(entry.purpose));
     let score = 0;
+    let nameHits = 0;
+    const matchedTokens = new Set<string>();
     const matchedOn = new Set<string>();
     for (const token of tokens) {
       if (nameTokens.has(token)) {
         score += 3;
+        nameHits += 1;
+        matchedTokens.add(token);
         matchedOn.add(`name:${token}`);
       }
       if (purposeTokens.has(token)) {
         score += 1;
+        matchedTokens.add(token);
         matchedOn.add(`purpose:${token}`);
       }
     }
     if (score === 0) continue;
-    if (entry.installReady) score += 2;
+    // One shared purpose word is too weak a signal to promote a skill on its
+    // approval alone; the bonus needs a name hit or two distinct matched words.
+    if (entry.installReady && (nameHits > 0 || matchedTokens.size >= 2)) score += 2;
     scored.push({
       skillId: entry.skillId,
       name: entry.name,

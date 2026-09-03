@@ -55,6 +55,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   };
 
   const noWorkspace = () => toolError('conflict', 'No active workspace. The human creates one in the Command Center.');
+  const workItemIdProperty = { type: 'string', description: 'Work item id from create_work_item or read_attention_queue.' };
 
   // ---------- Inbox surface ----------
 
@@ -110,7 +111,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   define({
     name: 'read_work_thread',
     description: 'Read one work item in full: status, definition of done, assignments, and the message thread.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' } }, ['workItemId']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty }, ['workItemId']),
     annotations: { readOnlyHint: true },
     states: [],
     zodSchema: threadSchema,
@@ -129,7 +130,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
     name: 'assign_work_item',
     description: 'Assign a work item to one or more existing agent profiles. Profiles must exist in this workspace; assignment never starts execution.',
     inputSchema: objectSchema(
-      { workItemId: { type: 'string' }, agentIds: { type: 'array', items: { type: 'string' } } },
+      { workItemId: workItemIdProperty, agentIds: { type: 'array', items: { type: 'string' } } },
       ['workItemId', 'agentIds'],
     ),
     annotations: { readOnlyHint: false },
@@ -149,7 +150,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
     name: 'request_work_run',
     description:
       'Move a work item toward execution: DRAFT becomes READY, READY becomes QUEUED. Actual running requires an execution host to lease the job — this tool never fakes progress past QUEUED.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' } }, ['workItemId']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty }, ['workItemId']),
     annotations: { readOnlyHint: false },
     states: [],
     zodSchema: runRequestSchema,
@@ -270,7 +271,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
     name: 'propose_handoff',
     description: 'Propose handing a work item to another agent, with a reason. The handoff is recorded as proposed; it takes effect when accepted.',
     inputSchema: objectSchema(
-      { workItemId: { type: 'string' }, toAgentId: { type: 'string' }, reason: { type: 'string' }, fromAgentId: { type: 'string' } },
+      { workItemId: workItemIdProperty, toAgentId: { type: 'string' }, reason: { type: 'string' }, fromAgentId: { type: 'string' } },
       ['workItemId', 'toAgentId', 'reason'],
     ),
     annotations: { readOnlyHint: false },
@@ -290,7 +291,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   define({
     name: 'read_run_status',
     description: 'Read the live status of a work item in flight: state, revision, and the latest thread entries.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' } }, ['workItemId']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty }, ['workItemId']),
     annotations: { readOnlyHint: true },
     states: [],
     zodSchema: threadSchema,
@@ -308,7 +309,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   define({
     name: 'record_run_checkpoint',
     description: 'Record a checkpoint on a work item thread — what was just completed or observed. A record, never a claim of verification.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' }, note: { type: 'string' } }, ['workItemId', 'note']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty, note: { type: 'string' } }, ['workItemId', 'note']),
     annotations: { readOnlyHint: false },
     states: [],
     zodSchema: checkpointSchema,
@@ -325,7 +326,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   define({
     name: 'request_human_action',
     description: 'Ask the human for a decision. Posts the question to the thread and, if the item is RUNNING, honestly parks it in WAITING_FOR_HUMAN.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' }, question: { type: 'string' } }, ['workItemId', 'question']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty, question: { type: 'string' } }, ['workItemId', 'question']),
     annotations: { readOnlyHint: false },
     states: [],
     zodSchema: humanActionSchema,
@@ -347,7 +348,7 @@ export function buildWorkforceToolDefinitions(context: ToolContext): CherryToolD
   define({
     name: 'request_verification',
     description: 'Move a RUNNING work item to VERIFYING. Verification itself is deterministic and outside agent control — its outcome decides success or failure.',
-    inputSchema: objectSchema({ workItemId: { type: 'string' } }, ['workItemId']),
+    inputSchema: objectSchema({ workItemId: workItemIdProperty }, ['workItemId']),
     annotations: { readOnlyHint: false },
     states: [],
     zodSchema: runRequestSchema,

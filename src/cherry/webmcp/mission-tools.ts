@@ -28,7 +28,11 @@ export const MISSION_TOOL_NAMES = [
   'request_mission_action',
 ] as const;
 
+const FINISHED_STATUSES: ReadonlyArray<MissionView['card']['status']> = ['cancelled', 'succeeded', 'failed'];
+
 function summary(view: MissionView) {
+  // A finished mission has no work left to offer, whatever its nodes still say.
+  const finished = FINISHED_STATUSES.includes(view.card.status);
   return {
     missionId: view.mission.id,
     planId: view.plan.id,
@@ -40,8 +44,8 @@ function summary(view: MissionView) {
     approved: view.card.approved,
     runnerBound: view.card.runnerBound,
     activeWorkers: view.card.activeWorkers,
-    pendingApprovals: view.card.pendingApprovals,
-    readyNodeIds: view.readyNodeIds.slice(0, 8),
+    pendingApprovals: finished ? 0 : view.card.pendingApprovals,
+    readyNodeIds: finished ? [] : view.readyNodeIds.slice(0, 8),
     problems: view.problems.slice(0, 5),
     nodes: view.nodes.slice(0, 20).map((node) => ({ id: node.node.id, kind: node.node.kind, status: node.status, boundary: node.runner?.sandbox?.boundary ?? null, host: node.runner?.host?.kind ?? null })),
     boundary: 'No tool here approves, promotes trust, activates memory, or runs a command.',
@@ -66,8 +70,8 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
     inputSchema: objectSchema(
       {
         outcome: { type: 'string', description: 'The result the person wants, in one or two sentences.' },
-        constraints: { type: 'array', items: { type: 'string' } },
-        templateId: { type: 'string', enum: MISSION_TEMPLATES.map((template) => template.id) },
+        constraints: { type: 'array', items: { type: 'string' }, description: 'Rules the plan must respect, one per entry (at most 10).' },
+        templateId: { type: 'string', enum: MISSION_TEMPLATES.map((template) => template.id), description: 'Mission template to instantiate; matched from the outcome when omitted.' },
         repositoryRoot: { type: 'string', description: 'Optional repository folder under a runner root.' },
       },
       ['outcome'],
@@ -85,7 +89,7 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
         workspaceCreated = true;
         context.setActiveIds?.({ workspaceId });
       }
-      const result = await createMission({ workspaceId, outcome: input.outcome, constraints: input.constraints ?? [], ...(input.templateId ? { templateId: input.templateId } : {}), repositoryRoot: input.repositoryRoot ?? null });
+      const result = await createMission({ workspaceId, outcome: input.outcome, constraints: input.constraints ?? [], ...(input.templateId ? { templateId: input.templateId } : {}), repositoryRoot: input.repositoryRoot ?? null, actorType: 'agent' });
       if (!result.ok) return toolError(result.error.code, result.error.message);
       context.setActiveIds?.({ workspaceId, missionId: result.value.mission.id });
       return toolText({
@@ -102,10 +106,11 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
   });
 
   const missionSchema = z.object({ missionId: z.string().min(1).optional() });
+  const missionIdProperty = { type: 'string', description: 'Mission id from create_outcome_mission; defaults to the current mission.' };
   define({
     name: 'plan_current_mission',
     description: 'Read the validated plan of the current mission (or a given missionId): revision, content hash, node states, ready nodes, problems, and whether a person must approve it.',
-    inputSchema: objectSchema({ missionId: { type: 'string' } }, []),
+    inputSchema: objectSchema({ missionId: missionIdProperty }, []),
     annotations: { readOnlyHint: true },
     states: [],
     zodSchema: missionSchema,
@@ -122,7 +127,7 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
   define({
     name: 'start_current_mission',
     description: 'Ask Cherry to start the mission on the paired local runner at an exact plan revision. Refuses honestly when the runner is unpaired, the plan hash is stale, or a person has not approved a consequential plan.',
-    inputSchema: objectSchema({ missionId: { type: 'string' }, expectedRevision: { type: 'integer' } }, ['expectedRevision']),
+    inputSchema: objectSchema({ missionId: missionIdProperty, expectedRevision: { type: 'integer', minimum: 1, description: 'The plan revision you last read; a stale revision is refused.' } }, ['expectedRevision']),
     annotations: { readOnlyHint: false, sideEffect: 'execute' },
     states: [],
     zodSchema: startSchema,
@@ -140,7 +145,7 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
   define({
     name: 'cancel_current_mission',
     description: 'Cancel the current mission (or a given missionId) on the runner and locally. Finished work stays recorded.',
-    inputSchema: objectSchema({ missionId: { type: 'string' } }, []),
+    inputSchema: objectSchema({ missionId: missionIdProperty }, []),
     annotations: { readOnlyHint: false, sideEffect: 'write' },
     states: [],
     zodSchema: missionSchema,
@@ -159,8 +164,16 @@ export function buildMissionToolDefinitions(context: ToolContext): CherryToolDef
   define({
     name: 'request_mission_action',
     description: 'Ask the person for a decision on one mission task. Parks a running task as Needs you. This never approves, grants, or decides anything.',
-    inputSchema: objectSchema({ missionId: { type: 'string' }, nodeId: { type: 'string' }, question: { type: 'string' } }, ['nodeId', 'question']),
-    annotations: { readOnlyHint: false, sideEffect: 'write', requiresApproval: true },
+    inputSchema: objectSchema(
+      {
+        missionId: missionIdProperty,
+        nodeId: { type: 'string', description: 'Plan node id from plan_current_mission (the task the decision is about).' },
+        question: { type: 'string', description: 'The decision you need from the person, in one sentence.' },
+      },
+      ['nodeId', 'question'],
+    ),
+    // Asking a question needs no approval of its own; the person's answer is the decision.
+    annotations: { readOnlyHint: false, sideEffect: 'write', requiresApproval: false },
     states: [],
     zodSchema: actionSchema,
     execute: guarded(actionSchema, async (input) => {

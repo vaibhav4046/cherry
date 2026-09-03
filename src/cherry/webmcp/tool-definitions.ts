@@ -180,7 +180,9 @@ function boundedSkillSummary(
     evaluationCount: graph.evaluations.length,
     evaluations: [],
     evaluationsTruncated: false,
-    ...citations,
+    citationCount: citations.citationCount,
+    citations: [],
+    citationsTruncated: false,
     ...approvalContext,
     formats: ['skill-md', 'agents-md', 'claude-md'],
   };
@@ -209,7 +211,12 @@ function boundedSkillSummary(
     })) break;
   }
   payload.evaluationsTruncated = (payload.evaluations as unknown[]).length < graph.evaluations.length;
+  // The purpose is the contract; citations take what is left after it fits.
   fitStringProperty(payload, 'purpose', graph.purpose, 240);
+  for (const citation of citations.citations) {
+    if (!appendIfBounded(payload, 'citations', citation)) break;
+  }
+  payload.citationsTruncated = (payload.citations as unknown[]).length < citations.citationCount;
   return payload;
 }
 
@@ -287,16 +294,26 @@ async function skillCitationEnvelope(graph: SkillGraph): Promise<SkillCitationEn
       Boolean(record.sourceCreator || record.sourceTitle || record.sourceUri) ||
       typeof record.timestampSeconds === 'number',
   );
-  const citations: SkillCitation[] = [];
-  for (const record of scoped.slice(0, MAX_SKILL_CITATIONS)) {
+  // One citation per source: several evidence records from the same URL cite it
+  // once (first timestamp wins) instead of spending the budget on repeats.
+  const unique: SkillCitation[] = [];
+  const seen = new Set<string>();
+  for (const record of scoped) {
     const candidate = citationFromEvidence(record);
+    const key = candidate.url ?? JSON.stringify(candidate);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(candidate);
+  }
+  const citations: SkillCitation[] = [];
+  for (const candidate of unique.slice(0, MAX_SKILL_CITATIONS)) {
     if (JSON.stringify([...citations, candidate]).length > SKILL_CITATION_JSON_BUDGET) break;
     citations.push(candidate);
   }
   return {
-    citationCount: scoped.length,
+    citationCount: unique.length,
     citations,
-    citationsTruncated: citations.length < scoped.length,
+    citationsTruncated: citations.length < unique.length,
   };
 }
 
@@ -424,7 +441,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'list_cherry_capabilities',
     description:
-      'List Cherry capabilities and which WebMCP tools are active in the current product state, with the reason each other tool is unavailable.',
+      'List which WebMCP tools are active now, and which surface and state each other tool needs.',
     inputSchema: objectSchema({}, []),
     annotations: { readOnlyHint: true },
     states: [],
@@ -439,7 +456,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         productState: state,
         activeTools: context.getActiveToolNames?.() ?? [...GLOBAL_TOOLS, ...(byState[state] ?? [])],
         allStates: byState,
-        safeSequenceAliases: SAFE_TOOL_NAME_ALIASES,
+        registeredNameForLegacyName: Object.fromEntries(Object.entries(SAFE_TOOL_NAME_ALIASES).map(([registered, legacy]) => [legacy, registered])),
         note: 'Tools register and unregister as the product state changes. Manual UI can always do everything these tools can.',
       });
     }),
@@ -492,13 +509,17 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
-  const listSkillsSchema = z.object({ status: z.enum(['all', 'approved']).optional() });
+  const listSkillsStatuses = ['all', 'approved'] as const;
+  const listSkillsSchema = z.object({ status: z.enum(listSkillsStatuses).optional(), offset: z.number().int().min(0).optional() });
   define({
     name: 'list_skills',
     description:
-      'Read the cross-workspace skill library with status, exact revision, approval hash, sample label, and install readiness. For sample=false, installReady records a live human decision. sample=true is a labelled synthetic reference state and never proof of a user decision.',
+      'Read the cross-workspace skill library with status, exact revision, approval hash, sample label, and install readiness. Pages with offset and nextOffset. For sample=false, installReady records a live human decision. sample=true is a labelled synthetic reference state and never proof of a user decision.',
     inputSchema: objectSchema(
-      { status: { type: 'string', description: "Optional filter: 'approved' returns only install-ready skills (default 'all')" } },
+      {
+        status: { type: 'string', enum: [...listSkillsStatuses], description: "Optional filter: 'approved' returns only install-ready skills (default 'all')" },
+        offset: { type: 'integer', minimum: 0, description: 'Skip this many skills; pass the previous nextOffset to read the next page (default 0)' },
+      },
       [],
     ),
     annotations: { readOnlyHint: true },
@@ -507,14 +528,18 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     execute: guarded(listSkillsSchema, async (input) => {
       const entries = await listLibraryEntries();
       const filtered = input.status === 'approved' ? entries.filter((entry) => entry.installReady) : entries;
+      const offset = input.offset ?? 0;
       const payload: Record<string, unknown> = {
         totalCount: filtered.length,
+        offset,
         returnedCount: 0,
+        // Sized with the widest value it can take, so the final number always fits.
+        nextOffset: filtered.length,
         skills: [],
         skillsTruncated: false,
         note: 'get_skill serves install-ready content. Live approvals stay human-only; labelled samples report sample=true.',
       };
-      for (const entry of filtered.slice(0, 8)) {
+      for (const entry of filtered.slice(offset, offset + 8)) {
         if (!appendIfBounded(payload, 'skills', {
           skillId: entry.skillId,
           name: entry.name.slice(0, 60),
@@ -527,8 +552,11 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
           approvalHash: entry.approvalHash ? entry.approvalHash.slice(0, 16) : null,
         })) break;
       }
-      payload.returnedCount = (payload.skills as unknown[]).length;
-      payload.skillsTruncated = (payload.skills as unknown[]).length < filtered.length;
+      const returnedCount = (payload.skills as unknown[]).length;
+      const remaining = offset + returnedCount < filtered.length;
+      payload.returnedCount = returnedCount;
+      payload.nextOffset = remaining ? offset + returnedCount : null;
+      payload.skillsTruncated = remaining;
       return boundedSkillJson(payload);
     }),
   });
@@ -541,7 +569,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     inputSchema: objectSchema(
       {
         task: { type: 'string', description: 'What the agent is trying to do right now' },
-        limit: { type: 'number', description: 'Max results (default 3, max 5)' },
+        limit: { type: 'integer', minimum: 1, maximum: 5, description: 'Max results (default 3, max 5)' },
       },
       ['task'],
     ),
@@ -581,9 +609,10 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
+  const getSkillFormats = ['summary', 'skill-md', 'agents-md', 'claude-md'] as const;
   const getSkillSchema = z.object({
     skillId: z.string().min(1),
-    format: z.enum(['summary', 'skill-md', 'agents-md', 'claude-md']).optional(),
+    format: z.enum(getSkillFormats).optional(),
     part: z.number().int().min(1).optional(),
   });
   define({
@@ -593,8 +622,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     inputSchema: objectSchema(
       {
         skillId: { type: 'string', description: 'Skill id from list_skills or recommend_skills' },
-        format: { type: 'string', description: "'summary' | 'skill-md' | 'agents-md' | 'claude-md' (default 'summary')" },
-        part: { type: 'number', description: 'File formats are delivered in bounded parts; request part 1..totalParts (default 1)' },
+        format: { type: 'string', enum: [...getSkillFormats], description: "'summary' | 'skill-md' | 'agents-md' | 'claude-md' (default 'summary')" },
+        part: { type: 'integer', minimum: 1, description: 'File formats are delivered in bounded parts; request part 1..totalParts (default 1)' },
       },
       ['skillId'],
     ),
@@ -1478,13 +1507,16 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   for (const [canonical, legacy] of Object.entries(SAFE_TOOL_NAME_ALIASES)) {
     const source = definitions.find((definition) => definition.name === legacy);
     if (source && !definitions.some((definition) => definition.name === canonical)) {
-      definitions.push({ ...source, name: canonical, description: `${source.description} Canonical WebMCP name.` });
+      definitions.push({ ...source, name: canonical, description: `${source.description} Registered under this name; ${legacy} is the same tool on the local bridge.` });
     }
   }
 
   // After any successful mutating call, re-sync the app shell (UI selection and
   // tool aperture) so an agent-driven journey advances without a human click.
   // Read-only tools skip it; contexts without onMutation (bridge, tests) no-op.
+  // The re-sync runs off the awaited path, after the result exists: it may
+  // retire the very registration that is executing, and the host must receive
+  // the result from a registration that is still live.
   return definitions.map((definition) => {
     const sideEffect = definition.annotations.sideEffect
       ?? (definition.annotations.readOnlyHint
@@ -1504,7 +1536,10 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       annotations,
       execute: async (input: unknown, signal: AbortSignal) => {
         const result = await inner(input, signal);
-        if (result.isError !== true) await context.onMutation?.();
+        if (result.isError !== true) {
+          // A refresh failure must not fail a call whose work already landed.
+          void Promise.resolve().then(() => context.onMutation?.()).catch(() => undefined);
+        }
         return result;
       },
     };

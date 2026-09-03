@@ -76,8 +76,21 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     const started = await callTool(page, 'start_apprenticeship', { workspaceName: 'Host journey' });
     expect(started.isError).toBe(false);
 
-    // The aperture must advance to expose load_lesson WITHOUT any human click.
+    // The aperture must advance to expose load_lesson WITHOUT any human click. The onboarding
+    // aperture still includes start_apprenticeship, so that registration stays live (no churn):
+    // only names that leave the aperture are retired.
     await expect.poll(() => hostTools(page)).toContain('load_lesson');
+    expect(await page.evaluate(() => window.__host.retired.has('start_apprenticeship'))).toBe(false);
+    await expect(page.getByTestId('showcase-steps')).toContainText('Mission "Learn a lesson and prove it" (DRAFT)');
+
+    const lesson = await callTool(page, 'load_lesson', { title: 'Semantic hero sections', kind: 'manual' });
+    expect(lesson.isError).toBe(false);
+    const lessonId = (lesson.payload as Record<string, unknown>).lessonId as string;
+
+    // DRAFT → LEARNING happened inside the tool; learning tools appear, and the names that left
+    // the aperture are retired: their old closures refuse instead of mutating stale state.
+    await expect.poll(() => hostTools(page)).toContain('import_transcript');
+    await expect.poll(() => page.evaluate(() => window.__host.retired.has('start_apprenticeship'))).toBe(true);
     const retiredResult = await page.evaluate(async () => {
       const stale = window.__host.retired.get('start_apprenticeship');
       if (!stale) return null;
@@ -85,14 +98,7 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
       return { isError: result.isError === true, payload: JSON.parse(result.content[0]!.text) as Record<string, unknown> };
     });
     expect(retiredResult?.isError).toBe(true);
-    await expect(page.getByTestId('showcase-steps')).toContainText('Mission "Learn a lesson and prove it" (DRAFT)');
-
-    const lesson = await callTool(page, 'load_lesson', { title: 'Semantic hero sections', kind: 'manual' });
-    expect(lesson.isError).toBe(false);
-    const lessonId = (lesson.payload as Record<string, unknown>).lessonId as string;
-
-    // DRAFT → LEARNING happened inside the tool; learning tools appear.
-    await expect.poll(() => hostTools(page)).toContain('import_transcript');
+    expect(await hostTools(page)).not.toContain('start_apprenticeship');
     const transcript = await callTool(page, 'import_transcript', {
       lessonId,
       text: '00:05 A hero section needs exactly one real h1.\n00:12 Spacing groups related content.\n00:20 Focus must stay visible for keyboard users.',

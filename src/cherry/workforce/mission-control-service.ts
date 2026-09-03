@@ -47,6 +47,7 @@ import {
   projectPlanToWorkItems,
   recordPlanStatus,
   requiresApproval,
+  type MissionCreatorType,
 } from './mission-plan-service.ts';
 import { applyRunnerNodeEvent, deriveMissionSummary, type RunnerNodeEvent } from './mission-orchestrator.ts';
 import { hostBoundary, probeToExecutionHost } from './host-registry-service.ts';
@@ -66,7 +67,8 @@ export interface MissionCard {
   planId: string;
   outcome: string;
   status: MissionPlan['status'];
-  column: 'working' | 'needs_you' | 'completed';
+  /** planned: validated but never started; working: bound to a runner or in flight. */
+  column: 'planned' | 'working' | 'needs_you' | 'completed';
   nodeCount: number;
   activeWorkers: number;
   hosts: string[];
@@ -125,9 +127,12 @@ function nodeStatuses(plan: MissionPlan, workItems: readonly WorkItem[]): Record
   return statuses;
 }
 
-function columnFor(status: MissionPlan['status'], pendingApprovals: number): MissionCard['column'] {
+const PLANNED_STATUSES: ReadonlyArray<MissionPlan['status']> = ['draft', 'validated', 'ready'];
+
+function columnFor(status: MissionPlan['status'], pendingApprovals: number, runnerBound: boolean): MissionCard['column'] {
   if (status === 'succeeded' || status === 'failed' || status === 'cancelled') return 'completed';
   if (status === 'waiting_for_human' || pendingApprovals > 0) return 'needs_you';
+  if (PLANNED_STATUSES.includes(status) && !runnerBound) return 'planned';
   return 'working';
 }
 
@@ -155,7 +160,7 @@ function buildCard(mission: Mission, plan: MissionPlan, workItems: readonly Work
     planId: plan.id,
     outcome: plan.outcome,
     status,
-    column: columnFor(status, pendingApprovals),
+    column: columnFor(status, pendingApprovals, binding !== null),
     nodeCount: plan.nodes.length,
     activeWorkers,
     hosts: [...hosts].sort(),
@@ -190,6 +195,8 @@ export interface CreateMissionInput {
   constraints?: string[];
   templateId?: string;
   repositoryRoot?: string | null;
+  /** Who is creating the mission; recorded on its ledger events. Defaults to the person. */
+  actorType?: MissionCreatorType;
 }
 
 /** Outcome in, validated plan out. Template selection is deterministic and reported. */
@@ -205,6 +212,7 @@ export async function createMission(input: CreateMissionInput): Promise<Result<{
     constraints: input.constraints ?? [],
     templateId,
     repositoryRoot: input.repositoryRoot ?? null,
+    actorType: input.actorType ?? 'human',
   });
   if (!created.ok) return created;
   return ok({ ...created.value, templateId });
@@ -408,7 +416,8 @@ export async function cancelMission(workspaceId: string, missionId: string, acto
     const moved = await transitionWorkItem(workspaceId, workItemId, 'CANCELLED', { actorType: actorType === 'runner' ? 'system' : actorType, reason: 'mission cancelled' });
     if (!moved.ok) return moved;
   }
-  const recorded = await recordPlanStatus(workspaceId, plan.id, 'cancelled', 'cancelled by the person');
+  const cancelledBy = actorType === 'agent' ? 'cancelled by the agent' : actorType === 'human' ? 'cancelled by the person' : `cancelled by the ${actorType}`;
+  const recorded = await recordPlanStatus(workspaceId, plan.id, 'cancelled', cancelledBy);
   if (!recorded.ok) return recorded;
   return getMissionView(workspaceId, missionId);
 }
@@ -453,6 +462,9 @@ export async function requestMissionAction(workspaceId: string, missionId: strin
   if (trimmed.length === 0) return fail('validation', 'Say what decision you need.');
   const plan = await getPlanForMission(workspaceId, missionId);
   if (!plan) return fail('not_found', 'This mission has no plan.');
+  if (!plan.nodes.some((node) => node.id === nodeId)) {
+    return fail('validation', `Unknown node "${nodeId}". Valid node ids: ${plan.nodes.map((node) => node.id).join(', ')}.`, { nodeIds: plan.nodes.map((node) => node.id) });
+  }
   const workItemId = plan.nodeWorkItemIds[nodeId] ?? null;
   if (!workItemId) return fail('validation', 'That node has not been projected into work yet; start the mission first.');
   const item = await getWorkItem(workspaceId, workItemId);

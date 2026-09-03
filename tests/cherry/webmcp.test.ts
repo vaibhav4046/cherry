@@ -17,6 +17,7 @@ import { createMission, createWorkspace } from '../../src/cherry/mission/mission
 import { createSource } from '../../src/cherry/source/source-service.ts';
 import { getDb } from '../../src/cherry/persistence/cherry-db.ts';
 import { addEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import type { EvidenceRecord } from '../../src/cherry/evidence/evidence-model.ts';
 import {
   decideSkillGraphApproval,
   draftSkillGraph,
@@ -513,14 +514,17 @@ describe('WebMCP graceful degradation', () => {
       expect(learningNames).toContain('load_lesson');
       expect(learningNames).not.toContain('compile_skill_bundle');
 
-      const firstBatchSignals = registered.map((entry) => entry.signal);
+      const isGlobal = (name: string) => (GLOBAL_TOOLS as readonly string[]).includes(name);
+      const firstBatch = [...registered];
       manager.syncState('passed');
-      // Old registrations were aborted.
-      expect(firstBatchSignals.every((signal) => signal?.aborted)).toBe(true);
+      // Old state registrations were aborted; the globals stay live across the swap.
+      expect(firstBatch.filter((entry) => !isGlobal(entry.name)).every((entry) => entry.signal?.aborted)).toBe(true);
+      expect(firstBatch.filter((entry) => isGlobal(entry.name)).every((entry) => entry.signal?.aborted === false)).toBe(true);
       const passedNames = manager.status().registered.map((tool) => tool.name);
       expect(passedNames).toContain('compile_skill_bundle');
       expect(passedNames).not.toContain('load_lesson');
       manager.dispose();
+      expect(registered.every((entry) => entry.signal?.aborted)).toBe(true);
     } finally {
       delete (document as unknown as { modelContext?: unknown }).modelContext;
     }
@@ -543,6 +547,157 @@ describe('WebMCP graceful degradation', () => {
       expect(registered.map((entry) => entry.name)).toContain('record_observation');
     } finally {
       delete (document as unknown as { modelContext?: unknown }).modelContext;
+    }
+  });
+});
+
+interface HostRegistration {
+  name: string;
+  signal: AbortSignal | undefined;
+  execute: (input: unknown) => Promise<unknown>;
+}
+
+/** A minimal document.modelContext that records every registration it receives. */
+function installHost(): { registrations: HostRegistration[]; remove(): void } {
+  const registrations: HostRegistration[] = [];
+  (document as unknown as { modelContext: unknown }).modelContext = {
+    registerTool: (tool: { name: string; execute: (input: unknown) => Promise<unknown> }, options?: { signal?: AbortSignal }) => {
+      registrations.push({ name: tool.name, signal: options?.signal, execute: tool.execute });
+    },
+  };
+  return {
+    registrations,
+    remove: () => {
+      delete (document as unknown as { modelContext?: unknown }).modelContext;
+    },
+  };
+}
+
+const nextMacrotask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+describe('WebMCP registration lifecycle', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('keeps a write tool registered until the host has its result, even when its own mutation retires it', async () => {
+    const host = installHost();
+    try {
+      const context = makeContext();
+      const manager = new WebMcpRegistrationManager(context);
+      context.setActiveIds = (ids) => {
+        if (ids.workspaceId !== undefined) context.workspaceId = ids.workspaceId;
+        if (ids.missionId !== undefined) context.missionId = ids.missionId;
+      };
+      // The worst-case shell: it re-reads state synchronously and lands on a state that retires the tool.
+      let mutations = 0;
+      context.onMutation = () => {
+        mutations += 1;
+        manager.syncState('passed');
+      };
+      manager.syncState('empty');
+      const registration = host.registrations.find((entry) => entry.name === 'create_workspace')!;
+      expect(registration.signal?.aborted).toBe(false);
+
+      const result = parseResult(await registration.execute({ name: 'Agent workspace' }));
+      expect(result.workspaceId).toBeTruthy();
+      expect(mutations).toBe(1);
+      // The host has its result and the registration that produced it is still live.
+      expect(registration.signal?.aborted).toBe(false);
+      expect(manager.status().registered.map((tool) => tool.name)).toContain('create_workspace');
+      expect(host.registrations.some((entry) => entry.name === 'compile_skill_bundle')).toBe(false);
+
+      // Once the call has fully returned, the deferred selection applies: the tool retires and refuses.
+      await nextMacrotask();
+      expect(registration.signal?.aborted).toBe(true);
+      expect(manager.status().registered.map((tool) => tool.name)).toEqual(manager.activeNamesFor('passed'));
+      expect(host.registrations.filter((entry) => entry.name === 'compile_skill_bundle')).toHaveLength(1);
+      expect(parseResult(await registration.execute({ name: 'stale' })).error).toBe('conflict');
+      expect(await getDb().workspaces.count()).toBe(1);
+      manager.dispose();
+    } finally {
+      host.remove();
+    }
+  });
+
+  it('registers the globals once: navigating between surfaces never re-registers them', () => {
+    const host = installHost();
+    try {
+      const manager = new WebMcpRegistrationManager(makeContext());
+      manager.syncState('onboarding');
+      const isGlobal = (entry: HostRegistration) => (GLOBAL_TOOLS as readonly string[]).includes(entry.name);
+      const globals = host.registrations.filter(isGlobal);
+      expect(globals.map((entry) => entry.name)).toEqual([...GLOBAL_TOOLS]);
+
+      manager.setSurface('inbox');
+      manager.setSurface('crew');
+      manager.setSurface('sources');
+      manager.setSurface('default');
+      manager.syncState('learning');
+      expect(host.registrations.filter(isGlobal)).toHaveLength(7);
+      expect(globals.every((entry) => entry.signal?.aborted === false)).toBe(true);
+      expect(manager.status().registered.filter((tool) => (GLOBAL_TOOLS as readonly string[]).includes(tool.name))).toHaveLength(7);
+      expect(manager.status().recentlyRemoved).not.toEqual(expect.arrayContaining([...GLOBAL_TOOLS]));
+
+      manager.dispose();
+      expect(globals.every((entry) => entry.signal?.aborted)).toBe(true);
+    } finally {
+      host.remove();
+    }
+  });
+
+  it('a state change aborts exactly the retired tools and registers each new one exactly once', async () => {
+    const host = installHost();
+    try {
+      const manager = new WebMcpRegistrationManager(makeContext());
+      manager.syncState('planning');
+      const planning = host.registrations.filter((entry) => TOOL_STATE_TABLE.planning!.includes(entry.name));
+      expect(planning.map((entry) => entry.name)).toEqual(TOOL_STATE_TABLE.planning);
+      const kept = planning.find((entry) => entry.name === 'propose_memory')!;
+      const countBefore = host.registrations.length;
+      expect(countBefore).toBe(GLOBAL_TOOLS.length + TOOL_STATE_TABLE.planning!.length);
+
+      manager.syncState('verification');
+      const retired = planning.filter((entry) => entry.name !== 'propose_memory');
+      expect(retired.every((entry) => entry.signal?.aborted)).toBe(true);
+      // propose_memory stays in the aperture: same registration, never aborted, never registered twice.
+      expect(kept.signal?.aborted).toBe(false);
+      expect(host.registrations.filter((entry) => entry.name === 'propose_memory')).toHaveLength(1);
+      const added = host.registrations.slice(countBefore);
+      expect(added.map((entry) => entry.name).sort()).toEqual(TOOL_STATE_TABLE.verification!.filter((name) => name !== 'propose_memory').sort());
+      expect(added.every((entry) => entry.signal?.aborted === false)).toBe(true);
+      expect(manager.status().registered.map((tool) => tool.name)).toEqual(manager.activeNamesFor('verification'));
+      expect(manager.status().registered).toHaveLength(12);
+      expect(manager.status().recentlyRemoved).toEqual(expect.arrayContaining(['define_skillgraph', 'request_skill_approval', 'revise_checkpoint']));
+      expect(manager.status().recentlyRemoved).not.toContain('propose_memory');
+
+      // A retired closure refuses clearly; the kept one still answers.
+      expect(parseResult(await retired[0]!.execute({ skillGraphId: 'x', expectedRevision: 1, changeSummary: 'stale' })).error).toBe('conflict');
+      expect(parseResult(await kept.execute({})).error).toBe('validation');
+      manager.dispose();
+    } finally {
+      host.remove();
+    }
+  });
+
+  it('never holds more than five contextual tools plus the seven globals live across a cold load and every route', () => {
+    const host = installHost();
+    try {
+      const manager = new WebMcpRegistrationManager(makeContext());
+      const live = () => host.registrations.filter((entry) => entry.signal?.aborted === false).map((entry) => entry.name);
+      manager.syncState('empty');
+      expect(live()).toEqual(manager.activeNamesFor('empty'));
+      expect(host.registrations).toHaveLength(live().length);
+      for (const surface of ['inbox', 'crew', 'routines', 'run', 'sources', 'control', 'default'] as const) {
+        manager.setSurface(surface);
+        expect(live().length, surface).toBeLessThanOrEqual(12);
+        expect(new Set(live()).size, surface).toBe(live().length);
+        expect(live(), surface).toEqual(manager.activeNamesFor('empty', surface));
+      }
+      manager.dispose();
+      expect(live()).toEqual([]);
+    } finally {
+      host.remove();
     }
   });
 });
@@ -838,9 +993,137 @@ describe('fresh-journey tools and mutation sync', () => {
   });
 });
 
+/** A skill whose every step cites the same video: three duplicate citations used to crowd out the purpose. */
+async function makeDuplicateCitedSkill(purpose: string) {
+  const workspace = unwrap(await createWorkspace({ name: 'Duplicate citations' }));
+  const mission = unwrap(await createMission({ workspaceId: workspace.id, title: 'Learn thumbnail review', objective: 'Serve a deduplicated skill', definitionOfDone: ['One citation per source'] }));
+  const evidence: EvidenceRecord[] = [];
+  for (let index = 0; index < 6; index += 1) {
+    evidence.push(unwrap(await addEvidence({
+      workspaceId: workspace.id,
+      missionId: mission.id,
+      sourceType: 'video',
+      sourceCreator: 'Creator Lab Studio Sessions',
+      sourceTitle: 'The Thumbnail Hierarchy Method, full breakdown with examples',
+      sourceUri: 'https://www.youtube.com/watch?v=abc123xyz00',
+      timestampSeconds: 10 * (index + 1),
+      claim: `Observation ${index + 1} from the same video.`,
+      provenanceMethod: 'user_typed',
+    })));
+  }
+  const graph = unwrap(await draftSkillGraph({
+    workspaceId: workspace.id,
+    missionId: mission.id,
+    name: 'Thumbnail review',
+    purpose,
+    nodes: Array.from({ length: 3 }, (_, index) => ({
+      kind: 'action' as const,
+      title: `Step ${index + 1}: check the focal subject`,
+      goal: `Confirm the subject reads first at a small size (${index + 1})`,
+      evidenceIds: evidence.slice(index * 2, index * 2 + 2).map((record) => record.id),
+    })),
+  }));
+  const revised = unwrap(await reviseSkillGraph(graph.id, {
+    guardrails: Array.from({ length: 2 }, (_, index) => ({
+      id: `guard-${index}`,
+      title: `Never crop the subject ${index + 1}`,
+      effect: 'deny' as const,
+      condition: 'subject cropped',
+      scope: 'global' as const,
+    })),
+    evaluations: Array.from({ length: 2 }, (_, index) => ({
+      id: `evaluation-${index}`,
+      name: `Subject reads first ${index + 1}`,
+      type: index === 0 ? 'graph' as const : 'manual' as const,
+      severity: index === 0 ? 'blocking' as const : 'info' as const,
+      config: {},
+    })),
+  }, 'Add guardrails and evaluations', 'human', graph.revision));
+  const request = unwrap(await requestSkillGraphApproval(revised.id, 'Duplicate citation test', 'user'));
+  unwrap(await decideSkillGraphApproval(request.approval.id, 'approved', 'user'));
+  return revised;
+}
+
+describe('WebMCP skill library paging', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it('list_skills pages with offset and nextOffset until every skill was returned once', async () => {
+    const workspace = unwrap(await createWorkspace({ name: 'Paged library' }));
+    const created: string[] = [];
+    for (let index = 0; index < 9; index += 1) {
+      const graph = unwrap(await draftSkillGraph({
+        workspaceId: workspace.id,
+        name: `Library skill ${index + 1} with a descriptive name for paging`,
+        purpose: `Purpose ${index + 1}: a sentence long enough to make each page cost real budget in the response.`,
+        nodes: [{ kind: 'action', title: 'Do the work', goal: 'Produce the artifact' }],
+      }));
+      created.push(graph.id);
+    }
+    const manager = new WebMcpRegistrationManager(makeContext());
+
+    const seen: string[] = [];
+    let offset: number | null = 0;
+    let pages = 0;
+    while (offset !== null) {
+      const raw = await manager.executeLocal('list_skills', { offset });
+      expect(resultText(raw).length).toBeLessThanOrEqual(MAX_RESULT_CHARS);
+      const page = parseResult(raw);
+      const skills = page.skills as Array<{ skillId: string }>;
+      expect(page.totalCount).toBe(9);
+      expect(page.offset).toBe(offset);
+      expect(page.returnedCount).toBe(skills.length);
+      expect(skills.length).toBeGreaterThan(0);
+      seen.push(...skills.map((skill) => skill.skillId));
+      const nextOffset = page.nextOffset as number | null;
+      expect(page.skillsTruncated).toBe(nextOffset !== null);
+      if (nextOffset !== null) expect(nextOffset).toBe(offset + skills.length);
+      offset = nextOffset;
+      pages += 1;
+      expect(pages).toBeLessThan(10);
+    }
+    expect(pages).toBeGreaterThan(1);
+    expect(new Set(seen).size).toBe(seen.length);
+    expect([...seen].sort()).toEqual([...created].sort());
+
+    const beyond = parseResult(await manager.executeLocal('list_skills', { offset: 50 }));
+    expect(beyond).toMatchObject({ totalCount: 9, offset: 50, returnedCount: 0, skills: [], skillsTruncated: false, nextOffset: null });
+    expect(parseResult(await manager.executeLocal('list_skills', { offset: -1 })).error).toBe('validation');
+    expect(parseResult(await manager.executeLocal('list_skills', { offset: 1.5 })).error).toBe('validation');
+    expect(parseResult(await manager.executeLocal('list_skills', {})).offset).toBe(0);
+  });
+});
+
 describe('WebMCP skill provenance delivery', () => {
   beforeEach(() => {
     freshDb();
+  });
+
+  it('keeps the purpose whole and cites one source once when every step cites the same video', async () => {
+    const purpose = 'Review a thumbnail against the hierarchy method: one focal subject, supporting text that reads at a small size, a background that never competes, and a final check that the subject still reads first when the thumbnail is shrunk to the size it is actually seen at in a feed.';
+    expect(purpose.length).toBeGreaterThan(240);
+    const graph = await makeDuplicateCitedSkill(purpose);
+    const manager = new WebMcpRegistrationManager(makeContext());
+
+    const raw = await manager.executeLocal('get_skill', { skillId: graph.id });
+    expect(resultText(raw).length).toBeLessThanOrEqual(MAX_RESULT_CHARS);
+    const summary = parseResult(raw);
+    expect(summary.purpose).toBe(purpose.slice(0, 240));
+    expect(summary.citationCount).toBe(1);
+    expect(summary.citations).toEqual([
+      {
+        creator: 'Creator Lab Studio Sessions',
+        title: 'The Thumbnail Hierarchy Method, full breakdown with examples',
+        url: 'https://www.youtube.com/watch?v=abc123xyz00',
+        timestampSeconds: 10,
+      },
+    ]);
+    expect(summary.citationsTruncated).toBe(false);
+
+    const file = parseResult(await manager.executeLocal('get_skill', { skillId: graph.id, format: 'skill-md' }));
+    expect(file.citationCount).toBe(1);
+    expect(file.citations).toEqual(summary.citations);
   });
 
   it('reports durable synthetic sample approval state even without a workspace flag', async () => {

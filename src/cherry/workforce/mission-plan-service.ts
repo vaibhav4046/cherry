@@ -84,15 +84,21 @@ export async function getPlanForMission(workspaceId: string, missionId: string):
 
 // ---------------- Create ----------------
 
+/** Who is creating the mission. Only a person or an attached agent can; the ledger records which. */
+export type MissionCreatorType = Extract<ActorType, 'human' | 'agent'>;
+
 export interface CreateOutcomeMissionInput {
   workspaceId: string;
   outcome: string;
   constraints?: string[];
   templateId?: string;
   repositoryRoot?: string | null;
+  /** Recorded on every emitted event. Defaults to the person. */
+  actorType?: MissionCreatorType;
 }
 
 export async function createOutcomeMission(input: CreateOutcomeMissionInput): Promise<Result<{ mission: Mission; plan: MissionPlan }>> {
+  const actorType: MissionCreatorType = input.actorType ?? 'human';
   const outcome = input.outcome.trim();
   if (outcome.length === 0) return err('validation', 'Tell Cherry the outcome you want.');
   if (outcome.length > MAX_OUTCOME_LENGTH) return err('validation', `The outcome must be at most ${MAX_OUTCOME_LENGTH} characters.`);
@@ -101,7 +107,15 @@ export async function createOutcomeMission(input: CreateOutcomeMissionInput): Pr
   const constraints = (input.constraints ?? []).map((line) => line.trim()).filter(Boolean);
   const repositoryRoot = input.repositoryRoot?.trim() ? input.repositoryRoot.trim() : null;
 
+  // Validate the instantiated template before anything is persisted: a refused
+  // outcome (an injection marker, an invalid graph) must leave no mission behind.
+  // The mission id is applied uniformly afterwards, which cannot change the verdict.
   const draft = instantiateTemplate(templateId, { workspaceId: input.workspaceId, missionId: 'pending', outcome, constraints, repositoryRoot });
+  const problems = validateMissionPlan(draft);
+  if (problems.length > 0) {
+    return err('validation', `The mission template produced an invalid plan: ${problems.map((problem) => problem.message).join('; ')}. Nothing was created.`, { problems });
+  }
+
   const created = await createMission({
     workspaceId: input.workspaceId,
     title: outcome.slice(0, 160),
@@ -110,7 +124,7 @@ export async function createOutcomeMission(input: CreateOutcomeMissionInput): Pr
     constraints,
     agentRole: 'Cherry mission team',
     riskLevel: planRisk(draft),
-  });
+  }, actorType);
   if (!created.ok) return created;
   const mission = created.value;
 
@@ -120,15 +134,13 @@ export async function createOutcomeMission(input: CreateOutcomeMissionInput): Pr
     nodes: draft.nodes.map((node) => ({ ...node, missionId: mission.id })),
     status: 'validated',
   };
-  const problems = validateMissionPlan(plan);
-  if (problems.length > 0) return err('validation', `The mission template produced an invalid plan: ${problems.map((problem) => problem.message).join('; ')}`, { problems });
   plan.contentHash = await computePlanContentHash(plan);
 
   await withWorkspaceTx(input.workspaceId, ['missionPlans'], async (ctx) => {
     await ctx.db.missionPlans.add(plan);
     ctx.emit({
       type: 'mission.plan_created',
-      actorType: 'human',
+      actorType,
       objectType: 'mission_plan',
       objectId: plan.id,
       summary: `Mission plan created from "${templateId}" with ${plan.nodes.length} nodes (r${plan.revision})`,
