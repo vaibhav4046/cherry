@@ -45,7 +45,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | Ticket | What it was | Status | Commit | Evidence |
 |---|---|---|---|---|
 | T15 | Continuous 10/10 rubric loop | **PARTIAL** | none | Marked IN_PROGRESS 2026-09-01 18:37, never closed. The T11 sweep covered the same ground once; the repeating loop did not run. |
-| T16 | Real-usage proof runs with screenshots | **PARTIAL** | none | Marked IN_PROGRESS, never closed. No `PROOF_LOG.md` exists. 30 tracked screenshots exist in `docs/release/screenshots/` from earlier passes. |
+| T16 | Real-usage proof runs with screenshots | **PARTIAL** | none | Marked IN_PROGRESS, never closed. No `PROOF_LOG.md` exists. 81 tracked captures exist in `docs/release/screenshots/` (`git ls-files docs/release/screenshots | wc -l`). |
 | T17 | Codify the harness | VERIFIED | `6c03e41` Codex lane, `163e391` owner lane | Layered AGENTS contract, `npm run gates` / `verify:all`; `docs/HARNESS.md` written and cross-linked from README |
 | T18 | Contribution-ready, star-ready repository | VERIFIED | `6c03e41` Codex lane, `7b3b64a` owner lane | `CONTRIBUTING.md`, issue and PR templates, README overhaul, `docs/GOOD_FIRST_ISSUES.md` (10 scoped issues), fresh light landing capture `docs/media/cherry-landing.png` |
 | T19 | Final technical report | DONE (afternoon) | follow-up to `c8e2181` | `docs/release/TECHNICAL_REPORT.md`, assembled in the afternoon amendment from existing evidence. Was NOT DONE at the morning signature. |
@@ -130,16 +130,18 @@ A judge reading this should treat the product as audited but not tournament-hard
 | `https://getcherry.vercel.app/` (public alias) | 200, redirects to canonical |
 | `/media/demo/golden-loop.webm` | 200, `video/webm`, 4,000,205 bytes |
 
-Deploys are made from a locally verified prebuilt output (`vercel build --prod` then
-`vercel deploy --prebuilt --prod`), never from a remote build, because a remote build against a
-drifted lockfile is what produced the one blank-page outage this project had.
+Deploys of record are made from a locally verified prebuilt output (`vercel build --prod` then
+`vercel deploy --prebuilt --prod`), because a remote build against a drifted lockfile is what
+produced the one blank-page outage this project had. The Vercel Git integration also deploys on
+push to `main` (`vercel.json` names the build command), so the live site can come from either
+path.
 
 **Repository:** `https://github.com/vaibhav4046/cherry`, MIT.
 
-**Deploy of record:** `dpl_EQRAXjqxQHL5nPgzHicg2we9on4S`, prebuilt from the fresh clone at `d8c1efe` (the verified `deb6c0c` tree plus one Connect copy line naming where the site tools appear) with the Vercel production env; the live entry chunk `index-B4HdKDl9.js` matches the built output. The previous deploy of the night, `dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv`, was `deb6c0c` exactly.
+**Deploy of record:** `dpl_EQRAXjqxQHL5nPgzHicg2we9on4S`, prebuilt from the fresh clone at `d8c1efe` (the verified `deb6c0c` tree plus one Connect copy line naming where the site tools appear) with the Vercel production env. Since the Vercel Git integration also deploys on push, the live deploy serves the current `main` tree; chunk names vary with the build environment, so a chunk name is not the check. The release manager verifies the live site after every deploy. The previous deploy of the night, `dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv`, was `deb6c0c` exactly.
 
 **GitHub push state:** pushed and verified. `origin/main` is `d8c1efe` plus the documentation
-commits that follow it; the application code on the live deployment is exactly `d8c1efe`. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
+commits that follow it; the live deployment tracks `main`. `https://raw.githubusercontent.com/vaibhav4046/cherry/main/docs/release/FINAL_HANDOFF.md`
 returns 200 anonymously, which is only possible on a public repository, and `README.md`,
 `docs/HARNESS.md`, and `docs/media/cherry-landing.png` do the same.
 
@@ -193,8 +195,8 @@ Everything a judge or a contributor can open and check for themselves.
 | Uncut recording | `public/media/demo/golden-loop.webm` | The real loop, on the site, at `/showcase` |
 | Playwright report | `docs/release/e2e-results.json` | The JSON report from the 123-journey run on the signed commit |
 | Real Codex mission capture | `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` | codex-cli 0.152.1 running two mission nodes in two worktrees with measured overlap, verified by the runner's own `node --test` |
-| Screenshots | `docs/release/screenshots/` | 30 tracked captures across landing, studio, showcase, agent view, compatibility |
-| Landing capture for README | `docs/media/cherry-landing.png` | Current light Cherry Wine landing, 2880x1800, captured 2026-09-02 |
+| Screenshots | `docs/release/screenshots/` | 81 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
+| Landing capture for README | `docs/media/cherry-landing.png` | Light Cherry Wine landing, 2880x1800, captured the morning of 2026-09-02, before the Mission Control landing |
 | Sample bundle | `docs/release/sample-bundle.zip` and `.meta.json` | A compiled Agent Skills bundle with its standalone verify script |
 | Coordination log | `docs/codex-takeover/STATUS.md` | Append-only two-agent build record: every ticket, every gate run, every bounce |
 | Guardrails | `docs/codex-takeover/05_GUARDRAILS.md` | The hard lines this project refused to cross, and why |
@@ -217,8 +219,8 @@ Record at 1440x900 or larger. Public YouTube, not unlisted.
 
 The one artifact nobody else can supply is a real WebMCP host session. The challenge resources say
 WebMCP site tools work out of the box in the built-in browser of the ChatGPT desktop app, ChatGPT
-Work and Codex, with GPT-5.6 Sol or Terra (Luna has it disabled), and the judges may test the live
-site themselves. So the film is: ChatGPT's own browser sees Cherry's tools, plans a mission through
+Work and Codex (the challenge resources, as of 2 September, name GPT-5.6 Sol or Terra for site
+tools; Luna has it disabled), and the judges may test the live site themselves. So the film is: ChatGPT's own browser sees Cherry's tools, plans a mission through
 them, a person approves it (no tool can), ChatGPT starts it, and Codex on this machine does the
 work in git worktrees while the runner verifies it.
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/cherry-landing.png" alt="Cherry: turn a lesson into a skill every agent you own can run" width="820">
+  <img src="docs/media/cherry-landing.png" alt="Cherry landing page, captured the morning of 2026-09-02 before the Mission Control landing" width="820">
 </p>
 
 # Cherry 🍒
@@ -14,8 +14,9 @@ from timestamped evidence, waits for your approval on an exact revision, verifie
 checks that can genuinely fail, seals it with a receipt anyone can recompute, and then serves the
 finished skill to the agents you already pay for.
 
-**Cherry never calls a model and never asks for an API key.** Your agents bring the reasoning.
-Cherry brings the memory, the approval gates, and the proof.
+**Cherry makes no model API calls of its own and never asks for an API key.** Reasoning comes from
+the agent hosts you already pay for; transcription, when you choose it, runs on your device. Cherry
+brings the memory, the approval gates, and the proof.
 
 - **Live:** https://cherry-wine.vercel.app
 - **Judge route:** https://cherry-wine.vercel.app/showcase
@@ -69,14 +70,16 @@ npm run verify:all # gates + build + e2e + pack verification + submission audit
 
 ## Verification
 
-Cherry's claims are meant to survive checking. Current gates on `main`:
+Cherry's claims are meant to survive checking. Current gates on `main` (measured 2026-09-03 from a
+fresh clone):
 
 | Gate | Result |
 | --- | --- |
-| Unit | 379 passed, 2 opt-in skips |
-| Runner and MCP bridge | 68 passed |
-| End-to-end (Playwright, desktop + mobile) | 84 passed |
+| Unit | 604 passed, 2 opt-in skips |
+| Runner and MCP bridge | 131 passed |
+| End-to-end (Playwright, desktop plus Pixel 7) | 123 passed |
 | Bundle verification (`verify:pack`) | tamper-evident, evidence-complete |
+| Service worker verification (`verify:sw`) | 5 of 5 |
 | Submission audit | 0 failures, 0 warnings |
 
 Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.

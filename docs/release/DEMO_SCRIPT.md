@@ -6,8 +6,9 @@ the project functioning and audio that covers what was built and how WebMCP is u
 lines; do not narrate architecture.
 
 The centrepiece is a real WebMCP host session. The challenge resources say site tools work out of
-the box in the built-in browser of the ChatGPT desktop app, ChatGPT Work and Codex (GPT-5.6 Sol or
-Terra; Luna has WebMCP disabled), and in Chrome 149+ with `chrome://flags/#enable-webmcp-testing`.
+the box in the built-in browser of the ChatGPT desktop app, ChatGPT Work and Codex (the challenge
+resources, as of 2 September, name GPT-5.6 Sol or Terra for site tools; Luna has WebMCP disabled),
+and in Chrome 149+ with `chrome://flags/#enable-webmcp-testing`.
 Record that session first, before anything else; the rest of the film is cut around it. If neither
 host shows the tools on your machine, the FALLBACK lines below are honest replacements. Never claim
 a live host you did not record.
@@ -43,8 +44,9 @@ Cut to the ChatGPT built-in browser on `/studio/control`. Click **Site tools**, 
 **Available site tools**.
 
 > "This is ChatGPT's own browser looking at Cherry. No plugin, no MCP server: the page registers
-> its tools on document.modelContext. Seven always-on reads, and on Mission Control, five mission
-> tools. Not one of them can approve anything."
+> its tools on document.modelContext. Seven always-on tools, six reads plus introduce_agent, which
+> only labels the session, and on Mission Control, five mission tools. Not one of them can approve
+> anything."
 
 Type to ChatGPT: "Use this site's tools. Create an outcome mission with the outcome 'Fix the
 highest-impact onboarding defect in Orbit Runner and prepare the release notes. Nothing public
@@ -68,7 +70,8 @@ Click **Approve plan** yourself, then ask ChatGPT to start it again. Show two no
 > says VM, because it is not one."
 
 FALLBACK (no host showed the tools): show Agent View instead and say: "Cherry registers seven
-always-on reads and at most five state-scoped tools on document.modelContext. This browser has no
+always-on tools (six reads plus introduce_agent, which only labels the session) and at most five
+state-scoped tools on document.modelContext. This browser has no
 WebMCP host, so the panel says manual mode and nothing is registered. Nothing on this page fakes an
 agent." Then plan and start the mission by hand in Mission Control.
 
@@ -89,8 +92,8 @@ When the publish node waits, decide it.
 
 Click **Agent** in the Studio nav.
 
-> "Every tool call ChatGPT made is here: name, input, result, revision. If a page can be driven by
-> an agent, the person must be able to see exactly what the agent did."
+> "Every tool call is here: name, time, whether it succeeded, and the start of its result. If a
+> page can be driven by an agent, the person must be able to see exactly what the agent did."
 
 ## 1:50 to 2:15, the committed run (Showcase)
 

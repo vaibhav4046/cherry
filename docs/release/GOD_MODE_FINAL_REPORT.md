@@ -1,8 +1,9 @@
 # God Mode final report
 
-Branch `claude/god-mode-v2`, updated by the Codex release conductor on 2026-09-02. Every count below
-was measured by the named command on the named commit. Nothing is deployed and nothing is merged by
-this branch; the release manager reviews and decides.
+Branch `claude/god-mode-v2`, updated by the Codex release conductor on 2026-09-02. This is the
+branch closeout as of commit 1110098 on 2026-09-02; the branch has since merged into main as
+6b850ae and is deployed. Every count below was measured by the named command on the named commit
+and is historical to that closeout. For the merged state see docs/release/FINAL_HANDOFF.md.
 
 ```text
 Branch: claude/god-mode-v2 (worktree D:\project\cherry-god-mode-v2), rebased onto origin/main
@@ -21,7 +22,7 @@ Lint: 0 problems (eslint .)
 Unit: 539 passed, 2 skipped (541), 59 files passed, 1 skipped (vitest, includes the browser-to-real-runner integration test)
 Runner/MCP: 131 passed, 0 failed (node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs, which aggregates the sandbox, host, executor, queue and bridge suites)
 Build: tsc -b and vite build succeeded
-Playwright: 115 passed, 0 failed, 0 flaky in 5.6 min (desktop 1440x1024 plus the Pixel 7 responsive project, 1 worker); the God Mode specs alone were green three consecutive times before the full run; docs/release/e2e-results.json records 115 expected, 0 unexpected
+Playwright: 115 passed, 0 failed, 0 flaky in 5.6 min (desktop 1440x1024 plus the Pixel 7 responsive project, 1 worker); the God Mode specs alone were green three consecutive times before the full run; docs/release/e2e-results.json recorded 115 expected, 0 unexpected at this closeout (historical: that file now holds the 123-journey run of 2026-09-03 on merged main)
 Service worker: verify-sw 5/5 (cherry-shell-v4)
 Pack verification: release pack 6/6 (bundle genuine, tamper-evident, evidence-complete)
 Submission audit: audit-submission 0 FAIL, 0 WARN (13 checks)

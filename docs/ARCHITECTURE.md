@@ -1,6 +1,6 @@
 # Cherry architecture
 
-**Date:** 2026-08-30 · **Commit:** 5297dad
+**Date:** 2026-08-30 · **Commit:** 5297dad · **WebMCP section and routes brought current:** 2026-09-03
 
 Cherry is a Vite + React 19 + TypeScript strict SPA with a framework-independent domain core.
 The manual UI, the WebMCP tool layer, and the native MCP bridge all call the same validated
@@ -43,7 +43,8 @@ services, so an agent can never do something the UI would refuse (AGENTS.md cont
 ## Routes (src/app/App.tsx)
 
 `/` (Landing) · `/showcase` · `/connect` · `/compatibility` · `/ingest` · `/studio` (Command
-Center) with children: `onboarding`, `quick` (Quick Skill), `sources`, `creators`, `inbox`,
+Center) with children: `control` (Mission Control), `control/:missionId` (Mission Control
+detail), `onboarding`, `quick` (Quick Skill), `sources`, `creators`, `inbox`,
 `work/:workItemId`, `crew`, `routines`, `routines/:routineId`, `missions/new`,
 `missions/:missionId`, `watch/:lessonId`, `memory`, `skills`, `skills/:skillId`,
 `artifacts/:artifactSetId`, `runs`, `proof[/:receiptId]`, `agent` (Agent View / MCP inspector),
@@ -64,8 +65,11 @@ Landing links "Try the guided example" to `/studio?demo=1`.
 4. **Approval** — binds to the exact revision reviewed; any edit invalidates it
    (`approval/`, enforced in `skillgraph-service.ts`).
 5. **Artifact** — real HTML/CSS/JS/MD/JSON files written to the artifact workspace,
-   previewed in a `sandbox="allow-scripts"` srcdoc iframe with `default-src 'none'` CSP
-   (`artifacts/artifact-service.ts`, `preview-protocol.ts`).
+   previewed in a srcdoc iframe with an empty `sandbox` attribute (no permissions at all,
+   `PREVIEW_SANDBOX = ''` in `preview-protocol.ts`), `<script>` elements stripped before
+   render, and a `default-src 'none'` / `script-src 'none'` CSP
+   (`artifacts/artifact-service.ts`, `preview-protocol.ts`; asserted in
+   `e2e/cherry/responsive.spec.ts`).
 6. **Verify** — deterministic assertions run against the actual files; failures link to
    evidence; repairs re-verify (`verify/verification-service.ts`).
 7. **Memory** — corrections compile into scoped memory proposals; a human approves them into
@@ -83,38 +87,48 @@ Every step above writes its ProofEvent inside the same IndexedDB transaction
 Registration: `src/cherry/webmcp/registration-manager.ts` feature-detects
 `document.modelContext.registerTool`, registers with AbortController lifecycle, and
 re-registers (reporting retired tools) on both mission-state and route-surface changes
-(D-015). Aperture cap: ≤ 5 state/surface tools + 7 globals (the library reads joined the
-original three on 2026-08-31; nothing has been added since).
-Tool definitions: `tool-definitions.ts` (mission-state tools) and `workforce-tools.ts`
-(surface tools). All names below are read from those files' `TOOL_STATE_TABLE`,
-`TOOL_SURFACE_TABLE`, and `GLOBAL_TOOLS`.
+(D-015). Aperture cap: ≤ 5 state/surface tools + 7 globals (six reads plus `introduce_agent`,
+which only labels the session; the library reads joined the original three on 2026-08-31).
+The sources surface (present from main's root commit `27f49e5`, 2026-09-01) and the control
+surface with five mission tools (`mission-tools.ts`, `29d05ae`, 2026-09-02) followed;
+`run_routine_now` left the routines aperture on 2026-09-02 (`33c6992`).
+Tool definitions: `tool-definitions.ts` (mission-state tools), `workforce-tools.ts`
+(workforce surface tools) and `mission-tools.ts` (control surface tools). All names below are
+read from `TOOL_STATE_TABLE`, `TOOL_SURFACE_TABLE`, and `GLOBAL_TOOLS` as of 2026-09-03.
 
 **Global (always registered):** `read_cherry_context`, `list_cherry_capabilities`,
 `get_cherry_status`, `introduce_agent`, `list_skills`, `recommend_skills`, `get_skill`.
 
-**By mission state** (`TOOL_STATE_TABLE`):
+**By mission state** (`TOOL_STATE_TABLE`, names as registered with the host;
+`SAFE_TOOL_NAME_ALIASES` maps `record_observation`, `derive_skill`, `request_skill_approval`,
+`propose_memory` and `run_verification` to the longer original definition names, which
+`executeLocal` also accepts):
 
 | State | Tools |
 |---|---|
-| empty / onboarding | `create_workspace`, `create_mission` |
-| learning | `load_lesson`, `import_transcript`, `record_lesson_observation`, `add_source_evidence`, `generate_quick_skill` |
-| planning | `define_skillgraph`, `propose_memory_rule`, `request_checkpoint_approval`, `revise_checkpoint` |
-| execution | `write_artifact_file`, `record_task_result`, `request_consequential_action`, `run_cherry_verification` |
-| verification | `run_cherry_verification`, `apply_verified_repair`, `read_failed_assertions`, `propose_memory_rule`, `write_artifact_file` |
-| passed | `compile_skill_bundle`, `export_proof_receipt`, `prepare_runner_job`, `request_consequential_action` |
+| empty | `start_apprenticeship`, `create_workspace`, `create_mission` |
+| onboarding | `start_apprenticeship`, `create_workspace`, `create_mission`, `load_lesson` |
+| learning | `load_lesson`, `import_transcript`, `record_observation`, `add_source_evidence`, `derive_skill` |
+| planning | `define_skillgraph`, `propose_memory`, `request_skill_approval`, `revise_checkpoint` |
+| execution | `write_artifact_file`, `record_task_result`, `run_verification` |
+| verification | `run_verification`, `apply_verified_repair`, `read_failed_assertions`, `propose_memory`, `write_artifact_file` |
+| passed | `compile_skill_bundle`, `export_proof_receipt`, `export_workspace`, `prepare_runner_job` |
 
 Also defined in `tool-definitions.ts` for the learning flow: `control_lesson_playback`,
-`compile_lesson_draft` (registered per their `states` declarations).
+`compile_lesson_draft` (declared for the `learning` state but absent from `TOOL_STATE_TABLE`,
+so they are callable locally and are not registered with a host).
 
-**By route surface** (`TOOL_SURFACE_TABLE`, workforce):
+**By route surface** (`TOOL_SURFACE_TABLE`; route-to-surface mapping in
+`src/pages/studio/StudioLayout.tsx`):
 
 | Surface | Tools |
 |---|---|
 | inbox (`/studio/inbox`, `/studio/work/*`) | `create_work_item`, `read_attention_queue`, `read_work_thread`, `assign_work_item`, `request_work_run` |
 | crew (`/studio/crew`) | `list_agent_profiles`, `propose_agent_profile`, `assign_agent_role`, `read_agent_context`, `propose_handoff` |
-| routines (`/studio/routines`) | `list_routines`, `draft_routine`, `set_routine_schedule`, `run_routine_now`, `pause_routine` |
+| routines (`/studio/routines`) | `list_routines`, `draft_routine`, `set_routine_schedule`, `pause_routine` |
 | run (`/studio/runs`) | `read_run_status`, `record_run_checkpoint`, `record_task_result`, `request_human_action`, `request_verification` |
 | sources (`/studio/sources`, `/studio/creators`) | `list_sources` (rows carry the skill proposal), `save_source`, `request_source_fetch`, `archive_source`, `prepare_source_for_skill` |
+| control (`/studio/control`, `/studio/control/:missionId`) | `create_outcome_mission`, `plan_current_mission`, `start_current_mission`, `cancel_current_mission`, `request_mission_action` |
 
 Agents can request but never grant: approvals, trust promotion, and memory activation are
 human-only code paths; `transitionWorkItem` refuses SUCCEEDED for agent actors (D-016).

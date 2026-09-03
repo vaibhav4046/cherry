@@ -46,8 +46,10 @@
 > (lesson-seed / proof-approval / carry-forward) with first-frame posters (reduced motion shows the
 > static poster, never a blank slot); OG card upgraded to the editorial plate (`/og.jpg`).
 >
-> **Native MCP live-host validation (2026-08-30):** from a real MCP host (Claude Code session) over
-> the runner bridge: `read_workspace_summary` returned the example workspace (1 mission COMPLETE,
+> **Native MCP live-host validation (session of 2026-08-29, with this 2026-08-30 addendum; the
+> Claude Code skill install and bridge registration are recorded in the decision log,
+> `docs/CHERRY_DECISIONS.md` D-012, no transcript file):** from a real MCP host (Claude Code
+> session) over the runner bridge: `read_workspace_summary` returned the example workspace (1 mission COMPLETE,
 > 1 skill, 1 approved memory, 1 receipt); `list_skills` returned the approved skill at
 > revision = approvedRevision; `verify_workspace_integrity` recomputed `fa13a1fc…432db35b` matching
 > stored; `verify_receipt rc-01M1779YFWYGBACKVW020XXT3R` recomputed `b8dd59e7…8dd638f` matching
@@ -247,9 +249,14 @@ none). Runner redacts secret-shaped output (tested). **PASSED**
 
 ## artifact_sandbox
 
-E2E "malicious artifact cannot reach Cherry storage or the network": storage access throws inside
-the opaque-origin sandbox, external fetch blocked by the preview CSP, parent navigation blocked,
-errors surface in the visible preview console and the ProofEvent ledger. **PASSED**
+E2E "malicious artifact is rendered as static content with no navigation or network"
+(`e2e/cherry/responsive.spec.ts`): the preview iframe carries an empty `sandbox` attribute
+(`PREVIEW_SANDBOX = ''` in `src/cherry/artifacts/preview-protocol.ts`, so no permissions at all,
+scripts included) and `referrerpolicy="no-referrer"`; the srcdoc opens with a
+`Content-Security-Policy` meta whose `script-src 'none'`; `<script>` elements, inline event
+handlers and external URLs are stripped before render; the hostile page renders its heading as
+static text, the script never executes, and no request reaches the hostile host. Cherry stays on
+its own origin with the workspace intact. **PASSED**
 
 ## accessibility
 
@@ -304,8 +311,10 @@ Vercel-auth protected.
 
 ## local_runner (optional gate)
 
-9 integration tests pass: pairing, origins, roots, allowlists, no-shell spawn, timeouts, atomic
-persistence + crash recovery, redaction, real bundle verification incl. tamper detection. **PASSED**
+11 runner integration tests pass in `runner/runner.test.mjs` (131 across the runner, sandbox, host,
+executor and bridge suites under `npm run test:runner`): pairing, origins, roots, allowlists,
+no-shell spawn, timeouts, atomic persistence + crash recovery, redaction, real bundle verification
+incl. tamper detection. **PASSED**
 
 ## native_mcp_bridge (optional gate)
 

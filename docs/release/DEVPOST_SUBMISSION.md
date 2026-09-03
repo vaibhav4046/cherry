@@ -44,8 +44,10 @@ because it needs a human sign-in that was not available on the build machine.
 
 **Creators and skills.** Follow a creator and the paired runner checks the channel's public feed
 daily; each new upload arrives with a deterministic skill proposal. Cherry never downloads a video
-or captions and never calls a model: the person adds the transcript (or transcribes on-device with
-Whisper), Cherry drafts the steps, and approval binds to the exact revision the person read.
+or captions and makes no model API calls of its own: the person adds the transcript (or transcribes
+on-device with Whisper), Cherry drafts the steps, and approval binds to the exact revision the
+person read. Reasoning comes from the agent hosts the person already pays for; Cherry never asks
+for an API key.
 Approved skills live in a cross-workspace Skill Library and export as SKILL.md, AGENTS.md, or
 CLAUDE.md, or as a zip bundle whose standalone verifier fails on tampering.
 
@@ -55,8 +57,9 @@ repaired. Receipts are SHA-256 over RFC 8785 canonical JSON, recomputable by any
 trust promotion, and memory activation are human-only code paths.
 
 **The WebMCP part.** Cherry registers state-aware site tools on `document.modelContext`: seven
-always-on reads (`read_cherry_context`, `list_cherry_capabilities`, `get_cherry_status`,
-`introduce_agent`, `list_skills`, `recommend_skills`, `get_skill`) plus at most five contextual
+always-on tools, six reads plus `introduce_agent`, which only labels the session
+(`read_cherry_context`, `list_cherry_capabilities`, `get_cherry_status`, `introduce_agent`,
+`list_skills`, `recommend_skills`, `get_skill`), plus at most five contextual
 tools per mission state or route surface, registered and retired as the product's state machine
 moves. On the control surface a visiting agent can `create_outcome_mission`,
 `plan_current_mission`, `start_current_mission`, `cancel_current_mission`, and
@@ -100,12 +103,12 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 585 unit tests, 131 runner and MCP bridge tests, and a 123-journey browser matrix including
+- 604 unit tests, 131 runner and MCP bridge tests, and a 123-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
   browser-to-real-runner integration test, and a service-worker redeploy check, all green from a
   clean install.
-- A compatibility page that labels every surface Validated, Shipped, Available, Experimental, or
-  Roadmap with the test or capture behind the label, including what was not tested.
+- A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
+  with the test or capture behind the label, including what was not tested.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
 - An adversarial review of the runtime that failed its own release once, then closed three
   critical boundary defects test-first (command execution, link traversal, plan contract parity)
@@ -126,7 +129,8 @@ mcp (stdio), node, playwright, vitest
 
 ## Judging-criteria cheat sheet (for the form and the video description)
 
-- **Use of WebMCP:** seven always-on reads plus at most five state-scoped tools, registered and
+- **Use of WebMCP:** seven always-on tools (six reads plus `introduce_agent`, which only labels
+  the session) plus at most five state-scoped tools, registered and
   retired live on a real state machine, runtime re-validation, cancellation, untrusted-content
   hints, and a visible Agent View call log. Mission tools let a visiting agent create, plan, start
   and cancel a mission but never approve one.

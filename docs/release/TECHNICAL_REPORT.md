@@ -6,7 +6,9 @@
 **Repository:** https://github.com/vaibhav4046/cherry (MIT)
 
 This historical report describes the pre-God-Mode baseline at `c8e2181`; it is not the report for
-the branch now under review. See [GOD_MODE_FINAL_REPORT.md](GOD_MODE_FINAL_REPORT.md) for that branch.
+the God Mode branch, which has since merged into main as `6b850ae`. See
+[GOD_MODE_FINAL_REPORT.md](GOD_MODE_FINAL_REPORT.md) for that branch's closeout and
+[FINAL_HANDOFF.md](FINAL_HANDOFF.md) for the merged state.
 Every statement below points at baseline evidence. Section 8 lists what was not proven at this
 snapshot.
 
@@ -75,9 +77,10 @@ data flow in more detail.
 
 ## 4. The WebMCP surface
 
-Seven global read tools are always registered: `read_cherry_context`,
-`list_cherry_capabilities`, `get_cherry_status`, `introduce_agent`, `list_skills`,
-`recommend_skills`, `get_skill`. At most five contextual mutation tools register per mission state
+Seven global tools are always registered, six reads plus `introduce_agent`, which only labels
+the session: `read_cherry_context`, `list_cherry_capabilities`, `get_cherry_status`,
+`introduce_agent`, `list_skills`, `recommend_skills`, `get_skill`. At most five contextual
+mutation tools register per mission state
 or route surface (`TOOL_STATE_TABLE` in `src/cherry/webmcp/tool-definitions.ts`,
 `TOOL_SURFACE_TABLE` in `workforce-tools.ts`). Tools register and unregister as the mission's state
 machine advances; learning tools exist only while learning, export tools only after verification
@@ -100,8 +103,10 @@ visits.
   `verify_receipt`, `list_skill_bundles`); no write, approve, or execute tool exists. A live
   ChatGPT-authenticated Codex CLI 0.151.0-alpha.7.2 session called all five in order on
   2026-09-01 (`docs/release/CODEX_MCP_CAPTURE.md`).
-- **Agent Skills bundles**: installed into a real Claude Code host on 2026-08-29 and listed as an
-  available skill; the same convention is read by Hermes-class agents.
+- **Agent Skills bundles**: installed into a real Claude Code host on 2026-08-29 (with a
+  2026-08-30 addendum) and listed as an available skill, recorded in the decision log
+  (`docs/CHERRY_DECISIONS.md` D-012), no transcript file; the same convention is read by
+  Hermes-class agents.
 - **Local runner** (`runner/server.mjs`): pairing token, exact-origin CORS, root-restricted
   working directories, allowlisted executables, `shell:false` spawn, output caps and redaction,
   atomic job persistence, durable queue with leases, hash-chained event log. Timed routines fail

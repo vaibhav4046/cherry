@@ -7,9 +7,10 @@
 ## Eligibility
 
 The WebMCP hackathon requires evidence of WebMCP work done after **August 25, 2026**.
-This repository's first commit (`ed6dcdc`) is dated **2026-08-29**. All WebMCP work in
-Cherry therefore postdates the cutoff and qualifies; nothing below is back-ported or
-pre-existing.
+The history of `main` begins at `27f49e5` (**2026-09-01**); the earlier lane history from
+**2026-08-29** (first commit `ed6dcdc`) survives on `origin/codex/cherry-workforce-v2`.
+Either way, all WebMCP work in Cherry postdates the cutoff and qualifies; nothing below is
+back-ported or pre-existing.
 
 ## Dated changes (from git history, oldest first)
 
@@ -59,36 +60,41 @@ pre-existing.
   claude-cli/safe-command): the native-host execution side that
   `prepare_runner_job` and the run aperture hand off to.
 
-## Current tool surface (as of 2026-08-31)
+## Current tool surface (as of 2026-09-03)
 
-Selection rule: active tools = **3 global reads + at most 5 tools** from either the
-mission-state aperture (`TOOL_STATE_TABLE`, `tool-definitions.ts`) or the
-route-selected surface aperture (`TOOL_SURFACE_TABLE`, `workforce-tools.ts`);
+Selection rule: active tools = **7 globals (six reads plus `introduce_agent`) + at most 5
+tools** from either the mission-state aperture (`TOOL_STATE_TABLE`, `tool-definitions.ts`)
+or the route-selected surface aperture (`TOOL_SURFACE_TABLE`, `workforce-tools.ts`);
 `registration-manager.ts` enforces the ≤5 cap with a hard `slice(0, 5)`. Without a
 WebMCP host, zero tools register and the app runs in honest manual mode.
 
 ### Global (always active)
-`read_cherry_context` · `list_cherry_capabilities` · `introduce_agent` ·
-`get_cherry_status` *(global read, added 2026-08-31)*
+`read_cherry_context` · `list_cherry_capabilities` · `get_cherry_status` *(global read,
+added 2026-08-31)* · `introduce_agent` *(labels the session only)* · `list_skills` ·
+`recommend_skills` · `get_skill` *(library reads, added 2026-08-31)*
 
-### By mission state (`TOOL_STATE_TABLE`)
+### By mission state (`TOOL_STATE_TABLE`, names as registered; `SAFE_TOOL_NAME_ALIASES`
+maps `record_observation`, `derive_skill`, `request_skill_approval`, `propose_memory` and
+`run_verification` to the longer original definition names, which `executeLocal` also accepts)
 | State | Tools |
 |---|---|
 | empty | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission` |
 | onboarding | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission`, `load_lesson` *(added to this aperture 2026-08-31 — fixes the DRAFT deadlock)* |
-| learning | `load_lesson`, `import_transcript`, `record_lesson_observation`, `add_source_evidence`, `generate_quick_skill` |
-| planning | `define_skillgraph`, `propose_memory_rule`, `request_checkpoint_approval`, `revise_checkpoint` |
-| execution | `write_artifact_file`, `record_task_result`, `request_consequential_action`, `run_cherry_verification` |
-| verification | `run_cherry_verification`, `apply_verified_repair`, `read_failed_assertions`, `propose_memory_rule`, `write_artifact_file` |
-| passed | `compile_skill_bundle`, `export_proof_receipt`, `prepare_runner_job`, `request_consequential_action` |
+| learning | `load_lesson`, `import_transcript`, `record_observation`, `add_source_evidence`, `derive_skill` |
+| planning | `define_skillgraph`, `propose_memory`, `request_skill_approval`, `revise_checkpoint` |
+| execution | `write_artifact_file`, `record_task_result`, `run_verification` |
+| verification | `run_verification`, `apply_verified_repair`, `read_failed_assertions`, `propose_memory`, `write_artifact_file` |
+| passed | `compile_skill_bundle`, `export_proof_receipt`, `export_workspace`, `prepare_runner_job` |
 
 ### By surface/route (`TOOL_SURFACE_TABLE`)
 | Surface | Tools |
 |---|---|
 | inbox | `create_work_item`, `read_attention_queue`, `read_work_thread`, `assign_work_item`, `request_work_run` |
 | crew | `list_agent_profiles`, `propose_agent_profile`, `assign_agent_role`, `read_agent_context`, `propose_handoff` |
-| routines | `list_routines`, `draft_routine`, `set_routine_schedule`, `run_routine_now`, `pause_routine` |
+| routines | `list_routines`, `draft_routine`, `set_routine_schedule`, `pause_routine` *(`run_routine_now` removed 2026-09-02)* |
 | run | `read_run_status`, `record_run_checkpoint`, `record_task_result`, `request_human_action`, `request_verification` |
+| sources | `list_sources`, `save_source`, `request_source_fetch`, `archive_source`, `prepare_source_for_skill` |
+| control | `create_outcome_mission`, `plan_current_mission`, `start_current_mission`, `cancel_current_mission`, `request_mission_action` |
 
 A `/showcase` judge route (fresh linear apprenticeship story) is also being added
 2026-08-31 (`src/pages/Showcase.tsx`).
@@ -134,3 +140,32 @@ and `start_apprenticeship`.
 - Host-path e2e extension: after the human approval, the visiting agent asks `recommend_skills`
   for its current task, receives the approved skill with revision + approval hash, streams the
   SKILL.md parts, and verifies the joined sha256 in-page.
+
+## 2026-09-02: sources and control surfaces; `run_routine_now` leaves the routines aperture
+
+- Sources surface (`/studio/sources`, `/studio/creators`), five tools: `list_sources`,
+  `save_source`, `request_source_fetch`, `archive_source`, `prepare_source_for_skill`. Nothing
+  fetches from a tool call; `request_source_fetch` saves a local request that a person dispatches.
+  The surface is present from the root commit of `main` (`27f49e5`, 2026-09-01) and is recorded
+  here with the other surface changes of this date.
+- Control surface (`/studio/control`, `/studio/control/:missionId`), five mission tools
+  (`src/cherry/webmcp/mission-tools.ts`, commit `29d05ae`): `create_outcome_mission`,
+  `plan_current_mission`, `start_current_mission`, `cancel_current_mission`,
+  `request_mission_action`. None of them approves anything; `start_current_mission` refuses when
+  the runner is unpaired, the plan revision is stale, or a consequential plan lacks a person's
+  approval.
+- `run_routine_now` removed from the routines aperture (`33c6992`, `git log -S run_routine_now`);
+  the routines surface now registers four tools. The definition remains in `workforce-tools.ts`
+  but no host registers it.
+
+## 2026-09-03: registration lifecycle and call attribution
+
+- Globals register once under their own `AbortController` and stay live until dispose; a state or
+  surface change aborts only the contextual tools that left the aperture and registers only the
+  ones that entered it (`registration-manager.ts`, `globalController`, `applySelection`).
+- A write tool's registration stays live until its result is returned: while a host call is in
+  flight the selection is deferred and flushed after the result exists (`inFlight`,
+  `pendingSelection`, `scheduleFlush`).
+- `list_skills` gained `offset` and `nextOffset` for paging the library.
+- Agent tool calls are attributed to `actorType: 'agent'` in the proof ledger
+  (`mission-tools.ts`, `tool-definitions.ts`, `workforce-tools.ts`).

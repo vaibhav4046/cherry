@@ -1,6 +1,9 @@
 # God Mode real-host capture
 
 Started 2026-09-02T13:39:14.557Z on commit be0e713156b2 (win32 10.0.26200, Node v24.12.0).
+That commit lives on the pre-rebase God Mode lane and is not reachable from main; the capture
+content is pinned by the SHA-256 of docs/release/benchmarks/god-mode-hosts.json
+(c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3).
 Switches: CHERRY_REAL_CODEX=1, CHERRY_REAL_CLAUDE=0. Fixture repository at a temporary path, base commit 18774c71f7a0.
 
 ## Hosts as the runner probed them
@@ -51,7 +54,10 @@ Status: **succeeded**. Parallel overlap proven from the event log: **yes** (at m
 
 - None recorded by the script. Provider completion was never treated as success; the runner ran node --test itself.
 
-Raw record: docs/release/benchmarks/god-mode-hosts.json (sha256 14d0c601b06f881f).
+Raw record: docs/release/benchmarks/god-mode-hosts.json. File sha256:
+c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3. Compact-JSON content sha256
+(the value scripts/god-mode/run-real-host-smoke.mjs prints, computed over the compact JSON re-serialisation of the record):
+14d0c601b06f881f056c70262c4f894a52beba0049599f4d20ea671b6acdc1f7.
 
 ## Claude Code (not captured)
 
