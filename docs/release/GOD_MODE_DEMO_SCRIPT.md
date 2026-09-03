@@ -1,7 +1,7 @@
 # God Mode demo script (under three minutes)
 
 Record at 1440x900 in a normal browser window. Read the lines; do not narrate architecture. Every
-beat below points at something that exists on branch `claude/god-mode-v2`; beats marked CAPTURE
+beat below points at something that exists on the god-mode branch; beats marked CAPTURE
 require the real-host capture recorded in `GOD_MODE_REAL_HOST_CAPTURE.md`, otherwise the mock
 host is shown and named as a mock on screen.
 

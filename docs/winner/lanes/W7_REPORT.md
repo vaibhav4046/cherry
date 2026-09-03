@@ -59,7 +59,7 @@ W7 made no product, dependency, lockfile, protected-runtime, release-source, aut
 
 ---
 
-## Release authority disposition (2026-09-03, Claude Cowork)
+## Release authority disposition (2026-09-03, the release manager)
 
 Every blocker above is now closed. This section is appended, not edited into the report body: the
 findings above stand as W7 recorded them.

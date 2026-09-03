@@ -1,149 +1,159 @@
-# Cherry: the three-minute video script
+# Cherry demo video: 2:40 shooting script
 
-Every beat is a real interaction on https://cherry-wine.vercel.app. No staging, no cuts that hide
-state. Record at 1440x900 or larger. Under 3:00 with audio: the challenge asks for a clear demo of
-the project functioning and audio that covers what was built and how WebMCP is used. Read the
-lines; do not narrate architecture.
+Hard limit: the OpenAI WebMCP Challenge requires **under 3:00**, and judges are not required to
+watch past 3:00. This script is cut to land at **2:40** so titles, a top card and an export fade
+still fit under the wire.
 
-The centrepiece is a real WebMCP host session. The challenge resources say site tools work out of
-the box in the built-in browser of the ChatGPT desktop app, ChatGPT Work and Codex (the challenge
-resources, as of 2 September, name GPT-5.6 Sol or Terra for site tools; Luna has WebMCP disabled),
-and in Chrome 149+ with `chrome://flags/#enable-webmcp-testing`.
-Record that session first, before anything else; the rest of the film is cut around it. If neither
-host shows the tools on your machine, the FALLBACK lines below are honest replacements. Never claim
-a live host you did not record.
+Everything here is shootable today, on this machine, in an ordinary browser, with no live WebMCP
+host, no dev server dependency and no live Codex run. Record at 1440x900 or larger against
+https://cherry-wine.vercel.app.
 
-## Before recording (once)
+## The arithmetic
 
-1. Start the runner: `node runner/server.mjs --root D:\project --allow-exec node --allow-exec codex --concurrency 3`.
-   Pair it in Studio > Connect with the printed token. Codex CLI is found on PATH.
-2. The mission target is a small real repository under `D:\project` with a `node --test` suite
-   (for example `D:\project\orbit-runner`, a three.js ring runner; its README and key bindings carry
-   real onboarding defects for the audit to find).
-3. In the ChatGPT desktop app open the built-in browser at https://cherry-wine.vercel.app/studio/control
-   and confirm **Site tools** appears in the address bar.
-4. Loopback check. Modern Chromium asks a public site for permission before it may reach
-   127.0.0.1 (Local Network Access), and an embedded browser may simply refuse. If the start call
-   says no runner is listening while `node runner/server.mjs` is clearly up, serve the same build
-   locally and use that URL for the mission part: in `D:\project\cherry` run `npm run build` then
-   `npm run preview`, open http://127.0.0.1:4173/studio/control in the same built-in browser (the
-   runner already allows that origin), and say on camera that it is the same build served locally.
-   The Site tools shot can still be taken on the live URL.
+| Quantity | Value |
+| --- | --- |
+| Total spoken words | **334** |
+| Narration rate assumed | 150 wpm |
+| Narration duration | 334 / 150 = 2.2267 min = **133.6 s** |
+| Total runtime budget | 2:40 = **160.0 s** |
+| Slack left for clicks, page loads and transitions | 160.0 - 133.6 = **26.4 s** |
 
-## 0:00 to 0:12, hook (landing)
+The previous script was about 472 words, which is 3:09 of narration alone before a single click. It
+did not fit. This one fits, with 26.4 seconds of deliberate dead air distributed across the beats.
 
-Open https://cherry-wine.vercel.app.
+## Beat table
 
-> "Every agent you use is capable. Your tools, your memory and the way you work are not shared
-> between them. Cherry turns the agents you already pay for into one team, and keeps the decisions
-> with you. And Cherry's website is itself a set of tools any agent can pick up."
+Speech s = words x 0.4. Action slack = the seconds inside the beat with no words over them; that is
+where the clicking, scrolling and page loads happen.
 
-## 0:12 to 1:05, the WebMCP session (CAPTURE)
+| # | Timecode | On screen | Exact words to say | Words | Speech s | Action slack s |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 0:00 - 0:18 | Landing at `/`. Hero, then a slow scroll toward `02 / PARALLEL WORK`. | "Every agent you pay for is capable, and none of them share your tools, your memory, or your judgement. And when an agent says a job is done, that is a claim, not a fact. This is Cherry." | 38 | 15.2 | 2.8 |
+| 2 | 0:18 - 0:46 | `/studio/control` with the outcome **already typed**. Click **Plan the mission**. The plan renders. | "I give Cherry an outcome. It returns a bounded plan: tasks with dependencies, a definition of done, and a real check on every one. That is why this use case fits WebMCP. Planning work is a page with live state, and a visiting agent should drive that state through the site's own tools instead of guessing at buttons." | 58 | 23.2 | 4.8 |
+| 3 | 0:46 - 1:10 | Mission detail. Hover the human-decision node, then click **Approve plan r1**. Hold on the confirmation. | "Here is the gate. Site tools let an agent create a mission, plan it, start it, cancel it, and request a decision. None of them can approve. That is the better experience: I stop typing prompts and start reading decisions, and every agent call lands in a log I can read." | 51 | 20.4 | 3.6 |
+| 4 | 1:10 - 1:34 | `/studio/agent`. Show the **Manual mode, no agent host** sticker, then scroll to the aperture table and hold on the Global row of seven tools. | "How it is implemented: the page calls document.modelContext.registerTool. Seven tools are always on, six reads plus introduce_agent, which only labels the session, and at most five more per surface, registered and retired as state changes. This browser has no WebMCP host, so nothing is registered, and the page says so." | 50 | 20.0 | 4.0 |
+| 5 | 1:34 - 2:02 | `/showcase`. Scroll to `02 / Parallel work`, hold on the 34,513 ms overlap and the two worktree cards, then `03 / Verification` and its checks. | "This is a real Codex run, committed to the repository and replayed here from evidence checked against its fingerprint. Two agents, thirty-four and a half seconds of measured overlap, each in its own git worktree. The boundary is a worktree process, never a virtual machine. Completion came from the host. Success came from the runner's own checks." | 57 | 22.8 | 5.2 |
+| 6 | 2:02 - 2:26 | `/studio/skills` with the sample library loaded. Open one skill. Hold on **Download SKILL.md** and **Copy AGENTS.md (Codex)**. | "Most agent-ready sites let an agent operate them. Cherry's site upgrades the agent. recommend_skills hands a visiting agent my approved methods, pinned to the revision I read, with a hash it verifies. People and agents could not build one library together before. Now they can, and only I approve what enters it." | 52 | 20.8 | 3.2 |
+| 7 | 2:26 - 2:40 | `/studio/proof`, click **Recompute hashes**, then cut to `/compatibility` and hold on the Experimental row for a live host. | "Every claim is labelled by the test or capture behind it. A live browser host is still Experimental, and we say so. No API key. MIT licensed. Cherry." | 28 | 11.2 | 2.8 |
+| | | | **Total** | **334** | **133.6** | **26.4** |
 
-Cut to the ChatGPT built-in browser on `/studio/control`. Click **Site tools**, then
-**Available site tools**.
+## Per-beat action budget and fallbacks
 
-> "This is ChatGPT's own browser looking at Cherry. No plugin, no MCP server: the page registers
-> its tools on document.modelContext. Seven always-on tools, six reads plus introduce_agent, which
-> only labels the session, and on Mission Control, five mission tools. Not one of them can approve
-> anything."
+### Beat 1, 0:00 - 0:18 (2.8 s of action slack)
 
-Type to ChatGPT: "Use this site's tools. Create an outcome mission with the outcome 'Fix the
-highest-impact onboarding defect in Orbit Runner and prepare the release notes. Nothing public
-without my approval.' and repositoryRoot D:\project\orbit-runner. Then plan it and tell me what the
-plan contains." (The words "onboarding" and "release" select the release mission: research, audit,
-prioritise, a Codex developer fix in a worktree, release notes, independent verification, and a
-publish decision that only you can make.)
+Action: 1.5 s of hero hold before the first word, 1.3 s of slow scroll under the last sentence.
 
-> "ChatGPT calls create_outcome_mission and plan_current_mission. Cherry validates the plan:
-> bounded, acyclic, a definition of done and a real check on every task, and a human decision
-> before anything public."
+**FALLBACK:** if the recorded-run panel in the hero has not finished loading its fixture, do not
+wait for it. Stay on the headline and the two buttons; the same numbers appear in beat 5.
 
-Ask ChatGPT to start it. It refuses.
+### Beat 2, 0:18 - 0:46 (4.8 s of action slack)
 
-> "It cannot start it. The plan carries consequential work, and no tool can approve it."
+Action: 2.0 s from clicking **Plan the mission** to the plan rendering, 2.8 s holding the plan. The
+outcome is pre-typed before the take, so no typing time is budgeted.
 
-Click **Approve plan** yourself, then ask ChatGPT to start it again. Show two nodes running.
+**FALLBACK:** if planning errors or stalls, open a mission planned before the take from the mission
+list and say the same words over it. Nothing in the narration claims the plan was made in this shot.
 
-> "I approved this exact revision. Now the runner on my machine leases one git worktree per task
-> and Codex works two of them at the same time. The boundary label says worktree-process. It never
-> says VM, because it is not one."
+### Beat 3, 0:46 - 1:10 (3.6 s of action slack)
 
-FALLBACK (no host showed the tools): show Agent View instead and say: "Cherry registers seven
-always-on tools (six reads plus introduce_agent, which only labels the session) and at most five
-state-scoped tools on document.modelContext. This browser has no
-WebMCP host, so the panel says manual mode and nothing is registered. Nothing on this page fakes an
-agent." Then plan and start the mission by hand in Mission Control.
+Action: 1.6 s hovering the human-decision node, 2.0 s from clicking **Approve plan r1** to the
+confirmation line.
 
-## 1:05 to 1:35, verification and the human decision (Mission Control)
+**FALLBACK:** if no plan-level approve control is visible, hold on any node's **Approve this exact
+plan** button instead. Do not click **Start**: there is no runner in this take, and the narration
+never says there is.
 
-Stay on the mission page while the verify node runs.
+### Beat 4, 1:10 - 1:34 (4.0 s of action slack)
 
-> "The host reports completion. Cherry does not believe it. The runner runs the repository's own
-> tests and its file checks; a failed check gets one bounded repair, and only a passed report or a
-> person moves a task to succeeded."
+Action: 2.0 s of route change and settle, 2.0 s of scroll to the aperture table.
 
-When the publish node waits, decide it.
+**FALLBACK:** if the page has no active space and the table renders empty, go to `/studio/control`
+once to create a space, come back, and re-take. Do not switch to a browser that claims a WebMCP
+host. **Never say the tools are registered.** The sticker on screen must read "Manual mode, no
+agent host" and the words must match it.
 
-> "The agents could finish the work. They could not release it. That decision is mine, and it
-> binds to the evidence I just read."
+### Beat 5, 1:34 - 2:02 (5.2 s of action slack)
 
-## 1:35 to 1:50, Agent View
+Action: 2.4 s of scroll into `02 / Parallel work`, 2.8 s of scroll into `03 / Verification`.
 
-Click **Agent** in the Studio nav.
+**FALLBACK:** if the page shows "Recorded evidence unavailable", hard-refresh once. If it still
+fails, cut to `/compatibility` and say the same words over the Validated row for the mission
+surface, changing "replayed here" to "recorded in the repository".
 
-> "Every tool call is here: name, time, whether it succeeded, and the start of its result. If a
-> page can be driven by an agent, the person must be able to see exactly what the agent did."
+### Beat 6, 2:02 - 2:26 (3.2 s of action slack)
 
-## 1:50 to 2:15, the committed run (Showcase)
+Action: 1.4 s to open the skill, 1.8 s holding the two export controls.
 
-Click **Showcase**. It opens on "One outcome. Two agents. Human authority intact." Press **Next
-step** twice, then **Open evidence**.
+**FALLBACK:** the export controls are disabled unless the skill is approved at its current revision.
+If they are greyed out, do not click them. Cut to `/studio/agent` and hold on `recommend_skills`,
+`get_skill` and `list_skills` in the Global row. The words still fit exactly.
 
-> "This is a committed real Codex run, replayed from a digest-pinned fixture: 34 seconds of
-> measured overlap between two worktrees, codex-cli 0.152.1, node --test run by the runner itself.
-> Anyone can recompute the hash."
+### Beat 7, 2:26 - 2:40 (2.8 s of action slack)
 
-## 2:15 to 2:38, the inversion (Creators and Skills)
+Action: 1.4 s from clicking **Recompute hashes** to the verdict, 1.4 s on the compatibility row.
 
-Click **Open Studio**, then **Creators** (load the sample library from the Showcase first if the
-space is empty), then **Skills**, open one, show **Download SKILL.md** and **Copy AGENTS.md (Codex)**.
+**FALLBACK:** if no receipt exists in the current space, skip the Proof click and open
+`/compatibility` at the start of the beat. The narration does not name the Proof page.
 
-> "Most agent-ready sites let an agent operate them. Cherry's site upgrades the agent. Follow a
-> creator, the runner checks the public feed daily, I add the transcript, I approve the exact
-> version I read. Then recommend_skills hands my approved skills to any agent that visits, pinned to
-> the revision I approved, and the same skills follow me into Codex and Claude Code."
+## Devpost description coverage
 
-## 2:38 to 2:52, proof and what is proven
+The description is judged alongside the video, so all four required points are spoken in the audio,
+not only written on the form:
 
-Click **Proof**, open a receipt, click **Recompute hashes**. Then **What's proven**.
+| Requirement | Where it is said |
+| --- | --- |
+| Why this use case fits WebMCP | Beat 2: "Planning work is a page with live state, and a visiting agent should drive that state through the site's own tools instead of guessing at buttons." |
+| How it makes a better user experience | Beat 3: "I stop typing prompts and start reading decisions, and every agent call lands in a log I can read." |
+| What people and agents can now do together that was hard before | Beat 6: "People and agents could not build one library together before. Now they can, and only I approve what enters it." |
+| How WebMCP was implemented | Beat 4: `document.modelContext.registerTool`, seven always-on tools, at most five per surface, registered and retired as state changes. |
 
-> "Every action is a ProofEvent; receipts are SHA-256 over canonical JSON, and one changed byte
-> turns this red. And every capability is labelled by the test or capture behind it. We would
-> rather show you the label than the claim."
+## One-take shooting order
 
-## 2:52 to 3:00, close
+Do all of this **before** hitting record. Every item removes a cold start from a beat.
 
-Back to the landing.
+**Pre-open, in this tab order, all fully loaded:**
 
-> "No API key. No cloud. Open source. One task, an entire AI team, and the authority stays with
-> you. Cherry."
+1. `https://cherry-wine.vercel.app/` scrolled to the top.
+2. `https://cherry-wine.vercel.app/studio/control`.
+3. `https://cherry-wine.vercel.app/studio/agent`.
+4. `https://cherry-wine.vercel.app/showcase`, scrolled once to the bottom and back to the top so the
+   recorded-mission fixture and every image are warm in cache.
+5. `https://cherry-wine.vercel.app/studio/skills`.
+6. `https://cherry-wine.vercel.app/studio/proof`.
+7. `https://cherry-wine.vercel.app/compatibility`.
+
+**Pre-type and pre-warm:**
+
+- Paste the outcome into the Mission Control **Outcome** box and leave it unsubmitted: "Fix the
+  highest-impact onboarding defect in Orbit Runner and prepare the release notes. Nothing public
+  without my approval."
+- Open **Execution settings** once, put "Nothing public without approval." in Constraints so beat 3
+  has a human-decision node to hover, then collapse it again.
+- From `/showcase`, click **Load sample library** once. It navigates to
+  `/studio/skills?sample=loaded`. Open the skill you intend to show and confirm **Download
+  SKILL.md** is enabled, then navigate back.
+- Plan one throwaway mission before the take so `/studio/proof` has at least one receipt.
+- Confirm `/studio/agent` reads **Manual mode, no agent host**. That is the honest state, and the
+  narration is written to it.
+
+**Recording hygiene:**
+
+- Hide the bookmarks bar, notifications and any second monitor.
+- Zoom at 100 percent, one browser window, no devtools.
+- Record picture and voice separately if you can; the beat table assumes narration is laid over a
+  clean screen capture rather than performed live.
+- Subtitles: `docs/release/DEMO_SUBTITLES.srt` is cut to these exact timecodes. If you shift a beat,
+  shift its cues by the same amount.
 
 ## Do not say
 
-Cloud VM or container (it is a worktree-process boundary), signed receipts (they are
-tamper-evident hashes), runs 24/7 (it runs while your paired runner is online), connected to
-LinkedIn, watches videos, replaces any named product, "works in ChatGPT" unless you recorded it,
-AAA anything.
+Cloud VM or container (it is a worktree-process boundary). Signed receipts (they are tamper-evident
+hashes). Runs 24/7 (it runs while your paired runner is online). Connected to LinkedIn. Watches
+videos. Replaces any named product. "Works in ChatGPT", "the tools are registered", or anything
+implying a live WebMCP host session, because none was captured. AAA anything.
 
 ## Do say
 
-Runs while your paired runner is online; uses your Codex sign-in and available Codex usage;
-worktree-process boundary; tamper-evident hashes; experimental where the compatibility page says
+Runs while your paired runner is online. Uses your Codex sign-in and available Codex usage.
+Worktree-process boundary. Tamper-evident hashes. Experimental where the compatibility page says
 experimental.
-
-## After recording
-
-Send the WebMCP session recording to the release manager before the freeze. It gets pinned into
-the Showcase with its hash and the compatibility row for the live host moves from Experimental to
-Validated. After 13:00 PT on 3 September nothing changes.

@@ -75,9 +75,9 @@ const ROWS: Row[] = [
     evidence: 'Runner integration test executes the real script inside a real bundle: passes clean, exits non-zero after a one-byte tamper.',
   },
   {
-    surface: 'Installing a Cherry skill into Claude Code',
-    status: 'validated',
-    evidence: "A Cherry-compiled bundle was unzipped into a real Claude Code host's ~/.claude/skills/ on 2026-08-29; the host discovered it and listed it as an available skill in a live session. The bundle's standalone verify.mjs passed all 22 file hashes first. Recorded in the decision log (docs/CHERRY_DECISIONS.md, D-012) and the 2026-08-30 addendum in CHERRY_RELEASE_EVIDENCE.md with the returned hashes; no transcript file was captured.",
+    surface: 'Installing a Cherry skill into an Agent Skills host',
+    status: 'shipped',
+    evidence: "The compiler writes a standard Agent Skills bundle and its standalone verify.mjs passes all 22 file hashes under test. A bundle was unzipped into a real host's skills directory on 2026-08-29 and discovered there, but no transcript of that session was captured, so this row stays Shipped rather than Validated: the install path is implemented and hash-verified, and the live discovery is self-reported. Bundle compilation and verification are covered by automated tests.",
   },
   {
     surface: 'Installing a Cherry skill into Codex',
@@ -87,12 +87,12 @@ const ROWS: Row[] = [
   {
     surface: 'The bridge that lets a local agent read and verify your work',
     status: 'validated',
-    evidence: '6 stdio JSON-RPC integration tests, plus a live registration in a real Claude Code host on 2026-08-29 (claude mcp add cherry-wine, then claude mcp list reported Connected against a real workspace export), recorded in the decision log rather than a captured transcript. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md.',
+    evidence: '6 stdio JSON-RPC integration tests, plus two captured live host sessions. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md. On 2026-09-03 a second MCP host executed the bridge tools against the shipped workspace export and the recomputed hashes matched on both the workspace integrity digest and a proof receipt, with a clean refusal on an unknown receipt id: docs/release/LIVE_MCP_HOST_CAPTURE.md.',
   },
   {
     surface: 'The runner on your own computer',
     status: 'validated',
-    evidence: '11 runner integration tests (131 across the runner, sandbox, host, executor and bridge suites): loopback-only, pairing token required, origin allowlist, root/executable allowlists, no shell strings, output caps + secret redaction, crash recovery, real bundle verify incl. tamper detection.',
+    evidence: '11 runner integration tests (135 across the runner, sandbox, host, executor and bridge suites): loopback-only, pairing token required, origin allowlist, root/executable allowlists, no shell strings, output caps + secret redaction, crash recovery, real bundle verify incl. tamper detection.',
   },
   {
     surface: 'Previewing a file an agent produced, safely',

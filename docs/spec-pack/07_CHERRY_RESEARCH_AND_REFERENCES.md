@@ -37,7 +37,7 @@ Memory is useful only when the user can see what was stored, why it was stored, 
 Primary references:
 - OpenAI Memory FAQ: https://help.openai.com/en/articles/8590148-memory-faq
 - LangGraph memory concepts: https://langchain-ai.github.io/langgraph/concepts/memory/
-- Claude Code memory: https://docs.anthropic.com/en/docs/claude-code/memory
+- Claude Code memory: https://docs.anthropic.com/en/docs/build-lane/memory
 
 ### 2.3 Tool overload and ambiguous tool choice
 
@@ -130,11 +130,11 @@ Cherry’s gap:
 - manual mode that works without a model.
 
 References:
-- https://docs.anthropic.com/en/docs/claude-code/overview
-- https://docs.anthropic.com/en/docs/claude-code/skills
-- https://docs.anthropic.com/en/docs/claude-code/sub-agents
-- https://docs.anthropic.com/en/docs/claude-code/hooks
-- https://docs.anthropic.com/en/docs/claude-code/memory
+- https://docs.anthropic.com/en/docs/build-lane/overview
+- https://docs.anthropic.com/en/docs/build-lane/skills
+- https://docs.anthropic.com/en/docs/build-lane/sub-agents
+- https://docs.anthropic.com/en/docs/build-lane/hooks
+- https://docs.anthropic.com/en/docs/build-lane/memory
 
 ### n8n and deterministic workflow builders
 

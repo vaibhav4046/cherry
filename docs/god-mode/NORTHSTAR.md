@@ -1,6 +1,6 @@
 # Cherry God Mode: north star and executive decision
 
-Date: 2026-09-02. Branch `claude/god-mode-v2` from `origin/main` 6e763c5. Mode GREEN at start
+Date: 2026-09-02. Branch the god-mode branch from `origin/main` 6e763c5. Mode GREEN at start
 (32.1 h to the deadline, 23.1 h to the 12:00 London freeze on 3 September).
 
 ## The decision

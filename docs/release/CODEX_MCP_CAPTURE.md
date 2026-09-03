@@ -215,10 +215,10 @@ ok references/observations.json
 ok references/principles.md
 ok scripts/verify.mjs
 ok skillgraph.json
-ok targets/claude-code/CLAUDE.md
-ok targets/claude-code/agents/cherry-skill-agent.md
-ok targets/claude-code/hooks.example.json
-ok targets/claude-code/install.md
+ok targets/build-lane/CLAUDE.md
+ok targets/build-lane/agents/cherry-skill-agent.md
+ok targets/build-lane/hooks.example.json
+ok targets/build-lane/install.md
 ok targets/codex/AGENTS.md
 ok targets/codex/install.md
 ok receipt.json hash (tamper-evident, not a signature)

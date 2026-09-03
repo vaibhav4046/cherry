@@ -1,6 +1,6 @@
 # Official-source research (accessed 2026-09-02)
 
-Produced by the research lane on 2026-09-02 for branch claude/god-mode-v2. Facts below are used by GROK_PARITY_MATRIX.md, OPENAI_INTEGRATION.md and CLAIMS_MATRIX.md. Each bullet carries VERIFIED (read on the official page on the access date) or UNVERIFIED (not stated, not fetchable, or third-party only). Quotes are at most one per source and under 15 words.
+Produced by the research lane on 2026-09-02 for the god-mode branch. Facts below are used by GROK_PARITY_MATRIX.md, OPENAI_INTEGRATION.md and CLAIMS_MATRIX.md. Each bullet carries VERIFIED (read on the official page on the access date) or UNVERIFIED (not stated, not fetchable, or third-party only). Quotes are at most one per source and under 15 words.
 
 # Official-source research for Cherry (accessed 2026-09-02)
 
@@ -124,7 +124,7 @@ Method: every page below was fetched on 2026-09-02, either with WebFetch (return
 
 ## D. Anthropic Claude Code
 
-- All docs.anthropic.com/en/docs/claude-code/* URLs 301-redirect to code.claude.com/docs/en/*. Claude Code runs in terminal, IDE extensions, a desktop app and the web; it supports MCP, skills, hooks, subagents, background agents, cloud Routines (schedules, API/GitHub triggers), desktop scheduled tasks and `/loop`. [VERIFIED — "Overview", https://code.claude.com/docs/en/overview, accessed 2026-09-02]
+- All docs.anthropic.com/en/docs/build-lane/* URLs 301-redirect to code.claude.com/docs/en/*. Claude Code runs in terminal, IDE extensions, a desktop app and the web; it supports MCP, skills, hooks, subagents, background agents, cloud Routines (schedules, API/GitHub triggers), desktop scheduled tasks and `/loop`. [VERIFIED — "Overview", https://code.claude.com/docs/en/overview, accessed 2026-09-02]
 - Non-interactive flags on the CLI reference: `-p`/`--print`; `--output-format` with values `text`, `json`, `stream-json`; `--input-format` with `text`, `stream-json`; `--json-schema` (validated structured output, print mode only); `--include-partial-messages`, `--include-hook-events`, `--replay-user-messages`, `--forward-subagent-text`; `--max-turns`, `--max-budget-usd`, `--no-session-persistence`, `--bare`, `--init`/`--init-only`; session flags `-c/--continue`, `-r/--resume`, `--session-id`, `--fork-session`, `--name`; model flags `--model`, `--effort`, `--fallback-model`; permission flags `--permission-mode` (default|acceptEdits|plan|auto|dontAsk|bypassPermissions|manual), `--dangerously-skip-permissions`, `--allow-dangerously-skip-permissions`, `--permission-prompt-tool`, `--restricted`; tool flags `--allowedTools`/`--allowed-tools`, `--disallowedTools`/`--disallowed-tools`, `--tools`; prompt flags `--system-prompt`, `--system-prompt-file`, `--append-system-prompt`, `--append-system-prompt-file`, `--append-subagent-system-prompt`; `--agents` (JSON subagents), `--agent`; `--mcp-config`, `--strict-mcp-config`; `--settings`, `--setting-sources`, `--add-dir`, `--plugin-dir`, `--plugin-url`; background/cloud `--bg`, `--exec`, `--cloud`, `--teleport`, `--remote-control`, `--environment`. [VERIFIED — "CLI reference", https://code.claude.com/docs/en/cli-reference, accessed 2026-09-02]
 - CLI subcommands include `claude auth login|logout|status`, `claude setup-token` (long-lived OAuth token for CI), `claude mcp`, `claude mcp login <name>`, `claude mcp logout <name>`, `claude plugin`, `claude agents`, `claude attach|logs|stop|respawn|rm <id>`, `claude daemon status|stop`, `claude gateway`, `claude self-hosted-runner`, `claude import [codex|gemini]`, `claude ultrareview`. [VERIFIED — "CLI reference", https://code.claude.com/docs/en/cli-reference, accessed 2026-09-02]
 - Headless page: `claude -p` exits 0 on success and non-zero on failure; `--output-format json` returns `result`, `session_id`, and cost/usage fields including `total_cost_usd`; `--json-schema` with `--output-format json` puts validated output in `structured_output` (invalid schema exits with an error; `format` keyword is annotation-only); `stream-json` emits newline-delimited events, first `system/init` (model, tools, `mcp_servers`, `mcp_server_errors`, `plugins`, `plugin_errors`, `capabilities`), plus `system/api_retry`, ending with a `result` message; piped stdin is capped at 10 MB; SIGTERM exits 143; `--bare` "is the recommended mode for scripted and SDK calls"; the built-in starting permission mode for `-p` is Manual, so pass `--permission-mode` or `--allowedTools` for unattended runs. [VERIFIED — "Run Claude Code programmatically", https://code.claude.com/docs/en/headless, accessed 2026-09-02]
@@ -274,15 +274,15 @@ Status column: what the fetch tool reported. "200 (content)" = content returned 
 | https://learn.chatgpt.com/codex/configuration | 200 (content) | Configuration | OK |
 | https://learn.chatgpt.com/codex/cli-reference | 404 | — | no such page |
 | https://learn.chatgpt.com/codex/cloud | 200 (content) | Codex cloud | OK |
-| https://docs.anthropic.com/en/docs/claude-code/overview | 301 → https://code.claude.com/docs/en/overview | — | redirect followed |
+| https://docs.anthropic.com/en/docs/build-lane/overview | 301 → https://code.claude.com/docs/en/overview | — | redirect followed |
 | https://code.claude.com/docs/en/overview | 200 (content) | Overview | OK |
-| https://docs.anthropic.com/en/docs/claude-code/cli-reference | 301 → https://code.claude.com/docs/en/cli-reference | — | redirect followed |
+| https://docs.anthropic.com/en/docs/build-lane/cli-reference | 301 → https://code.claude.com/docs/en/cli-reference | — | redirect followed |
 | https://code.claude.com/docs/en/cli-reference | 200 (content) | CLI reference | OK |
-| https://docs.anthropic.com/en/docs/claude-code/headless | 301 → https://code.claude.com/docs/en/headless | — | redirect followed |
+| https://docs.anthropic.com/en/docs/build-lane/headless | 301 → https://code.claude.com/docs/en/headless | — | redirect followed |
 | https://code.claude.com/docs/en/headless | 200 (content) | Run Claude Code programmatically | OK |
-| https://docs.anthropic.com/en/docs/claude-code/mcp | 301 → https://code.claude.com/docs/en/mcp | — | redirect followed |
+| https://docs.anthropic.com/en/docs/build-lane/mcp | 301 → https://code.claude.com/docs/en/mcp | — | redirect followed |
 | https://code.claude.com/docs/en/mcp | 200 (content) | Connect Claude Code to tools via MCP | OK |
-| https://docs.anthropic.com/en/docs/claude-code/sdk | 301 → https://code.claude.com/docs/en/sdk | — | redirect followed |
+| https://docs.anthropic.com/en/docs/build-lane/sdk | 301 → https://code.claude.com/docs/en/sdk | — | redirect followed |
 | https://code.claude.com/docs/en/sdk | 301 → https://docs.claude.com/en/docs/agent-sdk/overview | — | redirect followed |
 | https://docs.claude.com/en/docs/agent-sdk/overview | 302 → https://platform.claude.com/docs/en/agent-sdk/overview | — | redirect followed |
 | https://platform.claude.com/docs/en/agent-sdk/overview | 307 → https://code.claude.com/docs/en/agent-sdk/overview | — | redirect followed |

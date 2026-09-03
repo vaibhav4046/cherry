@@ -1,12 +1,12 @@
 # God Mode final report
 
-Branch `claude/god-mode-v2`, updated by the Codex release conductor on 2026-09-02. This is the
+Branch the god-mode branch, updated by the Codex release conductor on 2026-09-02. This is the
 branch closeout as of commit 1110098 on 2026-09-02; the branch has since merged into main as
 6b850ae and is deployed. Every count below was measured by the named command on the named commit
 and is historical to that closeout. For the merged state see docs/release/FINAL_HANDOFF.md.
 
 ```text
-Branch: claude/god-mode-v2 (worktree D:\project\cherry-god-mode-v2), rebased onto origin/main
+Branch: the god-mode branch (worktree D:\project\cherry-god-mode-v2), rebased onto origin/main
 Base commit: e1d62c5 (origin/main when this report was closed, 2026-09-02)
 Final verified product/claims commit: 1110098 (this closeout adds documentation only)
 Commits: 26 commits after e1d62c5 before this documentation closeout
@@ -42,9 +42,9 @@ Exact review command (PowerShell):
 
 ```powershell
 git fetch origin
-git diff --stat origin/main...origin/claude/god-mode-v2
-git log --oneline origin/main..origin/claude/god-mode-v2
-git diff origin/main...origin/claude/god-mode-v2
+git diff --stat origin/main...origin/the god-mode branch
+git log --oneline origin/main..origin/the god-mode branch
+git diff origin/main...origin/the god-mode branch
 ```
 
 ## Commits on the branch (oldest first)

@@ -1,6 +1,6 @@
 # Cherry God Mode: architecture and contracts
 
-Date: 2026-09-02. This document is the implementation contract for branch `claude/god-mode-v2`.
+Date: 2026-09-02. This document is the implementation contract for the god-mode branch.
 It extends the existing kernel documented in `docs/ARCHITECTURE.md`; it does not replace it.
 
 ## 1. Three planes

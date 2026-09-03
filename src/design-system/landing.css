@@ -689,9 +689,13 @@
   .landing-proof-cabinet__grid > a:hover { transform: translateY(-3px); }
 }
 
+/* Transform only, deliberately no opacity: fading text in from 0 renders the
+   hero below its contrast threshold for the whole 650ms, which axe catches and
+   a reader with low vision actually experiences. Transform is also the
+   compositor-friendly property, so the reveal stays cheap. */
 @keyframes landing-enter {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { transform: translateY(18px); }
+  to { transform: translateY(0); }
 }
 
 .landing-seed-bank { position: relative; }

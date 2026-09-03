@@ -1,15 +1,16 @@
 {
   "config": {
     "argv": [
-      "/opt/node22/bin/node",
-      "/root/cherry-clone/node_modules/.bin/playwright",
+      "D:\\node.exe",
+      "D:\\project\\cherry\\node_modules\\@playwright\\test\\cli.js",
       "test",
-      "e2e/cherry/upgrade.spec.ts",
-      "e2e/cherry/performance-meta.spec.ts",
-      "--project=desktop"
+      "e2e/cherry/responsive.spec.ts",
+      "e2e/cherry/visual-qa.spec.ts",
+      "e2e/cherry/landing-god-mode.spec.ts",
+      "e2e/cherry/final-winner-landing.spec.ts"
     ],
-    "configFile": "/root/cherry-clone/playwright.config.ts",
-    "rootDir": "/root/cherry-clone/e2e",
+    "configFile": "D:\\project\\cherry\\playwright.config.ts",
+    "rootDir": "D:/project/cherry/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -25,7 +26,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/root/cherry-clone/test-results",
+        "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -33,7 +34,7 @@
         },
         "id": "desktop",
         "name": "desktop",
-        "testDir": "/root/cherry-clone/e2e",
+        "testDir": "D:/project/cherry/e2e",
         "testIgnore": [
           "/demo-recording\\.spec\\.ts/"
         ],
@@ -43,7 +44,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/root/cherry-clone/test-results",
+        "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -51,7 +52,7 @@
         },
         "id": "mobile",
         "name": "mobile",
-        "testDir": "/root/cherry-clone/e2e",
+        "testDir": "D:/project/cherry/e2e",
         "testIgnore": [
           "/demo-recording\\.spec\\.ts/"
         ],
@@ -96,20 +97,232 @@
   },
   "suites": [
     {
-      "title": "cherry/performance-meta.spec.ts",
-      "file": "cherry/performance-meta.spec.ts",
+      "title": "cherry\\final-winner-landing.spec.ts",
+      "file": "cherry/final-winner-landing.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "desktop-1440 leads with the recorded mission and has no overflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1896,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:23.923Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-ea53139829b1777c587c",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 31,
+          "column": 3
+        },
+        {
+          "title": "desktop-1280 leads with the recorded mission and has no overflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1265,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:26.992Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-a44714182d16e3d864f3",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 31,
+          "column": 3
+        },
+        {
+          "title": "mobile-390 leads with the recorded mission and has no overflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 991,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:28.266Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-e885beb03c8284926426",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 31,
+          "column": 3
+        },
+        {
+          "title": "story chapters, Chronicle art, and recorded facts stay honest",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 447,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:29.271Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-b9907c32b3aa2ff9e5d4",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 69,
+          "column": 1
+        },
+        {
+          "title": "mobile keyboard, reduced motion, and accessibility remain usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1468,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:29.728Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-c13f98139cd74e33e409",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 103,
+          "column": 1
+        },
+        {
+          "title": "the promoted Three.js lab renders, switches all scenes, and exports real OBJ and MTL files",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7403,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-03T15:58:31.205Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cae50a2b9c4d110d6fc8-2cac199ea290b6f8035c",
+          "file": "cherry/final-winner-landing.spec.ts",
+          "line": 153,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "cherry\\landing-god-mode.spec.ts",
+      "file": "cherry/landing-god-mode.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "guest performance boundary",
-          "file": "cherry/performance-meta.spec.ts",
-          "line": 6,
+          "title": "landing: evidence-led AI workforce",
+          "file": "cherry/landing-god-mode.spec.ts",
+          "line": 42,
           "column": 6,
           "specs": [
             {
-              "title": "configured guest routes never request the Privy SDK or its services",
+              "title": "desktop: copy, sections, statuses, no fake claims, axe clean, no console errors",
               "ok": true,
               "tags": [],
               "tests": [
@@ -124,12 +337,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3420,
+                      "duration": 1801,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:34:57.921Z",
+                      "startTime": "2026-09-03T15:58:38.635Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -137,55 +350,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "ba0f12340033bd3c3103-eb90d0ea6897b1672754",
-              "file": "cherry/performance-meta.spec.ts",
-              "line": 7,
-              "column": 3
-            }
-          ]
-        },
-        {
-          "title": "route metadata",
-          "file": "cherry/performance-meta.spec.ts",
-          "line": 38,
-          "column": 6,
-          "specs": [
-            {
-              "title": "uses specific metadata for real public and Studio routes",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "desktop",
-                  "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2669,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T12:35:01.503Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "ba0f12340033bd3c3103-895599e630a1da908818",
-              "file": "cherry/performance-meta.spec.ts",
-              "line": 39,
+              "id": "6f318cf4b286eb016bb4-3d1a9487dcf68bf9c953",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 43,
               "column": 3
             },
             {
-              "title": "prefix lookalikes and unknown Studio children keep 404 metadata",
+              "title": "mobile 390x844: no horizontal overflow, sections reachable, example labelled",
               "ok": true,
               "tags": [],
               "tests": [
@@ -200,12 +371,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1197,
+                      "duration": 1913,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:04.191Z",
+                      "startTime": "2026-09-03T15:58:40.446Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -213,13 +384,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "ba0f12340033bd3c3103-3d1259d5e430048b4adc",
-              "file": "cherry/performance-meta.spec.ts",
-              "line": 80,
+              "id": "6f318cf4b286eb016bb4-87abe1a4d2ea083b376f",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 71,
               "column": 3
             },
             {
-              "title": "serves the valid Open Graph image and wine SVG favicon",
+              "title": "tablet 768px: proof cards stay readable and summary links reach real chapters",
               "ok": true,
               "tags": [],
               "tests": [
@@ -234,12 +405,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 631,
+                      "duration": 407,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:05.403Z",
+                      "startTime": "2026-09-03T15:58:42.369Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -247,13 +418,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "ba0f12340033bd3c3103-b6429e88837089b70b3a",
-              "file": "cherry/performance-meta.spec.ts",
-              "line": 92,
+              "id": "6f318cf4b286eb016bb4-a6a98652683b805b2152",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 126,
               "column": 3
             },
             {
-              "title": "keeps the custom 404 available from the cached offline shell",
+              "title": "keyboard: the primary CTA and recorded run are reachable with a visible focus ring",
               "ok": true,
               "tags": [],
               "tests": [
@@ -268,12 +439,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1254,
+                      "duration": 457,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:06.055Z",
+                      "startTime": "2026-09-03T15:58:42.784Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -281,9 +452,77 @@
                   "status": "expected"
                 }
               ],
-              "id": "ba0f12340033bd3c3103-7b7fa72f7b4d627bc6d9",
-              "file": "cherry/performance-meta.spec.ts",
-              "line": 111,
+              "id": "6f318cf4b286eb016bb4-da84e163e0239c977c2d",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 145,
+              "column": 3
+            },
+            {
+              "title": "reduced motion: every chapter is visible without scrolling animation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 379,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:43.249Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6f318cf4b286eb016bb4-b9271fa26a35b9497e11",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 161,
+              "column": 3
+            },
+            {
+              "title": "final action opens Mission Control",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 435,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:43.635Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6f318cf4b286eb016bb4-a1d2aff4f5aca50a256e",
+              "file": "cherry/landing-god-mode.spec.ts",
+              "line": 175,
               "column": 3
             }
           ]
@@ -291,20 +530,20 @@
       ]
     },
     {
-      "title": "cherry/upgrade.spec.ts",
-      "file": "cherry/upgrade.spec.ts",
+      "title": "cherry\\responsive.spec.ts",
+      "file": "cherry/responsive.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "landing upgrade",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 3,
+          "title": "responsive and accessible shell",
+          "file": "cherry/responsive.spec.ts",
+          "line": 11,
           "column": 6,
           "specs": [
             {
-              "title": "hero leads to Mission Control and the recorded evidence cabinet",
+              "title": "landing and studio render without horizontal overflow at mobile",
               "ok": true,
               "tags": [],
               "tests": [
@@ -319,12 +558,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 625,
+                      "duration": 764,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:07.354Z",
+                      "startTime": "2026-09-03T15:58:44.090Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -332,47 +571,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-0a835dfc2cefa8b90ff8",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "landing respects reduced motion and leaves the replay paused",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "desktop",
-                  "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 670,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T12:35:08.002Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "db8d97f7fe057b185ab1-def4167e96584a870440",
-              "file": "cherry/upgrade.spec.ts",
+              "id": "764551a30f0c3008a13d-83be1a8ac40d3d0cc905",
+              "file": "cherry/responsive.spec.ts",
               "line": 13,
-              "column": 3
+              "column": 5
             },
             {
-              "title": "compatibility page renders honest status labels",
+              "title": "landing and studio render without horizontal overflow at tablet",
               "ok": true,
               "tags": [],
               "tests": [
@@ -387,12 +592,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 822,
+                      "duration": 751,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:08.689Z",
+                      "startTime": "2026-09-03T15:58:44.861Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -400,26 +605,570 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-d90fc5630af95342741b",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 23,
+              "id": "764551a30f0c3008a13d-6fb71a046705cb197bac",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at laptop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 897,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:45.619Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-94050cabe6a63f03b966",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at desktop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 789,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:46.522Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-d57f9dc3448256b0c2d4",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "showcase renders without horizontal overflow at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 649,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:47.319Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-73d4cf23cb3544f69285",
+              "file": "cherry/responsive.spec.ts",
+              "line": 27,
+              "column": 3
+            },
+            {
+              "title": "mobile shows bottom navigation instead of the rail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 219,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:47.976Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-becf377fd25af46db6bf",
+              "file": "cherry/responsive.spec.ts",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "landing has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1209,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:48.203Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-46f525ae1967941be55d",
+              "file": "cherry/responsive.spec.ts",
+              "line": 42,
+              "column": 3
+            },
+            {
+              "title": "studio empty state has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1054,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:49.421Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-351936eadf0619388fa7",
+              "file": "cherry/responsive.spec.ts",
+              "line": 49,
+              "column": 3
+            },
+            {
+              "title": "keyboard-only: workspace creation works without a mouse",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1112,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:58:50.481Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-1c39e56adedefe354645",
+              "file": "cherry/responsive.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 978,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:55.683Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-dc6947ce380c08ef4561",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at tablet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 872,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:56.871Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-4cd0fb3682d24842624a",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at laptop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 903,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:57.760Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-02fb7a072c3c998c8809",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "landing and studio render without horizontal overflow at desktop",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 795,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:58.672Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-41368cb6d16e4100f64e",
+              "file": "cherry/responsive.spec.ts",
+              "line": 13,
+              "column": 5
+            },
+            {
+              "title": "showcase renders without horizontal overflow at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 716,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:59.475Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-65694f3174ba0d979e80",
+              "file": "cherry/responsive.spec.ts",
+              "line": 27,
+              "column": 3
+            },
+            {
+              "title": "mobile shows bottom navigation instead of the rail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 281,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:00:00.202Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-0a1345933574ec8a9827",
+              "file": "cherry/responsive.spec.ts",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "landing has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1173,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:00:00.494Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-5d4f9665739af17041bc",
+              "file": "cherry/responsive.spec.ts",
+              "line": 42,
+              "column": 3
+            },
+            {
+              "title": "studio empty state has no serious axe violations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1554,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:00:01.676Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-3122323984b14f7332cb",
+              "file": "cherry/responsive.spec.ts",
+              "line": 49,
+              "column": 3
+            },
+            {
+              "title": "keyboard-only: workspace creation works without a mouse",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1130,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T16:00:03.240Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "764551a30f0c3008a13d-39496e0e227ebc83b50a",
+              "file": "cherry/responsive.spec.ts",
+              "line": 57,
               "column": 3
             }
           ]
         },
         {
-          "title": "guided example and walkthrough",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 43,
+          "title": "artifact preview isolation",
+          "file": "cherry/responsive.spec.ts",
+          "line": 66,
           "column": 6,
           "specs": [
             {
-              "title": "the guided demo route loads the real example workspace and starts the tour",
+              "title": "malicious artifact is rendered as static content with no navigation or network",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -429,12 +1178,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3509,
+                      "duration": 1885,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:09.530Z",
+                      "startTime": "2026-09-03T15:58:51.601Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -442,13 +1191,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-dd6cc1321428442b2c43",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 44,
+              "id": "764551a30f0c3008a13d-48f89aa5f9a9a3ba6b06",
+              "file": "cherry/responsive.spec.ts",
+              "line": 67,
               "column": 3
             },
             {
-              "title": "walkthrough is replayable from the Command Center",
+              "title": "malicious artifact is rendered as static content with no navigation or network",
               "ok": true,
               "tags": [],
               "tests": [
@@ -456,19 +1205,19 @@
                   "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "desktop",
-                  "projectName": "desktop",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1902,
+                      "duration": 1655,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:13.068Z",
+                      "startTime": "2026-09-03T16:00:04.378Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -476,26 +1225,35 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-aedc51a44eede660a3ac",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 86,
+              "id": "764551a30f0c3008a13d-5292380c48981586da9d",
+              "file": "cherry/responsive.spec.ts",
+              "line": 67,
               "column": 3
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "title": "cherry\\visual-qa.spec.ts",
+      "file": "cherry/visual-qa.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
         {
-          "title": "agent view (MCP inspector)",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 98,
+          "title": "final visual and accessibility QA",
+          "file": "cherry/visual-qa.spec.ts",
+          "line": 156,
           "column": 6,
           "specs": [
             {
-              "title": "manual mode shows the honest aperture story with zero fake activity",
+              "title": "public pages at desktop (1440x900)",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -505,12 +1263,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1893,
+                      "duration": 7941,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:15.004Z",
+                      "startTime": "2026-09-03T15:58:53.510Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -518,18 +1276,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-bf21e9df9952a90899df",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 99,
-              "column": 3
+              "id": "87eaa6935f63575cd504-dea90ad1fc047ad56ad4",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 162,
+              "column": 5
             },
             {
-              "title": "teach CTA routes into the Quick Skill wizard once a workspace exists",
+              "title": "studio setup-required states at desktop",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -539,12 +1297,16 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2339,
+                      "duration": 10298,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] empty studio @desktop: 4 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:16.921Z",
+                      "startTime": "2026-09-03T15:59:01.465Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -552,60 +1314,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-4295e3d79de3dd71a1d3",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 123,
-              "column": 3
-            }
-          ]
-        },
-        {
-          "title": "upgrade accessibility",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 133,
-          "column": 6,
-          "specs": [
-            {
-              "title": "compatibility page has no serious axe violations",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "desktop",
-                  "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2263,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T12:35:19.278Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "db8d97f7fe057b185ab1-f5ececc79a897b84dafa",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 134,
-              "column": 3
+              "id": "87eaa6935f63575cd504-a292d5844d7b0a4369ad",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 180,
+              "column": 5
             },
             {
-              "title": "agent view has no serious axe violations and the tour card is a labelled dialog",
+              "title": "studio populated by the guided example at desktop",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -615,12 +1335,16 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3326,
+                      "duration": 12185,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] populated studio @desktop: 6 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:21.560Z",
+                      "startTime": "2026-09-03T15:59:11.772Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -628,60 +1352,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-d32e87de9c9d80414232",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 143,
-              "column": 3
-            }
-          ]
-        },
-        {
-          "title": "quick skill wizard",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 157,
-          "column": 6,
-          "specs": [
-            {
-              "title": "URL to installable skill: transcript in, approved bundle out",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "desktop",
-                  "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2634,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T12:35:24.909Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "db8d97f7fe057b185ab1-486040bf4604448a3d49",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 158,
-              "column": 3
+              "id": "87eaa6935f63575cd504-5a08fe5c9e8abe23cc2b",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 198,
+              "column": 5
             },
             {
-              "title": "wizard refuses an empty transcript path honestly",
+              "title": "public pages at mobile (390x844)",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -691,12 +1373,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1403,
+                      "duration": 6514,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:27.560Z",
+                      "startTime": "2026-09-03T15:59:23.965Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -704,26 +1386,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-9125a997b5c9cea45a43",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 195,
-              "column": 3
-            }
-          ]
-        },
-        {
-          "title": "notebook (sources · overview · studio)",
-          "file": "cherry/upgrade.spec.ts",
-          "line": 203,
-          "column": 6,
-          "specs": [
+              "id": "87eaa6935f63575cd504-4acf9bc007eea4391008",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 162,
+              "column": 5
+            },
             {
-              "title": "drop sources, get an instant overview, generate a real briefing artifact",
+              "title": "studio setup-required states at mobile",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
@@ -733,12 +1407,16 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2615,
+                      "duration": 11367,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] empty studio @mobile: 4 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-03T12:35:28.977Z",
+                      "startTime": "2026-09-03T15:59:30.489Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -746,10 +1424,48 @@
                   "status": "expected"
                 }
               ],
-              "id": "db8d97f7fe057b185ab1-10236cdd3e41512f2113",
-              "file": "cherry/upgrade.spec.ts",
-              "line": 204,
-              "column": 3
+              "id": "87eaa6935f63575cd504-0145485f2be03419b296",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 180,
+              "column": 5
+            },
+            {
+              "title": "studio populated by the guided example at mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12869,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] populated studio @mobile: 6 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-03T15:59:41.865Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "87eaa6935f63575cd504-d1c3014c73c203504bca",
+              "file": "cherry/visual-qa.spec.ts",
+              "line": 198,
+              "column": 5
             }
           ]
         }
@@ -758,9 +1474,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-03T12:33:46.679Z",
-    "duration": 105045.935,
-    "expected": 17,
+    "startTime": "2026-09-03T15:58:23.204Z",
+    "duration": 103014.603,
+    "expected": 38,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

@@ -195,7 +195,9 @@ describe('winner mission replay fixture', () => {
     expect(metadata.durationMs).toBeGreaterThan(27_500);
     expect(metadata.durationMs).toBeLessThan(28_000);
     expect(metadata.bytes).toBeLessThan(6 * 1024 * 1024);
-  });
+    // Launching a real browser to decode the shipped recording costs more than the
+    // default per-test budget on a cold machine; the assertions above are unchanged.
+  }, 90_000);
 });
 
 describe('mission film', () => {

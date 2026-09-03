@@ -307,7 +307,7 @@ Cherry generates a real archive from current state:
     ├── codex/
     │   ├── AGENTS.md
     │   └── install.md
-    └── claude-code/
+    └── build-lane/
         ├── CLAUDE.md
         ├── install.md
         ├── hooks.example.json

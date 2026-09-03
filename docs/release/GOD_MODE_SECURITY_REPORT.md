@@ -1,6 +1,6 @@
 # God Mode security report
 
-Branch `claude/god-mode-v2`. Every row names the test that exercises the control on this branch; a
+Branch the god-mode branch. Every row names the test that exercises the control on this branch; a
 row without a test is marked as such. Findings that were fixed during the work are listed with their
 regression. This report is completed at the end of the branch (final counts live in
 `GOD_MODE_FINAL_REPORT.md`).

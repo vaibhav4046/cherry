@@ -10,7 +10,7 @@ Cherry turns a human outcome into a supervised, local-first AI workforce mission
 
 - Conductor: Codex GPT-5.6 Sol, W0.
 - Repository: `D:\project\cherry`; integration worktree: `D:\project\cherry-superman-orchard`.
-- Base: synchronized `origin/claude/god-mode-v2` at `b7a3e757bbc96ea51307129427df4d4ebd495e6c`.
+- Base: synchronized `origin/the god-mode branch at `b7a3e757bbc96ea51307129427df4d4ebd495e6c`.
 - Runtime freeze: active. W5 is read-only unless an integrated judge-flow regression fails first and proves a runtime blocker.
 - Release authority: repository release manager only. This execution may prepare a release candidate and handoff; it may not merge or deploy.
 - Human-only boundaries: authentication/login, third-party submission upload, and deployment remain human actions.

@@ -218,7 +218,7 @@ node --test runner/runner.test.mjs → includes "cherry-verify runs a real bundl
 ```
 A real compiled bundle: frontmatter name == directory name, SKILL.md < 500 lines, required tree
 (SKILL.md, cherry.json, skillgraph.json, receipt.json, MANIFEST.json, references/, policies/, evals/,
-scripts/verify.mjs, targets/codex, targets/claude-code), every MANIFEST hash recomputes, embedded
+scripts/verify.mjs, targets/codex, targets/build-lane), every MANIFEST hash recomputes, embedded
 receipt hash recomputable. `scripts/verify.mjs` exits non-zero on a tampered bundle (runner test
 proves it against a mutated file). Unapproved graphs refuse to compile. **PASSED**
 

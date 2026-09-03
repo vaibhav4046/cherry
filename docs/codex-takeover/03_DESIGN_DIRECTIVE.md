@@ -11,7 +11,7 @@ cherry as the only brand gesture. Reference points: the Hermes Agent site's mini
 Apple's type/spacing restraint (already tokenized in the repo). Not: glassmorphism showcases,
 gradient heroes, icon walls, dark panels inside light pages.
 
-## Tokens (implemented by Claude in the design system; consume, don't redefine)
+## Tokens (implemented in the design lane in the design system; consume, don't redefine)
 
 - Canvas: warm off-white (`--surface-canvas`), cards on hairline borders, existing subtle
   elevation only.

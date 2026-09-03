@@ -20,6 +20,47 @@ One task. An entire AI team. Human authority intact.
 - Repository (MIT): https://github.com/vaibhav4046/cherry
 - Video: (add after recording; script in docs/release/DEMO_SCRIPT.md)
 
+## The four required points, answered directly
+
+Devpost asks every entry to cover four things. Here they are, in order, with nothing between them.
+
+**1. Why this use case is a strong fit for WebMCP.** Cherry is a page whose whole purpose is live,
+structured state: a plan with tasks and dependencies, work running in isolated sandboxes, checks
+passing or failing, and decisions waiting for a person. An agent trying to help with that through
+screenshots and button-guessing is working blind against a moving target. WebMCP is exactly the
+right shape here, because the site can hand the agent the small set of operations that are legal
+*right now*, in this state, on this surface — and withdraw them the moment they stop being legal.
+A planning-and-approval workflow is one of the few interfaces where a bounded, state-aware tool
+surface is strictly better than both a screenshot agent and a static REST API.
+
+**2. How it creates a better user experience.** The person stops writing prompts and starts reading
+decisions. They state an outcome once; the plan, the parallel work, the failures, the repairs and
+the receipts all arrive as things to review rather than things to drive. Because the agent acts
+through named site tools, every action it takes is legible in the same UI the person is using — no
+hidden clicking, no "what did it just do". And the entire product works by hand: with no agent and
+no runner, every screen still functions, so the agent is an accelerator, never a dependency.
+
+**3. What people and agents can do together that was difficult or impossible before.** Build one
+library of working methods, together, that every agent can use and only a human can extend. Before
+this, a useful method you taught an agent died in that chat: not portable, not versioned, not
+verifiable, and re-taught from scratch in every other tool forever. In Cherry an agent can call
+`recommend_skills` for the task in front of it and receive the person's approved methods, pinned to
+the exact revision that person read and approved, with a SHA-256 it can verify itself. The agent
+can propose, retrieve, and execute; it cannot approve, promote trust, or activate memory, because
+no registered tool reaches those code paths. That asymmetry — agents contribute at machine speed,
+humans retain authority — is what was missing.
+
+**4. How WebMCP was implemented.** Registration goes through `document.modelContext.registerTool`,
+feature-detected, with an AbortController lifecycle so tools are registered and retired as the
+mission state machine advances. The aperture is deliberately bounded: seven always-on tools (six
+reads plus `introduce_agent`, which only labels the session) and at most five mutation tools for
+the current surface, so an agent never faces a wall of ambiguous options. Tool names are canonical
+with legacy aliases, and every mutation tool's description states what it does *not* do. `/studio/agent`
+is an in-page inspector showing the live aperture, the registration and retirement diff, and the
+real tool-call log. Coverage is unit tests against a mock model context plus a Playwright journey
+that installs a mock `modelContext` before page load and asserts the *registered closures* actually
+execute. In a browser with no WebMCP host the panel says so plainly and registers nothing.
+
 ## Inspiration
 
 Every agent we use is capable. Our tools, memory, and ways of working are not shared between
@@ -70,9 +111,12 @@ human path share one implementation.
 The inversion: most agent-ready sites let an agent operate them. Cherry's site upgrades the agent.
 `recommend_skills` returns the person's approved skills for the task at hand, and `get_skill`
 streams the install file in bounded parts with a full-file sha256, pinned to the approved
-revision. The same skills reach Codex through the stdio MCP bridge (validated in a live Codex CLI
-session) and Claude Code or Hermes-class agents through Agent Skills bundles (installed into a
-live Claude Code host).
+revision. The same skills reach a local agent host through the stdio MCP bridge — captured twice in
+live sessions, once in Codex CLI 0.152.1 (docs/release/CODEX_MCP_CAPTURE.md) and once on 3 Sep where
+a host recomputed the workspace integrity digest and a proof receipt and both matched
+(docs/release/LIVE_MCP_HOST_CAPTURE.md) — and any Agent Skills host through the exported bundle.
+Bundle compilation and hash verification are test-covered; we have captured transcripts only for the
+two MCP host sessions above, so the skills-bundle install row stays Shipped rather than Validated.
 
 ## How we built it
 
@@ -103,7 +147,7 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 612 unit tests, 135 runner and MCP bridge tests, and a 129-journey browser matrix including
+- 613 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
   browser-to-real-runner integration test, and a service-worker redeploy check, all green from a
   clean install.
@@ -139,5 +183,5 @@ mcp (stdio), node, playwright, vitest
 - **Safety story:** untrusted-by-default evidence, human-only approvals, exact-revision
   approvals, fail-closed runner policy, per-task sandboxes labelled honestly, recomputable proof.
 - **The inversion:** the site makes the visiting agent smarter. Library reads are global,
-  installs are hash-pinned to human approvals, and the same skills follow the person into Codex,
-  Claude Code, and Hermes-class agents through WebMCP, MCP, and Agent Skills.
+  installs are hash-pinned to human approvals, and the same skills follow the person into any
+  host that speaks WebMCP, MCP, or the Agent Skills bundle format.

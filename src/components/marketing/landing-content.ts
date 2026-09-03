@@ -1,11 +1,11 @@
 /**
  * Landing copy of record. Every string here is fixed by the God Mode directive
  * or derived from the claims matrix; tests pin it. Statuses use the public
- * vocabulary only (Validated, Shipped, Experimental, Roadmap, Available) and
+ * vocabulary only (Validated, Shipped, Experimental, Roadmap) and
  * "Connected" is never used because no live connector exists.
  */
 
-export type PublicStatus = 'Validated' | 'Shipped' | 'Experimental' | 'Roadmap' | 'Available';
+export type PublicStatus = 'Validated' | 'Shipped' | 'Experimental' | 'Roadmap';
 
 export const HERO = {
   eyebrow: 'Cherry / Open AI workforce',
@@ -129,9 +129,9 @@ export interface StatusRow {
 
 /** Capability layer rows. Statuses mirror /compatibility and the claims matrix. */
 export const CAPABILITY_ROWS: readonly StatusRow[] = [
-  { name: 'MCP bridge for Codex CLI and Claude Code', detail: 'Read and verify Cherry workspaces from a local agent host. Captured in a live Codex CLI session.', status: 'Validated' },
-  { name: 'WebMCP site tools', detail: 'Bounded page tools registered by state and surface, visible in Agent View. Mock-host tested; live ChatGPT capture pending.', status: 'Experimental' },
-  { name: 'Agent Skills bundles', detail: 'SKILL.md, AGENTS.md and CLAUDE.md with a standalone verifier. Installed into a live Claude Code host.', status: 'Validated' },
+  { name: 'MCP bridge for local agent hosts', detail: 'Read and verify Cherry workspaces from a local agent host. Captured in two live host sessions, including recomputed workspace and receipt hashes.', status: 'Validated' },
+  { name: 'WebMCP site tools', detail: 'Bounded page tools registered by state and surface, visible in Agent View. Mock-host tested; live in-browser host capture pending.', status: 'Experimental' },
+  { name: 'Agent Skills bundles', detail: 'SKILL.md, AGENTS.md and a standalone verifier that checks every file hash. Bundle build and verification are test-covered; live host discovery is self-reported.', status: 'Shipped' },
   { name: 'Terminal through the paired runner', detail: 'Allowlisted executables only, argument arrays, no shell, minimal environment, output caps.', status: 'Shipped' },
   { name: 'Browser computer', detail: 'A visible, permission-scoped browser worker with human takeover for sign-in.', status: 'Roadmap' },
   { name: 'Gmail, GitHub, LinkedIn and YouTube connectors', detail: 'Official APIs behind approval. No scraping, no shared logins.', status: 'Roadmap' },
@@ -144,7 +144,7 @@ export const COMPUTER_ROWS: readonly StatusRow[] = [
 ];
 
 export const MODEL_ROWS: readonly StatusRow[] = [
-  { name: 'Codex', detail: 'Builds inside a worktree with an explicit sandbox flag. Uses your Codex sign-in and available Codex usage.', status: 'Available' },
+  { name: 'Codex', detail: 'Builds inside a worktree with an explicit sandbox flag, using your own Codex sign-in. Captured: two workers in two worktrees with 34.5s of measured overlap.', status: 'Validated' },
   { name: 'Claude Code', detail: 'The integration is built. A real execution capture requires a Claude sign-in.', status: 'Experimental' },
   { name: 'Local models through Ollama', detail: 'Classification and extraction on this machine once tool use is validated.', status: 'Experimental' },
   { name: 'Kimi, Kilo and OpenAI-compatible endpoints', detail: 'Probed and labelled honestly before any work is assigned.', status: 'Roadmap' },
@@ -214,7 +214,6 @@ export const MISSION_DEMO_NODES: readonly MissionDemoNode[] = [
 export const STATUS_CLASS: Record<PublicStatus, string> = {
   Validated: 'sticker sticker-pass',
   Shipped: 'sticker sticker-cherry',
-  Available: 'sticker sticker-blue',
   Experimental: 'sticker sticker-wait',
   Roadmap: 'sticker',
 };

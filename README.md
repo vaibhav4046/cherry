@@ -75,14 +75,19 @@ npm run verify:all # gates + build + e2e + pack verification + submission audit
 Cherry's claims are meant to survive checking. Current gates on `main` (measured 2026-09-03 from a
 fresh clone):
 
-| Gate | Result |
-| --- | --- |
-| Unit | 604 passed, 2 opt-in skips |
-| Runner and MCP bridge | 131 passed |
-| End-to-end (Playwright, desktop plus Pixel 7) | 123 passed |
-| Bundle verification (`verify:pack`) | tamper-evident, evidence-complete |
-| Service worker verification (`verify:sw`) | 5 of 5 |
-| Submission audit | 0 failures, 0 warnings |
+| Gate | Command | Result |
+| --- | --- | --- |
+| Unit | `npm run test` | 613 passed, 2 opt-in skips |
+| Runner and MCP bridge | `npm run test:runner` | 135 passed |
+| End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | see `docs/release/e2e-results.json` |
+| Bundle verification | `npm run verify:pack` | tamper-evident, evidence-complete |
+| Service worker verification | `npm run verify:sw` | 5 of 5 |
+| Submission audit | `npm run audit:submission` | 0 failures, 0 warnings |
+
+Run them all with `npm run verify:all`. The end-to-end row deliberately points at the committed
+Playwright report rather than a number typed into prose: the report is the evidence, and
+`audit:submission` fails the build if that report records zero tests run, any unexpected failure,
+or more skips than passes.
 
 Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.
 Every compiled bundle ships its own standalone `scripts/verify.mjs` so a stranger can check it

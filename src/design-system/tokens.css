@@ -3,8 +3,10 @@
    surfaces that keep the product legible instead of decorative. */
 
 :root {
-  /* Apple palette — the blue is reserved for action and selection. */
-  /* Cherry Wine accent — the ONLY accent (see docs/codex-takeover/03_DESIGN_DIRECTIVE.md) */
+  /* Native checkboxes and radios are painted by the OS; without this they arrive
+     in default browser blue, which is the one colour this palette does not use. */
+  accent-color: #8c1d2f;
+  /* Cherry Wine accent — the ONLY accent. */
   --color-cherry-wine: #8c1d2f;
   --color-cherry-wine-deep: #731826;
   --color-cherry-tint: #f7ecee;
@@ -225,7 +227,19 @@ a { color: var(--color-link-blue); }
 
 .textarea { min-height: 96px; resize: vertical; font-family: var(--font-mono); font-size: 13px; }
 .input::placeholder, .textarea::placeholder { color: #cfa6b7; }
-.select { border-radius: var(--radius-pill); width: auto; }
+/* Without appearance:none the browser paints its own arrow and option list in OS
+   chrome, which lands as default blue next to a wine palette. The chevron is an
+   inline data: URI so no network request and no CSP exception is involved. */
+.select {
+  border-radius: var(--radius-pill);
+  width: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23474747' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
 
 label.field { display: flex; flex-direction: column; gap: var(--sp-2); }
 label.field > span:first-child { font-size: var(--text-caption); font-weight: 700; letter-spacing: var(--tracking-label); text-transform: uppercase; }

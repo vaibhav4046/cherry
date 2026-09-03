@@ -33,6 +33,11 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
   useEffect(() => {
     let cancelled = false;
     let probing = false;
+    // Set once the probe has established there is no runner to talk to. A visitor
+    // without a paired computer must not generate a failed loopback request every
+    // 15 seconds for as long as the tab is open; the page recovers on focus instead.
+    let stopPolling = false;
+    let timer = 0;
 
     if (!canStart || !policyAllows) {
       setLiveReady(false);
@@ -51,6 +56,7 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
         if (cancelled) return;
         if (!status.reachable || !status.paired) {
           setBlocker('runner');
+          stopPolling = true;
           return;
         }
 
@@ -82,21 +88,29 @@ export function LiveStartGate({ canStart, policyAllows, requiredCapabilitySets, 
         if (!cancelled) {
           setLiveReady(false);
           setBlocker('runner');
+          stopPolling = true;
         }
       } finally {
         probing = false;
+        if (stopPolling && timer !== 0) {
+          window.clearInterval(timer);
+          timer = 0;
+        }
       }
     }
 
+    // Focus and visibility changes are user actions, so they may re-probe even
+    // after the timer has stopped: someone can start a runner and come back.
     const refresh = () => {
+      stopPolling = false;
       void probe();
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') refresh();
     };
 
-    refresh();
-    const timer = window.setInterval(refresh, LIVE_READINESS_REFRESH_MS);
+    void probe();
+    timer = window.setInterval(() => { void probe(); }, LIVE_READINESS_REFRESH_MS);
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refreshWhenVisible);
 

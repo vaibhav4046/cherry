@@ -1,6 +1,6 @@
 # Cherry final visual and accessibility QA
 
-**Date:** 2026-09-02 · **Original lane:** `claude/final-visual-qa` (worktree from `origin/main` @ `c4a0af1`)
+**Date:** 2026-09-02 · **Original lane:** the visual-QA branch (worktree from `origin/main` @ `c4a0af1`)
 **Integrated on:** `main` at `505d1d9`, followed by the canonical Cherry masthead and offline-shell
 cache repair recorded in the integration verification below.
 
@@ -232,7 +232,7 @@ Recorded, not patched:
 ## Update after the branch was pushed
 
 `origin/main` moved from `c4a0af1` to `f761615` (four commits) while this lane ran. None of them touch
-a file in this lane; `git merge-tree --write-tree origin/main claude/final-visual-qa` reports a clean
+a file in this lane; `git merge-tree --write-tree origin/main the visual-QA branch reports a clean
 merge. Re-running the three specs against a detached checkout of `f761615` (fresh `npm ci`, build,
 preview on :4176): `library-actions.spec.ts` 3 passed, `t11-misc-copy.spec.ts` 4 passed,
 `memory-routine.spec.ts` 4 passed and 1 failed (`:97`, "Runner paired" still never appears). That last

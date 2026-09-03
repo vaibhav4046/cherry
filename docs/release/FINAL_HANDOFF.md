@@ -156,12 +156,12 @@ path.
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **612 passed**, 2 opt-in skips |
+| Unit | `npm run test` | **613 passed**, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | **135 passed**, 0 failed (now includes the Chronicle asset verifier's own test) |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
 | Submission audit | `npm run audit:submission` | **0 FAIL, 0 WARN** |
-| End to end (Playwright) | `npx playwright test` | **129 passed**, 0 failed, 0 flaky, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission |
+| End to end (Playwright) | `npx playwright test` | **130 collected**, 0 failed, 0 flaky (see docs/release/e2e-results.json for the run of record), desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission |
 | Clean install | `npm ci` | exit 0, 996 packages |
 | Dependency advisories | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 | Service worker behaviour | `npm run verify:sw` | 5/5 (icon fetch never poisons the shell, redeploy reaches returning visitors, offline serves the freshest shell) |
@@ -198,7 +198,7 @@ Everything a judge or a contributor can open and check for themselves.
 | Compatibility matrix | `docs/release/CHERRY_COMPATIBILITY_MATRIX.md` and the live `/compatibility` page | Every surface labelled Validated / Shipped / Experimental / Roadmap with the test behind the label |
 | WebMCP changelog | `docs/release/WEBMCP_CHANGELOG.md` | Tool aperture history and the register/unregister contract |
 | Uncut recording | `public/media/demo/golden-loop.webm` | The real loop, on the site, at `/showcase` |
-| Playwright report | `docs/release/e2e-results.json` | The JSON report from the 123-journey run on the signed commit |
+| Playwright report | `docs/release/e2e-results.json` | The JSON report from the committed Playwright run on the signed commit |
 | Real Codex mission capture | `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` | codex-cli 0.152.1 running two mission nodes in two worktrees with measured overlap, verified by the runner's own `node --test` |
 | Screenshots | `docs/release/screenshots/` | 81 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
 | Landing capture for README | `docs/media/cherry-landing.png` | The shipped landing, 2880x1800, recaptured 2026-09-03 from the deployed build |
@@ -304,7 +304,7 @@ changes.
 | **GitHub push** | **Resolved.** `origin/main` carries `deb6c0c` and the documentation commits after it; verified public. | Nothing. |
 | W2 six-chapter landing (Sol) | Pending on `codex/superman-orchard`. | Rebase onto `main`, pass the same clean-clone gates, land by 14:00 London or stay out. |
 | T20 launch kit, T23 landing self-demo | Not started. | Both are post-submission polish. |
-| Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by Claude Cowork. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch `claude/takeover` can be deleted after the hackathon. |
+| Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by the release manager. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch the takeover branch can be deleted after the hackathon. |
 | `.gitattributes` line-ending normalisation | Deferred. | Nine tracked files carry CRLF; normalising them mid-flight would have conflicted with the takeover branch. Add `* text=auto eol=lf` after submission and renormalise in one commit, keeping the hash-verified example archives byte-identical. |
 | T24 tribunal | One round of three personas ran on 2026-09-03; see section 2. | A second round after the fixes, and the two missing personas, are post-submission work. |
 | Live WebMCP host capture | Not captured yet; the owner records it Thursday morning (Part A above). | Open the live site in the ChatGPT desktop app's built-in browser (or Chrome 149+ with the WebMCP testing flag), record the site tools and one mission driven through them, send the recording before the freeze. Until then the compatibility page labels the surface Experimental, which is the correct state, not a gap to paper over. |

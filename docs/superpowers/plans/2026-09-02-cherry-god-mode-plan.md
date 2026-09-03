@@ -1,6 +1,6 @@
 # Cherry God Mode implementation plan
 
-Branch `claude/god-mode-v2`, worktree `D:\project\cherry-god-mode-v2`. Every task: RED (write the
+Branch the god-mode branch, worktree `D:\project\cherry-god-mode-v2`. Every task: RED (write the
 failing test), FIX (minimum code), PROVE (focused test green, then `npm run gates && npm run build`),
 REGRESS (the test stays). Commit boundaries are the ticket commits named in the directive.
 

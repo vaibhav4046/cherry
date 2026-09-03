@@ -58,7 +58,10 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
   else fail(`${relPath} is missing or empty`);
 }
 
-// 5. e2e-results.json parses
+// 5. e2e-results.json records a run that actually happened and actually passed.
+//    Parsing alone is not evidence: a report where every test was skipped parses
+//    perfectly and proves nothing, which is precisely how an all-skipped run was
+//    once cited as a passing suite.
 {
   const text = readText('docs/release/e2e-results.json');
   if (text === null) fail('docs/release/e2e-results.json is missing');
@@ -66,7 +69,21 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
     try {
       const parsed = JSON.parse(text);
       const stats = parsed?.stats ?? {};
-      pass(`docs/release/e2e-results.json parses (expected: ${stats.expected ?? '?'}, unexpected: ${stats.unexpected ?? '?'})`);
+      const expected = Number(stats.expected ?? 0);
+      const unexpected = Number(stats.unexpected ?? 0);
+      const skipped = Number(stats.skipped ?? 0);
+      const flaky = Number(stats.flaky ?? 0);
+      const summary = `expected: ${expected}, unexpected: ${unexpected}, skipped: ${skipped}, flaky: ${flaky}`;
+
+      if (expected === 0) {
+        fail(`docs/release/e2e-results.json records no tests that ran (${summary}) — it is not evidence of a passing suite`);
+      } else if (unexpected > 0) {
+        fail(`docs/release/e2e-results.json records ${unexpected} failing test(s) (${summary})`);
+      } else if (skipped > expected) {
+        fail(`docs/release/e2e-results.json skipped more tests than it ran (${summary})`);
+      } else {
+        pass(`docs/release/e2e-results.json records a real passing run (${summary})`);
+      }
     } catch {
       fail('docs/release/e2e-results.json is not valid JSON');
     }
