@@ -1,27 +1,29 @@
 <p align="center">
-  <img src="docs/media/cherry-landing.png" alt="Cherry landing page, captured the morning of 2026-09-02 before the Mission Control landing" width="820">
+  <img src="docs/media/cherry-landing.png" alt="Cherry landing page: one task, an entire AI team, with the recorded real Codex run playing beside it" width="820">
 </p>
 
 # Cherry 🍒
 
-**Teach once. Cherry remembers. Every agent gets better.**
+**One task. An entire AI team. Human authority intact.**
 
-You learn your craft from creators: a YouTube lesson, an article, a post. Your agents cannot. Every
-workflow you teach an AI dies in a chat transcript, unusable in the next session and the next tool.
-
-Cherry is the layer underneath. Give it a source you are allowed to learn from. It drafts the method
-from timestamped evidence, waits for your approval on an exact revision, verifies the result with
-checks that can genuinely fail, seals it with a receipt anyone can recompute, and then serves the
-finished skill to the agents you already pay for.
+Give Cherry an outcome. It turns that outcome into a bounded plan: tasks with dependencies, a
+definition of done and a real check on each one, and a decision only you can make before anything
+public happens. On a paired computer the agents you already pay for do the work, each in its own
+isolated workspace, and nothing counts as done because an agent said so: either Cherry's own checks
+pass or a person decides.
 
 **Cherry makes no model API calls of its own and never asks for an API key.** Reasoning comes from
 the agent hosts you already pay for; transcription, when you choose it, runs on your device. Cherry
-brings the memory, the approval gates, and the proof.
+brings the plan, the isolation, the checks, the approval gates and the proof.
+
+The second half of the product is the memory. Give Cherry a source you are allowed to learn from and
+it drafts the method from timestamped evidence, waits for your approval on an exact revision,
+verifies the result with checks that can genuinely fail, seals it with a receipt anyone can
+recompute, and then serves the finished skill back to every agent you use.
 
 - **Live:** https://cherry-wine.vercel.app
-- **Judge route:** https://cherry-wine.vercel.app/showcase
-- **Watch a real run:** the uncut recording of the automated end-to-end test driving the product,
-  linked from the showcase page. Nothing staged.
+- **Judge route:** https://cherry-wine.vercel.app/showcase, a recorded real Codex run with two agents
+  working at once in separate worktrees, replayed from evidence checked against its fingerprint
 - **What is actually proven:** https://cherry-wine.vercel.app/compatibility
 
 Built for the **OpenAI WebMCP Challenge 2026**. MIT licensed. Free and open source, with no paid
@@ -31,7 +33,7 @@ tier, no account required, and no telemetry.
 
 Most agent-ready sites let an agent operate them. **Cherry's site upgrades the agent.**
 
-Three always-on WebMCP read tools serve your library to any agent that visits:
+Seven tools are registered on every page. Three of them serve your library to any agent that visits:
 
 | Tool | What it does |
 | --- | --- |

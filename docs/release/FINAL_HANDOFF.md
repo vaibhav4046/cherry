@@ -201,7 +201,7 @@ Everything a judge or a contributor can open and check for themselves.
 | Playwright report | `docs/release/e2e-results.json` | The JSON report from the 123-journey run on the signed commit |
 | Real Codex mission capture | `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` | codex-cli 0.152.1 running two mission nodes in two worktrees with measured overlap, verified by the runner's own `node --test` |
 | Screenshots | `docs/release/screenshots/` | 81 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
-| Landing capture for README | `docs/media/cherry-landing.png` | Light Cherry Wine landing, 2880x1800, captured the morning of 2026-09-02, before the Mission Control landing |
+| Landing capture for README | `docs/media/cherry-landing.png` | The shipped landing, 2880x1800, recaptured 2026-09-03 from the deployed build |
 | Sample bundle | `docs/release/sample-bundle.zip` and `.meta.json` | A compiled Agent Skills bundle with its standalone verify script |
 | Coordination log | `docs/codex-takeover/STATUS.md` | Append-only two-agent build record: every ticket, every gate run, every bounce |
 | Guardrails | `docs/codex-takeover/05_GUARDRAILS.md` | The hard lines this project refused to cross, and why |
