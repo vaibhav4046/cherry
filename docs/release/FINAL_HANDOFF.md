@@ -2,7 +2,7 @@
 
 **Assembled:** 2026-09-02, London morning cycle; **amended** 2026-09-02 afternoon after the Creators engine and the judge card shipped; **amended again** 2026-09-03 at 02:00 London after God Mode v2 and the Winner OS lanes went live
 **Assembled by:** Claude (release manager lane)
-**Signed against commit:** `deb6c0c` (night amendment; earlier signatures were `b6b7d11` and `e81dbc3`)
+**Signed against commit:** `48f82e7` (night amendment after the tribunal; earlier signatures were `b6b7d11`, `e81dbc3` and `deb6c0c`)
 **Rule this document follows:** nothing is claimed here that a commit, a gate log, a captured
 session, or a live HTTP response does not show. Where work was not finished, it says so and says
 what finishing it would take.
@@ -63,7 +63,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 
 | Ticket | What it was | Status | Commit | Evidence |
 |---|---|---|---|---|
-| T24 | Five-persona judge tribunal to two perfect rounds | **NOT RUN** | none | No tribunal sessions were run and no `TRIBUNAL_LOG.md` exists. The honest consequence is stated in section 2. |
+| T24 | Five-persona judge tribunal to two perfect rounds | **PARTIAL** (three personas, one round, 2026-09-03) | `6efe318`, `e1ebfdf`, `87ec293`, `48f82e7` | Three independent reviewer sessions (WebMCP judge, first-time user and product judge, claims auditor) reviewed the production build read-only; 30 findings were fixed test-first the same night and re-verified from a fresh clone, the rest are listed as deferred with reasons. `docs/release/TRIBUNAL_LOG.md` holds the scores and the ledger. Two personas and the second round did not run. |
 | T25 | This document | DONE | `b6b7d11`, amended `e81dbc3` | You are reading it. |
 
 ### Takeover (13_CLAUDE_TAKEOVER.md, afternoon)
@@ -90,10 +90,17 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 
 ## 2. Final tribunal scorecard
 
-**The tribunal did not run.** There is no scorecard, and inventing one would break the single rule
-this project has held to since the first day: no claim beyond what happened.
+**A three-persona tribunal ran once, on 2026-09-03 between 02:15 and 04:00 London**, against
+the production build: a WebMCP judge with a mock host, a first-time user and product judge with 62
+screenshots at two widths, and a claims auditor over every public page and release document. Their
+scores before the fixes were WebMCP use 7, human-agent experience 5, usefulness 5, originality 7,
+execution 4 (out of 10), and the claims auditor filed 18 findings, four of them blockers. Thirty
+findings were fixed test-first that night and verified from a fresh clone (`docs/release/TRIBUNAL_LOG.md`
+lists each with its commit); the deferred ones are listed there with the reason. The scores were
+not re-issued after the fixes, so no post-fix number is claimed. The five-persona, two-round
+tournament the ticket asked for did not run.
 
-What exists in place of it, and what it is worth:
+What existed before it, and what it is worth:
 
 - **T11 inspection sweep (2026-09-01):** 27 routes at 3 widths each, 81 combinations, every result
   logged individually in `docs/codex-takeover/STATUS.md`. This is a real, complete UI audit by one
@@ -151,7 +158,7 @@ returns 200 anonymously, which is only possible on a public repository, and `REA
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **585 passed**, 2 opt-in skips |
+| Unit | `npm run test` | **604 passed**, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | **131 passed**, 0 failed |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
@@ -203,9 +210,11 @@ Everything a judge or a contributor can open and check for themselves.
 | Starter issues | `docs/GOOD_FIRST_ISSUES.md` | 10 scoped issues for contributors |
 | Contribution guide | `CONTRIBUTING.md` | Gates, lanes, claim discipline, four worked extension outlines |
 
-**Not in the index because they were never produced:** `PROOF_LOG.md`, `BREAKER_LOG.md`,
-`TRIBUNAL_LOG.md`. Sections 1 and 2 say what stands in for each. `TECHNICAL_REPORT.md` was
-added in the afternoon amendment.
+| Tribunal log | `docs/release/TRIBUNAL_LOG.md` | The 2026-09-03 three-persona review: scores, every finding with its fix commit, and what was deferred |
+
+**Not in the index because they were never produced:** `PROOF_LOG.md`, `BREAKER_LOG.md`.
+Sections 1 and 2 say what stands in for each. `TECHNICAL_REPORT.md` was added in the afternoon
+amendment and `TRIBUNAL_LOG.md` in the night amendment.
 
 ---
 
@@ -299,7 +308,7 @@ changes.
 | T20 launch kit, T23 landing self-demo | Not started. | Both are post-submission polish. |
 | Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by Claude Cowork. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch `claude/takeover` can be deleted after the hackathon. |
 | `.gitattributes` line-ending normalisation | Deferred. | Nine tracked files carry CRLF; normalising them mid-flight would have conflicted with the takeover branch. Add `* text=auto eol=lf` after submission and renormalise in one commit, keeping the hash-verified example archives byte-identical. |
-| T24 tribunal | Not run. | Section 2 is the honest replacement. |
+| T24 tribunal | One round of three personas ran on 2026-09-03; see section 2. | A second round after the fixes, and the two missing personas, are post-submission work. |
 | Live WebMCP host capture | Not captured yet; the owner records it Thursday morning (Part A above). | Open the live site in the ChatGPT desktop app's built-in browser (or Chrome 149+ with the WebMCP testing flag), record the site tools and one mission driven through them, send the recording before the freeze. Until then the compatibility page labels the surface Experimental, which is the correct state, not a gap to paper over. |
 | Secret rotation | Pending. | The Privy app secret and the Vercel token were shared in a chat during the build. The Privy app secret was never used and is not in the repo or the client bundle; the Vercel token was used only to set `VITE_PRIVY_APP_ID` and to deploy. **Rotate both after the hackathon**, in the Privy dashboard and in Vercel account settings. |
 
