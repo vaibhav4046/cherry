@@ -55,3 +55,9 @@ Cherry turns a human outcome into a supervised, local-first AI workforce mission
 - 2026-09-02 19:30:44 +01:00 | Ruling: the master directive's named parallel waves override the generic sequential-implementer preference — W1/W2/W3/W4 own disjoint files and every lane has its own worktree; W5/W7 are read-only by default — cost if wrong: integration conflicts or duplicated review work, contained to lane branches.
 - 2026-09-02 19:30:44 +01:00 | Ruling: W5 may edit runtime only after a new failing regression reproduces a release-blocking judge-flow defect, then must use the smallest test-first fix — cost if wrong: a real but non-journey defect may remain documented rather than fixed before this release candidate.
 - 2026-09-02 19:30:44 +01:00 | Ruling: W7 receives a branch/worktree for isolation but should produce no product commit unless the conductor later assigns a narrowly owned report path — cost if wrong: its report may remain in the task recovery workspace rather than repository history.
+
+## Release manager note (2026-09-03 01:50 London)
+
+- W1 (fb3d13e), W3 (7f00e16) and W4 (7ced434) are integrated on `main` as of `deb6c0c` and live at https://cherry-wine.vercel.app (deploy dpl_7Z86R4JH3stQ7QnopYp6wonmx4mv). Rebase `codex/superman-orchard` and any W2 work onto `main` before offering it.
+- Two integration defects were fixed on `main`, not in the lane branches: the W4 live-start gate never rendered for a real runner (verify nodes carry the runner-native `verification` capability; the gate now considers agent nodes only), and the W3 replay digest was pinned from CRLF text (hashing now normalises line endings). Do not re-pin either from a Windows checkout.
+- W2 cutoff: 14:00 London. After that the tree is frozen for the video and the Devpost form; nothing merges without the release manager.
