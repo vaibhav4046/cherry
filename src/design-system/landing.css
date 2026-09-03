@@ -716,7 +716,7 @@
   }
 
   .landing-trust-line { font-size: 9px; }
-  .landing-recording-label { margin-bottom: 5px; font-size: 8px; }
+  .landing-recording-label { margin-bottom: 5px; font-size: 10px; }
 
   .chronicle-landing .recorded-mission {
     padding: 10px;
@@ -727,7 +727,7 @@
     align-items: center;
   }
 
-  .chronicle-landing .recorded-mission__heading .showcase-kicker { font-size: 8px; }
+  .chronicle-landing .recorded-mission__heading .showcase-kicker { font-size: 10px; }
 
   .chronicle-landing .recorded-mission__heading h2 {
     max-width: 15ch;
@@ -736,7 +736,7 @@
 
   .chronicle-landing .recorded-mission__seal {
     padding: 5px 6px;
-    font-size: 7px;
+    font-size: 10px;
   }
 
   .chronicle-landing .recorded-mission__stage {
@@ -770,7 +770,7 @@
   }
 
   .chronicle-landing .recorded-mission__progress li span {
-    font-size: 7px;
+    font-size: 10px;
     line-height: 1.2;
   }
 
@@ -784,7 +784,7 @@
   .chronicle-landing .recorded-mission__controls button {
     min-height: 30px;
     padding: 4px 2px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .chronicle-landing .recorded-mission__controls button:last-child { margin: 0; }

@@ -141,7 +141,7 @@ describe('winner landing', () => {
 
     expect(container.querySelectorAll('[data-landing-chapter]')).toHaveLength(6);
     expect(cabinet.textContent).toContain('Every card names only what its artifact proves.');
-    expect(cabinet.textContent).not.toMatch(/AAA|Sora|Sol|Terra|Luna|live ChatGPT/i);
+    expect(container.textContent).not.toMatch(/AAA|Sora|live ChatGPT|works in ChatGPT|runs inside ChatGPT|(?:Sol|Terra|Luna) (?:executes|runs)/i);
   });
 
   it('reuses recorded overlap, worktree and verification facts as live HTML', async () => {

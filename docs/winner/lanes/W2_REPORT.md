@@ -153,3 +153,15 @@ The first neutral-state implementation exposed four lower `role="status"` region
 - `npm.cmd run gates` passed with typecheck and lint clean, Vitest **61 passed / 1 skipped files; 572 passed / 2 skipped tests**, and runner/MCP **131/131 passed**.
 
 Fix-round tracked changes are limited to the approved W2 paths: `src/pages/Landing.tsx`, `src/components/marketing/ChronicleLanding.tsx`, `src/design-system/landing.css`, `tests/cherry/landing-winner.test.tsx`, and this append-only report. No W1/W3 asset, replay, trust-anchor, runtime, package-manifest, deployment, or release-source file changed.
+
+## Rebase integration correction
+
+W2 was rebased onto verified `origin/main` `35f8d33094f322f080c2eae0b778a603cef27fa4` by replaying only its two landing commits. The protected Showcase, Mission Control, and judge-journey files remained byte-identical to main. Main's paired-runner gate, 120-second probe age, LF-normalized replay hashing, and pinned replay SHA-256 `bd68e563073fc63eb06902ae2747395ec447852f52b825c17b2bac8b5ec1ea23` were preserved.
+
+The first full post-rebase gate passed typecheck, lint, **588 unit tests with 2 skipped**, **131 runner/MCP tests**, and build, then exposed deterministic browser regressions in older journeys that still selected the removed `Open Studio`, teammate rail, guided-example, and eleven-chapter landing controls. The gate was stopped after those failures were established. The compatibility journeys now enter through Mission Control and the real Studio navigation, while the Landing contract tests assert the six evidence-led chapters, four bounded proof cards, paused replay, final Mission Control action, and the current accessibility behavior.
+
+Hostile review also measured 7 to 8 px proof labels at 390 px. A browser regression was observed RED at a minimum of 7 px; the mobile W2 CSS now keeps those proof labels and controls at least 10 px, and the regression is GREEN. The expanded claim guards reject unsupported AAA, Sora, live or working-in-ChatGPT, and named-model execution language across the complete Landing surface.
+
+Fresh targeted integration verification passed **31/31 Playwright tests in 3.4 minutes** across `demo-recording-ui`, the opt-in recording journey, final Landing, first skill, golden manual, Landing God Mode, and upgrade. This includes the real Three.js OBJ/MTL export and the persisted golden journey. Generated `docs/release/e2e-results.json` and `tsconfig.tsbuildinfo` were restored and are not part of the change.
+
+The integration correction touches only this report plus `e2e/cherry/demo-recording-ui.spec.ts`, `e2e/cherry/demo-recording.spec.ts`, `e2e/cherry/final-winner-landing.spec.ts`, `e2e/cherry/first-skill.spec.ts`, `e2e/cherry/golden-manual.spec.ts`, `e2e/cherry/landing-god-mode.spec.ts`, `e2e/cherry/upgrade.spec.ts`, `src/design-system/landing.css`, and `tests/cherry/landing-winner.test.tsx`. It changes no runtime, dependency, package manifest, lockfile, protected W3/W4 surface, release-authority file, merge target, or deployment configuration.
