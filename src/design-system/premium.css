@@ -1,0 +1,149 @@
+/* Premium pass — loaded last so it refines the shipped system rather than
+   forking it.
+
+   Every value here was taken from measurements of shipped premium product
+   surfaces (hairlines instead of elevation, colour-only state, a fixed row
+   height, a much smaller in-app type scale than the marketing scale), then
+   translated into this brand's warm cream-and-wine palette. Patterns only:
+   nothing is copied from another product, and the dark-neon idioms that came
+   with those measurements - negative tracking on display serif, line-height
+   1.0, neon glow layers, overlay-blend grain - are deliberately excluded
+   because they damage a warm editorial brand. */
+
+:root {
+  /* One hairline, warm rather than neutral: a grey rule reads dirty on cream. */
+  --hairline: 1px solid rgba(46, 20, 24, 0.12);
+  --hairline-strong: 1px solid rgba(46, 20, 24, 0.20);
+
+  /* Three warm surfaces, each a couple of percent apart. Depth comes from this
+     ladder plus the hairline, which is what lets the shadows go away. */
+  --surface-page: #faf8f5;
+  --surface-panel: #f4f1ec;
+  --surface-raised: #ebe6df;
+
+  /* One ambient shadow, reserved for things that genuinely float above the
+     page (menus, dialogs). Cards must not use it. */
+  --lift: 0 2px 24px rgba(60, 40, 40, 0.10);
+
+  /* Interaction timing. Nothing interactive is slower than 200ms. */
+  --dur-fast: 120ms;
+  --dur: 160ms;
+  --ease-ui: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* In-app type scale. Deliberately about a third of the marketing display
+     scale: the same brand should not shout inside its own tool. */
+  --app-h1: 22px;
+  --app-h1-lh: 30px;
+  --app-h2: 20px;
+  --app-h2-lh: 28px;
+  --app-ui: 14px;
+  --app-ui-lh: 20px;
+  --app-prose: 16px;
+  --app-prose-lh: 28px;
+
+  /* Metadata: IDs, timestamps, counts, statuses. */
+  --app-meta: 13px;
+  --app-meta-lh: 18px;
+}
+
+/* ---- Studio shell ------------------------------------------------------- */
+
+/* The rail carried a third accent (copper) alongside wine and the blue action.
+   One accent, used sparingly, is the most reliable premium signal there is. */
+.studio-rail {
+  --shell-accent: var(--color-accent);
+}
+
+/* Fixed row height plus tight padding is what makes a dense list read calm.
+   State is carried by colour alone - never by weight, which makes rows jump. */
+.studio-rail .rail-link {
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: var(--app-ui);
+  line-height: var(--app-ui-lh);
+  font-weight: 400;
+  letter-spacing: 0;
+  transition: background-color var(--dur-fast) var(--ease-ui), color var(--dur-fast) var(--ease-ui);
+}
+
+.rail-group { gap: 4px; }
+
+/* ---- Elevation: hairlines, not shadows ---------------------------------- */
+
+/* Cards are filled like the panel behind them and exist by their border. A card
+   that needs a shadow to be visible is a card with no structural reason to be
+   there. Scoped to the studio so the marketing pages keep their own treatment. */
+.studio-main .card,
+.studio-main .studio-card {
+  box-shadow: none;
+  border: var(--hairline);
+  border-radius: 6px;
+}
+
+/* ---- In-app type scale -------------------------------------------------- */
+
+/* The studio was rendering its page titles in the marketing display scale
+   (.display-sm, ~35px). A product should not shout inside its own tool: the
+   premium products measured for this pass run an in-app h1 at roughly a third
+   of their marketing h1. */
+.studio-main h1,
+.studio-main .display-sm,
+.studio-main .display-xs {
+  font-size: var(--app-h1);
+  line-height: var(--app-h1-lh);
+  letter-spacing: -0.01em;
+}
+
+.studio-main h2 {
+  font-size: var(--app-h2);
+  line-height: var(--app-h2-lh);
+}
+
+/* .subhead is used in the studio as a page description, not as a heading. At
+   20px under a 22px title there was no hierarchy at all - two sizes 2px apart
+   read as one undifferentiated block. Descriptions belong at prose size. */
+.studio-main > .subhead,
+.studio-main > * > .subhead {
+  font-size: var(--app-prose);
+  line-height: var(--app-prose-lh);
+  max-width: 68ch;
+}
+
+.studio-main p {
+  font-size: var(--app-prose);
+  line-height: var(--app-prose-lh);
+}
+
+/* Metadata is demoted by colour and size, not by a badge around it. */
+.studio-main .label,
+.studio-main .studio-card-sub {
+  font-size: var(--app-meta);
+  line-height: var(--app-meta-lh);
+}
+
+/* ---- Controls ----------------------------------------------------------- */
+
+/* Every interactive control gets a visible pressed state. The shipped :active
+   rule sat before :hover, so during a press :hover always won and nothing moved. */
+.btn:active,
+.landing-primary-action:active,
+.landing-secondary-action:active {
+  transform: translateY(0);
+}
+
+/* The phone navigation was set in 11px uppercase with label tracking, which is
+   the densest, least legible treatment available and the only navigation a
+   phone user gets. Sentence case at 12px is both easier to read and quieter. */
+.bottom-nav a {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-rail .rail-link,
+  .btn {
+    transition: none;
+  }
+}

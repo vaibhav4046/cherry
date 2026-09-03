@@ -33,22 +33,40 @@ export function Ribbon({ color = 'var(--color-cherry-pop)', className = 'ribbon-
   );
 }
 
-/** Small decorative sticker shape cluster for empty states. */
+/**
+ * Empty-state mark: the three artefacts a skill is made of, stacked as pages —
+ * a source, the method derived from it, and the sealed receipt over both.
+ *
+ * Drawn as the product's own objects rather than as mascots. The previous
+ * version used a yellow sticker, a green tick and a text star glyph outlined in
+ * 2-3px black, which is off-palette for a wine brand, renders differently
+ * depending on which font supplies the glyph, and reads as clip-art. Hairlines
+ * and wine tints only: no black, no third hue, no rotation.
+ */
 export function StickerCluster() {
   return (
     <svg width="180" height="90" viewBox="0 0 180 90" aria-hidden="true" focusable="false">
-      <g transform="rotate(-8 40 45)">
-        <rect x="10" y="20" width="56" height="44" rx="14" fill="var(--color-sunburst)" stroke="#000" strokeWidth="2" />
-        <text x="38" y="48" textAnchor="middle" fontFamily="var(--font-ui)" fontWeight="700" fontSize="20">★</text>
-      </g>
-      <g transform="rotate(6 110 40)">
-        <circle cx="110" cy="40" r="24" fill="var(--color-cherry-pop)" stroke="#000" strokeWidth="2" />
-        <path d="M110 24 c-3 -8 4 -12 8 -14" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-      </g>
-      <g transform="rotate(-4 158 58)">
-        <rect x="140" y="40" width="36" height="36" rx="12" fill="var(--color-mint-pop)" stroke="#000" strokeWidth="2" />
-        <path d="M148 58 l6 7 12 -14" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
+      {/* Back page: the source. */}
+      <rect
+        x="14.5" y="18.5" width="72" height="54" rx="5"
+        fill="var(--color-cherry-tint)" stroke="var(--color-accent)" strokeOpacity="0.35" strokeWidth="1"
+      />
+      <path d="M28 34h44M28 44h44M28 54h28" stroke="var(--color-accent)" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Middle page: the derived method, offset so the stack reads as depth. */}
+      <rect
+        x="52.5" y="26.5" width="72" height="54" rx="5"
+        fill="var(--color-frost, #fff)" stroke="var(--color-accent)" strokeOpacity="0.45" strokeWidth="1"
+      />
+      <path d="M66 42h44M66 52h44M66 62h30" stroke="var(--color-accent)" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* The seal: a human approval sitting over the method it approved. */}
+      <circle cx="139" cy="52" r="19" fill="var(--color-accent)" />
+      <path
+        d="M131 52.5l5.5 5.5L148 46.5"
+        fill="none" stroke="var(--color-cherry-tint)" strokeWidth="2.4"
+        strokeLinecap="round" strokeLinejoin="round"
+      />
     </svg>
   );
 }

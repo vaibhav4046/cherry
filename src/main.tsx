@@ -8,6 +8,9 @@ import './design-system/showcase.css';
 import './design-system/contract.css';
 import './design-system/apple.css';
 import './design-system/landing.css';
+// Loaded last: refines the shipped system (hairlines over elevation, one
+// accent, a smaller in-app type scale) without forking it.
+import './design-system/premium.css';
 import { App } from './app/App.tsx';
 import { AppStateProvider } from './app/AppState.tsx';
 import { AuthBoundary } from './cherry/auth/auth-boundary.tsx';
