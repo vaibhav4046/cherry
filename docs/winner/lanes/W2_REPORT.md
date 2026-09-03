@@ -186,3 +186,11 @@ After the fixes:
 - The append-only integration ledger records the exact W0 correction scope. No production runtime, W3/W4 surface, dependency, merge target, or deployment ownership was transferred.
 
 The Showcase cross-route fragment-scroll defect remains outside W2's lock in protected W3/release-authority code. W2 does not change or conceal it; W7 reports it as an integration blocker with exact sources and targets.
+
+## Final review correction
+
+The final implementation review fault-injected loading, network failure, and a self-consistent but independently untrusted replay. The hero withheld the replay correctly, but the first evidence-cabinet card still published `Real Codex team run`, two-task/worktree facts, and `RECORDED` plus `VERIFIED`. The regression first failed **3/11** in each of those non-ready states. `VerifiedDemoCabinet` now receives the same `ReplayState` as every other evidence surface. Only `ready` publishes the recorded mission's factual card. Loading and failure render neutral evidence wording with `CHECKING` or `UNAVAILABLE`, and withhold the replay-derived title, description, `RECORDED`, and `VERIFIED`. Focused Landing tests then passed **14/14**, and focused ESLint passed.
+
+The first full `verify:all` attempt passed typecheck, lint, **588 unit tests with 2 skipped**, **131/131 runner tests**, and the production build. Its browser phase passed **127/129**. One failure was environmental: an already-running manual preview caused Playwright to reuse a build that lacked its configured Privy test identifier. Stopping that preview removed the conflicting server; no product change was made for that result. The other failure was a real W2 visual-contract defect: the Chronicle wrapper gave all Landing focus rings the blue proof token instead of the repository's wine accent. The existing final visual QA supplied the RED evidence. The wrapper now uses `--color-accent`, and the focused keyboard regression asserts the settled computed value `rgb(140, 29, 47)`; it passed **1/1 in 3.0 seconds** together with the existing reduced-motion, 10 px proof-text, overflow, and Axe checks.
+
+The authoritative full gate must run again from a clean exact tip with no pre-existing preview. Its final counts belong in the append-only STATUS handoff after the branch push.

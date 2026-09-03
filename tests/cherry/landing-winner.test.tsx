@@ -50,6 +50,14 @@ function expectReplayEvidenceWithheld(container: HTMLElement, stateLabel: string
   expect(branch.textContent).not.toMatch(/Measured overlap|34,513|2 workers ran at once/i);
   expect(glasshouse.textContent).not.toMatch(/codex-cli|worktree-process|18774c71|Recorded worker|Isolated worktree/i);
   expect(harvest.textContent).not.toMatch(/✓|passed|verified|node --test/i);
+
+  const cabinet = screen.getByTestId('proof-cabinet');
+  const codexRun = cabinet.querySelector<HTMLElement>('a[href="/showcase#recorded-mission"]');
+  expect(codexRun).toBeTruthy();
+  expect(codexRun!.textContent).not.toMatch(/Real Codex team run|two Codex tasks|separate worktrees/i);
+  expect(within(codexRun!).queryByText('RECORDED')).toBeNull();
+  expect(within(codexRun!).queryByText('VERIFIED')).toBeNull();
+  expect(codexRun!.textContent).toMatch(/mission claims/i);
 }
 
 describe('winner landing', () => {

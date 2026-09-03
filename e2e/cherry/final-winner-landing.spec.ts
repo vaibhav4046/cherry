@@ -121,6 +121,10 @@ test('mobile keyboard, reduced motion, and accessibility remain usable', async (
   await expect(player.locator('.recorded-mission__counter')).toHaveText(/Step 2 of \d+/);
   const outlineStyle = await next.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(outlineStyle).not.toBe('none');
+  await expect.poll(
+    () => next.evaluate((element) => getComputedStyle(element).outlineColor),
+    { timeout: 1_000 },
+  ).toBe('rgb(140, 29, 47)');
   const proofText = page.locator([
     '.landing-eyebrow',
     '.landing-trust-line',

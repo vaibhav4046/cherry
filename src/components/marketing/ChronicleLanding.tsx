@@ -299,7 +299,7 @@ const VERIFIED_DEMOS = [
   },
 ] as const;
 
-export function VerifiedDemoCabinet() {
+export function VerifiedDemoCabinet({ replay }: { replay: ReplayState }) {
   return (
     <section className="landing-proof-cabinet" data-testid="proof-cabinet" aria-labelledby="proof-cabinet-heading">
       <header className="landing-proof-cabinet__heading">
@@ -308,18 +308,31 @@ export function VerifiedDemoCabinet() {
         <p>Every card names only what its artifact proves.</p>
       </header>
       <div className="landing-proof-cabinet__grid">
-        {VERIFIED_DEMOS.map((demo, index) => (
-          <a key={demo.href} href={demo.href} data-verified-demo>
-            <span className="landing-proof-cabinet__index" aria-hidden="true">0{index + 1}</span>
-            <span className="landing-proof-cabinet__labels">
-              {demo.labels.map((label) => <span key={label}>{label}</span>)}
-            </span>
-            <h3>{demo.title}</h3>
-            <p>{demo.description}</p>
-            {'note' in demo ? <small>{demo.note}</small> : null}
-            <strong>Open evidence</strong>
-          </a>
-        ))}
+        {VERIFIED_DEMOS.map((demo, index) => {
+          const replayPending = index === 0 && replay.status !== 'ready';
+          const presentedDemo = replayPending
+            ? {
+                ...demo,
+                title: 'Recorded mission evidence',
+                description: replay.status === 'loading'
+                  ? 'Checking the committed replay before showing mission claims.'
+                  : 'Mission claims are withheld because this view could not verify the committed replay.',
+                labels: [replay.status === 'loading' ? 'CHECKING' : 'UNAVAILABLE'],
+              }
+            : demo;
+          return (
+            <a key={presentedDemo.href} href={presentedDemo.href} data-verified-demo>
+              <span className="landing-proof-cabinet__index" aria-hidden="true">0{index + 1}</span>
+              <span className="landing-proof-cabinet__labels">
+                {presentedDemo.labels.map((label) => <span key={label}>{label}</span>)}
+              </span>
+              <h3>{presentedDemo.title}</h3>
+              <p>{presentedDemo.description}</p>
+              {'note' in presentedDemo ? <small>{presentedDemo.note}</small> : null}
+              <strong>Open evidence</strong>
+            </a>
+          );
+        })}
       </div>
     </section>
   );
