@@ -42,7 +42,7 @@ export function Landing() {
               separate workspaces, checks the result, and returns when your authority is needed.
             </p>
             <div className="landing-hero__actions" data-testid="hero-actions">
-              <Link className="landing-primary-action" to="/studio/control">Run the verified mission</Link>
+              <Link className="landing-primary-action" to="/studio/control">Open Mission Control</Link>
               <Link className="landing-secondary-action" to="/showcase#recorded-mission">Watch 90 seconds</Link>
             </div>
             <p className="landing-trust-line">Real Codex run · separate worktrees · independent checks</p>
@@ -120,6 +120,7 @@ export function Landing() {
 
       <footer className="landing-footer">
         <span>Cherry · local-first mission orchestration</span>
+        <Link className="landing-footer__demo" to="/studio?demo=1">Try the guided example</Link>
         <span>MIT licensed · evidence before claims</span>
       </footer>
     </div>

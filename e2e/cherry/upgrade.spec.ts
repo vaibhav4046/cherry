@@ -4,7 +4,7 @@ test.describe('landing upgrade', () => {
   test('hero leads to Mission Control and the recorded evidence cabinet', async ({ page }) => {
     await page.goto('/');
     const actions = page.getByTestId('hero-actions');
-    await expect(actions.getByRole('link', { name: 'Run the verified mission' })).toHaveAttribute('href', '/studio/control');
+    await expect(actions.getByRole('link', { name: 'Open Mission Control' })).toHaveAttribute('href', '/studio/control');
     await expect(actions.getByRole('link', { name: 'Watch 90 seconds' })).toHaveAttribute('href', '/showcase#recorded-mission');
     await expect(page.getByLabel('Main navigation').getByRole('link', { name: 'Mission Control' })).toBeVisible();
     await expect(page.getByTestId('proof-cabinet').locator('[data-verified-demo]')).toHaveCount(4);

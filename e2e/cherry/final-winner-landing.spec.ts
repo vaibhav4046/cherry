@@ -122,18 +122,23 @@ test('mobile keyboard, reduced motion, and accessibility remain usable', async (
   const outlineStyle = await next.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(outlineStyle).not.toBe('none');
   const proofText = page.locator([
+    '.landing-eyebrow',
+    '.landing-trust-line',
     '.landing-recording-label',
     '.recorded-mission__heading .showcase-kicker',
     '.recorded-mission__seal',
     '.recorded-mission__progress li span',
     '.recorded-mission__controls button',
+    '.landing-proof-cabinet__labels > span',
   ].map((selector) => `.chronicle-landing ${selector}`).join(', '));
   const proofFontSizes = await proofText.evaluateAll((elements) => elements.map((element) => parseFloat(getComputedStyle(element).fontSize)));
   expect(proofFontSizes.length).toBeGreaterThan(0);
   expect(Math.min(...proofFontSizes)).toBeGreaterThanOrEqual(10);
 
-  const runningAnimations = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running').length);
-  expect(runningAnimations).toBe(0);
+  await expect.poll(
+    () => page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running').length),
+    { timeout: 1_000 },
+  ).toBe(0);
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))).toEqual([]);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
