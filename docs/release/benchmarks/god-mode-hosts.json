@@ -13,14 +13,14 @@
     "CHERRY_REAL_CLAUDE": false
   },
   "fixture": {
-    "repo": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\fixture-repo",
+    "repo": "C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\fixture-repo",
     "baseCommit": "18774c71f7a0d9ca4e06997093b1011c75f3ba85"
   },
   "hosts": [
     {
       "hostId": "codex",
       "kind": "codex-cli",
-      "executable": "node C:\\Users\\lalwa\\AppData\\Local\\npm-cache\\_npx\\5010de4b76d2184a\\node_modules\\@openai\\codex\\bin\\codex.js",
+      "executable": "node C:\\Users\\<user>\\AppData\\Local\\npm-cache\\_npx\\5010de4b76d2184a\\node_modules\\@openai\\codex\\bin\\codex.js",
       "available": true,
       "authenticated": null,
       "version": "codex-cli 0.152.1",
@@ -310,7 +310,7 @@
         "executionHostId": "codex-cli",
         "adapter": "agent-host",
         "workingDirectory": null,
-        "boundedPrompt": "{\"planId\":\"plan-smoke\",\"planRevision\":1,\"planContentHash\":\"\",\"nodeId\":\"developer-fix\",\"kind\":\"agent\",\"title\":\"Fix the failing test\",\"objective\":\"Run node --test, read the failure, fix add.mjs so the test passes. Do not edit the test file.\",\"definitionOfDone\":[\"The checks pass\"],\"contextBundleId\":null,\"contextText\":\"Fix only what the failing test describes. Do not touch the test. Do not push.\\n\",\"sandbox\":{\"provider\":\"git-worktree\",\"sourceRoot\":\"C:\\\\Users\\\\lalwa\\\\AppData\\\\Local\\\\Temp\\\\cherry-real-host-voUF2j\\\\fixture-repo\",\"baseRef\":\"18774c71f7a0d9ca4e06997093b1011c75f3ba85\"},\"hostKinds\":[\"codex-cli\"],\"outputs\":[]}",
+        "boundedPrompt": "{\"planId\":\"plan-smoke\",\"planRevision\":1,\"planContentHash\":\"\",\"nodeId\":\"developer-fix\",\"kind\":\"agent\",\"title\":\"Fix the failing test\",\"objective\":\"Run node --test, read the failure, fix add.mjs so the test passes. Do not edit the test file.\",\"definitionOfDone\":[\"The checks pass\"],\"contextBundleId\":null,\"contextText\":\"Fix only what the failing test describes. Do not touch the test. Do not push.\\n\",\"sandbox\":{\"provider\":\"git-worktree\",\"sourceRoot\":\"C:\\\\Users\\\\<user>\\\\AppData\\\\Local\\\\Temp\\\\cherry-real-host-<run>\\\\fixture-repo\",\"baseRef\":\"18774c71f7a0d9ca4e06997093b1011c75f3ba85\"},\"hostKinds\":[\"codex-cli\"],\"outputs\":[]}",
         "contextRefs": [],
         "requiredCapabilities": [
           "repository_read",
@@ -341,7 +341,7 @@
         "executionHostId": "codex-cli",
         "adapter": "agent-host",
         "workingDirectory": null,
-        "boundedPrompt": "{\"planId\":\"plan-smoke\",\"planRevision\":1,\"planContentHash\":\"\",\"nodeId\":\"review-notes\",\"kind\":\"agent\",\"title\":\"Write a review of the defect\",\"objective\":\"Read add.mjs and add.test.mjs, explain the defect, and write artifacts/review.md with a heading \\\"Verdict\\\" and one sentence saying whether the module is correct as it stands. Do not edit code.\",\"definitionOfDone\":[\"artifacts/review.md exists with a Verdict\"],\"contextBundleId\":null,\"contextText\":\"Fix only what the failing test describes. Do not touch the test. Do not push.\\n\",\"sandbox\":{\"provider\":\"git-worktree\",\"sourceRoot\":\"C:\\\\Users\\\\lalwa\\\\AppData\\\\Local\\\\Temp\\\\cherry-real-host-voUF2j\\\\fixture-repo\",\"baseRef\":\"18774c71f7a0d9ca4e06997093b1011c75f3ba85\"},\"hostKinds\":[\"codex-cli\"],\"outputs\":[\"artifacts/review.md\"]}",
+        "boundedPrompt": "{\"planId\":\"plan-smoke\",\"planRevision\":1,\"planContentHash\":\"\",\"nodeId\":\"review-notes\",\"kind\":\"agent\",\"title\":\"Write a review of the defect\",\"objective\":\"Read add.mjs and add.test.mjs, explain the defect, and write artifacts/review.md with a heading \\\"Verdict\\\" and one sentence saying whether the module is correct as it stands. Do not edit code.\",\"definitionOfDone\":[\"artifacts/review.md exists with a Verdict\"],\"contextBundleId\":null,\"contextText\":\"Fix only what the failing test describes. Do not touch the test. Do not push.\\n\",\"sandbox\":{\"provider\":\"git-worktree\",\"sourceRoot\":\"C:\\\\Users\\\\<user>\\\\AppData\\\\Local\\\\Temp\\\\cherry-real-host-<run>\\\\fixture-repo\",\"baseRef\":\"18774c71f7a0d9ca4e06997093b1011c75f3ba85\"},\"hostKinds\":[\"codex-cli\"],\"outputs\":[\"artifacts/review.md\"]}",
         "contextRefs": [],
         "requiredCapabilities": [
           "repository_read",
@@ -378,7 +378,7 @@
         "sandboxLeaseId": "sb-35bc46883049",
         "sandbox": {
           "id": "sb-35bc46883049",
-          "root": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix",
+          "root": "C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix",
           "provider": "git-worktree",
           "boundary": "worktree-process",
           "branchName": "cherry/mission/mr-1601fffe40d1019f/wk-developer-fix",
@@ -399,8 +399,8 @@
           "wallClockMs": 36119,
           "stdoutArtifact": ".cherry\\attempt-1.stdout.txt",
           "stderrArtifact": ".cherry\\attempt-1.stderr.txt",
-          "stdoutTail": "Fixed [add.mjs](C:/Users/lalwa/AppData/Local/Temp/cherry-real-host-voUF2j/.cherry-sandboxes/mr-1601fffe40d1019f/wk-developer-fix/add.mjs) to return `a + b`.\n\n`node --test`: **1 passed, 0 failed**. Test file unchanged.\n",
-          "stderrTail": "and reviewing the diff to confirm no test changes.\nexec\n\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'node --test' in C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix\nexec\n\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff -- add.mjs; git status --short' in C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix\n succeeded in 82ms:\nwarning: in the working copy of 'add.mjs', LF will be replaced by CRLF the next time Git touches it\ndiff --git a/add.mjs b/add.mjs\nindex 2e1e43b..7d65831 100644\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n export function add(a, b) {\n-  return a - b; // deliberate defect: should add\n+  return a + b;\n }\nwarning: unable to access 'C:\\Users\\lalwa/.config/git/ignore': Permission denied\nwarning: unable to access 'C:\\Users\\lalwa/.config/git/ignore': Permission denied\n M add.mjs\n?? .cherry/\n\n succeeded in 166ms:\n✔ add sums two numbers (0.5366ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 87.5124\n\ndiff --git a/add.mjs b/add.mjs\nindex 1e96edf63bd345e3361023ee9b12a63ec78d752f..7d658310b0d95fd8c4981c2cc0fad840aebd6a20\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n-export function add(a, b) {\r\n-  return a - b; // deliberate defect: should add\r\n-}\r\n+export function add(a, b) {\n+  return a + b;\n+}\n\ncodex\nFixed [add.mjs](C:/Users/lalwa/AppData/Local/Temp/cherry-real-host-voUF2j/.cherry-sandboxes/mr-1601fffe40d1019f/wk-developer-fix/add.mjs) to return `a + b`.\n\n`node --test`: **1 passed, 0 failed**. Test file unchanged.\ndiff --git a/add.mjs b/add.mjs\nindex 1e96edf63bd345e3361023ee9b12a63ec78d752f..7d658310b0d95fd8c4981c2cc0fad840aebd6a20\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n-export function add(a, b) {\r\n-  return a - b; // deliberate defect: should add\r\n-}\r\n+export function add(a, b) {\n+  return a + b;\n+}\n\ntokens used\n10,911\n",
+          "stdoutTail": "Fixed [add.mjs](C:/Users/<user>/AppData/Local/Temp/cherry-real-host-<run>/.cherry-sandboxes/mr-1601fffe40d1019f/wk-developer-fix/add.mjs) to return `a + b`.\n\n`node --test`: **1 passed, 0 failed**. Test file unchanged.\n",
+          "stderrTail": "and reviewing the diff to confirm no test changes.\nexec\n\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'node --test' in C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix\nexec\n\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff -- add.mjs; git status --short' in C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix\n succeeded in 82ms:\nwarning: in the working copy of 'add.mjs', LF will be replaced by CRLF the next time Git touches it\ndiff --git a/add.mjs b/add.mjs\nindex 2e1e43b..7d65831 100644\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n export function add(a, b) {\n-  return a - b; // deliberate defect: should add\n+  return a + b;\n }\nwarning: unable to access 'C:\\Users\\<user>/.config/git/ignore': Permission denied\nwarning: unable to access 'C:\\Users\\<user>/.config/git/ignore': Permission denied\n M add.mjs\n?? .cherry/\n\n succeeded in 166ms:\n✔ add sums two numbers (0.5366ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 87.5124\n\ndiff --git a/add.mjs b/add.mjs\nindex 1e96edf63bd345e3361023ee9b12a63ec78d752f..7d658310b0d95fd8c4981c2cc0fad840aebd6a20\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n-export function add(a, b) {\r\n-  return a - b; // deliberate defect: should add\r\n-}\r\n+export function add(a, b) {\n+  return a + b;\n+}\n\ncodex\nFixed [add.mjs](C:/Users/<user>/AppData/Local/Temp/cherry-real-host-<run>/.cherry-sandboxes/mr-1601fffe40d1019f/wk-developer-fix/add.mjs) to return `a + b`.\n\n`node --test`: **1 passed, 0 failed**. Test file unchanged.\ndiff --git a/add.mjs b/add.mjs\nindex 1e96edf63bd345e3361023ee9b12a63ec78d752f..7d658310b0d95fd8c4981c2cc0fad840aebd6a20\n--- a/add.mjs\n+++ b/add.mjs\n@@ -1,3 +1,3 @@\n-export function add(a, b) {\r\n-  return a - b; // deliberate defect: should add\r\n-}\r\n+export function add(a, b) {\n+  return a + b;\n+}\n\ntokens used\n10,911\n",
           "timedOut": false,
           "aborted": false,
           "report": null,
@@ -425,7 +425,7 @@
           ],
           "startedAt": "2026-09-02T13:39:54.040Z",
           "finishedAt": "2026-09-02T13:39:54.186Z",
-          "sandboxRoot": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix"
+          "sandboxRoot": "C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-developer-fix"
         },
         "failedChecks": [],
         "decision": null,
@@ -447,7 +447,7 @@
         "sandboxLeaseId": "sb-59dd21e51102",
         "sandbox": {
           "id": "sb-59dd21e51102",
-          "root": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes",
+          "root": "C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes",
           "provider": "git-worktree",
           "boundary": "worktree-process",
           "branchName": "cherry/mission/mr-1601fffe40d1019f/wk-review-notes",
@@ -468,8 +468,8 @@
           "wallClockMs": 34415,
           "stdoutArtifact": ".cherry\\attempt-1.stdout.txt",
           "stderrArtifact": ".cherry\\attempt-1.stderr.txt",
-          "stdoutTail": "Created [artifacts/review.md](C:/Users/lalwa/AppData/Local/Temp/cherry-real-host-voUF2j/.cherry-sandboxes/mr-1601fffe40d1019f/wk-review-notes/artifacts/review.md) with the defect explanation and verdict. No code or tests were edited.\n",
-          "stderrTail": "ell.exe\" -Command \"Get-Content -Raw -LiteralPath .\\\\artifacts\\\\review.md; git diff -- .\\\\artifacts\\\\review.md; git status --short\" in C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes\n succeeded in 121ms:\n# Defect\n\n`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n\n# Verdict\n\nThe module is not correct as it stands.\n\r\nwarning: unable to access 'C:\\Users\\lalwa/.config/git/ignore': Permission denied\nwarning: unable to access 'C:\\Users\\lalwa/.config/git/ignore': Permission denied\n?? .cherry/\n?? artifacts/\n\ndiff --git a/artifacts/review.md b/artifacts/review.md\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..8df2c0a9c5afd0708d8abb3769cce020805dc351\n--- /dev/null\n+++ b/artifacts/review.md\n@@ -0,0 +1,7 @@\n+# Defect\n+\n+`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n+\n+# Verdict\n+\n+The module is not correct as it stands.\n\ncodex\nCreated [artifacts/review.md](C:/Users/lalwa/AppData/Local/Temp/cherry-real-host-voUF2j/.cherry-sandboxes/mr-1601fffe40d1019f/wk-review-notes/artifacts/review.md) with the defect explanation and verdict. No code or tests were edited.\ndiff --git a/artifacts/review.md b/artifacts/review.md\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..8df2c0a9c5afd0708d8abb3769cce020805dc351\n--- /dev/null\n+++ b/artifacts/review.md\n@@ -0,0 +1,7 @@\n+# Defect\n+\n+`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n+\n+# Verdict\n+\n+The module is not correct as it stands.\n\ntokens used\n10,708\n",
+          "stdoutTail": "Created [artifacts/review.md](C:/Users/<user>/AppData/Local/Temp/cherry-real-host-<run>/.cherry-sandboxes/mr-1601fffe40d1019f/wk-review-notes/artifacts/review.md) with the defect explanation and verdict. No code or tests were edited.\n",
+          "stderrTail": "ell.exe\" -Command \"Get-Content -Raw -LiteralPath .\\\\artifacts\\\\review.md; git diff -- .\\\\artifacts\\\\review.md; git status --short\" in C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes\n succeeded in 121ms:\n# Defect\n\n`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n\n# Verdict\n\nThe module is not correct as it stands.\n\r\nwarning: unable to access 'C:\\Users\\<user>/.config/git/ignore': Permission denied\nwarning: unable to access 'C:\\Users\\<user>/.config/git/ignore': Permission denied\n?? .cherry/\n?? artifacts/\n\ndiff --git a/artifacts/review.md b/artifacts/review.md\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..8df2c0a9c5afd0708d8abb3769cce020805dc351\n--- /dev/null\n+++ b/artifacts/review.md\n@@ -0,0 +1,7 @@\n+# Defect\n+\n+`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n+\n+# Verdict\n+\n+The module is not correct as it stands.\n\ncodex\nCreated [artifacts/review.md](C:/Users/<user>/AppData/Local/Temp/cherry-real-host-<run>/.cherry-sandboxes/mr-1601fffe40d1019f/wk-review-notes/artifacts/review.md) with the defect explanation and verdict. No code or tests were edited.\ndiff --git a/artifacts/review.md b/artifacts/review.md\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..8df2c0a9c5afd0708d8abb3769cce020805dc351\n--- /dev/null\n+++ b/artifacts/review.md\n@@ -0,0 +1,7 @@\n+# Defect\n+\n+`add(a, b)` uses the subtraction operator (`a - b`) even though the module's contract, as demonstrated by the test, is to sum its two arguments. Consequently, `add(2, 3)` returns `-1` instead of the expected `5`.\n+\n+# Verdict\n+\n+The module is not correct as it stands.\n\ntokens used\n10,708\n",
           "timedOut": false,
           "aborted": false,
           "report": null,
@@ -493,7 +493,7 @@
           ],
           "startedAt": "2026-09-02T13:39:52.020Z",
           "finishedAt": "2026-09-02T13:39:52.021Z",
-          "sandboxRoot": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\cherry-real-host-voUF2j\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes"
+          "sandboxRoot": "C:\\Users\\<user>\\AppData\\Local\\Temp\\cherry-real-host-<run>\\.cherry-sandboxes\\mr-1601fffe40d1019f\\wk-review-notes"
         },
         "failedChecks": [],
         "decision": null,

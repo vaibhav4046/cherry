@@ -3,7 +3,7 @@
 Started 2026-09-02T13:39:14.557Z on commit be0e713156b2 (win32 10.0.26200, Node v24.12.0).
 That commit lives on the pre-rebase God Mode lane and is not reachable from main; the capture
 content is pinned by the SHA-256 of docs/release/benchmarks/god-mode-hosts.json
-(c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3).
+(baed40e34ce702642040e4198c821c0b35a0e7509fe661b0c0a7e486db71b9e5).
 Switches: CHERRY_REAL_CODEX=1, CHERRY_REAL_CLAUDE=0. Fixture repository at a temporary path, base commit 18774c71f7a0.
 
 ## Hosts as the runner probed them
@@ -55,9 +55,20 @@ Status: **succeeded**. Parallel overlap proven from the event log: **yes** (at m
 - None recorded by the script. Provider completion was never treated as success; the runner ran node --test itself.
 
 Raw record: docs/release/benchmarks/god-mode-hosts.json. File sha256:
-c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3. Compact-JSON content sha256
+baed40e34ce702642040e4198c821c0b35a0e7509fe661b0c0a7e486db71b9e5. Compact-JSON content sha256
 (the value scripts/god-mode/run-real-host-smoke.mjs prints, computed over the compact JSON re-serialisation of the record):
-14d0c601b06f881f056c70262c4f894a52beba0049599f4d20ea671b6acdc1f7.
+20fc34e9d11225f1adaf0481a1f0fb08e83f9ea687923d0c3973fb76bf1b6dc2.
+
+## Redaction
+
+On 2026-09-03 the release authority replaced the capture machine's Windows account name and the
+per-run temporary directory name with the placeholders `<user>` and `<run>`, on the red team's
+finding that a public artifact should not carry local identity. Nothing else changed: every host
+version, sandbox branch, exit code, timestamp, evaluation result and base commit in this record is
+exactly what the run produced. The hashes above and the showcase replay pin
+(`src/components/showcase/recorded-mission-trust.mjs`) were regenerated from the redacted file with
+`scripts/capture-winner-demo.mjs`, so anyone can recompute them from what the repository ships. The
+pre-redaction file hashed to c93e03d22f71f8ca9dca7e43b3f1396d3a713337f426614fd39cb3b72772a8b3.
 
 ## Claude Code (not captured)
 
