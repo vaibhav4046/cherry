@@ -35,7 +35,7 @@ The conductor's authoritative clean `npm run verify:all` on the same product tip
 
 ### WebMCP API presence can be misreported as an attached agent
 
-`src/pages/studio/StudioLayout.tsx:101-106` and `src/lib/webmcp/registration-manager.ts:122-134` equate WebMCP API presence with an attached agent. A no-call stub registered 10 tools and executed zero calls while the interface displayed `Agent connected`. Upstream commits `6efe318` and `e1ebfdf` contain the fix chain. Release authority must decide whether to integrate them.
+`src/pages/studio/StudioLayout.tsx:101-106` and `src/cherry/webmcp/registration-manager.ts:122-134` equate WebMCP API presence with an attached agent. A no-call stub registered 10 tools and executed zero calls while the interface displayed `Agent connected`. Upstream commits `6efe318` and `e1ebfdf` contain the fix chain. Release authority must decide whether to integrate them.
 
 ### Evidence documentation contains obsolete hashes
 
