@@ -117,6 +117,9 @@
 * { box-sizing: border-box; }
 
 html, body {
+  /* The product commits to light. Saying so stops a dark-OS browser painting
+     native controls, scrollbars and autofill dark inside a light page. */
+  color-scheme: light;
   margin: 0;
   padding: 0;
   background: var(--color-frost);

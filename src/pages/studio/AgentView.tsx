@@ -205,7 +205,7 @@ export default function AgentView() {
               <h3 className="label">Retired by the last phase change</h3>
               <div className="row" data-testid="recently-removed">
                 {webmcp.recentlyRemoved.map((name) => (
-                  <span key={name} className="sticker sticker-fail" style={{ textDecoration: 'line-through' }}>{name}</span>
+                  <span key={name} className="sticker sticker-fail">Retired · {name}</span>
                 ))}
               </div>
             </>

@@ -190,7 +190,7 @@
 .recorded-mission .label,
 .landing-footer .label,
 .studio-rail .label {
-  color: var(--paper-2);
+  color: #ecdde0;
 }
 
 /* ---- One showcase scale, not five --------------------------------------- */

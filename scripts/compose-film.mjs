@@ -73,20 +73,34 @@ const { width: ww, height: wh, radius, top } = WINDOW;
 const left = Math.round((cw - ww) / 2);
 
 /**
+ * The rounded-corner mask is a still, so it is built once rather than evaluated
+ * per pixel per frame. `geq` on a single image is instant; the same expression
+ * inside the video graph turns a one-minute take into a twenty-minute encode.
+ */
+const maskPath = resolve('playwright-report/film/window-mask.png');
+await ffmpeg([
+  '-y',
+  '-f', 'lavfi',
+  '-i', `color=white:s=${ww}x${wh}`,
+  '-vf', `format=gray,geq=lum='if(gt(hypot(max(0,${radius}-X)+max(0,X-(W-1-${radius})),max(0,${radius}-Y)+max(0,Y-(H-1-${radius}))),${radius}),0,255)'`,
+  '-frames:v', '1',
+  maskPath,
+]);
+
+/**
  * One graph, so the frame is composed in a single pass:
  *   backdrop -> fill the canvas, blur hard, darken
- *   take     -> scale to the window box, round its corners with an alpha mask
- *   shadow   -> the same rounded box, blurred and offset under the window
+ *   take     -> scale into the window box, rounded by the mask above
+ *   shadow   -> the same rounded silhouette, blurred and offset underneath
  */
 const filter = [
   `[0:v]scale=${cw}:${ch}:force_original_aspect_ratio=increase,crop=${cw}:${ch},gblur=sigma=42,eq=brightness=-0.06:saturation=0.85[bg]`,
-  `[1:v]scale=${ww}:${wh}:force_original_aspect_ratio=decrease,pad=${ww}:${wh}:(ow-iw)/2:(oh-ih)/2:color=white,` +
-    `format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':` +
-    `a='if(gt(hypot(max(0,${radius}-X)+max(0,X-(W-1-${radius})),max(0,${radius}-Y)+max(0,Y-(H-1-${radius}))),${radius}),0,255)'[win]`,
-  `[win]split=2[winA][winB]`,
-  `[winB]format=rgba,colorchannelmixer=rr=0:gg=0:bb=0:aa=0.45,gblur=sigma=26[shadow]`,
-  `[bg][shadow]overlay=${left}:${top + 18}[withShadow]`,
-  `[withShadow][winA]overlay=${left}:${top}[framed]`,
+  `[1:v]scale=${ww}:${wh}:force_original_aspect_ratio=decrease,pad=${ww}:${wh}:(ow-iw)/2:(oh-ih)/2:color=white,format=rgba[take]`,
+  `[2:v]format=gray,split=2[maskA][maskB]`,
+  `[take][maskA]alphamerge[win]`,
+  `[maskB]format=rgba,colorchannelmixer=rr=0:rg=0:rb=0:gr=0:gg=0:gb=0:br=0:bg=0:bb=0:ar=0.45:ag=0:ab=0,gblur=sigma=26[shadow]`,
+  `[bg][shadow]overlay=${left}:${top + 20}[withShadow]`,
+  `[withShadow][win]overlay=${left}:${top}[framed]`,
   `[framed]format=yuv420p[v]`,
 ].join(';');
 
@@ -96,13 +110,16 @@ await ffmpeg([
   '-y',
   '-loop', '1', '-i', backdrop,
   '-i', input,
+  '-loop', '1', '-i', maskPath,
   '-filter_complex', filter,
   '-map', '[v]',
   '-shortest',
   '-r', '30',
   '-c:v', 'libx264',
-  '-preset', 'slow',
-  '-crf', '20',
+  // 2560x1440 with a blurred alpha shadow is heavy; 'slow' turned a one-minute
+  // take into a ten-minute encode for no visible gain at this bitrate.
+  '-preset', 'medium',
+  '-crf', '21',
   '-pix_fmt', 'yuv420p',
   '-movflags', '+faststart',
   output,
