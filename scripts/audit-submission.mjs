@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Cherry submission audit — Devpost preflight checks.
+ * Cherry submission audit — judge-readiness and release preflight checks.
  * Prints PASS/FAIL/WARN lines; exits non-zero only when a FAIL occurred.
- * Node builtins only; run via `npm run audit:submission`.
+ * Node built-ins only; run via `npm run audit:submission`.
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
@@ -23,6 +23,16 @@ function readText(relPath) {
   } catch {
     return null;
   }
+}
+
+function requireNonEmpty(relPath) {
+  const text = readText(relPath);
+  if (text !== null && text.trim().length > 0) {
+    pass(`${relPath} exists and is non-empty`);
+    return text;
+  }
+  fail(`${relPath} is missing or empty`);
+  return '';
 }
 
 // 1. Canonical URL in README + Devpost kit
@@ -51,17 +61,19 @@ for (const relPath of ['README.md', 'docs/release/DEVPOST_SUBMISSION.md']) {
 }
 
 // 4. Release docs exist and are non-empty
-for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBILITY_MATRIX.md', 'CHERRY_RELEASE_EVIDENCE.md']) {
-  const relPath = `docs/release/${name}`;
-  const text = readText(relPath);
-  if (text !== null && text.trim().length > 0) pass(`${relPath} exists and is non-empty`);
-  else fail(`${relPath} is missing or empty`);
+for (const name of [
+  'DEVPOST_SUBMISSION.md',
+  'DEMO_SCRIPT.md',
+  'CHERRY_COMPATIBILITY_MATRIX.md',
+  'CHERRY_RELEASE_EVIDENCE.md',
+  'CODEX_SUBMISSION_CHECKLIST.md',
+]) {
+  requireNonEmpty(`docs/release/${name}`);
 }
+requireNonEmpty('docs/CODEX_AUTOMATION.md');
 
 // 5. e2e-results.json records a run that actually happened and actually passed.
-//    Parsing alone is not evidence: a report where every test was skipped parses
-//    perfectly and proves nothing, which is precisely how an all-skipped run was
-//    once cited as a passing suite.
+// Parsing alone is not evidence: a report where every test was skipped proves nothing.
 {
   const text = readText('docs/release/e2e-results.json');
   if (text === null) fail('docs/release/e2e-results.json is missing');
@@ -102,16 +114,27 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
   }
 }
 
-// 7. Secret scan over tracked text files
+// 7. Secret scan over tracked text surfaces
 {
   const SECRET_RE = /(sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
-  // Known dummy fixture: runner redaction tests deliberately emit this string to
-  // prove secret-shaped output is scrubbed (runner/runner.test.mjs, runner/v2.test.mjs).
+  // Known dummy fixture: runner redaction tests deliberately emit this string.
   const ALLOWLISTED_FIXTURES = new Set(['sk-abcdefghijklmnop1234']);
-  const SCAN_DIRS = ['src', 'scripts', 'docs', 'runner', 'schemas', 'e2e', 'tests'];
-  const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'screenshots', 'test-results']);
+  const SCAN_DIRS = ['src', 'scripts', 'docs', 'runner', 'schemas', 'e2e', 'tests', '.github'];
+  const ROOT_FILES = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'package.json', 'index.html'];
+  const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'screenshots', 'test-results', 'playwright-report', 'artifacts']);
   const TEXT_EXT = new Set(['.ts', '.tsx', '.mjs', '.js', '.cjs', '.json', '.md', '.txt', '.html', '.css', '.yaml', '.yml', '.svg']);
   const hits = [];
+
+  function scanFile(full) {
+    let content;
+    try {
+      content = readFileSync(full, 'utf8');
+    } catch {
+      return;
+    }
+    const match = SECRET_RE.exec(content);
+    if (match && !ALLOWLISTED_FIXTURES.has(match[1])) hits.push(`${full}: ${match[1].slice(0, 12)}…`);
+  }
 
   function scanDir(dir) {
     let entries;
@@ -126,22 +149,17 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
         if (!SKIP_DIRS.has(entry.name)) scanDir(full);
         continue;
       }
-      if (!TEXT_EXT.has(extname(entry.name).toLowerCase())) continue;
-      let content;
-      try {
-        content = readFileSync(full, 'utf8');
-      } catch {
-        continue;
-      }
-      const match = SECRET_RE.exec(content);
-      if (match && !ALLOWLISTED_FIXTURES.has(match[1])) hits.push(`${full}: ${match[1].slice(0, 12)}…`);
+      if (TEXT_EXT.has(extname(entry.name).toLowerCase())) scanFile(full);
     }
   }
 
   for (const dir of SCAN_DIRS) {
     if (existsSync(join(ROOT, dir))) scanDir(join(ROOT, dir));
   }
-  if (hits.length === 0) pass('secret scan: no credential-shaped strings in tracked text files (redaction-test fixture allowlisted)');
+  for (const file of ROOT_FILES) {
+    if (existsSync(join(ROOT, file))) scanFile(join(ROOT, file));
+  }
+  if (hits.length === 0) pass('secret scan: no credential-shaped strings in tracked text files (redaction fixture allowlisted)');
   else for (const hit of hits) fail(`secret scan hit: ${hit}`);
 }
 
@@ -170,6 +188,97 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
   const hasDemoLink = landingText.includes('/studio?demo=1');
   if (hasRoute && hasDemoLink) pass('demo route: /studio route exists and Landing links to /studio?demo=1');
   else fail(`demo route check failed (route: ${hasRoute}, landing link: ${hasDemoLink})`);
+}
+
+// 10. WebMCP implementation and judge-journey contract
+{
+  const manager = requireNonEmpty('src/cherry/webmcp/registration-manager.ts');
+  const tools = requireNonEmpty('src/cherry/webmcp/tool-definitions.ts');
+  const fullJourney = requireNonEmpty('e2e/cherry/webmcp-full-journey.spec.ts');
+  const showcaseJourney = requireNonEmpty('e2e/cherry/showcase-host.spec.ts');
+  const requiredToolNames = [
+    'read_cherry_context',
+    'list_cherry_capabilities',
+    'request_checkpoint_approval',
+    'get_approval_status',
+  ];
+  const registrationPresent = /registerTool|modelContext/.test(manager);
+  const namesPresent = requiredToolNames.every((name) => tools.includes(name));
+  const fullLoopPresent = /learn -> derive -> human approve -> execute -> verify -> repair -> export/.test(fullJourney)
+    && fullJourney.includes("getByTestId('approve-skill')");
+  const showcaseHandoffPresent = showcaseJourney.includes("getByTestId('approve-skill')")
+    && (showcaseJourney.includes('approvalUrl') || /waitForURL\([^\n]*approval=/.test(showcaseJourney));
+
+  if (registrationPresent) pass('WebMCP registration manager contains the host registration path');
+  else fail('WebMCP registration manager no longer contains a host registration path');
+  if (namesPresent) pass('critical WebMCP context and approval tools are present');
+  else fail('one or more critical WebMCP context/approval tools are missing');
+  if (fullLoopPresent) pass('full registered-closure journey retains the human approval boundary and complete loop');
+  else fail('full registered-closure journey no longer proves the complete human-gated loop');
+  if (showcaseHandoffPresent) pass('showcase host journey follows the real approval deep link');
+  else fail('showcase host journey does not follow the real approval deep link');
+}
+
+// 11. Hourly monitor and bounded Codex repair contract
+{
+  const workflow = requireNonEmpty('.github/workflows/hourly-maintenance.yml');
+  const prompt = requireNonEmpty('.github/codex/prompts/hourly-repair.md');
+  const health = requireNonEmpty('scripts/hourly-health.mjs');
+  const healthTest = requireNonEmpty('scripts/hourly-health.test.mjs');
+  const packageText = readText('package.json') ?? '';
+  const checks = {
+    hourlySchedule: /cron:\s*['"]17 \* \* \* \*['"]/.test(workflow),
+    codexAction: workflow.includes('openai/codex-action@v1'),
+    noAutoMerge: !/gh pr merge|mergePullRequest|enablePullRequestAutoMerge/.test(workflow),
+    noDeploy: !/vercel deploy|deploy --prod/.test(workflow),
+    staticPrompt: workflow.includes('prompt-file: .github/codex/prompts/hourly-repair.md'),
+    healthScript: packageText.includes('"health:hourly"') && health.includes('DEFAULT_ROUTES'),
+    healthTest: healthTest.includes("node:test") && healthTest.includes("'/showcase'") && healthTest.includes("'/connect'"),
+    repairBoundary: prompt.includes('Do not auto-approve, auto-merge, deploy'),
+  };
+  const failedChecks = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
+  if (failedChecks.length === 0) pass('hourly monitoring and bounded Codex repair contract is complete');
+  else fail(`hourly monitoring contract failed: ${failedChecks.join(', ')}`);
+}
+
+// 12. Active ownership policy must not assign the repository to a retired session.
+// Historical Git commits and the append-only STATUS ledger are intentionally excluded.
+{
+  const files = [
+    'README.md',
+    'AGENTS.md',
+    'CONTRIBUTING.md',
+    'index.html',
+    'docs/codex-takeover/00_MASTER_PROMPT.md',
+    'docs/codex-takeover/01_STATE_OF_CHERRY.md',
+    'docs/codex-takeover/02_TICKETS.md',
+    'docs/codex-takeover/03_DESIGN_DIRECTIVE.md',
+    'docs/codex-takeover/04_COPY_GUIDE.md',
+    'docs/codex-takeover/05_GUARDRAILS.md',
+    'docs/codex-takeover/06_OPERATING_MODEL.md',
+  ];
+  const markers = [
+    /Co-Authored-By:\s*Claude/i,
+    /Claude-Session:/i,
+    /Owner:\s*Claude\b/i,
+    /Claude\s+deploys\b/i,
+    /Claude['’]s\s+lane/i,
+    /\*\*Claude\*\*\s*\([^)]*(architect|release)/i,
+  ];
+  const hits = [];
+  for (const file of files) {
+    const text = readText(file);
+    if (text === null) {
+      hits.push(`${file}: missing`);
+      continue;
+    }
+    for (const marker of markers) {
+      const match = marker.exec(text);
+      if (match) hits.push(`${file}: ${match[0]}`);
+    }
+  }
+  if (hits.length === 0) pass('active ownership policy is Codex-led and contains no stale authorship marker');
+  else for (const hit of hits) fail(`active ownership attribution: ${hit}`);
 }
 
 console.log(`\naudit-submission: ${failures} FAIL, ${warnings} WARN`);

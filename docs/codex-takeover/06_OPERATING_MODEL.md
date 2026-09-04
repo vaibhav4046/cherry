@@ -1,54 +1,42 @@
-# Operating model — two agents, one repo, zero supervision needed
+# Operating model — Codex, GitHub Actions, and human authority
 
-Vaibhav's role shrinks to three human-only acts (see `07_HUMAN_CHECKLIST.md`). Everything else
-runs on this loop:
+## Roles
 
-## The loop
+- **Codex:** investigates, writes tests, implements, reviews the diff, updates current documentation, and prepares a pull request.
+- **GitHub Actions:** runs deterministic verification on pushes and pull requests; every hour it also checks the critical WebMCP journeys and the public app.
+- **Human maintainer:** supplies protected credentials, decides product approvals, reviews and merges pull requests, and performs production deployment.
 
-1. **Codex** takes the next ticket from `02_TICKETS.md`, marks it IN_PROGRESS in
-   `docs/codex-takeover/STATUS.md`, builds it with tests, runs the gates, commits, pushes,
-   marks it DONE with the commit hash and gate counts.
-2. **Claude** (architect/release manager) reviews DONE tickets against acceptance criteria on a
-   clean snapshot, runs the full merged gates including e2e, does browser QA on the real UI,
-   fixes or bounces (STATUS note: `T3 BOUNCED — <reason>`; bounced tickets outrank new work),
-   and owns design/copy/docs passes in parallel.
-3. **Claude deploys** via the verified prebuilt flow (local `npm ci` → `vercel build` →
-   render-smoke → `vercel deploy --prebuilt --prod` → content + render verification on the live
-   domain). Nobody else deploys, ever.
-4. Repeat until freeze (Wed 12:00 London), then: evidence refresh, final deploy, handoff.
+No other session owns a live file lane. Historical status entries remain evidence, not an active staffing model.
 
-## File-lane map (prevents every collision we've had)
+## Development loop
 
-| Path | Owner |
-| --- | --- |
-| `src/cherry/source/**`, `src/pages/studio/Sources.tsx`, Quick Skill flow, `/ingest` | Codex |
-| `src/cherry/library/**`, `src/cherry/webmcp/**` (additive only, invariants in 00) | Codex features / Claude review |
-| `src/design-system/**`, `src/pages/Landing.tsx`, `Showcase.tsx`, `Connect.tsx`, `Compatibility.tsx` | Claude |
-| `runner/**` | Codex (tests mandatory) |
-| `docs/codex-takeover/STATUS.md` | both, append-only |
-| `docs/` records (DECISIONS, CHANGELOG, release evidence, Devpost, demo script) | Claude |
-| `vercel.json`, deploy config, Vercel dashboard | Claude |
-| `package.json` + `package-lock.json` | whoever changes deps, always together, same commit |
+1. Start from current `main` on a narrow branch or worktree.
+2. Reproduce the defect and add the failing regression test.
+3. Implement the smallest root-cause fix.
+4. Run `npm run gates`; run `npm run verify:all` for UI, WebMCP, release, security, or cross-layer work.
+5. Review the complete diff, generated reports, changed claims, and secret scan.
+6. Push and open a pull request. Never call a local build deployed.
+7. A human merges and deploys after checks and review.
 
-Working on a file outside your lane: don't. Need something there: STATUS note, the owner does it.
+## Hourly loop
 
-## Git etiquette on this mount (learned the hard way)
+`.github/workflows/hourly-maintenance.yml` runs once per hour and on manual dispatch. It:
 
-- One git operation at a time per agent; never run long-lived interactive git.
-- Stale `.git/*.lock` (>60s old) blocks you: move it to `work/_to_delete/` and retry. Never
-  delete another agent's fresh lock.
-- Commit messages: conventional, honest, gate counts when relevant.
-- Push after every DONE ticket. The public repo is a judged artifact.
+1. verifies the lockfile install, types, lint, unit/runner tests, production build, bundle, service worker, and submission audit;
+2. runs the two critical registered-closure WebMCP journeys;
+3. checks `/`, `/showcase`, `/compatibility`, and `/connect` on the live domain and uploads JSON evidence;
+4. opens or updates one incident issue on failure and closes it after recovery;
+5. when `OPENAI_API_KEY` is available and repair is not disabled, gives a static repository prompt to the Codex GitHub Action;
+6. accepts only a bounded diff, reruns verification, then opens a new repair pull request;
+7. never merges, deploys, changes workflow files, or accepts instructions from failing page content.
 
-## Reporting protocol (STATUS.md is the only channel either agent polls)
+Full setup and threat boundaries: `docs/CODEX_AUTOMATION.md`.
 
-Append lines, never rewrite history:
+## Git and evidence rules
 
-```
-2026-09-01 09:40 codex  T1 IN_PROGRESS
-2026-09-01 12:05 codex  T1 DONE 1a2b3c4 — gates green, unit 174, e2e 45 (added first-skill.spec)
-2026-09-01 13:10 claude T1 VERIFIED — deployed dpl_xxx, live render checked
-```
-
-Blocked? `T3 BLOCKED — <what you need>` and move to the next ticket. Never idle, never improvise
-outside the queue.
+- Preserve unrelated work and stage explicit paths.
+- Never rewrite `docs/codex-takeover/STATUS.md`; it is append-only historical evidence.
+- Keep `package.json` and `package-lock.json` synchronized when dependency metadata changes. A script-only edit does not require lockfile churn.
+- Conventional commits state only behavior and checks actually observed.
+- One Git operation at a time. Do not delete a live lock owned by another process.
+- Generated artifacts are evidence, not implementation. Do not let an automated repair commit transient health output or a locally rewritten Playwright report.
