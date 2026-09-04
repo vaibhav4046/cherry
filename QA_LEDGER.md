@@ -51,3 +51,33 @@ history across navigations, so walletconnect errors from earlier builds (asset h
 index-CdotWFOt.js, index-BD7fE6zt.js) persist in the log. Verify against the current asset hash
 (index-DXrOsuLx.js or later) or use a fresh context; resource-timing measurements above are the
 authoritative check.
+
+## Run entry — 2026-09-04, commit `01212e0`
+
+Measured, not quoted from an earlier row.
+
+| suite | command | result |
+| --- | --- | --- |
+| unit | `npx vitest run` | 762 passed, 2 skipped, 74 files (1 file skipped) |
+| runner | `npm run test:runner` | 135 passed, 0 failed, 2 suites |
+| e2e (WebMCP full journey) | `npx playwright test e2e/cherry/webmcp-full-journey.spec.ts` | 1 passed (44.5s) |
+
+New this run: `approval-handoff.test.ts` (13), `tool-schema-contract.test.ts` (73),
+`webmcp-security-boundaries.test.ts` (14), `library-recommendation-contract.test.ts` (6),
+`auto-draft.test.ts` (6), `lazy-route.test.ts` (4), and the end-to-end journey spec.
+
+Defects found and fixed during this run, each with a test that failed first:
+
+| id | sev | what | evidence |
+| --- | --- | --- | --- |
+| AP-1 | P0 | The workflow stopped dead at `AWAITING_APPROVAL`: an agent could request approval and then had no way to see the pending decision, point a person at it, or learn the outcome. | `get_approval_status`, the deep link, the studio approval bar, `tests/cherry/approval-handoff.test.ts` |
+| AP-2 | P0 | A human approval did not move the product. Approving left the mission in `AWAITING_APPROVAL`, so execution stayed unreachable. Quick Skill's own `EXECUTING` transition was issued as `'system'` and had been silently refused for the same reason. | `decideSkillGraphApproval` advances the mission as the human who decided; `approval-handoff.test.ts` |
+| AP-3 | P0 | A passing verification never completed the mission, so the export aperture never registered. An agent could finish the entire journey and find no way to hand the result over. | `verification-service.ts`; found by `e2e/cherry/webmcp-full-journey.spec.ts`, not by inspection |
+| AP-4 | P1 | Approvals bound to a revision number only. An edit that kept the revision but changed the content inherited the decision. | Content hash recorded at request time and re-checked at decision; `approval-handoff.test.ts` |
+| DR-1 | P1 | Derivation dropped every declarative sentence, so a lesson teaching five things produced one node called "Review the lesson material" and counted one piece of evidence. | `auto-draft.ts`, `quick-skill.ts`, `tests/cherry/auto-draft.test.ts`, `tests/fixtures/landing-page-transcript.ts`. Now 5 nodes, 8 evidence records. |
+| UI-1 | P1 | A deploy landing under an open tab rendered a blank page: the next navigation requested a hashed route chunk the server no longer had. Hit in a real browser while verifying an unrelated change. | `src/app/lazy-route.ts`, `tests/cherry/lazy-route.test.ts` |
+| CL-1 | P1 | Five surfaces still told a judge the live ChatGPT host capture had not happened, including `/connect`, which sits between two pages that say it did. | `/connect`, Agent View, `docs/CAPABILITY_MATRIX.md`, `docs/release/DEVPOST_SUBMISSION.md` |
+| CSS-1 | P2 | `--paper-2` and `--ink-secondary` are defined nowhere; both silently fell back. The rail's active-link rule in `shell.css` set cream on near-white at 1.23:1, invisible if import order ever changed. `theme-color` painted the phone address bar from a retired palette, and no `color-scheme` was declared. | `premium.css`, `shell.css`, `tokens.css`, `index.html` |
+
+Still open, unchanged from earlier rows: PL-4, PL-5 (Quick Skill wizard draft
+persistence and empty-submit guard), PL-6, PL-7.
