@@ -81,6 +81,37 @@
   min-width: 0;
 }
 
+/* ---------- Pending approval bar ----------
+   One outstanding human decision, visible from every studio screen. An agent
+   can request approval from a chat window the person is not looking at, so the
+   request has to find them rather than the other way round. */
+.approval-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: var(--border);
+  background: var(--state-wait-bg);
+  font-size: 14px;
+}
+
+.approval-bar-text {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.approval-bar-meta {
+  color: var(--ink-secondary, #6e6e73);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .approval-bar {
+    padding: var(--sp-3) var(--sp-4);
+  }
+}
+
 /* ---------- Add a source dialog ---------- */
 dialog.source-dialog {
   max-width: 520px;

@@ -1,6 +1,7 @@
-import { Suspense, lazy } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import { RouteMeta } from './RouteMeta.tsx';
+import { onPresentRequest } from '../cherry/webmcp/present-path.ts';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
 import NotFound from '../pages/NotFound.tsx';
@@ -42,10 +43,22 @@ function Loading() {
   );
 }
 
+/**
+ * Lets a tool put one of Cherry's own screens in front of the person: an agent
+ * that just requested approval can show the decision instead of describing it.
+ * It navigates and nothing else, and it only ever navigates inside Cherry.
+ */
+function AgentPresenter() {
+  const navigate = useNavigate();
+  useEffect(() => onPresentRequest((path) => navigate(path)), [navigate]);
+  return null;
+}
+
 export function App() {
   return (
     <Suspense fallback={<Loading />}>
       <RouteMeta />
+      <AgentPresenter />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/showcase" element={<Showcase />} />

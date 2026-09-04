@@ -64,7 +64,8 @@ export type IdPrefix =
   | 'pl'
   | 'er'
   | 'ai'
-  | 'cb';
+  | 'cb'
+  | 'ds';
 
 export function newId(prefix: IdPrefix, now?: number): string {
   return `${prefix}-${ulid(now)}`;

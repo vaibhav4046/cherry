@@ -4,6 +4,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { CherryHomeLink } from '../../components/CherryHomeLink.tsx';
 import { GuidedTour } from '../../components/GuidedTour.tsx';
 import { Icons } from '../../components/Icons.tsx';
+import { PendingApprovalBar } from '../../components/PendingApprovalBar.tsx';
 import type { ProductState } from '../../cherry/mission/mission-state.ts';
 
 interface NavItem {
@@ -155,6 +156,8 @@ export function StudioLayout() {
           </span>
         </nav>
       </header>
+
+      <PendingApprovalBar />
 
       <div className="studio-shell">
         <nav className="studio-rail" aria-label="Studio sections">

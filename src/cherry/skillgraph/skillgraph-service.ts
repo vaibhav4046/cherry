@@ -5,6 +5,8 @@ import { isoNow } from '../core/clock.ts';
 import { ok, type Result } from '../core/result.ts';
 import { conflict, invalid, notFound } from '../core/errors.ts';
 import { sha256Canonical } from '../core/hash.ts';
+import { decisionSessionId } from '../core/session.ts';
+import { transitionMission } from '../mission/mission-service.ts';
 import type { ActorType } from '../core/domain-event.ts';
 import { validateSkillGraph, type GraphIssue } from './skillgraph-validator.ts';
 import type { SkillGraph, SkillGraphVersion, SkillNode } from './skillgraph-model.ts';
@@ -258,6 +260,11 @@ export async function requestSkillGraphApproval(
   }
 
   const now = isoNow();
+  const next: SkillGraph = { ...graph, status: 'ready_for_review', updatedAt: now };
+  next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
+  // The approval binds to the exact bytes the human is about to read, not just
+  // to the revision number. Recording the hash here is what lets the decision
+  // path reject an edit that kept the revision but changed the content.
   const approval: ApprovalRecord = {
     id: newId('ap'),
     workspaceId: graph.workspaceId,
@@ -268,9 +275,8 @@ export async function requestSkillGraphApproval(
     requestedAt: now,
     requestedBy,
     requestReason: reason,
+    contentHash: next.versionHash,
   };
-  const next: SkillGraph = { ...graph, status: 'ready_for_review', updatedAt: now };
-  next.versionHash = await sha256Canonical({ ...next, versionHash: undefined });
 
   const requested = await withWorkspaceTx(graph.workspaceId, ['skillGraphs', 'approvals'], async (ctx) => {
     const pending = await ctx.db.approvals.where('objectId').equals(graph.id).toArray();
@@ -327,13 +333,25 @@ export async function decideSkillGraphApproval(
   const recomputedVersionHash = await sha256Canonical({ ...graph, versionHash: undefined });
   if (graph.versionHash !== recomputedVersionHash) return invalid('SkillGraph version hash is invalid');
 
+  // Revision equality is not enough. An edit that keeps the revision number but
+  // changes the content would otherwise inherit a decision made about different
+  // words. Approvals recorded before this field existed have no hash to compare,
+  // and are still decided on revision alone rather than being invalidated.
+  if (approval.contentHash && approval.contentHash !== recomputedVersionHash) {
+    return conflict('The skill content changed since this approval was requested. Request approval again.', {
+      requested: approval.contentHash.slice(0, 16),
+      actual: recomputedVersionHash.slice(0, 16),
+    });
+  }
+
   const now = isoNow();
-  const contentHash = await sha256Canonical({ ...graph, versionHash: undefined });
+  const contentHash = recomputedVersionHash;
   const decidedApproval: ApprovalRecord = {
     ...approval,
     decision,
     decidedBy,
     decidedAt: now,
+    decidedSessionId: decisionSessionId(),
     contentHash,
   };
   if (comment) decidedApproval.comment = comment;
@@ -365,7 +383,35 @@ export async function decideSkillGraphApproval(
     });
   });
   if (decided && !decided.ok) return decided as Result<{ graph: SkillGraph; approval: ApprovalRecord }>;
+  await advanceMissionAfterDecision(next, decision);
   return ok({ graph: next, approval: decidedApproval });
+}
+
+/**
+ * The decision is the event the whole product waits on, so it must move the
+ * product, not just the record.
+ *
+ * Before this, a human could approve the exact revision and the mission stayed
+ * in AWAITING_APPROVAL forever: the WebMCP aperture kept offering planning
+ * tools, execution stayed unreachable, and an agent watching from a host had
+ * nothing to do but ask the person again. Nothing is weakened here. The
+ * transition still runs every guard in transitionMission, and it runs as
+ * 'human' because a human is exactly who just decided.
+ *
+ * A mission that cannot legally move is left alone: this advances the product
+ * when it can, and never fails an approval that already landed.
+ */
+async function advanceMissionAfterDecision(graph: SkillGraph, decision: 'approved' | 'rejected'): Promise<void> {
+  if (!graph.missionId) return;
+  const mission = await getDb().missions.get(graph.missionId);
+  if (!mission || mission.state !== 'AWAITING_APPROVAL' || mission.skillGraphId !== graph.id) return;
+  // Rejection returns the operator to planning, where revise_checkpoint lives.
+  await transitionMission(
+    graph.missionId,
+    decision === 'approved' ? 'EXECUTING' : 'PLANNING',
+    'human',
+    decision === 'approved' ? `Approved at r${graph.revision}` : `Rejected at r${graph.revision}`,
+  );
 }
 
 /** Roll back to an earlier stored revision snapshot as a new revision. */
@@ -406,6 +452,10 @@ export async function rollbackSkillGraph(
     });
   });
   return ok(next);
+}
+
+export async function getApproval(approvalId: string): Promise<ApprovalRecord | undefined> {
+  return getDb().approvals.get(approvalId);
 }
 
 export async function listApprovals(workspaceId: string): Promise<ApprovalRecord[]> {

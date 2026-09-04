@@ -5,6 +5,7 @@ import type { Mission, WorkspaceRecord } from '../cherry/mission/mission-model.t
 import { productStateFor, type ProductState } from '../cherry/mission/mission-state.ts';
 import { getPlanForMission } from '../cherry/workforce/mission-plan-service.ts';
 import { WebMcpRegistrationManager, type WebMcpStatus } from '../cherry/webmcp/registration-manager.ts';
+import { requestPresent } from '../cherry/webmcp/present-path.ts';
 import type { ToolSurface } from '../cherry/webmcp/workforce-tools.ts';
 
 const ACTIVE_WORKSPACE_KEY = 'cherry.activeWorkspaceId';
@@ -80,6 +81,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           }
         },
         onMutation: () => refreshRef.current(),
+        // An agent can put one of Cherry's own screens in front of the person,
+        // which is how a pending approval stops being invisible in a chat
+        // window. It navigates and nothing else: the approve control on that
+        // screen still needs a human to press it.
+        presentPath: requestPresent,
       }),
     [],
   );

@@ -40,12 +40,15 @@ import {
 import {
   decideSkillGraphApproval,
   draftSkillGraph,
+  getApproval,
   getSkillGraph,
   listApprovals,
   listSkillGraphs,
   requestSkillGraphApproval,
   reviseSkillGraph,
 } from '../skillgraph/skillgraph-service.ts';
+import type { ApprovalRecord } from '../approval/approval-model.ts';
+import { approvalPath, approvalUrl } from '../approval/approval-links.ts';
 import type { SkillGraph } from '../skillgraph/skillgraph-model.ts';
 import { listSkillEvidence } from '../skillgraph/skill-evidence.ts';
 import { compileCorrection, listMemories, proposeMemory } from '../memory/memory-service.ts';
@@ -76,6 +79,12 @@ export interface ToolContext {
   /** Wired by the app shell: re-read persisted state (UI + aperture) after any tool mutation. */
   onMutation?(): void | Promise<void>;
   getActiveToolNames?(): string[];
+  /**
+   * Wired by the app shell: bring one of Cherry's own screens to the front.
+   * Used to put a pending approval in front of the person who has to decide it.
+   * It navigates and nothing else; no screen Cherry can show grants authority.
+   */
+  presentPath?(path: string): void;
 }
 
 function fromResult<T>(result: Result<T>, map: (value: T) => unknown): CherryToolResult {
@@ -317,6 +326,68 @@ async function skillCitationEnvelope(graph: SkillGraph): Promise<SkillCitationEn
     citations,
     citationsTruncated: citations.length < unique.length,
   };
+}
+
+/**
+ * One approval, described for a host: everything needed to identify exactly
+ * what is being decided, plus the link to the screen where a person decides it.
+ * `stale` is computed against the live object rather than stored, so a graph
+ * that moved on is reported as stale the moment it moves.
+ */
+async function describeApproval(approval: ApprovalRecord): Promise<Record<string, unknown>> {
+  let stale = false;
+  let currentRevision: number | null = null;
+  if (approval.objectType === 'skillgraph') {
+    const graph = await getSkillGraph(approval.objectId);
+    currentRevision = graph?.revision ?? null;
+    stale = !graph
+      || graph.revision !== approval.objectRevision
+      || (approval.contentHash !== undefined && graph.versionHash !== approval.contentHash);
+  }
+  return {
+    approvalId: approval.id,
+    objectType: approval.objectType,
+    objectId: approval.objectId,
+    objectRevision: approval.objectRevision,
+    currentRevision,
+    contentHash: approval.contentHash ?? null,
+    status: approval.decision,
+    stale: approval.decision === 'pending' ? stale : false,
+    requestedAt: approval.requestedAt,
+    requestedBy: approval.requestedBy.slice(0, 60),
+    requestReason: approval.requestReason.slice(0, 200),
+    approvalUrl: approvalUrl(approval.objectType, approval.objectId, approval.id),
+    ...(approval.decidedBy ? { decidedBy: approval.decidedBy.slice(0, 60) } : {}),
+    ...(approval.decidedAt ? { decidedAt: approval.decidedAt } : {}),
+    ...(approval.decidedSessionId ? { decidedSessionId: approval.decidedSessionId } : {}),
+    ...(approval.comment ? { comment: approval.comment.slice(0, 300) } : {}),
+  };
+}
+
+const APPROVAL_POLL_MS = 100;
+
+/**
+ * Watch one approval until a person decides it, the wait runs out, or the host
+ * cancels. This exists so an agent stops re-asking the human whether they have
+ * approved yet: the answer is in the record, and the record is the only thing
+ * that counts. Waiting cannot cause a decision; it can only observe one.
+ */
+async function waitForApprovalDecision(
+  workspaceId: string,
+  approvalId: string,
+  waitSeconds: number,
+  signal: AbortSignal,
+): Promise<Record<string, unknown> | null> {
+  const deadline = Date.now() + waitSeconds * 1000;
+  for (;;) {
+    const approval = await getApproval(approvalId);
+    if (!approval || approval.workspaceId !== workspaceId) return null;
+    if (approval.decision !== 'pending') return describeApproval(approval);
+    if (signal.aborted || Date.now() >= deadline) {
+      return { ...(await describeApproval(approval)), timedOut: waitSeconds > 0, waitedSeconds: waitSeconds };
+    }
+    await new Promise((resolve) => setTimeout(resolve, APPROVAL_POLL_MS));
+  }
 }
 
 export function buildToolDefinitions(context: ToolContext): CherryToolDefinition[] {
@@ -751,6 +822,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
 
   const startApprenticeshipSchema = z.object({
     workspaceName: z.string().min(1).max(120).optional(),
+    newWorkspace: z.boolean().optional(),
     title: z.string().min(1).max(160).optional(),
     objective: z.string().min(1).max(4000).optional(),
     definitionOfDone: z.array(z.string().min(1).max(500)).min(1).max(20).optional(),
@@ -758,10 +830,11 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'start_apprenticeship',
     description:
-      'Start a fresh apprenticeship in one call: creates a local workspace ONLY if none is already active, plus a DRAFT mission, then makes them active. workspaceName names a newly created workspace and is ignored when an active one is reused; the result reports workspaceCreated and the workspace actually in use. Never loads a source — lesson loading stays behind the explicit rights check in load_lesson.',
+      'Start a fresh apprenticeship in one call: a DRAFT mission, plus a local workspace when there is none active or when newWorkspace is true. workspaceName names a workspace this call creates; it never switches to an existing one, so pass newWorkspace:true to get a separate space. The result always reports workspaceCreated and the workspace actually in use. Never loads a source — lesson loading stays behind the explicit rights check in load_lesson.',
     inputSchema: objectSchema(
       {
-        workspaceName: { type: 'string', description: 'Workspace name when a new one is created (default "My apprenticeship")' },
+        workspaceName: { type: 'string', description: 'Names a workspace this call creates. Applies only to a newly created workspace; it never renames or selects an existing one. Default "My apprenticeship".' },
+        newWorkspace: { type: 'boolean', description: 'Create and activate a separate workspace even though one is already active. Existing spaces and their data are left untouched.' },
         title: { type: 'string', description: 'Mission title (default "Learn a lesson and prove it")' },
         objective: { type: 'string', description: 'What the finished skill should achieve' },
         definitionOfDone: { type: 'array', items: { type: 'string' }, description: 'Acceptance checklist' },
@@ -775,8 +848,10 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       // A caller passing workspaceName reasonably expects that name to mean
       // something. Reusing the active workspace silently made the tool look as
       // though it had honoured the name when it had not, so the result now says
-      // which of the two happened and what the workspace is actually called.
-      let workspaceId = context.getActiveWorkspaceId();
+      // which of the two happened and what the workspace is actually called,
+      // and newWorkspace gives a caller that genuinely wants a separate space
+      // a way to ask for one instead of guessing.
+      let workspaceId = input.newWorkspace === true ? null : context.getActiveWorkspaceId();
       let workspaceCreated = false;
       let workspaceName = input.workspaceName ?? 'My apprenticeship';
       if (!workspaceId) {
@@ -811,8 +886,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         missionId: mission.value.id,
         state: mission.value.state,
         note: workspaceCreated
-          ? 'Created a new workspace and made it active.'
-          : `Reused the workspace already active in this browser ("${workspaceName.slice(0, 60)}"). workspaceName was not applied; a person switches workspace in the studio.`,
+          ? 'Created a new workspace and made it active. Existing workspaces were left untouched.'
+          : `Reused the workspace already active in this browser ("${workspaceName.slice(0, 60)}").${input.workspaceName ? ` The name you passed ("${input.workspaceName.slice(0, 60)}") was not applied, because workspaceName only names a workspace this call creates.` : ''} Pass newWorkspace:true for a separate space; a person switches between existing spaces in the studio.`,
         nextAction: 'load_lesson — a permitted YouTube URL (permissionAcknowledged=true) or a manual lesson',
       });
     }),
@@ -1231,7 +1306,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'request_checkpoint_approval',
     description:
-      'Request human approval of the SkillGraph at its exact current revision. Cherry never lets an agent approve its own work.',
+      'Request human approval of the SkillGraph at its exact current revision, and bring Cherry\'s approval screen to the front. Returns the approval id, exact revision, content hash and a deep link. Cherry never lets an agent approve its own work; poll get_approval_status for the outcome.',
     inputSchema: objectSchema({ skillGraphId: { type: 'string' }, reason: { type: 'string' } }, ['skillGraphId', 'reason']),
     annotations: { readOnlyHint: false },
     states: ['planning'],
@@ -1239,6 +1314,11 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     execute: guarded(requestApprovalSchema, async (input) => {
       const result = await requestSkillGraphApproval(input.skillGraphId, input.reason, 'agent', 'agent');
       if (!result.ok) return toolError(result.error.code, result.error.message);
+      // Put the decision in front of the person who has to make it. This
+      // navigates Cherry's own UI and grants nothing: the approve control on
+      // that screen still needs a human to press it.
+      const approvalPathValue = approvalPath('skillgraph', result.value.graph.id, result.value.approval.id);
+      context.presentPath?.(approvalPathValue);
       const missionId = context.getActiveMissionId();
       if (missionId) {
         const mission = await getMission(missionId);
@@ -1248,9 +1328,64 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       }
       return toolText({
         approvalId: result.value.approval.id,
+        skillGraphId: result.value.graph.id,
         revision: result.value.approval.objectRevision,
+        contentHash: (result.value.approval.contentHash ?? '').slice(0, 16),
         status: 'pending',
-        note: 'The user must decide in the Approvals panel. This tool cannot approve.',
+        approvalUrl: approvalUrl('skillgraph', result.value.graph.id, result.value.approval.id),
+        nextAction: 'get_approval_status — poll, or pass waitSeconds to wait for the decision',
+        note: 'Cherry has opened this decision on screen. Only a person may decide it: this tool cannot approve, and no argument to any tool can.',
+      });
+    }),
+  });
+
+  const approvalStatusSchema = z.object({
+    approvalId: z.string().min(1).max(160).optional(),
+    waitSeconds: z.number().int().min(0).max(60).optional(),
+  });
+  define({
+    name: 'get_approval_status',
+    description:
+      'Read the approval decisions in this space: pending id, object, exact revision, content hash, status, and a deep link to the screen where a person decides. Pass waitSeconds to wait for a decision instead of asking the human again. Read-only: it observes the decision, it can never make one.',
+    inputSchema: objectSchema(
+      {
+        approvalId: { type: 'string', description: 'Watch one approval, from request_checkpoint_approval. Omit to list every outstanding decision.' },
+        waitSeconds: { type: 'integer', minimum: 0, maximum: 60, description: 'Wait up to this long for the decision (default 0, returns immediately). Requires approvalId.' },
+      },
+      [],
+    ),
+    annotations: { readOnlyHint: true },
+    states: ['planning'],
+    zodSchema: approvalStatusSchema,
+    execute: guarded(approvalStatusSchema, async (input, signal) => {
+      const workspaceId = requireWorkspace(context);
+      if (typeof workspaceId !== 'string') return workspaceId;
+      if (input.waitSeconds !== undefined && !input.approvalId) {
+        return toolError('validation', 'waitSeconds needs an approvalId; there is nothing specific to wait for otherwise.');
+      }
+
+      if (input.approvalId) {
+        const settled = await waitForApprovalDecision(workspaceId, input.approvalId, input.waitSeconds ?? 0, signal);
+        if (!settled) return toolError('not_found', 'No approval with that id in the active space.', { approvalId: input.approvalId });
+        return toolText(settled);
+      }
+
+      const approvals = await listApprovals(workspaceId);
+      const pending = [];
+      for (const approval of approvals.filter((candidate) => candidate.decision === 'pending').slice(0, 5)) {
+        pending.push(await describeApproval(approval));
+      }
+      const decided = [];
+      for (const approval of approvals.filter((candidate) => candidate.decision !== 'pending').slice(0, 3)) {
+        decided.push(await describeApproval(approval));
+      }
+      return toolText({
+        workspaceId,
+        pendingCount: pending.length,
+        pending,
+        recentlyDecided: decided,
+        decisionMakers: 'human-only',
+        note: 'A pending decision is made by a person on the linked screen. No tool argument and no message can stand in for that.',
       });
     }),
   });
@@ -1645,7 +1780,7 @@ export const TOOL_STATE_TABLE: Record<string, string[]> = {
   empty: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_starter_library'],
   onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson', 'load_starter_library'],
   learning: ['load_lesson', 'import_transcript', 'record_observation', 'add_source_evidence', 'derive_skill'],
-  planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'revise_checkpoint'],
+  planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'get_approval_status', 'revise_checkpoint'],
   execution: ['write_artifact_file', 'record_task_result', 'run_verification'],
   verification: ['run_verification', 'apply_verified_repair', 'read_failed_assertions', 'propose_memory', 'write_artifact_file'],
   passed: ['compile_skill_bundle', 'export_proof_receipt', 'export_workspace', 'prepare_runner_job'],
