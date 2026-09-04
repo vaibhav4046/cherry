@@ -498,7 +498,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const missions = await listMissions(workspace.id);
       const activeMissionId = context.getActiveMissionId();
       const mission = missions.find((candidate) => candidate.id === activeMissionId) ?? missions[0] ?? null;
-      const approvals = (await listApprovals(workspace.id)).filter((approval) => approval.decision === 'pending');
+      const allApprovals = await listApprovals(workspace.id);
+      const approvals = allApprovals.filter((approval) => approval.decision === 'pending');
       const verifications = mission ? await listVerifications(workspace.id, mission.id) : [];
       return toolText({
         workspace: { id: workspace.id, name: workspace.name },
@@ -508,6 +509,22 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
           : null,
         missionCount: missions.length,
         pendingApprovals: approvals.map((approval) => ({ id: approval.id, objectType: approval.objectType, objectRevision: approval.objectRevision })),
+        // get_approval_status is a planning tool, and approving moves the
+        // product out of planning, so the tool that could answer "was it
+        // approved?" is retired at the exact moment the answer exists. This
+        // global read carries the decision, so an agent is never left guessing.
+        recentDecisions: allApprovals
+          .filter((approval) => approval.decision !== 'pending')
+          .slice(0, 3)
+          .map((approval) => ({
+            id: approval.id,
+            objectType: approval.objectType,
+            objectId: approval.objectId,
+            objectRevision: approval.objectRevision,
+            decision: approval.decision,
+            ...(approval.decidedBy ? { decidedBy: approval.decidedBy.slice(0, 60) } : {}),
+            ...(approval.decidedAt ? { decidedAt: approval.decidedAt } : {}),
+          })),
         latestVerification: verifications[0] ? { id: verifications[0].id, status: verifications[0].status, blockingFailures: verifications[0].blockingFailures } : null,
       });
     }),
@@ -1813,7 +1830,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   for (const [canonical, legacy] of Object.entries(SAFE_TOOL_NAME_ALIASES)) {
     const source = definitions.find((definition) => definition.name === legacy);
     if (source && !definitions.some((definition) => definition.name === canonical)) {
-      definitions.push({ ...source, name: canonical, description: `${source.description} Registered under this name; ${legacy} is the same tool on the local bridge.` });
+      definitions.push({ ...source, name: canonical, description: `${source.description} Registered under this name; "${legacy}" is an accepted alias for it.` });
     }
   }
 

@@ -254,6 +254,33 @@ describe('WebMCP approval handoff', () => {
     expect((await getMission(mission.id))!.state).toBe('PLANNING');
   });
 
+  it('reports the decision through a global read once the planning aperture is gone', async () => {
+    const { workspace, mission, graph } = await makeReviewableSkill();
+    const context = makeContext();
+    context.workspaceId = workspace.id;
+    context.missionId = mission.id;
+    const manager = new WebMcpRegistrationManager(context);
+    manager.syncState('planning');
+    const requested = parseResult(
+      await manager.executeLocal('request_checkpoint_approval', { skillGraphId: graph.id, reason: 'Ready' }),
+    );
+    unwrap(await decideSkillGraphApproval(String(requested.approvalId), 'approved', 'user'));
+
+    // Approving moves the product out of planning, which retires the tool that
+    // could answer the question. The always-on read has to carry the answer, or
+    // an agent is left guessing at the moment the answer finally exists.
+    manager.syncState('execution');
+    expect(manager.activeNamesFor('execution')).not.toContain('get_approval_status');
+    const context1 = parseResult(await manager.executeLocal('read_cherry_context', {}));
+    const decisions = context1.recentDecisions as Array<Record<string, unknown>>;
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0]!.decision).toBe('approved');
+    expect(decisions[0]!.objectId).toBe(graph.id);
+    expect(decisions[0]!.objectRevision).toBe(graph.revision);
+    expect(decisions[0]!.decidedBy).toBe('user');
+    expect(typeof decisions[0]!.decidedAt).toBe('string');
+  });
+
   it('never lets an agent decide, whatever it sends', async () => {
     const { workspace, mission, graph } = await makeReviewableSkill();
     const context = makeContext();
