@@ -132,13 +132,13 @@ export const DEFAULT_CAPABILITY_CATALOGUE: readonly CapabilityDescriptor[] = [
   {
     id: 'webmcp.current_page.invoke',
     title: 'Invoke a WebMCP tool on the current page',
-    description: 'Call a tool the current page registered. Live host behaviour is not captured yet.',
+    description: 'Call a tool the current page registered. Live host behaviour was captured on 4 September 2026.',
     origin: 'webmcp',
     requires: ['page_tools'],
     riskLevel: 'medium',
     sideEffect: 'external',
-    status: 'experimental',
-    evidenceRef: 'tests/cherry/webmcp.test.ts',
+    status: 'validated_real',
+    evidenceRef: 'docs/release/WEBMCP_LIVE_HOST_CAPTURE.md',
   },
   {
     id: 'cherry.verify.run',

@@ -32,7 +32,7 @@ const ROWS: Row[] = [
   {
     surface: 'One outcome becomes a plan, agents work it in parallel, and checks decide whether it is done',
     status: 'validated',
-    evidence: 'A plan is validated (acyclic, bounded, every task with a definition of done and a real check) and hashed; the paired runner leases one sandbox per task (directory or git worktree, boundary stated as process or worktree-process, never a VM), runs up to three tasks at once, hands finished artifacts to dependants, and only its own checks or a person move a task to succeeded. Covered by the mission plan, orchestrator and evaluation unit suites, the runner executor suite, a browser-to-real-runner integration test and the Mission Control Playwright journey. Real Codex CLI execution captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md (two worktrees, measured overlap); Claude Code execution not captured on this machine (sign-in required).',
+    evidence: 'A plan is validated (acyclic, bounded, every task with a definition of done and a real check) and hashed; the paired runner leases one sandbox per task (directory or git worktree, boundary stated as process or worktree-process, never a VM), runs up to three tasks at once, hands finished artifacts to dependants, and only its own checks or a person move a task to succeeded. Covered by the mission plan, orchestrator and evaluation unit suites, the runner executor suite, a browser-to-real-runner integration test and the Mission Control Playwright journey. Real Codex CLI execution is captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md (two worktrees, measured overlap); no additional host execution is claimed without a capture.',
   },
   {
     surface: 'The whole journey by hand, with no AI provider involved',
@@ -115,9 +115,9 @@ const ROWS: Row[] = [
     evidence: 'Manifest + service worker (static shell only; never caches workspace data). Valid on the live HTTPS deployment; install prompt behaviour is browser-controlled.',
   },
   {
-    surface: 'The simpler routine adapters for Codex CLI and Claude CLI',
+    surface: 'The simpler routine adapters for Codex CLI and compatible local CLIs',
     status: 'shipped',
-    evidence: 'These routine adapters run only when the CLI is on PATH; exit codes are recorded with verifiedSeparately=true and never count as verification. They were not exercised against a live host. Mission Control uses the separate agent-host path, whose real Codex run is captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md; Claude Code mission execution is not captured.',
+    evidence: 'These routine adapters run only when the CLI is on PATH; exit codes are recorded with verifiedSeparately=true and never count as verification. They were not exercised against an additional live host. Mission Control uses the separate agent-host path, whose real Codex run is captured in docs/release/GOD_MODE_REAL_HOST_CAPTURE.md.',
   },
   {
     surface: 'Syncing between your devices',

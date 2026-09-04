@@ -36,7 +36,7 @@ describe('capability catalogue', () => {
     for (const id of ['github.repository.read', 'github.pull_request.create', 'gmail.draft.create', 'gmail.message.send', 'linkedin.post.create', 'youtube.video.upload', 'browser.navigate']) {
       expect(byId[id]!.status, id).toBe('designed');
     }
-    expect(byId['webmcp.current_page.invoke']!.status).toBe('experimental');
+    expect(byId['webmcp.current_page.invoke']!.status).toBe('validated_real');
     expect(byId['gmail.message.send']!.riskLevel).toBe('critical');
     expect(byId['gmail.message.send']!.sideEffect).toBe('external');
   });

@@ -296,7 +296,7 @@ export default function SkillDetail() {
           data-testid="export-skill-md"
           onClick={() => void handleExport('skill-md', 'download')}
           disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'Agent Skills format: Claude Code, Hermes-class agents'}
+          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'Portable Agent Skills format'}
         >
           Download SKILL.md
         </button>
@@ -309,16 +309,6 @@ export default function SkillDetail() {
           title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Copying requires approval of the current version' : 'Copy the AGENTS.md block for Codex'}
         >
           Copy AGENTS.md (Codex)
-        </button>
-        <button
-          type="button"
-          className="btn"
-          data-testid="export-claude-md"
-          onClick={() => void handleExport('claude-md', 'download')}
-          disabled={graph.status !== 'approved' || graph.approvedRevision !== graph.revision}
-          title={graph.status !== 'approved' || graph.approvedRevision !== graph.revision ? 'Download requires approval of the current version' : 'CLAUDE.md install file for Claude Code'}
-        >
-          Download CLAUDE.md
         </button>
       </div>
 

@@ -96,7 +96,7 @@ describe('unapproved skills are readable but not installable', () => {
     freshDb();
   });
 
-  it.each(['skill-md', 'agents-md', 'claude-md'] as const)(
+  it.each(['skill-md', 'agents-md'] as const)(
     'refuses a live %s file before a human decision',
     async (format) => {
       const { graph } = await makeDraft('Unapproved export');

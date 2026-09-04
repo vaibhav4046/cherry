@@ -73,6 +73,9 @@ jobs:
       - name: Submission audit
         run: npm run audit:submission
 
+      - name: Codex and WebMCP judge-surface audit
+        run: npm run audit:codex-submission
+
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4

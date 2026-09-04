@@ -2,13 +2,13 @@
  * Landing copy of record. Every string here is fixed by the God Mode directive
  * or derived from the claims matrix; tests pin it. Statuses use the public
  * vocabulary only (Validated, Shipped, Experimental, Roadmap) and
- * "Connected" is never used because no live connector exists.
+ * "Connected" is shown only after a real host call, never from API presence alone.
  */
 
 export type PublicStatus = 'Validated' | 'Shipped' | 'Experimental' | 'Roadmap';
 
 export const HERO = {
-  eyebrow: 'Cherry / Open AI workforce',
+  eyebrow: 'Cherry / OpenAI workforce',
   headline: 'One task. An entire AI team.',
   subhead:
     'Cherry takes one goal, splits it into tasks, runs them on the agent hosts you already use, checks what comes back, and stops at anything that needs your decision.',
@@ -82,7 +82,7 @@ export const LANDING_SECTIONS: readonly LandingSectionCopy[] = [
     number: '06',
     kicker: 'Use any model',
     heading: 'Keep the workforce when the best model changes.',
-    body: 'Codex can build, Claude can review, a local model can classify, and tomorrow’s model can join without taking your memory and workflows with it.',
+    body: 'Codex can build, a local model can classify, and tomorrow’s model can join without taking your memory and workflows with it.',
   },
   {
     id: 'automations',
@@ -130,7 +130,7 @@ export interface StatusRow {
 /** Capability layer rows. Statuses mirror /compatibility and the claims matrix. */
 export const CAPABILITY_ROWS: readonly StatusRow[] = [
   { name: 'MCP bridge for local agent hosts', detail: 'Read and verify Cherry workspaces from a local agent host. Captured in two live host sessions, including recomputed workspace and receipt hashes.', status: 'Validated' },
-  { name: 'WebMCP site tools', detail: 'Bounded page tools registered by state and surface, visible in Agent View. Mock-host tested; live in-browser host capture pending.', status: 'Experimental' },
+  { name: 'WebMCP site tools', detail: 'Bounded page tools registered by state and surface, visible in Agent View. Mock-host tested and captured in a live in-browser host on 4 September 2026.', status: 'Validated' },
   { name: 'Agent Skills bundles', detail: 'SKILL.md, AGENTS.md and a standalone verifier that checks every file hash. Bundle build and verification are test-covered; live host discovery is self-reported.', status: 'Shipped' },
   { name: 'Terminal through the paired runner', detail: 'Allowlisted executables only, argument arrays, no shell, minimal environment, output caps.', status: 'Shipped' },
   { name: 'Browser computer', detail: 'A visible, permission-scoped browser worker with human takeover for sign-in.', status: 'Roadmap' },
@@ -145,7 +145,7 @@ export const COMPUTER_ROWS: readonly StatusRow[] = [
 
 export const MODEL_ROWS: readonly StatusRow[] = [
   { name: 'Codex', detail: 'Builds inside a worktree with an explicit sandbox flag, using your own Codex sign-in. Captured: two workers in two worktrees with 34.5s of measured overlap.', status: 'Validated' },
-  { name: 'Claude Code', detail: 'The integration is built. A real execution capture requires a Claude sign-in.', status: 'Experimental' },
+  { name: 'Additional local agent CLIs', detail: 'Compatibility adapters remain available, but no additional execution claim is made without a captured host run.', status: 'Experimental' },
   { name: 'Local models through Ollama', detail: 'Classification and extraction on this machine once tool use is validated.', status: 'Experimental' },
   { name: 'Kimi, Kilo and OpenAI-compatible endpoints', detail: 'Probed and labelled honestly before any work is assigned.', status: 'Roadmap' },
 ];
@@ -202,11 +202,11 @@ export const MISSION_DEMO_OUTCOME =
   'Audit Cherry against its strongest competitor, fix the highest-impact onboarding defect, and prepare the launch content. Nothing public without approval.';
 
 export const MISSION_DEMO_NODES: readonly MissionDemoNode[] = [
-  { id: 'research-competitor', title: 'Research the competitor', host: 'Claude Code', boundary: 'process', dependsOn: [], kind: 'agent' },
+  { id: 'research-competitor', title: 'Research the competitor', host: 'Codex research worker', boundary: 'worktree-process', dependsOn: [], kind: 'agent' },
   { id: 'audit-onboarding', title: 'Audit onboarding', host: 'Codex', boundary: 'worktree-process', dependsOn: [], kind: 'agent' },
   { id: 'prioritise', title: 'Prioritise', host: 'Chief', boundary: 'process', dependsOn: ['research-competitor', 'audit-onboarding'], kind: 'agent' },
   { id: 'developer-fix', title: 'Developer fix', host: 'Codex', boundary: 'worktree-process', dependsOn: ['prioritise'], kind: 'agent' },
-  { id: 'content-draft', title: 'Content draft', host: 'Claude Code', boundary: 'process', dependsOn: ['prioritise'], kind: 'agent' },
+  { id: 'content-draft', title: 'Content draft', host: 'Codex writing worker', boundary: 'worktree-process', dependsOn: ['prioritise'], kind: 'agent' },
   { id: 'independent-verification', title: 'Independent verification', host: 'Cherry checks', boundary: 'worktree-process', dependsOn: ['developer-fix', 'content-draft'], kind: 'verify' },
   { id: 'publish-approval', title: 'Publish approval', host: 'You', boundary: 'human decision', dependsOn: ['independent-verification'], kind: 'human' },
 ];

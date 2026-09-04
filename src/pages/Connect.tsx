@@ -22,9 +22,6 @@ args = [
 const CODEX_CLI = `codex mcp add cherry -- node <path-to-cherry>/runner/mcp/server.mjs \\
   --workspace <path>/cherry-workspace-export.json --bundles <path>/skill-bundles`;
 
-const CLAUDE_MCP = `claude mcp add cherry -- node <path-to-cherry>/runner/mcp/server.mjs \\
-  --workspace <path>/cherry-workspace-export.json --bundles <path>/skill-bundles`;
-
 function CopyBlock({ label, name, text, testId }: { label: string; name: string; text: string; testId: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -73,10 +70,10 @@ const HOSTS: HostCard[] = [
   {
     id: 'chatgpt',
     title: 'ChatGPT in-app browser (WebMCP)',
-    status: 'experimental',
-    statusNote: 'Built to the documented registerTool contract and feature-detected; awaiting a captured live-host session.',
+    status: 'validated',
+    statusNote: 'Captured on 2026-09-04 in the ChatGPT desktop in-app browser: the live host registered Cherry’s tools and called them through document.modelContext without clicking or typing into the page (transcript: docs/release/WEBMCP_LIVE_HOST_CAPTURE.md).',
     steps: [
-      'Open this site in the built-in browser of the ChatGPT desktop app, ChatGPT Work or Codex (the challenge resources, as of 2 September, name GPT-5.6 Sol or Terra for site tools), then choose Site tools in the address bar to see what Cherry provides.',
+      'Open this site in a supported ChatGPT or Codex in-app browser, then choose Site tools in the address bar to see what Cherry provides.',
       'Cherry’s tools appear automatically, no setup. Ask for a status check: the agent calls get_cherry_status.',
       'Mid-task, the agent can call recommend_skills with what it is doing and receive your approved skills, pinned to exact revisions.',
       'Watch every call land in Agent View (Studio → Agent View).',
@@ -107,26 +104,14 @@ const HOSTS: HostCard[] = [
     block: { label: 'config.toml (or use the one-liner)', name: 'Codex configuration', text: `${CODEX_TOML}\n\n# one-liner alternative\n${CODEX_CLI}` },
   },
   {
-    id: 'claude',
-    title: 'Claude Code (skills + MCP)',
-    status: 'validated',
-    statusNote: 'A Cherry-compiled bundle was installed into a real Claude Code host (2026-08-29): discovered and listed as an available skill; the MCP bridge registered and reported Connected in the same host. Recorded in the decision log (docs/CHERRY_DECISIONS.md, D-012); no transcript file was captured. Mission execution on Claude Code is not captured and stays Experimental.',
+    id: 'agent-skills',
+    title: 'Agent Skills-compatible hosts',
+    status: 'shipped',
+    statusNote: 'Cherry exports the standard SKILL.md convention with source evidence, exact-revision approval metadata, and a standalone verifier. Structure and every bundle hash are test-validated.',
     steps: [
       'Download SKILL.md or the full bundle from any approved skill in the Skill Library.',
-      'Drop the bundle folder into .claude/skills/ (project) or ~/.claude/skills/ (global).',
-      'Optionally register the MCP bridge so Claude can read the whole library.',
-    ],
-    block: { label: 'MCP registration', name: 'Claude Code MCP registration', text: CLAUDE_MCP },
-  },
-  {
-    id: 'hermes',
-    title: 'Hermes-class open-source agents',
-    status: 'shipped',
-    statusNote: 'Cherry exports the Agent Skills SKILL.md convention these agents read; structure is test-validated.',
-    steps: [
-      'Export SKILL.md from an approved skill.',
-      'Place it in the agent’s skills directory (one folder per skill).',
-      'The skill carries where it came from: sources, guardrails, verification steps, and the approval it was pinned at.',
+      'Place the skill folder in the host’s documented skills directory.',
+      'Run the included verifier before installation; it fails after any one-byte change.',
     ],
   },
 ];
@@ -174,7 +159,7 @@ export function Connect() {
             <ul className="contract-list" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
               <li><span className="mono">list_skills</span> <span className="quiet">: the whole library with status, revisions, and approval hashes</span></li>
               <li><span className="mono">recommend_skills</span> <span className="quiet">: &ldquo;here is my task&rdquo; returns ranked approved skills with explainable matches</span></li>
-              <li><span className="mono">get_skill</span> <span className="quiet">: install-ready SKILL.md / AGENTS.md / CLAUDE.md, only for human-approved exact revisions</span></li>
+              <li><span className="mono">get_skill</span> <span className="quiet">: install-ready SKILL.md / AGENTS.md, only for human-approved exact revisions</span></li>
             </ul>
           </section>
 

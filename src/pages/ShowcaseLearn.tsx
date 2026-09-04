@@ -360,7 +360,7 @@ export function ShowcaseLearn() {
       title: '11 · Portable bundle',
       detail:
         activeMission?.state === 'COMPLETE'
-          ? 'Compile from the skill page. Installs into Claude Code and Codex, with the verifier included.'
+          ? 'Compile from the skill page. Installs into Codex and Agent Skills-compatible hosts, with the verifier included.'
           : 'Unlocked after verification passes.',
       status: activeMission?.state === 'COMPLETE' ? 'done' : 'todo',
       href: data.skillGraph ? `/studio/skills/${data.skillGraph.id}` : undefined,

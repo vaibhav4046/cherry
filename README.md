@@ -2,6 +2,11 @@
   <img src="docs/media/cherry-landing.png" alt="Cherry landing page: one task, an entire AI team, with the recorded real Codex run playing beside it" width="820">
 </p>
 
+<p align="center">
+  <a href="https://github.com/vaibhav4046/cherry/actions/workflows/verify.yml"><img alt="Verification" src="https://github.com/vaibhav4046/cherry/actions/workflows/verify.yml/badge.svg"></a>
+  <a href="https://github.com/vaibhav4046/cherry/actions/workflows/hourly-health.yml"><img alt="Hourly health" src="https://github.com/vaibhav4046/cherry/actions/workflows/hourly-health.yml/badge.svg"></a>
+</p>
+
 # Cherry 🍒
 
 **One task. An entire AI team. Human authority intact.**
@@ -25,6 +30,7 @@ recompute, and then serves the finished skill back to every agent you use.
 - **Judge route:** https://cherry-wine.vercel.app/showcase, a recorded real Codex run with two agents
   working at once in separate worktrees, replayed from evidence checked against its fingerprint
 - **What is actually proven:** https://cherry-wine.vercel.app/compatibility
+- **Canonical submission brief:** [docs/release/CODEX_WEBMCP_SUBMISSION.md](docs/release/CODEX_WEBMCP_SUBMISSION.md)
 
 Built for the **OpenAI WebMCP Challenge 2026**. MIT licensed. Free and open source, with no paid
 tier, no account required, and no telemetry.
@@ -39,7 +45,7 @@ Seven tools are registered on every page. Three of them serve your library to an
 | --- | --- |
 | `list_skills` | Every skill you have taught, with status, revision, and approval hash |
 | `recommend_skills` | "Here is my task" → ranked approved skills, with an explanation of each match |
-| `get_skill` | Install-ready SKILL.md / AGENTS.md / CLAUDE.md, streamed in bounded parts with a full-file SHA-256 the agent verifies |
+| `get_skill` | Install-ready SKILL.md / AGENTS.md, streamed in bounded parts with a full-file SHA-256 the agent verifies |
 
 Only human-approved exact revisions are installable. An agent can request an approval; it can never
 grant one. Everything else stays state-gated behind a bounded aperture: at most five contextual
@@ -52,8 +58,8 @@ mutation tools per surface, registered and unregistered live as the work advance
    bookmarklet.
 2. **Approve the method.** Cherry compiles evidence into a readable, versioned skill. You approve
    the exact revision you read. Edit one step and the approval goes stale.
-3. **Use it everywhere.** Install into Codex (`AGENTS.md`), Claude Code (`SKILL.md`), or any agent
-   reading Agent Skills bundles. Or let a visiting agent pull it live over WebMCP.
+3. **Use it everywhere.** Install into Codex (`AGENTS.md`) or any Agent Skills-compatible host
+   (`SKILL.md`). Or let a visiting agent pull it live over WebMCP.
 
 ## Quickstart
 
@@ -83,6 +89,7 @@ fresh clone):
 | Bundle verification | `npm run verify:pack` | tamper-evident, evidence-complete |
 | Service worker verification | `npm run verify:sw` | 5 of 5 |
 | Submission audit | `npm run audit:submission` | 0 failures, 0 warnings |
+| Codex/WebMCP surface audit | `npm run audit:codex-submission` | canonical judge surfaces checked |
 
 Run them all with `npm run verify:all`. The end-to-end row deliberately points at the committed
 Playwright report rather than a number typed into prose: the report is the evidence, and
@@ -92,6 +99,15 @@ or more skips than passes.
 Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.
 Every compiled bundle ships its own standalone `scripts/verify.mjs` so a stranger can check it
 without trusting us.
+
+## Hourly release monitor
+
+`.github/workflows/hourly-health.yml` runs at minute 17 of every hour. It installs from the lockfile,
+runs deterministic gates, builds the application, checks the release bundle and service worker,
+runs both submission audits, and exercises focused WebMCP, showcase, and persistence journeys. A
+failure updates one deduplicated repair issue with the commit and diagnostics; a later green run
+records recovery and closes it. The monitor never edits code, grants approvals, merges, deploys, or
+rewrites history.
 
 ## Deliberate boundaries
 

@@ -51,7 +51,7 @@ describe('repository harness contract', () => {
     expect(contract).toContain('pairing token');
     expect(contract).toMatch(/labelled synthetic/i);
     expect(contract).toContain('package-lock.json');
-    expect(contract).toContain('headless automation of ChatGPT, Codex, or Claude');
+    expect(contract).toContain('headless automation of third-party agent accounts or credentials');
     expect(contract).toContain('BLOCKED');
   });
 

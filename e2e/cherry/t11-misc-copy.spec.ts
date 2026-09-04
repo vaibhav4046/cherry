@@ -40,7 +40,7 @@ test.describe('T11 Studio copy surfaces', () => {
     await expect(privacy).not.toContainText(/IndexedDB|workspace/i);
 
     const commandLine = page.locator('section').filter({
-      has: page.getByRole('heading', { name: 'Connect Claude Code or Codex CLI' }),
+      has: page.getByRole('heading', { name: 'Connect Codex CLI' }),
     });
     await expect(commandLine).toContainText('Export your space');
     await expect(commandLine).toContainText('compatible command-line agent');

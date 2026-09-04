@@ -202,19 +202,19 @@ export default function Connections() {
         </section>
 
         <section className="card stack" aria-labelledby="cli-heading">
-          <h2 id="cli-heading" className="subhead">Connect Claude Code or Codex CLI</h2>
+          <h2 id="cli-heading" className="subhead">Connect Codex CLI</h2>
           <p style={{ fontSize: 14, margin: 0 }}>
             Export your space from the Command Center, then give a compatible command-line agent read and
             verification access through Cherry's included local bridge.
           </p>
           <div className="row">
             <code className="mono" style={{ background: 'var(--color-paper-white)', border: 'var(--border)', borderRadius: 8, padding: '6px 10px', overflowX: 'auto', flex: 1, minWidth: 200 }}>
-              claude mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json
+              codex mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json
             </code>
-            <CopyButton text="claude mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json" />
+            <CopyButton text="codex mcp add cherry -- node runner/mcp/server.mjs --workspace ./cherry-workspace.json" />
           </div>
           <p style={{ fontSize: 14, margin: 0 }}>
-            Compiled skill bundles install into Claude Code by unzipping into <code className="mono">~/.claude/skills/</code>.
+            Compiled skill bundles include <code className="mono">targets/codex/AGENTS.md</code> and a standalone hash verifier.
             Start the optional local runner with:
           </p>
           <div className="row">

@@ -77,7 +77,7 @@ describe('WebMCP mission tools (control surface)', () => {
 
     expect(schemaOf('list_skills').properties.status?.enum).toEqual(['all', 'approved']);
     expect(schemaOf('list_skills').properties.offset).toMatchObject({ type: 'integer', minimum: 0 });
-    expect(schemaOf('get_skill').properties.format?.enum).toEqual(['summary', 'skill-md', 'agents-md', 'claude-md']);
+    expect(schemaOf('get_skill').properties.format?.enum).toEqual(['summary', 'skill-md', 'agents-md']);
     expect(schemaOf('get_skill').properties.part?.type).toBe('integer');
     expect(schemaOf('recommend_skills').properties.limit?.type).toBe('integer');
 
