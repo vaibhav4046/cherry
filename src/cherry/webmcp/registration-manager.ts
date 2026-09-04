@@ -138,6 +138,8 @@ export class WebMcpRegistrationManager {
   /** The aperture before a selection that was deferred behind an in-flight execution. */
   private pendingSelection: string[] | null = null;
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Cancels local/bridge calls on dispose, the way aborting a registration cancels a host call. */
+  private localController: AbortController | null = null;
 
   constructor(context: ToolContext) {
     this.context = context;
@@ -355,8 +357,12 @@ export class WebMcpRegistrationManager {
       this.logCall(name, refused, 'local');
       return refused;
     }
-    const controller = new AbortController();
-    const result = await definition.execute(input, controller.signal);
+    // A host call is cancelled by aborting its registration; a local call had
+    // nothing to abort it, so a tool that waits (get_approval_status with
+    // waitSeconds) kept polling after the manager was disposed. Local calls now
+    // share the lifetime controller, so dispose() ends them too.
+    this.localController ??= new AbortController();
+    const result = await definition.execute(input, this.localController.signal);
     this.logCall(name, result, 'local');
     return result;
   }
@@ -366,6 +372,8 @@ export class WebMcpRegistrationManager {
   }
 
   dispose(): void {
+    this.localController?.abort();
+    this.localController = null;
     if (this.flushTimer !== null) clearTimeout(this.flushTimer);
     this.flushTimer = null;
     this.pendingSelection = null;
