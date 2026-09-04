@@ -59,6 +59,8 @@ import { generateSkillFromLesson } from '../skillgraph/quick-skill.ts';
 import { createProofReceipt, listReceipts } from '../proof/proof-service.ts';
 import { exportWorkspace } from '../persistence/workspace-archive.ts';
 import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../library/library-service.ts';
+import { loadCatalogManifest, searchCatalog } from '../library/skill-catalog.ts';
+import { installCatalogSkill } from '../library/catalog-install.ts';
 import { loadExampleWorkspace } from '../persistence/example-workspace-loader.ts';
 import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
@@ -526,10 +528,17 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const planStatus = workspaceId && mission ? (await getPlanForMission(workspaceId, mission.id))?.status ?? null : null;
       const state = productStateFor(mission?.state ?? null, workspaceId !== null, planStatus);
       const byState = TOOL_STATE_TABLE;
+      // Advertise the catalog here so an agent knows the shelf exists before it
+      // has asked a question that happens to miss.
+      const catalog = await loadCatalogManifest().catch(() => null);
       return toolText({
         productState: state,
         activeTools: context.getActiveToolNames?.() ?? [...GLOBAL_TOOLS, ...(byState[state] ?? [])],
         allStates: byState,
+        catalogSkills: catalog?.totalSkills ?? 0,
+        catalogNote: catalog
+          ? `${catalog.totalSkills} third-party skills are preloaded as reference material across ${catalog.collections.length} licensed collections. They are not installed and not approved; recommend_skills surfaces matches and install_catalog_skill imports one.`
+          : 'Skill catalog unavailable in this browser.',
         registeredNameForLegacyName: Object.fromEntries(Object.entries(SAFE_TOOL_NAME_ALIASES).map(([registered, legacy]) => [legacy, registered])),
         note: 'Tools register and unregister as the product state changes. Manual UI can always do everything these tools can.',
       });
@@ -684,6 +693,16 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
             revision: entry.revision,
           }))
         : [];
+      // Nothing installed here can match a task this browser has never been
+      // taught, which used to make a fresh session a dead end. The preloaded
+      // catalog is searched only when the installed library came up empty, and
+      // its hits are returned under their own key: they are third-party
+      // reference material, not installed skills, and get_skill cannot resolve
+      // their ids until install_catalog_skill has run.
+      const catalogMatches = recommendations.length === 0
+        ? await searchCatalog(input.task, input.limit ?? 3).catch(() => [])
+        : [];
+
       const payload: Record<string, unknown> = {
         recommendationCount: recommendations.length,
         returnedCount: 0,
@@ -693,10 +712,26 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         note:
           recommendations.length > 0
             ? 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.'
-            : missed
-              ? `Nothing matched this task, so recommendations is empty on purpose. The library does hold ${entries.length} skill(s); the closest are listed under availableSkills, unranked and not claimed to fit. get_skill resolves those ids.`
-              : 'The library is empty in this browser. Call load_starter_library to install labelled reference methods you can read and install right now, or have the human teach a real one via start_apprenticeship.',
+            : catalogMatches.length > 0
+              ? `Nothing installed in this browser matches, so recommendations is empty on purpose. catalogSkills lists ${catalogMatches.length} third-party skill(s) from the preloaded catalog that do match the words in this task — not installed, not approved, and get_skill cannot read them yet. install_catalog_skill imports one and derives a draft from it.`
+              : missed
+                ? `Nothing matched this task, so recommendations is empty on purpose. The library does hold ${entries.length} skill(s); the closest are listed under availableSkills, unranked and not claimed to fit. get_skill resolves those ids.`
+                : 'The library is empty in this browser and the catalog has nothing matching those words. Call load_starter_library for labelled reference methods, or have the human teach a real one via start_apprenticeship.',
       };
+      if (catalogMatches.length > 0) {
+        payload.catalogSkills = [];
+        for (const match of catalogMatches) {
+          if (!appendIfBounded(payload, 'catalogSkills', {
+            catalogId: match.id,
+            name: match.name.slice(0, 60),
+            purpose: match.description.slice(0, 120),
+            collection: match.collection,
+            installed: false,
+            score: match.score,
+            matchedOn: match.matchedOn.slice(0, 3),
+          })) break;
+        }
+      }
       for (const recommendation of recommendations) {
         if (!appendIfBounded(payload, 'recommendations', recommendation)) break;
       }
@@ -816,6 +851,67 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         approvalKind: 'synthetic-sample-state',
         note:
           'Installed labelled reference methods. Their approvals are shipped sample state, not a decision this person made, so treat them as worked examples. recommend_skills and get_skill now resolve against them; a real method still has to be taught and approved by the human.',
+      });
+    }),
+  });
+
+  const installCatalogSkillSchema = z.object({
+    catalogId: z.string().min(1).max(200),
+    workspaceName: z.string().min(1).max(120).optional(),
+  });
+  define({
+    name: 'install_catalog_skill',
+    description:
+      'Install one skill from the preloaded catalog of third-party Agent Skills into this browser. The upstream SKILL.md is imported as a lesson and run through the ordinary derivation, so the result is a DRAFT with citations back to the source repo — not an approved method. Attribution and license travel with the text. Creates a workspace first if this browser has none. Find ids with recommend_skills.',
+    inputSchema: objectSchema(
+      {
+        catalogId: { type: 'string', description: 'Catalog id from recommend_skills, e.g. "workflows/screen-reader-testing"' },
+        workspaceName: { type: 'string', description: 'Name for the workspace, only used if one has to be created' },
+      },
+      ['catalogId'],
+    ),
+    annotations: { readOnlyHint: false, untrustedContentHint: true },
+    // Executable through onboarding too, but only advertised in `empty`: the
+    // contextual aperture is capped at five and onboarding is already full.
+    states: ['empty', 'onboarding'],
+    zodSchema: installCatalogSkillSchema,
+    execute: guarded(installCatalogSkillSchema, async (input) => {
+      let workspaceId = context.getActiveWorkspaceId();
+      let workspaceCreated = false;
+      if (!workspaceId) {
+        const created = await createWorkspace({ name: input.workspaceName ?? 'Catalog skills' }, 'agent');
+        if (!created.ok) return toolError(created.error.code, created.error.message);
+        workspaceId = created.value.id;
+        workspaceCreated = true;
+        context.setActiveIds?.({ workspaceId });
+      }
+
+      const installed = await installCatalogSkill(workspaceId, input.catalogId, { actorType: 'agent' });
+      if (!installed.ok) return toolError(installed.error.code, installed.error.message);
+      const { graph, source, lessonId, evidenceCount } = installed.value;
+
+      return toolText({
+        skillId: graph.id,
+        name: graph.name.slice(0, 80),
+        status: graph.status,
+        revision: graph.revision,
+        steps: graph.nodes.length,
+        evidenceCount,
+        lessonId,
+        workspaceId,
+        workspaceCreated,
+        source: {
+          catalogId: source.id,
+          repo: source.repo,
+          license: source.license,
+          publisher: source.publisher,
+          path: source.upstreamPath,
+          sha256: source.sha256.slice(0, 16),
+        },
+        approved: false,
+        note:
+          'Imported third-party reference material and derived a DRAFT from it. Nobody has approved this revision, so it is not yet a method this person stands behind. Read it with get_skill; a human approves before use.',
+        nextAction: 'get_skill — read the derived draft and its citations',
       });
     }),
   });
@@ -1777,7 +1873,7 @@ export const SAFE_TOOL_NAME_ALIASES = {
 } as const;
 
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
-  empty: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_starter_library'],
+  empty: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_starter_library', 'install_catalog_skill'],
   onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson', 'load_starter_library'],
   learning: ['load_lesson', 'import_transcript', 'record_observation', 'add_source_evidence', 'derive_skill'],
   planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'get_approval_status', 'revise_checkpoint'],

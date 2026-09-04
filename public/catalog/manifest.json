@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "builtAt": "2026-09-04T05:04:22.971Z",
+  "note": "Third-party Agent Skills redistributed under their own licenses. Cherry did not author these; each entry keeps its upstream repo, license and content hash. Installing one runs Cherry ordinary derivation pipeline over the upstream text.",
+  "totalSkills": 1058,
+  "indexSha256": "8c07c34c92b8c9b426c8c1aa8e1a8241d99a1a9305c315b6c1118435316a481f",
+  "collections": [
+    {
+      "slug": "cybersecurity",
+      "repo": "mukul975/Anthropic-Cybersecurity-Skills",
+      "license": "Apache-2.0",
+      "publisher": "community",
+      "title": "Cybersecurity Skills",
+      "count": 753,
+      "sourcePath": "skills/Anthropic-Cybersecurity-Skills/skills"
+    },
+    {
+      "slug": "workflows",
+      "repo": "wshobson/agents",
+      "license": "MIT",
+      "publisher": "community",
+      "title": "Claude Code Workflows",
+      "count": 180,
+      "sourcePath": "plugins/marketplaces/claude-code-workflows"
+    },
+    {
+      "slug": "anthropic-official",
+      "repo": "anthropics/claude-plugins-official",
+      "license": "Apache-2.0",
+      "publisher": "Anthropic",
+      "title": "Anthropic Official Plugins",
+      "count": 27,
+      "sourcePath": "plugins/marketplaces/claude-plugins-official"
+    },
+    {
+      "slug": "trailofbits",
+      "repo": "trailofbits/skills",
+      "license": "CC-BY-SA-4.0",
+      "publisher": "Trail of Bits",
+      "title": "Trail of Bits Security Skills",
+      "count": 80,
+      "sourcePath": "plugins/marketplaces/trailofbits"
+    },
+    {
+      "slug": "impeccable",
+      "repo": "pbakaus/impeccable",
+      "license": "Apache-2.0",
+      "publisher": "community",
+      "title": "Impeccable",
+      "count": 1,
+      "sourcePath": "plugins/marketplaces/impeccable"
+    },
+    {
+      "slug": "ponytail",
+      "repo": "DietrichGebert/ponytail",
+      "license": "MIT",
+      "publisher": "community",
+      "title": "Ponytail",
+      "count": 6,
+      "sourcePath": "plugins/marketplaces/ponytail"
+    },
+    {
+      "slug": "caveman",
+      "repo": "JuliusBrussee/caveman",
+      "license": "MIT",
+      "publisher": "community",
+      "title": "Caveman",
+      "count": 6,
+      "sourcePath": "plugins/marketplaces/caveman"
+    },
+    {
+      "slug": "obsidian",
+      "repo": "kepano/obsidian-skills",
+      "license": "MIT",
+      "publisher": "community",
+      "title": "Obsidian Skills",
+      "count": 5,
+      "sourcePath": "plugins/marketplaces/obsidian-skills"
+    }
+  ],
+  "shards": [
+    {
+      "shard": 0,
+      "file": "shards/00.json",
+      "skills": 39,
+      "bytes": 387037,
+      "sha256": "4546cbea7a99280bfd8e8bf05a5d0e2c13567452cfc360f24a56d22348037f36"
+    },
+    {
+      "shard": 1,
+      "file": "shards/01.json",
+      "skills": 48,
+      "bytes": 481183,
+      "sha256": "015096eda2996e7d3dac96490d78f686a2c625dd8a20cc29b4819f5da4226c57"
+    },
+    {
+      "shard": 2,
+      "file": "shards/02.json",
+      "skills": 49,
+      "bytes": 507610,
+      "sha256": "ff1ebd8c99a696607a929fa06bcb2093d62a0eeb70a369201537512de56fd3e5"
+    },
+    {
+      "shard": 3,
+      "file": "shards/03.json",
+      "skills": 46,
+      "bytes": 474056,
+      "sha256": "60a3ee7f624060dfa0ffc0a0938e7d767cb0231191aa7381bbef7ae34efcf9a0"
+    },
+    {
+      "shard": 4,
+      "file": "shards/04.json",
+      "skills": 31,
+      "bytes": 366422,
+      "sha256": "f7381711e0ff9add6e750992ef6ffa951d545f0cf627336e60a17f5b0057d66c"
+    },
+    {
+      "shard": 5,
+      "file": "shards/05.json",
+      "skills": 48,
+      "bytes": 437260,
+      "sha256": "8d5821041c24a4b2368c112b7632c8409e5f8025ff198f5ce8c2b73108e75bc5"
+    },
+    {
+      "shard": 6,
+      "file": "shards/06.json",
+      "skills": 59,
+      "bytes": 594982,
+      "sha256": "f754471b8cb9071a54af37e61d755c1d96ac59829f20a74a5d761ae9f7e55fc9"
+    },
+    {
+      "shard": 7,
+      "file": "shards/07.json",
+      "skills": 49,
+      "bytes": 454752,
+      "sha256": "65dc1ca10a13dcc941a95ef4af88310224d2c5e05ae0ecf6b2f158b00eb974cb"
+    },
+    {
+      "shard": 8,
+      "file": "shards/08.json",
+      "skills": 35,
+      "bytes": 347321,
+      "sha256": "f1b93576b178a68ec64d94eb2016837ff6e383ce86800786e417889d98929474"
+    },
+    {
+      "shard": 9,
+      "file": "shards/09.json",
+      "skills": 38,
+      "bytes": 372558,
+      "sha256": "9b556d21102ce5a6b3eca1ad494fae176d7e7c77d01886e3d9f222857d003c9c"
+    },
+    {
+      "shard": 10,
+      "file": "shards/10.json",
+      "skills": 57,
+      "bytes": 640259,
+      "sha256": "bd8f258ba9c44aa3154798c2fe055fd019d8c16b6cf7b863a3352ae95d3351ef"
+    },
+    {
+      "shard": 11,
+      "file": "shards/11.json",
+      "skills": 41,
+      "bytes": 398422,
+      "sha256": "417ca7ed83fdc071da1df56af2818f48475d69f472421c06b92c7fc817eaa571"
+    },
+    {
+      "shard": 12,
+      "file": "shards/12.json",
+      "skills": 37,
+      "bytes": 371704,
+      "sha256": "1cd2f101e455ab4472a76c3c296f8c3edeb4df60978a7c95f834e23da67dac12"
+    },
+    {
+      "shard": 13,
+      "file": "shards/13.json",
+      "skills": 46,
+      "bytes": 519668,
+      "sha256": "dd1b1c3d119213029e4a26a2e5b7b1cfa33e5cd12c5a76c4a44e617792f3e3b4"
+    },
+    {
+      "shard": 14,
+      "file": "shards/14.json",
+      "skills": 24,
+      "bytes": 228587,
+      "sha256": "0ab0f2ab6aa9056fd3e225784bc71777fab28001b89215aa5dc94dba230cb6f5"
+    },
+    {
+      "shard": 15,
+      "file": "shards/15.json",
+      "skills": 40,
+      "bytes": 415667,
+      "sha256": "e265cee5782d0ca76811e93a0aed184788036c862d1bdc72556b67f770658e78"
+    },
+    {
+      "shard": 16,
+      "file": "shards/16.json",
+      "skills": 47,
+      "bytes": 518598,
+      "sha256": "bcb8f697cd2043b47958c7ec25f231f0b7b3650880ee1628ed6f9ad775c5df22"
+    },
+    {
+      "shard": 17,
+      "file": "shards/17.json",
+      "skills": 52,
+      "bytes": 547311,
+      "sha256": "b27905ecf5fd213db6a60f508b65f4bf5f3449eb6d0ae729c209fba973885e91"
+    },
+    {
+      "shard": 18,
+      "file": "shards/18.json",
+      "skills": 58,
+      "bytes": 644660,
+      "sha256": "5df9f590b475c3beb7f007388655a345a1f93013111fe2c5a9fc6e02aa06ad1f"
+    },
+    {
+      "shard": 19,
+      "file": "shards/19.json",
+      "skills": 40,
+      "bytes": 451449,
+      "sha256": "9b038f28e0766ee4b4f1c0e4991366932332e593591418496908bb0a096c8083"
+    },
+    {
+      "shard": 20,
+      "file": "shards/20.json",
+      "skills": 49,
+      "bytes": 487354,
+      "sha256": "f8a687c369a360e46dd14f99bb5cb02f108e3172b3918d2ee46eb88e270f098f"
+    },
+    {
+      "shard": 21,
+      "file": "shards/21.json",
+      "skills": 39,
+      "bytes": 388439,
+      "sha256": "8d3dea7c88b9c48ef0d81122228070ff027554161f551195bb7b3b520ddfd035"
+    },
+    {
+      "shard": 22,
+      "file": "shards/22.json",
+      "skills": 49,
+      "bytes": 484981,
+      "sha256": "b91602b75f5aa16b56f01f969092baf640889036c7ce4953275d26d44e0e31bd"
+    },
+    {
+      "shard": 23,
+      "file": "shards/23.json",
+      "skills": 37,
+      "bytes": 388281,
+      "sha256": "38da01ed8b66840c984b1c75e5802d4c2a9993b6cd61727c68360fe992ec8eda"
+    }
+  ]
+}

@@ -18,7 +18,13 @@ One task. An entire AI team. Human authority intact.
 - Mission Control: https://cherry-wine.vercel.app/studio/control
 - What is proven: https://cherry-wine.vercel.app/compatibility
 - Repository (MIT): https://github.com/vaibhav4046/cherry
-- Video: (add after recording; script in docs/release/DEMO_SCRIPT.md)
+- Demo video (1:43, subtitled): https://cherry-wine.vercel.app/media/demo/cherry-demo-subtitled.mp4
+- Demo video (clean master, for a voiceover pass): https://cherry-wine.vercel.app/media/demo/cherry-demo.mp4
+- Subtitles: https://cherry-wine.vercel.app/media/demo/cherry-demo.srt
+
+The video is a single unedited browser session against this deployment. The beat times in
+`docs/release/demo-capture.json` were measured during the capture, and every subtitle cue is
+pinned to one of them, so any cue can be checked against the second it claims.
 
 ## The four required points, answered directly
 
@@ -59,7 +65,17 @@ with legacy aliases, and every mutation tool's description states what it does *
 is an in-page inspector showing the live aperture, the registration and retirement diff, and the
 real tool-call log. Coverage is unit tests against a mock model context plus a Playwright journey
 that installs a mock `modelContext` before page load and asserts the *registered closures* actually
-execute. In a browser with no WebMCP host the panel says so plainly and registers nothing.
+execute. `e2e/cherry/webmcp-full-journey.spec.ts` runs the entire loop — learn, derive, request
+approval, execute, verify, repair, export — using nothing but those closures, and proves the
+boundary the same way: while the decision is outstanding, `get_skill` returns `approval_required`,
+and `write_artifact_file`, `compile_skill_bundle` and `export_workspace` are not registered at all.
+The approval itself is not scriptable. The test follows the deep link the tool returned and clicks
+the control on Cherry’s own screen, because shipping a test-only approval path would be shipping
+the bypass. In a browser with no WebMCP host the panel says so plainly and registers nothing.
+
+This has also been done by a real host, not only by a test: ChatGPT desktop in Work mode fetched
+the aperture and called the tools against this deployment. That session, including the two defects
+it exposed and the fixes they forced, is recorded in `docs/release/WEBMCP_LIVE_HOST_CAPTURE.md`.
 
 ## Inspiration
 
