@@ -1,4 +1,4 @@
-name: codex unit diagnostic
+name: codex source reconciliation snapshot
 
 on:
   push:
@@ -11,45 +11,43 @@ permissions:
   contents: read
 
 jobs:
-  unit-diagnostic:
+  snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
-      - name: Check out branch with merge history
+      - name: Check out readiness branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: ${{ github.sha }}
+          path: readiness
 
-      - name: Reproduce the pull-request merge with current main
+      - name: Check out latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Check out merge base
+        uses: actions/checkout@v4
+        with:
+          ref: dc6ac56eeaf7a15bf037023430c5f53aad27525b
+          path: base
+
+      - name: Package source trees
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git merge --no-edit origin/main
+          tar --exclude=.git --exclude=node_modules --exclude=dist -czf readiness-source.tar.gz -C readiness .
+          tar --exclude=.git --exclude=node_modules --exclude=dist -czf main-source.tar.gz -C main .
+          tar --exclude=.git --exclude=node_modules --exclude=dist -czf base-source.tar.gz -C base .
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install from lockfile
-        run: npm ci
-
-      - name: Run unit tests and keep exact output
-        id: unit
-        shell: bash
-        run: |
-          set -o pipefail
-          npm test 2>&1 | tee unit-test.log
-
-      - name: Upload diagnostic log
-        if: always()
+      - name: Upload reconciliation snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: codex-unit-diagnostic-${{ github.sha }}
-          path: unit-test.log
+          name: codex-reconciliation-${{ github.sha }}
+          path: |
+            readiness-source.tar.gz
+            main-source.tar.gz
+            base-source.tar.gz
           if-no-files-found: error
           retention-days: 1
