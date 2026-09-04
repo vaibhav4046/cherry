@@ -33,3 +33,4 @@ debug.log
 
 # Design canvas working files (published as an Artifact, not part of the app)
 design/
+tsconfig.tsbuildinfo

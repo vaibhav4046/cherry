@@ -833,8 +833,14 @@
   .landing-nav__studio { justify-self: end; font-size: 12px; }
 
   .landing-hero {
+    /* The whole recorded player, including its Play control, has to finish
+       inside the first viewport at 390x844; an e2e journey asserts it. The
+       previous 12px padding left the control 1.4px below the fold on Linux,
+       where the font metrics run fractionally taller than on Windows. Ten
+       pixels of vertical padding buys ~4px of headroom without changing the
+       horizontal rhythm. */
     min-height: calc(100svh - 52px);
-    padding: 12px;
+    padding: 10px 12px;
     grid-template-columns: 1fr;
     align-content: start;
     gap: 4px;

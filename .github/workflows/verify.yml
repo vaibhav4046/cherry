@@ -48,6 +48,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # One unit test decodes the shipped demo recording by launching a real
+      # browser, so this job needs the same pinned Chromium the e2e job uses.
+      # Without it the suite fails here for a missing executable, not for a
+      # defect in the code under test.
+      - name: Install Chromium for the media-probe unit test
+        run: npx playwright install --with-deps chromium
+
       - name: Unit tests
         run: npm run test
 

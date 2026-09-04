@@ -147,10 +147,13 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 613 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
+- 623 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
-  browser-to-real-runner integration test, and a service-worker redeploy check, all green from a
-  clean install.
+  browser-to-real-runner integration test, and a service-worker redeploy check. The unit, runner,
+  build, pack and audit gates pass on Linux CI and locally. Two browser journeys currently fail on
+  Linux CI on a 390px viewport, where a hero element ends 1.4px below the fold; they pass on
+  Windows. The run is public in the repository's Actions tab, and this page would rather point at
+  it than claim a green matrix it cannot show.
 - A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
   with the test or capture behind the label, including what was not tested.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
