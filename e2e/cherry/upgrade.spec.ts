@@ -25,9 +25,15 @@ test.describe('landing upgrade', () => {
     await expect(page.getByRole('heading', { name: 'What is proven, and what is not' })).toBeVisible();
     const rows = page.getByTestId('compat-rows');
     await expect(rows.getByText('The whole journey by hand, with no AI provider involved')).toBeVisible();
-    // The live-host row is honestly labelled Experimental, not Validated.
+    // This row was Experimental until 2026-09-04, when a session in the ChatGPT
+    // desktop app's built-in browser was captured: the host called the
+    // registered tools through document.modelContext and the page changed. The
+    // label may only say Validated while the row still names that capture and
+    // still admits what the session did not cover.
     const chatgptRow = rows.locator('.card', { hasText: 'ChatGPT and Codex built-in browsers' });
-    await expect(chatgptRow.getByText('Experimental')).toBeVisible();
+    await expect(chatgptRow.getByText('Validated')).toBeVisible();
+    await expect(chatgptRow).toContainText('WEBMCP_LIVE_HOST_CAPTURE.md');
+    await expect(chatgptRow).toContainText('was not exercised in that session');
     const authRow = rows.locator('.card', { hasText: 'Accounts (Privy, opt-in)' });
     await expect(authRow.getByText('Shipped')).toBeVisible();
     const libraryRow = rows.locator('.card', { hasText: 'Your skill library, and the tools that hand it to an agent' });
