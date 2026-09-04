@@ -1,0 +1,112 @@
+# Verification provenance for Cherry.
+#
+# Every public test count in this repository should be traceable to a run of
+# this workflow on a specific commit, rather than to a number typed into a
+# document. The deterministic gates need no secrets, so this runs on every push
+# and pull request and on forks.
+#
+# The browser suite is a separate job because it is slow and needs its own
+# runtime; splitting it keeps the fast gates honest about what they cover. A
+# green badge from this workflow means the deterministic gates passed, not that
+# the browser suite did — the browser job reports itself.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: Deterministic gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # ci, not install: the lockfile is the contract, and a run that silently
+      # resolves different versions cannot be evidence for anything.
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Runner and MCP bridge tests
+        run: npm run test:runner
+
+      - name: Production build
+        run: npm run build
+
+      - name: Bundle integrity
+        run: npm run verify:pack
+
+      - name: Service worker
+        run: npm run verify:sw
+
+      - name: Submission audit
+        run: npm run audit:submission
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-reports-${{ github.sha }}
+          path: |
+            docs/release/e2e-results.json
+            artifacts/release/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  browser:
+    name: Browser journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+
+      # Browsers are pinned by the Playwright version in the lockfile.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end journeys
+        run: npm run test:e2e
+
+      - name: Upload browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ github.sha }}
+          path: |
+            docs/release/e2e-results.json
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 30

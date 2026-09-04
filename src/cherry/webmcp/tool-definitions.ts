@@ -24,7 +24,8 @@ import {
   transitionMission,
   updateMission,
 } from '../mission/mission-service.ts';
-import { productStateForMission } from '../mission/mission-state.ts';
+import { productStateFor } from '../mission/mission-state.ts';
+import { getPlanForMission } from '../workforce/mission-plan-service.ts';
 import { addEvidence, listEvidence } from '../evidence/evidence-service.ts';
 import type { EvidenceRecord } from '../evidence/evidence-model.ts';
 import {
@@ -427,7 +428,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const verifications = mission ? await listVerifications(workspace.id, mission.id) : [];
       return toolText({
         workspace: { id: workspace.id, name: workspace.name },
-        productState: productStateForMission(mission?.state ?? null, true),
+        productState: productStateFor(mission?.state ?? null, true, mission ? (await getPlanForMission(workspace.id, mission.id))?.status ?? null : null),
         mission: mission
           ? { id: mission.id, title: mission.title, state: mission.state, lessonId: mission.lessonId, skillGraphId: mission.skillGraphId, artifactSetId: mission.artifactSetId }
           : null,
@@ -450,7 +451,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const workspaceId = context.getActiveWorkspaceId();
       const missionId = context.getActiveMissionId();
       const mission = missionId ? await getMission(missionId) : null;
-      const state = productStateForMission(mission?.state ?? null, workspaceId !== null);
+      const planStatus = workspaceId && mission ? (await getPlanForMission(workspaceId, mission.id))?.status ?? null : null;
+      const state = productStateFor(mission?.state ?? null, workspaceId !== null, planStatus);
       const byState = TOOL_STATE_TABLE;
       return toolText({
         productState: state,
@@ -496,7 +498,8 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       const workspaceId = context.getActiveWorkspaceId();
       const missionId = context.getActiveMissionId();
       const mission = missionId ? await getMission(missionId) : null;
-      const state = productStateForMission(mission?.state ?? null, workspaceId !== null);
+      const planStatus = workspaceId && mission ? (await getPlanForMission(workspaceId, mission.id))?.status ?? null : null;
+      const state = productStateFor(mission?.state ?? null, workspaceId !== null, planStatus);
       return toolText({
         productState: state,
         activeWorkspaceId: workspaceId,

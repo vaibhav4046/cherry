@@ -30,6 +30,7 @@ export function Landing() {
           <div className="landing-nav__navigation">
             <div className="landing-nav__links">
               <a href="#seed">How it works</a>
+              <Link to="/connect">Connect an agent</Link>
               <Link to="/showcase#recorded-mission">Recorded run</Link>
               <Link to="/compatibility">Compatibility</Link>
             </div>
@@ -128,7 +129,7 @@ export function Landing() {
             id="seed-bank"
             marker="06 / REUSE"
             heading="Save approved methods as reusable skills."
-            body="Turn a reviewed process into an installable skill. Cherry keeps the exact version you approved and the source it came from so your workers can reuse it later."
+            body="An agent that opens this page in a WebMCP browser can call list_skills, recommend_skills and get_skill, and leave with the exact revision you approved and a SHA-256 it can check itself. Most agent-ready sites let an agent work the page. This one sends the agent away more capable, and no tool it can reach grants an approval."
             composition="archive"
           >
             <SeedBankEvidence />

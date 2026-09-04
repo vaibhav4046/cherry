@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { listWorkspaces } from '../cherry/mission/mission-service.ts';
 import { listMissions } from '../cherry/mission/mission-service.ts';
 import type { Mission, WorkspaceRecord } from '../cherry/mission/mission-model.ts';
-import { productStateForMission, type ProductState } from '../cherry/mission/mission-state.ts';
+import { productStateFor, type ProductState } from '../cherry/mission/mission-state.ts';
+import { getPlanForMission } from '../cherry/workforce/mission-plan-service.ts';
 import { WebMcpRegistrationManager, type WebMcpStatus } from '../cherry/webmcp/registration-manager.ts';
 import type { ToolSurface } from '../cherry/webmcp/workforce-tools.ts';
 
@@ -49,6 +50,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(() => readStored(ACTIVE_WORKSPACE_KEY));
   const [activeMissionId, setActiveMissionId] = useState<string | null>(() => readStored(ACTIVE_MISSION_KEY));
+  const [activePlanStatus, setActivePlanStatus] = useState<Parameters<typeof productStateFor>[2]>(null);
   const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty', recentlyRemoved: [], recentCalls: [], agent: { attached: false, name: null }, surface: 'default', diagnostics: [] });
 
   const workspaceRef = useRef<string | null>(activeWorkspaceId);
@@ -104,9 +106,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         writeStored(ACTIVE_MISSION_KEY, missionId);
       }
       const activeMission = loadedMissions.find((mission) => mission.id === missionRef.current) ?? null;
-      manager.syncState(productStateForMission(activeMission?.state ?? null, true));
+      // A plan-based run never transitions the Mission, so the aperture has to
+      // read the plan too or it stays on onboarding tools while work executes.
+      const plan = activeMission ? await getPlanForMission(workspaceId, activeMission.id) : null;
+      const planStatus = plan?.status ?? null;
+      setActivePlanStatus(planStatus);
+      manager.syncState(productStateFor(activeMission?.state ?? null, true, planStatus));
     } else {
       setMissions([]);
+      setActivePlanStatus(null);
       manager.syncState('empty');
     }
     setReady(true);
@@ -124,7 +132,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null;
   const activeMission = missions.find((mission) => mission.id === activeMissionId) ?? null;
-  const productState = productStateForMission(activeMission?.state ?? null, activeWorkspace !== null);
+  const productState = productStateFor(activeMission?.state ?? null, activeWorkspace !== null, activePlanStatus);
 
   const value: AppState = {
     ready,
