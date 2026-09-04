@@ -99,8 +99,11 @@ const filter = [
   `[2:v]format=gray,split=2[maskA][maskB]`,
   `[take][maskA]alphamerge[win]`,
   `[maskB]format=rgba,colorchannelmixer=rr=0:rg=0:rb=0:gr=0:gg=0:gb=0:br=0:bg=0:bb=0:ar=0.45:ag=0:ab=0,gblur=sigma=26[shadow]`,
-  `[bg][shadow]overlay=${left}:${top + 20}[withShadow]`,
-  `[withShadow][win]overlay=${left}:${top}[framed]`,
+  // shortest=1 on both overlays, or the film never ends: the backdrop and the
+  // mask are looped stills, they drive the filter timeline, and -shortest alone
+  // does not stop a graph whose first overlay input is infinite.
+  `[bg][shadow]overlay=${left}:${top + 20}:shortest=1[withShadow]`,
+  `[withShadow][win]overlay=${left}:${top}:shortest=1[framed]`,
   `[framed]format=yuv420p[v]`,
 ].join(';');
 
