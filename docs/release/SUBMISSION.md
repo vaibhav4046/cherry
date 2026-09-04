@@ -10,7 +10,7 @@
 - **Verifies the work** with deterministic checks against the real files, shows the failing evidence, accepts a bounded repair, and only calls it done when the re-run passes.
 - **Exports** an Agent Skill bundle, a proof receipt and the whole workspace, each with a hash the recipient can recompute.
 
-Everything runs in the browser. No API keys, no accounts, no server. Nothing leaves IndexedDB without an explicit export.
+The core path runs in your browser and asks for no model API key: no Cherry-hosted backend holds your work, and nothing leaves IndexedDB without an explicit export. Two things are opt-in and off by default, so it would be wrong to say "no accounts, no server" flatly: email sign-in through Privy, and the paired loopback runner on your own machine that executes work.
 
 ## Live product
 

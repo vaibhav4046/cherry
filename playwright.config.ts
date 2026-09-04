@@ -2,6 +2,30 @@ import { defineConfig, devices } from '@playwright/test';
 
 const E2E_PRIVY_APP_ID = process.env.VITE_PRIVY_APP_ID?.trim() || 'clp_cherry_e2e_guest_mode';
 
+/**
+ * True only when this invocation runs the whole suite, so only a whole-suite run
+ * may write the committed JSON report.
+ *
+ * Everything after `playwright test` that is not a flag is a filename filter, so
+ * any positional argument means a subset. `--grep`, `--grep-invert`, `--project`,
+ * `--shard` and `--last-failed` narrow it too. `CI` is treated as a full run
+ * because the workflow invokes the suite without filters.
+ */
+function isFullRun(): boolean {
+  const argv = process.argv.slice(2);
+  const narrowing = ['--grep', '-g', '--grep-invert', '--project', '--shard', '--last-failed', '--only-changed'];
+  for (const arg of argv) {
+    if (arg.startsWith('-')) {
+      const name = arg.split('=')[0]!;
+      if (narrowing.includes(name)) return false;
+      continue;
+    }
+    // A bare word is a test-file filter.
+    return false;
+  }
+  return true;
+}
+
 export default defineConfig({
   testDir: './e2e',
   testIgnore: /demo-recording\.spec\.ts/,
@@ -9,7 +33,17 @@ export default defineConfig({
   workers: 1,
   timeout: 90_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['json', { outputFile: 'docs/release/e2e-results.json' }]],
+  // docs/release/e2e-results.json is the submission's browser-suite evidence, and
+  // README, the Devpost kit and audit:submission all point at it. Writing it on
+  // every invocation meant a filtered run — `playwright test upgrade`, one spec
+  // while debugging — silently replaced a whole-suite result with a file
+  // recording that almost nothing ran. That happened repeatedly, and the audit
+  // only caught it because it fails when a run reports zero tests.
+  //
+  // So the JSON report is written only by a full run: no positional filter, no
+  // --grep, no --project narrowing. Filtered runs still print to the console;
+  // they just cannot overwrite the evidence.
+  reporter: isFullRun() ? [['list'], ['json', { outputFile: 'docs/release/e2e-results.json' }]] : [['list']],
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
