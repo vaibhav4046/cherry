@@ -3,7 +3,8 @@
     "argv": [
       "D:\\node.exe",
       "D:\\project\\cherry\\node_modules\\@playwright\\test\\cli.js",
-      "test"
+      "test",
+      "--list"
     ],
     "configFile": "D:\\project\\cherry\\playwright.config.ts",
     "rootDir": "D:/project/cherry/e2e",
@@ -16,18 +17,14 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "desktop",
         "name": "desktop",
         "testDir": "D:/project/cherry/e2e",
@@ -43,9 +40,7 @@
         "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "mobile",
         "name": "mobile",
         "testDir": "D:/project/cherry/e2e",
@@ -116,22 +111,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1996,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:19.888Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-2518907c97c1ac69d2be",
@@ -150,22 +131,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2027,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:23.009Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-a5dace3749f5e2483849",
@@ -184,22 +151,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7591,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:25.053Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-d7126446aa42c0e6a48b",
@@ -218,22 +171,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1837,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:32.664Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-8eea33411f4c06cf3d01",
@@ -252,22 +191,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2804,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:34.523Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-2cf1ec08d50657b3d71e",
@@ -286,22 +211,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2174,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:37.344Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-93c45c1631d336b8a860",
@@ -320,22 +231,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1790,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:39.533Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-7377e92522ac1c9afdcd",
@@ -354,22 +251,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3209,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:41.337Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-99939da14062bdb2c30e",
@@ -405,22 +288,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1702,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:44.576Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ad095c448554a5a49b88-a598c10cb0d0e9f59f7d",
@@ -439,22 +308,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 4955,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:46.296Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ad095c448554a5a49b88-f3b55ad3f2e9a086400e",
@@ -473,22 +328,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3187,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:51.271Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ad095c448554a5a49b88-78cb94ee67ee0d3f5eb9",
@@ -519,27 +360,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 150000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 17151,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:21:54.487Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "21c89cde5e6780fb818d-09e77ab6f6ef4fad906d",
@@ -558,22 +385,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2553,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:11.662Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "21c89cde5e6780fb818d-88dd83f87e9d90fcd984",
@@ -582,6 +395,34 @@
               "column": 3
             }
           ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\demo-agent-journey.spec.ts",
+      "file": "cherry/demo-agent-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "films an agent learning a skill, a person approving it, and the work being proved",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "6e1f0d24d8f67403720a-b5006586a92f762847d9",
+          "file": "cherry/demo-agent-journey.spec.ts",
+          "line": 75,
+          "column": 1
         }
       ]
     },
@@ -609,22 +450,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1770,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:14.245Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "181b0dfd3ae04c5bc467-8480ddcc0eff2491b289",
@@ -643,27 +470,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 424,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:16.038Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "181b0dfd3ae04c5bc467-28fcb754cc6dfa8fe4cd",
               "file": "cherry/demo-recording-ui.spec.ts",
-              "line": 61,
+              "line": 63,
               "column": 3
             }
           ]
@@ -694,22 +507,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1548,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:16.490Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-2c1d98987726c3a461ff",
@@ -728,22 +527,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1606,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:18.053Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-595d8edff6d22d6bf75c",
@@ -762,22 +547,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2248,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:19.684Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-670c3e6fd0528e63a39a",
@@ -796,22 +567,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1967,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:22:21.945Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-c1ac3e070e50f380a764",
@@ -840,22 +597,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 2199,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:23.940Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-ea53139829b1777c587c",
@@ -874,22 +617,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 2050,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:26.153Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-a44714182d16e3d864f3",
@@ -908,22 +637,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1499,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:28.228Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-e885beb03c8284926426",
@@ -942,22 +657,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 891,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:29.747Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-b9907c32b3aa2ff9e5d4",
@@ -976,22 +677,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1680,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:30.653Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-c13f98139cd74e33e409",
@@ -1010,22 +697,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 37264,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:22:32.347Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-2cac199ea290b6f8035c",
@@ -1052,22 +725,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 2083,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:23:09.648Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "6bef802e5d6f169dab47-9b45ab57ab380c23fb17",
@@ -1086,22 +745,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1275,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:23:11.748Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "6bef802e5d6f169dab47-96347d333d862614a234",
@@ -1120,22 +765,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 3916,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:23:13.038Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "6bef802e5d6f169dab47-48e2a1cebfc47c9afc35",
@@ -1154,22 +785,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 685,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:23:16.967Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "6bef802e5d6f169dab47-a50c2be81a1a3b46e272",
@@ -1203,22 +820,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1256,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:17.677Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-cca697f3926d4a5e1daa",
@@ -1237,22 +840,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1609,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:18.949Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-0f49d0d7e01233db1d8f",
@@ -1271,22 +860,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1794,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:20.571Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-fa5d2cf5c6e9a49da327",
@@ -1305,22 +880,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1448,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:22.379Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-b6cf08fb4356054a6ed4",
@@ -1339,22 +900,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1900,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:23.840Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-89ab4c70084c2add0753",
@@ -1390,22 +937,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3388,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:25.777Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ea2267adb04f6488957a-5b8a8d31294bc31682d8",
@@ -1424,22 +957,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1413,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:29.179Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ea2267adb04f6488957a-e35c73a09e7221ac452d",
@@ -1461,37 +980,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
-                  "annotations": [
-                    {
-                      "type": "parallel-overlap",
-                      "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
-                    }
-                  ],
+                  "timeout": 90000,
+                  "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 48715,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:23:30.606Z",
-                      "annotations": [
-                        {
-                          "type": "parallel-overlap",
-                          "description": "research-competitor, audit-onboarding, developer-fix, content-draft"
-                        }
-                      ],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ea2267adb04f6488957a-91a6f04813e6941734bb",
@@ -1522,27 +1017,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 12768,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:20.953Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "417ea86cbde4b6cab3c9-3678f8e5665e0a4349bb",
@@ -1578,22 +1059,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1918,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:33.744Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "571b9a2d3f9e79848449-fc6f3da3c8613f820ef7",
@@ -1612,22 +1079,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1268,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:35.676Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "571b9a2d3f9e79848449-485d6cae9518651708d5",
@@ -1646,22 +1099,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1140,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:36.960Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "571b9a2d3f9e79848449-67bcd43b10bb32d818c2",
@@ -1680,22 +1119,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1004,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:38.113Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "571b9a2d3f9e79848449-53daf6b013b994465cac",
@@ -1714,22 +1139,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1685,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:39.131Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "571b9a2d3f9e79848449-292d0268b62d05432caf",
@@ -1765,22 +1176,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7665,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:40.847Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "9a5b3e8b82cdca839325-127daa9c5972d39b8b74",
@@ -1816,22 +1213,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2531,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:48.542Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-3d1a9487dcf68bf9c953",
@@ -1850,22 +1233,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3309,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:51.087Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-87abe1a4d2ea083b376f",
@@ -1884,22 +1253,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 620,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:54.411Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-a6a98652683b805b2152",
@@ -1918,22 +1273,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1090,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:55.047Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-da84e163e0239c977c2d",
@@ -1952,22 +1293,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 523,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:56.149Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-b9271fa26a35b9497e11",
@@ -1986,22 +1313,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 697,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:56.684Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-a1d2aff4f5aca50a256e",
@@ -2037,22 +1350,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5104,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:24:57.408Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "f248addefedc6e593dda-5a74e57c2d37e3b32970",
@@ -2071,22 +1370,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3445,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:02.527Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "f248addefedc6e593dda-a1ee10744314be1c8225",
@@ -2105,22 +1390,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1135,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:05.987Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "f248addefedc6e593dda-8ee6dcd6dbeed1579461",
@@ -2156,22 +1427,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1699,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:07.151Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "49a1ccec214198d092ce-04dd0ed7e189ce28fd93",
@@ -2190,22 +1447,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 327,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:08.863Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "49a1ccec214198d092ce-865ef482495c6c20a4a9",
@@ -2224,22 +1467,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1682,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:09.204Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "49a1ccec214198d092ce-bf3f12bc5e022de33d96",
@@ -2258,22 +1487,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2319,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:10.902Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "49a1ccec214198d092ce-75052cfb8745009a4fb0",
@@ -2292,22 +1507,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2512,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:13.232Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "49a1ccec214198d092ce-98cf0133ad6871caf726",
@@ -2343,22 +1544,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3199,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:15.777Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ba0f12340033bd3c3103-eb90d0ea6897b1672754",
@@ -2385,22 +1572,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1984,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:18.991Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ba0f12340033bd3c3103-895599e630a1da908818",
@@ -2419,22 +1592,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 784,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:20.988Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ba0f12340033bd3c3103-3d1259d5e430048b4adc",
@@ -2453,22 +1612,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 590,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:21.789Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ba0f12340033bd3c3103-b6429e88837089b70b3a",
@@ -2487,22 +1632,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 791,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:22.395Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "ba0f12340033bd3c3103-7b7fa72f7b4d627bc6d9",
@@ -2538,22 +1669,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 12873,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:23.210Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5f506c2edaca99e191ec-6f310afe32563c5323a0",
@@ -2572,22 +1689,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2261,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:36.098Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5f506c2edaca99e191ec-e00cd295bfa985b4a93e",
@@ -2618,27 +1721,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7912,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:38.400Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "3618732b7e1770231ef5-9b0872c709bdbb589e88",
@@ -2674,22 +1763,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 966,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:46.343Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-83be1a8ac40d3d0cc905",
@@ -2708,22 +1783,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 942,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:47.323Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-6fb71a046705cb197bac",
@@ -2742,22 +1803,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 987,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:48.279Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-94050cabe6a63f03b966",
@@ -2776,22 +1823,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 964,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:49.286Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-d57f9dc3448256b0c2d4",
@@ -2810,22 +1843,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 724,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:50.267Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-73d4cf23cb3544f69285",
@@ -2844,22 +1863,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 327,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:51.008Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-becf377fd25af46db6bf",
@@ -2878,22 +1883,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1467,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:51.349Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-46f525ae1967941be55d",
@@ -2912,22 +1903,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1765,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:52.829Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-351936eadf0619388fa7",
@@ -2946,22 +1923,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1274,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:54.608Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-1c39e56adedefe354645",
@@ -2980,22 +1943,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 858,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:23.548Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-dc6947ce380c08ef4561",
@@ -3014,22 +1963,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 828,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:24.600Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-4cd0fb3682d24842624a",
@@ -3048,22 +1983,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 840,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:25.437Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-02fb7a072c3c998c8809",
@@ -3082,22 +2003,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1370,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:26.289Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-41368cb6d16e4100f64e",
@@ -3116,22 +2023,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 759,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:27.674Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-65694f3174ba0d979e80",
@@ -3150,22 +2043,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 313,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:28.448Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-0a1345933574ec8a9827",
@@ -3184,22 +2063,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1536,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:28.777Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-5d4f9665739af17041bc",
@@ -3218,22 +2083,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1677,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:30.327Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-3122323984b14f7332cb",
@@ -3252,22 +2103,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1246,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:32.018Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-39496e0e227ebc83b50a",
@@ -3294,22 +2131,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2399,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:55.894Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-48f89aa5f9a9a3ba6b06",
@@ -3328,22 +2151,8 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1864,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:33.278Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "764551a30f0c3008a13d-5292380c48981586da9d",
@@ -3374,27 +2183,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1461,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:58.319Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-e85bfd21a61f8fa64d45",
@@ -3413,27 +2208,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1018,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:25:59.794Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-28a41d1f48be29dec301",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 189,
+              "line": 199,
               "column": 3
             },
             {
@@ -3447,27 +2228,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 883,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:00.827Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-5e148731d59ddbec2da8",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 198,
+              "line": 208,
               "column": 3
             },
             {
@@ -3481,27 +2248,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1241,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:01.724Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-cf79cff17fe77c91d90b",
               "file": "cherry/showcase-host.spec.ts",
-              "line": 206,
+              "line": 216,
               "column": 3
             }
           ]
@@ -3532,22 +2285,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3742,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:02.992Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "f974a77bec87ccd83aa8-06b1d88394d7f72e1dd9",
@@ -3566,22 +2305,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1722,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:06.747Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "f974a77bec87ccd83aa8-c30fbe2655581b9d6f12",
@@ -3605,27 +2330,13 @@
           "tags": [],
           "tests": [
             {
-              "timeout": 120000,
+              "timeout": 90000,
               "annotations": [],
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 3113,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:26:08.493Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "36b8b1979d9c4dbeb8d2-cdc8fc6bfb555676a70e",
@@ -3659,22 +2370,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2324,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:11.640Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-4808fa73cb7c4267f324",
@@ -3693,22 +2390,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2119,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:13.980Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-bb2796c39b2c18863c2b",
@@ -3727,22 +2410,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1648,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:16.114Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-b8ebb44c755a48ab4c73",
@@ -3761,22 +2430,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1742,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:17.777Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-9e0655862e7772712c37",
@@ -3805,22 +2460,8 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1832,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-09-03T22:26:19.542Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "607efd9179298f7330af-c9ebdc50c3aa89172cae",
@@ -3854,22 +2495,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 570,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:21.404Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-43e8c7d5e5382fc836bd",
@@ -3888,22 +2515,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 550,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:21.987Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-def4167e96584a870440",
@@ -3922,22 +2535,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 681,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:22.549Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-d90fc5630af95342741b",
@@ -3950,7 +2549,7 @@
         {
           "title": "guided example and walkthrough",
           "file": "cherry/upgrade.spec.ts",
-          "line": 43,
+          "line": 49,
           "column": 6,
           "specs": [
             {
@@ -3959,32 +2558,18 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2726,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:23.246Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-dd6cc1321428442b2c43",
               "file": "cherry/upgrade.spec.ts",
-              "line": 44,
+              "line": 50,
               "column": 3
             },
             {
@@ -3998,27 +2583,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2169,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:25.986Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-aedc51a44eede660a3ac",
               "file": "cherry/upgrade.spec.ts",
-              "line": 86,
+              "line": 92,
               "column": 3
             }
           ]
@@ -4026,7 +2597,7 @@
         {
           "title": "agent view (MCP inspector)",
           "file": "cherry/upgrade.spec.ts",
-          "line": 98,
+          "line": 104,
           "column": 6,
           "specs": [
             {
@@ -4040,27 +2611,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1466,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:28.170Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-bf21e9df9952a90899df",
               "file": "cherry/upgrade.spec.ts",
-              "line": 99,
+              "line": 105,
               "column": 3
             },
             {
@@ -4074,27 +2631,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1682,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:29.649Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-4295e3d79de3dd71a1d3",
               "file": "cherry/upgrade.spec.ts",
-              "line": 123,
+              "line": 129,
               "column": 3
             }
           ]
@@ -4102,7 +2645,7 @@
         {
           "title": "upgrade accessibility",
           "file": "cherry/upgrade.spec.ts",
-          "line": 133,
+          "line": 139,
           "column": 6,
           "specs": [
             {
@@ -4116,27 +2659,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1367,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:31.347Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-f5ececc79a897b84dafa",
               "file": "cherry/upgrade.spec.ts",
-              "line": 134,
+              "line": 140,
               "column": 3
             },
             {
@@ -4150,27 +2679,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2552,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:32.727Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-d32e87de9c9d80414232",
               "file": "cherry/upgrade.spec.ts",
-              "line": 143,
+              "line": 149,
               "column": 3
             }
           ]
@@ -4178,7 +2693,7 @@
         {
           "title": "quick skill wizard",
           "file": "cherry/upgrade.spec.ts",
-          "line": 157,
+          "line": 163,
           "column": 6,
           "specs": [
             {
@@ -4187,32 +2702,18 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1836,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:35.293Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-486040bf4604448a3d49",
               "file": "cherry/upgrade.spec.ts",
-              "line": 158,
+              "line": 164,
               "column": 3
             },
             {
@@ -4226,27 +2727,13 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1259,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:37.145Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-9125a997b5c9cea45a43",
               "file": "cherry/upgrade.spec.ts",
-              "line": 195,
+              "line": 201,
               "column": 3
             }
           ]
@@ -4254,7 +2741,7 @@
         {
           "title": "notebook (sources · overview · studio)",
           "file": "cherry/upgrade.spec.ts",
-          "line": 203,
+          "line": 209,
           "column": 6,
           "specs": [
             {
@@ -4263,32 +2750,18 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2033,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:38.417Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-10236cdd3e41512f2113",
               "file": "cherry/upgrade.spec.ts",
-              "line": 204,
+              "line": 210,
               "column": 3
             }
           ]
@@ -4319,22 +2792,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1840,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:40.479Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-02c4344bb0530b504b8d",
@@ -4353,22 +2812,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2406,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:42.332Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-392c555c7c3978ec142c",
@@ -4387,22 +2832,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1295,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:44.754Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-bb52e0326c6b57b2600c",
@@ -4433,27 +2864,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 12718,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:46.091Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-dea90ad1fc047ad56ad4",
@@ -4467,31 +2884,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 12346,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "[visual-qa] empty studio @desktop: 4 refused runner probe(s) (known, outside lane)\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:26:58.833Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-a292d5844d7b0a4369ad",
@@ -4505,31 +2904,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 14358,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "[visual-qa] populated studio @desktop: 6 refused runner probe(s) (known, outside lane)\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:27:11.194Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-5a08fe5c9e8abe23cc2b",
@@ -4543,27 +2924,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 9596,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:27:25.566Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-4acf9bc007eea4391008",
@@ -4577,31 +2944,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 10920,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "[visual-qa] empty studio @mobile: 4 refused runner probe(s) (known, outside lane)\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:27:35.175Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-0145485f2be03419b296",
@@ -4615,31 +2964,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 14005,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "[visual-qa] populated studio @mobile: 6 refused runner probe(s) (known, outside lane)\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:27:46.110Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "87eaa6935f63575cd504-d1c3014c73c203504bca",
@@ -4675,22 +3006,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1363,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:00.145Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "c385bb933e96a3fed348-14660f2d1d991448913b",
@@ -4709,22 +3026,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2406,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:01.525Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "c385bb933e96a3fed348-a757b9eee20e1cb3f690",
@@ -4743,27 +3046,50 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1830,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:03.945Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "c385bb933e96a3fed348-10fe726a7a6555d219fe",
               "file": "cherry/watch-history.spec.ts",
               "line": 64,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cherry\\webmcp-full-journey.spec.ts",
+      "file": "cherry/webmcp-full-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "WebMCP end-to-end journey",
+          "file": "cherry/webmcp-full-journey.spec.ts",
+          "line": 94,
+          "column": 6,
+          "specs": [
+            {
+              "title": "an agent learns, derives, waits for a person, then executes, verifies, repairs and exports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f833e959e3a6efe7379e-d57f7abb5c85d75ee352",
+              "file": "cherry/webmcp-full-journey.spec.ts",
+              "line": 95,
               "column": 3
             }
           ]
@@ -4789,27 +3115,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3854,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:05.802Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "060c5eae5f6f79d24336-f13b1ef77686e3094f60",
@@ -4828,22 +3140,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 335,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:09.668Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "060c5eae5f6f79d24336-62921640e30f5b655046",
@@ -4874,27 +3172,13 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 90000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2743,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:10.032Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5f7db527ef0c540abae1-ebdc0b57fa04429dabdf",
@@ -4913,22 +3197,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1376,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:12.789Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "5f7db527ef0c540abae1-68eb75cbe26bb1df453b",
@@ -4964,22 +3234,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2199,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:14.202Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-6ac46e0e5179d8d663e3",
@@ -4998,22 +3254,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1457,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:16.414Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-949330eb81d47e84ec1e",
@@ -5032,22 +3274,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1151,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:17.886Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-0ac7c0ec2d59779a8686",
@@ -5066,22 +3294,8 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2647,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-03T22:28:19.051Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-4c7dacfe6f4c72271506",
@@ -5096,10 +3310,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-03T22:20:03.360Z",
-    "duration": 512716.97,
-    "expected": 130,
-    "skipped": 0,
+    "startTime": "2026-09-04T05:46:18.739Z",
+    "duration": 1665.4400000000005,
+    "expected": 0,
+    "skipped": 132,
     "unexpected": 0,
     "flaky": 0
   }

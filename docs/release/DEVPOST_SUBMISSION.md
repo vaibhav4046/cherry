@@ -177,7 +177,7 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 627 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
+- 762 unit tests, 133 runner and MCP bridge tests, and a 130-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
   browser-to-real-runner integration test, and a service-worker redeploy check, run on every push
   by a GitHub Actions workflow whose result is public in the repository's Actions tab.
@@ -190,9 +190,7 @@ reasoning engine is the agent the person already pays for.
 
 ## What's next
 
-A live WebMCP browser-host capture (the registration contract is covered by unit and mock-host
-tests; the compatibility page keeps the surface Experimental until a real host session is
-recorded), Claude Code mission execution once a signed-in capture exists, container and remote
+Claude Code mission execution once a signed-in capture exists, container and remote
 workers behind the same lease interface, connectors behind official APIs only, and a local vision
 model over videos the person owns.
 

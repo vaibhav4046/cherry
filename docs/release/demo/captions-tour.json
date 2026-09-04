@@ -1,0 +1,18 @@
+[
+  { "kicker": "OpenAI WebMCP Challenge", "headline": "Cherry" },
+  { "kicker": "The product", "headline": "One task, an entire AI team" },
+  { "kicker": "The run's own numbers", "headline": "Two agents, 34.5 seconds, in parallel" },
+  { "kicker": "How it works", "headline": "Plan, run, check, come back to you" },
+  { "kicker": "The receipt", "headline": "Two agents ran one job" },
+  { "kicker": "Verified before display", "headline": "A recorded run, not a mock-up" },
+  { "kicker": "On the record", "headline": "Every step, and what it produced" },
+  { "kicker": "The boundary", "headline": "Publishing waits for a person" },
+  { "kicker": "WebMCP", "headline": "The page hands the agent its tools" },
+  { "kicker": "State-aware aperture", "headline": "Eleven tools, and not one more" },
+  { "kicker": "Real closures", "headline": "One row per registered tool" },
+  { "kicker": "Live call log", "headline": "You can see what it asked for" },
+  { "kicker": "Live host", "headline": "ChatGPT desktop, Work mode" },
+  { "kicker": "Validated", "headline": "It fetched the aperture and called the tools" },
+  { "kicker": "Honest by default", "headline": "What ships, says ships" },
+  { "kicker": "cherry-wine.vercel.app", "headline": "An agent cannot approve its own work" }
+]

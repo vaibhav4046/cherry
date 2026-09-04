@@ -77,8 +77,8 @@ fresh clone):
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Unit | `npm run test` | 627 passed, 2 opt-in skips |
-| Runner and MCP bridge | `npm run test:runner` | 135 passed |
+| Unit | `npm run test` | 762 passed, 2 opt-in skips |
+| Runner and MCP bridge | `npm run test:runner` | 133 passed |
 | End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | see `docs/release/e2e-results.json` |
 | Bundle verification | `npm run verify:pack` | tamper-evident, evidence-complete |
 | Service worker verification | `npm run verify:sw` | 5 of 5 |
