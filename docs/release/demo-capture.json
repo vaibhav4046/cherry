@@ -1,0 +1,105 @@
+{
+  "base": "https://cherry-wine.vercel.app",
+  "video": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\claude\\D--\\62d7df41-f8e4-46a5-8d27-401a400490e5\\scratchpad\\recording\\cherry-capture.webm",
+  "seconds": 110.99,
+  "beats": [
+    {
+      "start": 0.28,
+      "end": 5.31,
+      "label": "Title card: Cherry",
+      "planned": 4
+    },
+    {
+      "start": 5.31,
+      "end": 12.63,
+      "label": "Landing hero: \"One task. An entire AI team.\"",
+      "planned": 6
+    },
+    {
+      "start": 12.63,
+      "end": 19.01,
+      "label": "Landing proof rail: tasks, work areas, parallel time, checks",
+      "planned": 5
+    },
+    {
+      "start": 19.01,
+      "end": 24.04,
+      "label": "Landing: how the work is supervised",
+      "planned": 5
+    },
+    {
+      "start": 24.04,
+      "end": 29.35,
+      "label": "Title card: neither could publish",
+      "planned": 4
+    },
+    {
+      "start": 29.35,
+      "end": 36.74,
+      "label": "Showcase: recorded run of two agents on one job",
+      "planned": 6
+    },
+    {
+      "start": 36.74,
+      "end": 43.14,
+      "label": "Showcase: the run, step by step",
+      "planned": 5
+    },
+    {
+      "start": 43.14,
+      "end": 48.18,
+      "label": "Showcase: the approval a human had to give",
+      "planned": 5
+    },
+    {
+      "start": 48.18,
+      "end": 54.35,
+      "label": "Title card: WebMCP aperture (stand-in host)",
+      "planned": 5
+    },
+    {
+      "start": 54.35,
+      "end": 62.73,
+      "label": "Agent View: badge reads Agent connected, tools registered",
+      "planned": 7
+    },
+    {
+      "start": 62.73,
+      "end": 70.13,
+      "label": "Agent View: the tool table, one row per registered closure",
+      "planned": 6
+    },
+    {
+      "start": 70.13,
+      "end": 75.15,
+      "label": "Agent View: the live call log",
+      "planned": 5
+    },
+    {
+      "start": 75.15,
+      "end": 81.28,
+      "label": "Title card: real ChatGPT desktop capture",
+      "planned": 5
+    },
+    {
+      "start": 81.28,
+      "end": 88.7,
+      "label": "Compatibility: the live-host row, Validated",
+      "planned": 6
+    },
+    {
+      "start": 88.7,
+      "end": 93.73,
+      "label": "Compatibility: what is shipped, what is not",
+      "planned": 5
+    },
+    {
+      "start": 93.73,
+      "end": 110.99,
+      "label": "Closing card",
+      "planned": 5
+    }
+  ],
+  "problems": [],
+  "capturedAt": "2026-09-04T05:10:06.982Z"
+}

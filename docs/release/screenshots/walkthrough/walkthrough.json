@@ -1,0 +1,70 @@
+{
+  "base": "https://cherry-wine.vercel.app",
+  "capturedAt": "2026-09-04T05:15:24.972Z",
+  "steps": [
+    {
+      "step": 1,
+      "route": "/",
+      "offset": 0,
+      "file": "docs\\release\\screenshots\\walkthrough\\01-landing.png",
+      "caption": "Cherry runs supervised work on your own computer. Give it a goal; it plans, runs and checks the work, and comes back to you for the decisions."
+    },
+    {
+      "step": 2,
+      "route": "/",
+      "offset": 520,
+      "file": "docs\\release\\screenshots\\walkthrough\\02-proof-rail.png",
+      "caption": "The numbers on the page are the run’s own: two tasks, two separate work areas, 34.5 seconds in parallel, two checks passed."
+    },
+    {
+      "step": 3,
+      "route": "/showcase",
+      "offset": 0,
+      "file": "docs\\release\\screenshots\\walkthrough\\03-showcase.png",
+      "caption": "The claim, stated so you can attack it: two agents ran one job, and neither of them could publish it."
+    },
+    {
+      "step": 4,
+      "route": "/showcase",
+      "offset": 900,
+      "file": "docs\\release\\screenshots\\walkthrough\\04-run-steps.png",
+      "caption": "Every step of the run is on the record — what ran, where, and what it produced."
+    },
+    {
+      "step": 5,
+      "route": "/showcase",
+      "offset": 1600,
+      "file": "docs\\release\\screenshots\\walkthrough\\05-approval.png",
+      "caption": "Publishing stops at a human decision. No agent tool can make it."
+    },
+    {
+      "step": 6,
+      "route": "/studio/agent",
+      "offset": 0,
+      "file": "docs\\release\\screenshots\\walkthrough\\06-aperture.png",
+      "caption": "Open Agent View with a WebMCP host attached: Cherry has registered eleven site tools for this page."
+    },
+    {
+      "step": 7,
+      "route": "/studio/agent",
+      "offset": 620,
+      "file": "docs\\release\\screenshots\\walkthrough\\07-tool-table.png",
+      "caption": "The aperture is state-aware. Seven tools are always on; at most five more appear, and only when the state earns them."
+    },
+    {
+      "step": 8,
+      "route": "/studio/agent",
+      "offset": 1300,
+      "file": "docs\\release\\screenshots\\walkthrough\\08-registrations.png",
+      "caption": "These are the live registrations and the real call log — the closures themselves, not a description of them."
+    },
+    {
+      "step": 9,
+      "route": "/compatibility",
+      "offset": 0,
+      "file": "docs\\release\\screenshots\\walkthrough\\09-compatibility.png",
+      "caption": "Every host row says what was actually observed. ChatGPT desktop in Work mode is Validated because a real session did it."
+    }
+  ],
+  "problems": []
+}

@@ -1,0 +1,79 @@
+1
+00:00:00,280 --> 00:00:05,310
+Cherry turns a lesson into
+supervised work an agent can run.
+
+2
+00:00:05,310 --> 00:00:12,630
+This is the deployed product. One task,
+and an entire team of agents behind it.
+
+3
+00:00:12,630 --> 00:00:19,010
+Two tasks. Two work areas. Thirty-four
+seconds in parallel. Two checks passed.
+
+4
+00:00:19,010 --> 00:00:24,040
+You set the goal. Cherry plans,
+runs it, and checks the result.
+
+5
+00:00:24,040 --> 00:00:29,350
+The receipt: two agents ran
+one job. Neither could publish it.
+
+6
+00:00:29,350 --> 00:00:36,740
+A recorded run, verified
+before it was ever put on this page.
+
+7
+00:00:36,740 --> 00:00:43,140
+Every step is on the record:
+what ran, and what it produced.
+
+8
+00:00:43,140 --> 00:00:48,180
+Publishing stops here, because
+no person had approved it yet.
+
+9
+00:00:48,180 --> 00:00:54,350
+Now WebMCP. Cherry hands a
+visiting agent its tools from the page.
+
+10
+00:00:54,350 --> 00:01:02,730
+Site tools available: eleven. Seven always on, and
+stage tools that appear only when the state earns them.
+
+11
+00:01:02,730 --> 00:01:10,130
+One row per registered closure. These are
+the real tools, not a description of them.
+
+12
+00:01:10,130 --> 00:01:15,150
+And a live call log,
+showing exactly what the agent ran.
+
+13
+00:01:15,150 --> 00:01:21,280
+A real host did this too:
+ChatGPT desktop, in Work mode.
+
+14
+00:01:21,280 --> 00:01:28,700
+It fetched the aperture and called the
+tools. That row says Validated because it happened.
+
+15
+00:01:28,700 --> 00:01:33,730
+What ships, says ships.
+What does not, says that too.
+
+16
+00:01:33,730 --> 00:01:42,960
+Every claim here is checkable. And the one
+thing an agent cannot do is approve its own work.

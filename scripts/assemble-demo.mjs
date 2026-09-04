@@ -28,22 +28,22 @@ const WORDS_PER_SECOND = WPM / 60;
  * clauses, no clause that depends on a word the viewer cannot see on screen.
  */
 const NARRATION = [
-  'Cherry turns a lesson into work an agent can actually run — under human supervision.',
-  'This is the deployed product. One task, and an entire team of agents behind it.',
-  'Two tasks. Two separate work areas. Thirty-four seconds running in parallel. Two checks passed.',
-  'You give it a goal. It plans, runs the work on your own computer, and checks the result.',
-  'Here is the receipt. Two agents ran one job — and neither of them could publish it.',
-  'This is a recorded run, verified before it was ever put on the page.',
-  'Every step is on the record: what ran, where it ran, and what it produced.',
-  'And the publish step stops here, because a person had not approved it yet.',
-  'Now the WebMCP part. Cherry hands a visiting agent its tools, straight from the page.',
-  'The aperture is state-aware. Seven tools are always on; the rest appear only when the state earns them.',
-  'One row per registered closure — the real tools, not a description of them.',
-  'And a live call log, so you can see exactly what the agent asked for.',
-  'This was also driven by a real host: ChatGPT desktop, in Work mode.',
-  'It fetched the aperture and called the tools. That row says Validated because it happened.',
-  'What is shipped says shipped. What is not, says so too.',
-  'Every claim on this site is checkable — and the one thing an agent cannot do is approve its own work.',
+  "Cherry turns a lesson into supervised work an agent can run.",
+  "This is the deployed product. One task, and an entire team of agents behind it.",
+  "Two tasks. Two work areas. Thirty-four seconds in parallel. Two checks passed.",
+  "You set the goal. Cherry plans, runs it, and checks the result.",
+  "The receipt: two agents ran one job. Neither could publish it.",
+  "A recorded run, verified before it was ever put on this page.",
+  "Every step is on the record: what ran, and what it produced.",
+  "Publishing stops here, because no person had approved it yet.",
+  "Now WebMCP. Cherry hands a visiting agent its tools from the page.",
+  "Site tools available: eleven. Seven always on, and stage tools that appear only when the state earns them.",
+  "One row per registered closure. These are the real tools, not a description of them.",
+  "And a live call log, showing exactly what the agent ran.",
+  "A real host did this too: ChatGPT desktop, in Work mode.",
+  "It fetched the aperture and called the tools. That row says Validated because it happened.",
+  "What ships, says ships. What does not, says that too.",
+  "Every claim here is checkable. And the one thing an agent cannot do is approve its own work.",
 ];
 
 /** SRT wants HH:MM:SS,mmm. */
@@ -101,7 +101,7 @@ async function main() {
   // Then a burned-in copy, for platforms that drop the sidecar track.
   ffmpeg(IN, [
     '-i', 'cherry-demo.mp4',
-    '-vf', "subtitles=cherry-demo.srt:force_style='FontName=Segoe UI,FontSize=17,PrimaryColour=&H00F2F6FD,OutlineColour=&H99000000,BorderStyle=3,Outline=2,Shadow=0,MarginV=34'",
+    '-vf', "subtitles=cherry-demo.srt:force_style='FontName=Segoe UI,FontSize=11,PrimaryColour=&H00F2F6FD,OutlineColour=&HC0100000,BorderStyle=3,Outline=1,Shadow=0,MarginV=16'",
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
     'cherry-demo-subtitled.mp4',
   ]);
