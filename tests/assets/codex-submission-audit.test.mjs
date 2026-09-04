@@ -26,3 +26,9 @@ test('submission anchors include the live judge route and hourly monitor', () =>
   assert.match(result.stdout, /PASS Codex, WebMCP, judge-route and hourly-monitor anchors are present/);
   assert.match(result.stdout, /audit-codex-submission: 0 FAIL/);
 });
+
+
+test('verify:all keeps the Codex submission audit in the release chain', async () => {
+  const packageJson = JSON.parse(await import('node:fs/promises').then(({ readFile }) => readFile(join(repoRoot, 'package.json'), 'utf8')));
+  assert.match(packageJson.scripts['verify:all'], /npm run audit:codex-submission/);
+});

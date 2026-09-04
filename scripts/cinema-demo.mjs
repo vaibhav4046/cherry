@@ -112,7 +112,9 @@ async function main() {
 
   // Inputs: 0 = capture, 1 = mask, 2 = shadow, 3.. = captions.
   const inputs = ['-i', source, '-loop', '1', '-i', path.join(ASSETS, 'mask.png'), '-loop', '1', '-i', path.join(ASSETS, 'shadow.png')];
-  capFiles.forEach((file) => inputs.push('-loop', '1', '-i', file));
+  // A full-bleed card already carries its own headline, so it is not captioned.
+  const captioned = beats.map((beat, i) => ({ beat, file: capFiles[i] })).filter(({ beat }) => !beat.card);
+  captioned.forEach(({ file }) => inputs.push('-loop', '1', '-i', file));
 
   const chain = [
     `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},gblur=sigma=36,eq=brightness=-0.42:saturation=0.55[bg]`,
@@ -122,14 +124,14 @@ async function main() {
     `[bg][2:v]overlay=0:0:format=auto[withshadow]`,
     `[withshadow][fgm]overlay=${WIN_X}:${WIN_Y}:format=auto[base0]`,
   ];
-  beats.forEach((beat, i) => {
+  captioned.forEach(({ beat }, i) => {
     // A caption holds its beat, minus a breath at each end so it does not
     // change in the same frame the picture does.
     const start = (beat.start + 0.35).toFixed(2);
     const end = Math.min(beat.end - 0.2, videoSeconds).toFixed(2);
     chain.push(`[base${i}][${i + 3}:v]overlay=0:0:format=auto:enable='between(t,${start},${end})'[base${i + 1}]`);
   });
-  const finalLabel = `base${beats.length}`;
+  const finalLabel = `base${captioned.length}`;
 
   execFileSync('ffmpeg', [
     '-hide_banner', '-loglevel', 'error', '-y',
@@ -147,6 +149,7 @@ async function main() {
     out: OUT,
     seconds: +videoSeconds.toFixed(2),
     captions: captions.length,
+    captioned: captioned.length,
     window: { w: WIN_W, h: WIN_H, x: WIN_X, y: WIN_Y, radius: RADIUS },
   }, null, 2));
 }

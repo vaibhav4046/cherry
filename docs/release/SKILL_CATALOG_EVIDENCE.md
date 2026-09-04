@@ -147,12 +147,53 @@ returns nothing rather than a confident guess.
 - Nothing is fetched at boot. A browser that cannot reach the catalog degrades to the previous
   behaviour rather than failing.
 
-## Known limitation, stated plainly
+## Hostile pass, and what it found
 
-Derivation is tuned for spoken transcripts. A long structured markdown document currently yields a
-**thin draft** — the phishing skill above derived 1 step and 1 evidence record from an 11,769-character
-source. The provenance, citation and approval gate are all correct; the step breakdown is shallow.
-Improving markdown segmentation is follow-up work and is not claimed to be done.
+An independent adversarial pass drove the live tool surface with 17 malformed calls plus the full
+journey. It found **three defects, two of them in this feature**, both of the same class — a tool
+describing itself inaccurately, which an agent then acts on:
+
+1. `install_catalog_skill`'s not-found error said *"Use search_skill_catalog first."* **That tool
+   does not exist** — it was renamed during design when search folded into `recommend_skills`. Fixed,
+   and a test now walks every "call X" string in these modules and fails if X is not a real
+   definition, so this cannot recur.
+2. `recommend_skills` counted catalog matches **before** `appendIfBounded` trimmed them to the byte
+   budget, announcing three entries while returning two. The note is now written from the array that
+   actually shipped.
+3. The same note named `install_catalog_skill` unconditionally, though it is only offered in `empty`.
+   It now checks the active tool names and only names a call the caller can actually make.
+
+What the pass could **not** break, and confirmed: 17 malformed calls returned structured errors with
+zero throws, zero hangs and zero stack traces; path traversal was treated as an opaque id; no tool
+matching `/approv|grant|trust|promote/` exists in any state; **no call sequence flips a skill to
+approved**; every response stayed within the 1500-character bound.
+
+## Derivation quality, measured
+
+Derivation is built for speech, and markdown defeated it three separate ways: syntax hid the sentence
+(`- Parse the headers` opens on `-`, not a verb), blocks joined with single newlines arrived as **one
+segment** because `parsePlainText` splits on blank lines, and YAML front matter was read as prose.
+Before the fix, **every** install produced the single "Review the lesson material" fallback node.
+
+Measured after the fix, installing a deterministic sample spread across all eight collections:
+
+| | |
+|---|---:|
+| Attempted | 36 |
+| Installed successfully | **36** |
+| Failures | **0** |
+| Derived a real multi-step workflow | **29 (81%)** |
+| Still a thin 1-step draft | 7 (19%) |
+
+Step distribution: `10 steps → 13 skills`, `6 → 6`, `5 → 3`, `4 → 2`, `3 → 3`, `2 → 1`, `1 → 7`.
+
+The remaining 19% are command-heavy documents whose real actions live inside fenced code blocks,
+which are deliberately dropped rather than flattened into junk steps. That is a real limitation and
+is **not** claimed to be solved.
+
+One hard failure was fixed along the way: any document containing `-->` (an HTML comment) was sniffed
+as SRT by the transcript parser, yielded zero cue blocks, and failed the install outright with
+"No transcript segments could be parsed". `obsidian/obsidian-markdown` was one such file.
 
 ## Reproducing
 

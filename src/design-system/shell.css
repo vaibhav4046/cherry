@@ -45,8 +45,8 @@
 }
 
 .studio-rail .rail-link[aria-current='page'] {
-  background: rgba(217, 154, 114, 0.13);
-  color: #f4d8c4;
+  background: var(--color-accent-tint);
+  color: var(--color-accent-ink);
   box-shadow: inset 2px 0 0 var(--shell-accent);
 }
 
@@ -86,14 +86,20 @@
    can request approval from a chat window the person is not looking at, so the
    request has to find them rather than the other way round. */
 .approval-bar {
+  /* One outstanding decision must not scroll away from the person who owns it.
+     Below .bottom-nav (z-index 40) so nothing collides on a phone. */
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
   padding: var(--sp-3) var(--sp-5);
-  border-bottom: var(--border);
+  border-bottom: var(--hairline);
   background: var(--state-wait-bg);
-  font-size: 14px;
+  font-size: var(--app-ui);
+  line-height: var(--app-ui-lh);
 }
 
 .approval-bar-text {
@@ -102,7 +108,7 @@
 }
 
 .approval-bar-meta {
-  color: var(--ink-secondary, #6e6e73);
+  color: var(--color-ink-soft);
   font-variant-numeric: tabular-nums;
 }
 

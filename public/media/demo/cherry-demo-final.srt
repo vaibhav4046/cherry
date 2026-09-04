@@ -1,0 +1,79 @@
+1
+00:00:00,950 --> 00:00:22,130
+One agent, one unbroken run, doing the whole job.
+
+2
+00:00:22,130 --> 00:00:26,870
+Cherry hands a visiting agent its tools, straight from the page.
+
+3
+00:00:26,870 --> 00:00:31,990
+One call creates the project and the mission.
+
+4
+00:00:31,990 --> 00:00:46,180
+It records the source, and every claim it records is untrusted by default.
+
+5
+00:00:46,180 --> 00:00:50,580
+Derivation produces a real five-step workflow, each step cited to the source.
+
+6
+00:00:50,580 --> 00:00:56,430
+Now the boundary. get_skill returns approval_required, and the export tools are not registered at all.
+
+7
+00:00:56,430 --> 00:00:59,850
+The agent hands over a link. The decision happens on Cherry’s own screen.
+
+8
+00:00:59,850 --> 00:01:04,750
+Approved, and pinned to this exact revision.
+
+9
+00:01:04,750 --> 00:01:09,850
+Execution opens. The agent writes real files.
+
+10
+00:01:09,850 --> 00:01:23,570
+Verification fails, honestly, on the placeholder it left behind.
+
+11
+00:01:23,570 --> 00:01:27,800
+It repairs the file, runs the same checks again, and they pass.
+
+12
+00:01:27,800 --> 00:01:35,890
+Only now do the exports open: a bundle, a receipt, and an archive.
+
+13
+00:01:31,040 --> 00:01:37,190
+This is the aperture the page registers.
+
+14
+00:01:37,190 --> 00:01:45,570
+Eleven tools. Seven always on, and the rest only when the state earns them.
+
+15
+00:01:45,570 --> 00:01:52,970
+One row per registered closure, and a live call log beside it.
+
+16
+00:01:52,970 --> 00:01:57,990
+You can see exactly what the agent asked for.
+
+17
+00:01:57,990 --> 00:02:04,120
+A real host did this too: ChatGPT desktop, in Work mode.
+
+18
+00:02:04,120 --> 00:02:11,540
+It fetched the aperture and called the tools. The row says Validated because it happened.
+
+19
+00:02:11,540 --> 00:02:16,570
+What ships, says ships. What does not, says that too.
+
+20
+00:02:16,570 --> 00:02:33,830
+Every claim here is checkable, and an agent cannot approve its own work.

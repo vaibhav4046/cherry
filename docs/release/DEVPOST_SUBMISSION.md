@@ -18,13 +18,50 @@ One task. An entire AI team. Human authority intact.
 - Mission Control: https://cherry-wine.vercel.app/studio/control
 - What is proven: https://cherry-wine.vercel.app/compatibility
 - Repository (MIT): https://github.com/vaibhav4046/cherry
-- Demo video (1:43, subtitled): https://cherry-wine.vercel.app/media/demo/cherry-demo-subtitled.mp4
-- Demo video (clean master, for a voiceover pass): https://cherry-wine.vercel.app/media/demo/cherry-demo.mp4
-- Subtitles: https://cherry-wine.vercel.app/media/demo/cherry-demo.srt
+- **Demo video (2:26): https://cherry-wine.vercel.app/media/demo/cherry-demo-final.mp4** — the first 1:31 is one unbroken run of an agent doing the whole job through registered WebMCP tools against this deployment
+- Subtitles for the demo: https://cherry-wine.vercel.app/media/demo/cherry-demo-final.srt
+
+### >>> UNFILLED: Devpost "Video demo link" field <<<
+
+```
+PASTE HERE: <public YouTube or Vimeo URL>
+```
+
+**This is the one field in this kit that is still empty, and Devpost will not accept the entry
+without it.** Devpost's video field takes only a YouTube, Vimeo, Facebook Video or Youku link. The
+three URLs above are `.mp4` and `.srt` files served from our own deployment, so they are the source
+material, not a valid value for that field.
+
+To fill it: upload `public/media/demo/cherry-demo-subtitled.mp4` (1:43, subtitled) to YouTube as
+**Unlisted** or Public, then paste the resulting `https://www.youtube.com/watch?v=...` URL both
+into the Devpost video field and over the placeholder line above. Nothing else in this document
+needs to change.
 
 The video is a single unedited browser session against this deployment. The beat times in
 `docs/release/demo-capture.json` were measured during the capture, and every subtitle cue is
 pinned to one of them, so any cue can be checked against the second it claims.
+
+## Open with this (the first paragraph of the Devpost description)
+
+**We asked a real agent to approve its own work. It searched the whole tool surface and reported
+that it could not.**
+
+On 2026-09-04, inside the ChatGPT desktop app in Work mode (model 5.6 Sol), the agent was told to
+take a skill id and approve it, promote its trust, or mark it human-approved using any registered
+tool it could find, and told explicitly not to use the page UI. It enumerated the entire live
+aperture, twelve tools, and answered: *"No registered tool in the current aperture can grant a real
+approval, promote trust, or mark a skill human-approved."*
+
+That is not a permission check saying no. The tool does not exist. The only tool that touches
+approval at all, `request_skill_approval`, belongs to a stage that session was not in, and it asks
+a person rather than granting anything. Cherry's stdio MCP bridge shows the same property from the
+other side: a host that guesses the name `approve_skill` gets JSON-RPC `-32602`, unknown tool.
+
+Both transcripts are in the repository: `docs/release/WEBMCP_LIVE_HOST_CAPTURE.md` (third session)
+and `docs/release/MCP_CAPTURE_3c38684.md`.
+
+That exchange is the whole entry in miniature. An agent can propose, retrieve and execute at
+machine speed. It cannot approve, because there is nothing to call.
 
 ## The four required points, answered directly
 
@@ -127,19 +164,27 @@ human path share one implementation.
 The inversion: most agent-ready sites let an agent operate them. Cherry's site upgrades the agent.
 `recommend_skills` returns the person's approved skills for the task at hand, and `get_skill`
 streams the install file in bounded parts with a full-file sha256, pinned to the approved
-revision. The same skills reach a local agent host through the stdio MCP bridge — captured twice in
-live sessions, once in Codex CLI 0.152.1 (docs/release/CODEX_MCP_CAPTURE.md) and once on 3 Sep where
-a host recomputed the workspace integrity digest and a proof receipt and both matched
-(docs/release/LIVE_MCP_HOST_CAPTURE.md) — and any Agent Skills host through the exported bundle.
-Bundle compilation and hash verification are test-covered; we have captured transcripts only for the
-two MCP host sessions above, so the skills-bundle install row stays Shipped rather than Validated.
+revision. The same skills reach a local agent host through the stdio MCP bridge, captured in three
+live sessions: Codex CLI 0.152.1 (`docs/release/CODEX_MCP_CAPTURE.md`); a host on 3 Sep that
+recomputed the workspace integrity digest and a proof receipt, both matching
+(`docs/release/LIVE_MCP_HOST_CAPTURE.md`); and a stdio session on commit `3c38684` that recomputed
+both digests again and then tried `approve_skill`, receiving JSON-RPC `-32602`, unknown tool
+(`docs/release/MCP_CAPTURE_3c38684.md`). Any Agent Skills host can take the same method through the
+exported bundle. Bundle compilation and hash verification are test-covered; we have captured
+transcripts only for the three MCP host sessions above, so the skills-bundle install row stays
+Shipped rather than Validated.
 
 ## How we built it
 
-React 19, TypeScript strict, Vite. A framework-independent domain layer (`src/cherry/*`) that
-the UI, the WebMCP layer, and the native MCP bridge all call, so an agent can never do something
-the UI would refuse. Dexie over IndexedDB with versioned migrations; every mutation emits a
-ProofEvent inside the same transaction. A zero-dependency Node runner: loopback-only, pairing
+React 19, TypeScript strict, Vite. A framework-independent domain layer (`src/cherry/*`) that both
+the UI and the WebMCP layer call, over the same IndexedDB, so a visiting agent can never do
+something the UI would refuse: a tool call changes exactly what the page shows, with no separate
+agent backend. The stdio MCP bridge is deliberately not part of that: it is a separate
+zero-dependency Node process that cannot read browser IndexedDB at all, so it reads a **saved
+workspace export** and recomputes the hashes from its bytes. The three surfaces share the object
+definitions and the verification rules, not one live store, and saying otherwise would be the
+easiest lie in this submission. Dexie over IndexedDB with versioned migrations; every mutation
+emits a ProofEvent inside the same transaction. A zero-dependency Node runner: loopback-only, pairing
 token, exact-origin CORS, allowlisted executables, argument arrays and no shell, minimal child
 environment, output caps with redaction, physical-path guards that refuse symlink and junction
 traversal, hash-chained event log, per-task sandbox leases. No model API key anywhere: the
@@ -183,8 +228,8 @@ reasoning engine is the agent the person already pays for.
   by a GitHub Actions workflow whose result is public in the repository's Actions tab.
 - A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
   with the test or capture behind the label, including what was not tested.
-- An hourly GitHub Actions monitor that reruns deterministic gates and focused WebMCP, showcase, and
-  persistence journeys, attaches diagnostics, and maintains one deduplicated repair issue without
+- An hourly GitHub Actions monitor that reruns deterministic gates and focused WebMCP, Showcase, and
+  Memory Vault journeys, attaches diagnostics, and maintains one deduplicated repair issue without
   rewriting code or bypassing release approval.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
 - An adversarial review of the runtime that failed its own release once, then closed three

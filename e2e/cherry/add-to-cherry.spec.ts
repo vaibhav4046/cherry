@@ -157,8 +157,13 @@ test.describe('Add to Cherry', () => {
     await page.getByRole('button', { name: 'Add to Cherry' }).click();
     await page.getByRole('dialog', { name: 'Add to Cherry' }).getByRole('link', { name: 'Channel watch' }).click();
     const firstStep = page.getByRole('dialog', { name: 'Start a channel watch' });
-    await firstStep.getByLabel('Title').fill('Careful creator channel');
-    await firstStep.getByLabel('URL (metadata only)').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    const titleInput = firstStep.getByRole('textbox', { name: 'Title', exact: true });
+    const urlInput = firstStep.getByRole('textbox', { name: 'URL (metadata only)', exact: true });
+    await expect(titleInput).toBeFocused();
+    await titleInput.fill('Careful creator channel');
+    await expect(titleInput).toHaveValue('Careful creator channel');
+    await urlInput.fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await expect(urlInput).toHaveValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await firstStep.getByRole('checkbox', { name: /I have permission to use this material/ }).check();
     await firstStep.getByRole('button', { name: 'Save locally' }).click();
 

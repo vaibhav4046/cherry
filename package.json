@@ -4,7 +4,7 @@
   "private": false,
   "license": "MIT",
   "type": "module",
-  "description": "Cherry \u2014 the user-owned apprenticeship, memory, mission and verification layer for AI agents.",
+  "description": "Cherry — the user-owned apprenticeship, memory, mission and verification layer for AI agents.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,7 +14,7 @@
     "test": "vitest run",
     "smoke": "npm run typecheck && npm run lint && npm run test",
     "gates": "npm run typecheck && npm run lint && npm run test && npm run test:runner",
-    "verify:all": "npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run verify:sw && npm run audit:submission",
+    "verify:all": "npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run verify:sw && npm run audit:submission && npm run audit:codex-submission",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "record:demo": "playwright test --config=playwright.demo.config.ts && node scripts/promote-demo-recording.mjs",

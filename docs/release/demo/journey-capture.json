@@ -1,0 +1,142 @@
+{
+  "base": "https://cherry-wine.vercel.app",
+  "video": "C:\\Users\\lalwa\\AppData\\Local\\Temp\\claude\\D--\\62d7df41-f8e4-46a5-8d27-401a400490e5\\scratchpad\\journey\\cherry-journey.webm",
+  "seconds": 95.89,
+  "beats": [
+    {
+      "start": 0.95,
+      "end": 22.13,
+      "label": "Title: an agent does the whole job",
+      "card": true
+    },
+    {
+      "start": 22.13,
+      "end": 26.87,
+      "label": "Studio, empty. The host has the aperture.",
+      "card": false
+    },
+    {
+      "start": 26.87,
+      "end": 31.99,
+      "label": "start_apprenticeship: a project and a mission exist",
+      "card": false
+    },
+    {
+      "start": 31.99,
+      "end": 46.18,
+      "label": "The source is in, and every claim it recorded is untrusted",
+      "card": false
+    },
+    {
+      "start": 46.18,
+      "end": 50.58,
+      "label": "derive_skill: a 5-step workflow, cited to the source",
+      "card": false
+    },
+    {
+      "start": 50.58,
+      "end": 56.43,
+      "label": "Blocked: approval_required, and no export tool exists",
+      "card": true
+    },
+    {
+      "start": 56.43,
+      "end": 59.85,
+      "label": "The human decision, on the deep link the agent handed over",
+      "card": false
+    },
+    {
+      "start": 59.85,
+      "end": 64.75,
+      "label": "Approved at this exact version",
+      "card": false
+    },
+    {
+      "start": 64.75,
+      "end": 69.85,
+      "label": "Execution: real files written, with a placeholder still in the hero",
+      "card": false
+    },
+    {
+      "start": 69.85,
+      "end": 83.57,
+      "label": "run_verification: failed, on the placeholder it left behind",
+      "card": false
+    },
+    {
+      "start": 83.57,
+      "end": 87.8,
+      "label": "apply_verified_repair: the same checks, now passing",
+      "card": false
+    },
+    {
+      "start": 87.8,
+      "end": 95.89,
+      "label": "compile_skill_bundle, export_proof_receipt, export_workspace",
+      "card": true
+    }
+  ],
+  "facts": {
+    "openingTools": [
+      "create_mission",
+      "create_workspace",
+      "get_cherry_status",
+      "get_skill",
+      "install_catalog_skill",
+      "introduce_agent",
+      "list_cherry_capabilities",
+      "list_skills",
+      "load_starter_library",
+      "read_cherry_context",
+      "recommend_skills",
+      "start_apprenticeship"
+    ],
+    "missionId": "ms-01M1NG9HFR9XC7TNFK2XFSWMBS",
+    "startState": "DRAFT",
+    "evidenceTrust": "untrusted",
+    "nodeCount": 5,
+    "skillName": "Lead with the outcome the reader gets workflow",
+    "blockedError": "approval_required",
+    "toolsWhilePending": [
+      "define_skillgraph",
+      "get_approval_status",
+      "get_cherry_status",
+      "get_skill",
+      "introduce_agent",
+      "list_cherry_capabilities",
+      "list_skills",
+      "propose_memory",
+      "read_cherry_context",
+      "recommend_skills",
+      "request_skill_approval",
+      "revise_checkpoint"
+    ],
+    "exportRegisteredWhilePending": false,
+    "toolsAfterApproval": [
+      "get_cherry_status",
+      "get_skill",
+      "introduce_agent",
+      "list_cherry_capabilities",
+      "list_skills",
+      "read_cherry_context",
+      "recommend_skills",
+      "record_task_result",
+      "run_verification",
+      "write_artifact_file"
+    ],
+    "firstVerification": "failed",
+    "failureCount": null,
+    "repairPayload": {
+      "error": "validation",
+      "message": "Invalid arguments: failedAssertionId: Required"
+    },
+    "secondVerification": "passed",
+    "repairStatus": "unknown",
+    "exportStageReached": true,
+    "bundleFile": "lead-with-the-outcome-the-reader-gets-workflow-v0.1.0.zip",
+    "receiptHash": "40fa5ad483f4e6204df9c6c557108eab8202413735143ce0396319bbf6446b80",
+    "archiveHash": "be188eec5eee4d6d707704a7ba638b354abf6ef46fc2319a6650f14d264ba0b1"
+  },
+  "problems": [],
+  "capturedAt": "2026-09-04T06:05:39.971Z"
+}

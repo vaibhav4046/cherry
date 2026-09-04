@@ -155,6 +155,17 @@ browser-to-real-runner mission, and a WebMCP journey that asserts the
 ## 6. What is proven, and what is not
 
 **Captured live:**
+- **A proprietary in-browser WebMCP host.** ChatGPT desktop, Work mode, model
+  5.6 Sol, 2026-09-04, against the deployed site: registration and invocation
+  through `document.modelContext`, an aperture that grew 10 to 11 to 12 as
+  state advanced, and an install-ready `SKILL.md` with a full-file SHA-256
+  leaving with the agent. A later session in the same host was asked to approve
+  a skill with any tool it could find and reported that none of the twelve
+  registered tools can. Two defects that session exposed, and their fixes, are
+  written up alongside the passing run
+  (`docs/release/WEBMCP_LIVE_HOST_CAPTURE.md`). `/compatibility` marks this row
+  **Validated**; this section previously said the capture was pending, and it
+  no longer is.
 - Codex CLI 0.152.1 executing a real mission: two workers, two git worktrees,
   34.5 seconds of measured overlap (`docs/release/GOD_MODE_REAL_HOST_CAPTURE.md`).
 - Codex CLI registering the stdio MCP bridge and verifying a bundle's SHA-256
@@ -162,29 +173,49 @@ browser-to-real-runner mission, and a WebMCP journey that asserts the
 - A second MCP host recomputing the workspace integrity digest and a proof
   receipt, both matching, with a clean refusal on an unknown id
   (`docs/release/LIVE_MCP_HOST_CAPTURE.md`).
+- A stdio MCP session on commit `3c38684` recomputing both digests from the
+  export's own bytes and then attempting `approve_skill`, which came back
+  JSON-RPC `-32602`, unknown tool. The approval boundary is enforced by the
+  absence of the tool, not by a permission check
+  (`docs/release/MCP_CAPTURE_3c38684.md`).
 
-**Not captured, and labelled Experimental on `/compatibility`:**
-- A session inside a proprietary in-browser WebMCP host. The browser-side
-  surface is covered by unit tests against a mock model context plus a
-  Playwright journey, but no real in-browser host was available on the build
-  machine. The page says this rather than implying otherwise.
+**Still not captured, and labelled accordingly:**
+- The full learn to approve to retrieve journey *inside* a browser host. The
+  live sessions above proved registration, invocation, state mutation and
+  retrieval, but no human approval was exercised in them. That boundary rests
+  on the unit tests, the Playwright journey, and the stdio capture where
+  `approve_skill` does not exist. `/compatibility` says so on the row itself.
+- Claude Code mission execution, which needs a human sign-in that was not
+  available on the build machine. Labelled Experimental.
+- Chrome behind the WebMCP flag. Same code path, feature-detected, but not run
+  against a flagged build in this release. Labelled Experimental.
+- A transcript of a skills bundle being installed into a live host. The install
+  happened and is recorded in the decision log, but no session was captured, so
+  that row stays Shipped rather than Validated.
 
 Anyone can see the tool surface work in an ordinary browser: on
 `/studio/agent`, run `sessionStorage.setItem('cherry.standInHost','1')` and
 reload. Cherry installs an opt-in, per-tab stand-in host before boot, the
 aperture fills with the real registrations, and `cherryCall('read_cherry_context')`
 executes the real closure. It is a stand-in, not a WebMCP client, and the page
-and the compatibility matrix both say so.
+says so. It is a convenience for a reader without a WebMCP host, not the
+evidence; the evidence is the ChatGPT capture above.
 
 ## 7. Why this is hard to copy
 
-The full chain — creator content ingested with provenance, evidence with trust
-labels, versioned skill compilation, exact-revision human approval,
-deterministic verification that can genuinely fail, tamper-evident receipts,
-and serving over three open conventions at once — is what nobody else has.
-Summarisers stop at text for humans. Skill registries are hand-authored with no
-learning pipeline and no receipts. Vendor skill systems are single-vendor and
-manual. Cherry is the only one that closes the loop and can prove it.
+This is a positioning argument, not a measured claim, and it is worth saying so
+before making it: we have not audited the market and cannot prove a negative
+about what other products do.
+
+What is hard is the full chain: creator content ingested with provenance,
+evidence carrying trust labels, versioned skill compilation, exact-revision
+human approval, deterministic verification that can genuinely fail,
+tamper-evident receipts, and serving the result over three open conventions at
+once. Each link is cheap on its own. Keeping them honest together is the work,
+because every link has to survive a stranger recomputing it. The parts of that
+chain we can demonstrate are the ones cited in section 6; the claim that no one
+else has assembled it is our reading of the field, and a judge should treat it
+as such.
 
 ## 8. Economics
 

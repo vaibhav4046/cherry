@@ -32,7 +32,7 @@ export async function installCatalogSkill(
 ): Promise<Result<CatalogInstallResult>> {
   const skill = await getCatalogSkill(catalogId);
   if (!skill) {
-    return fail('not_found', `No catalog skill with id ${catalogId}. Use search_skill_catalog first.`);
+    return fail('not_found', `No catalog skill with id ${catalogId}. Call recommend_skills and use an id from its catalogSkills list.`);
   }
 
   const actorType = options.actorType ?? 'agent';
@@ -91,5 +91,79 @@ function withAttribution(skill: CatalogSkill): string {
     'This is third-party reference material imported into Cherry, not an approved method.',
     '',
   ].join('\n');
-  return `${header}\n${skill.content}`;
+  return `${header}\n${markdownToLessonText(skill.content)}`;
+}
+
+/**
+ * Flatten a SKILL.md into the shape the derivation actually reads.
+ *
+ * Derivation classifies a sentence by its opening word: an imperative verb earns
+ * a build step, a "should/must" earns a research step. Markdown hides both. In
+ * "- Parse the Received headers" the sentence opens on "-", and a fenced code
+ * block is not prose at all. Left as-is, an 11k-character document collapsed to
+ * a single fallback node.
+ *
+ * So this strips the syntax and keeps the words. It deliberately does NOT
+ * rewrite, summarise or reorder anything — every surviving line is still the
+ * source's own sentence, which is what keeps the derived steps quotable back to
+ * the upstream file. Fenced code is dropped rather than flattened: it is not
+ * instruction prose, and feeding it in produced junk steps.
+ */
+export function markdownToLessonText(markdown: string): string {
+  const lines: string[] = [];
+  let inFence = false;
+
+  // HTML comments go first, and not only because they are not prose: the plain
+  // transcript sniffer treats ANY "-->" as an SRT cue marker, so a single
+  // "<!-- note -->" made the whole document parse as subtitles, yield zero cue
+  // blocks, and fail the install outright with "No transcript segments".
+  const body = stripFrontmatter(markdown).replace(/<!--[\s\S]*?-->/g, ' ');
+
+  for (const rawLine of body.split('\n')) {
+    const line = rawLine.trimEnd();
+    if (/^\s*(```|~~~)/.test(line)) { inFence = !inFence; continue; }
+    if (inFence) continue;
+
+    let text = line.trim();
+    if (!text) continue;
+    if (/^(-{3,}|\*{3,}|={3,}|\|)/.test(text)) continue;   // rules and table rows
+    if (/^---$/.test(text)) continue;                       // front-matter fence
+
+    text = text
+      .replace(/^#{1,6}\s+/, '')                            // heading marker
+      .replace(/^\s*[-*+]\s+/, '')                          // bullet marker
+      .replace(/^\s*\d+[.)]\s+/, '')                        // ordered marker
+      .replace(/^\s*>\s?/, '')                              // block quote
+      .replace(/^\s*\[[ xX]\]\s*/, '')                      // task checkbox
+      .replace(/`([^`]+)`/g, '$1')                          // inline code
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')              // links keep their text
+      .replace(/(\*\*|__|\*|_)(?=\S)([^*_]*?)\1/g, '$2')    // emphasis
+      .replace(/-->/g, '→')                                 // never let prose sniff as SRT
+      .trim();
+
+    if (text.length < 12) continue;                         // headings like "Usage"
+    if (/^[a-z][a-z0-9_-]{2,20}:\s/i.test(text) && !/\s(the|a|an|to|your|this)\s/i.test(text)) continue; // stray "key: value" metadata
+    // Give the derivation a sentence terminator to split on; without one, several
+    // consecutive lines merge into a single unclassifiable run-on.
+    lines.push(/[.!?:]$/.test(text) ? text : `${text}.`);
+  }
+
+  // Blank-line separated, because parsePlainText splits plain transcripts on
+  // blank lines and collapses whitespace inside each block. Joined with single
+  // newlines the whole document arrived as ONE segment, the deriver saw one
+  // run-on sentence, and every install produced the single fallback node.
+  return lines.join('\n\n');
+}
+
+/**
+ * Remove YAML front matter. Its name/description/tags are already captured as
+ * catalog metadata; left in the body they read as prose and the deriver turned
+ * "description: Parse and analyze email headers…" into a workflow step.
+ */
+function stripFrontmatter(markdown: string): string {
+  if (!markdown.startsWith('---')) return markdown;
+  const close = markdown.indexOf('\n---', 3);
+  if (close < 0) return markdown;
+  const afterFence = markdown.indexOf('\n', close + 1);
+  return afterFence < 0 ? '' : markdown.slice(afterFence + 1);
 }

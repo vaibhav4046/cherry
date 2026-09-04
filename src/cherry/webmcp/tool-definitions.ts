@@ -726,14 +726,6 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         recommendations: [],
         recommendationsTruncated: false,
         librarySize: entries.length,
-        note:
-          recommendations.length > 0
-            ? 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.'
-            : catalogMatches.length > 0
-              ? `Nothing installed in this browser matches, so recommendations is empty on purpose. catalogSkills lists ${catalogMatches.length} third-party skill(s) from the preloaded catalog that do match the words in this task — not installed, not approved, and get_skill cannot read them yet. install_catalog_skill imports one and derives a draft from it.`
-              : missed
-                ? `Nothing matched this task, so recommendations is empty on purpose. The library does hold ${entries.length} skill(s); the closest are listed under availableSkills, unranked and not claimed to fit. get_skill resolves those ids.`
-                : 'The library is empty in this browser and the catalog has nothing matching those words. Call load_starter_library for labelled reference methods, or have the human teach a real one via start_apprenticeship.',
       };
       if (catalogMatches.length > 0) {
         payload.catalogSkills = [];
@@ -749,6 +741,25 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
           })) break;
         }
       }
+
+      // The note is written AFTER the list is built, from the list that actually
+      // shipped. Counting matches before appendIfBounded trimmed them to the byte
+      // budget made the note claim three entries while returning two — a tool
+      // describing itself wrongly is the same defect class as a bad answer.
+      const shippedCatalog = (payload.catalogSkills as unknown[] | undefined)?.length ?? 0;
+      // Only name a tool the caller can actually reach: install_catalog_skill is
+      // offered in `empty`, not in every state, and pointing an agent at a call
+      // it cannot make is a dead end.
+      const activeNames = context.getActiveToolNames?.() ?? [];
+      const canInstall = activeNames.length === 0 || activeNames.includes('install_catalog_skill');
+      payload.note =
+        recommendations.length > 0
+          ? 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.'
+          : shippedCatalog > 0
+            ? `Nothing installed in this browser matches, so recommendations is empty on purpose. catalogSkills lists ${shippedCatalog} third-party skill(s) from the preloaded catalog matching the words in this task — not installed, not approved, and get_skill cannot resolve those ids yet. ${canInstall ? 'install_catalog_skill imports one and derives a draft from it.' : 'install_catalog_skill is offered while a workspace is still being set up; here they are reference matches only.'}`
+            : missed
+              ? `Nothing matched this task, so recommendations is empty on purpose. The library does hold ${entries.length} skill(s); the closest are listed under availableSkills, unranked and not claimed to fit. get_skill resolves those ids.`
+              : 'The library is empty in this browser and the catalog has nothing matching those words. Call load_starter_library for labelled reference methods, or have the human teach a real one via start_apprenticeship.';
       for (const recommendation of recommendations) {
         if (!appendIfBounded(payload, 'recommendations', recommendation)) break;
       }

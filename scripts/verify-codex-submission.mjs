@@ -98,7 +98,16 @@ const hourly = existsSync(join(ROOT, '.github/workflows/hourly-health.yml'))
 const verifyWorkflow = existsSync(join(ROOT, '.github/workflows/verify.yml'))
   ? read('.github/workflows/verify.yml')
   : '';
-const packageJson = existsSync(join(ROOT, 'package.json')) ? read('package.json') : '';
+const packageJsonText = existsSync(join(ROOT, 'package.json')) ? read('package.json') : '';
+let packageJson = null;
+try {
+  packageJson = JSON.parse(packageJsonText);
+} catch {
+  fail('package.json is missing or invalid JSON');
+}
+const verifyAllScript = typeof packageJson?.scripts?.['verify:all'] === 'string'
+  ? packageJson.scripts['verify:all']
+  : '';
 
 const anchors = [
   ['README names Codex', /\bCodex\b/.test(readme)],
@@ -112,7 +121,8 @@ const anchors = [
   ['hourly workflow runs the deterministic gates', hourly.includes('npm run gates')],
   ['hourly workflow runs focused WebMCP journeys', hourly.includes('webmcp-god-mode.spec.ts')],
   ['verify workflow runs the Codex submission audit', verifyWorkflow.includes('npm run audit:codex-submission')],
-  ['package exposes the Codex submission audit', packageJson.includes('"audit:codex-submission"')],
+  ['package exposes the Codex submission audit', packageJson?.scripts?.['audit:codex-submission'] === 'node scripts/verify-codex-submission.mjs'],
+  ['verify:all runs the Codex submission audit', verifyAllScript.includes('npm run audit:codex-submission')],
 ];
 const failedAnchors = anchors.filter(([, ok]) => !ok);
 if (failedAnchors.length === 0) {
