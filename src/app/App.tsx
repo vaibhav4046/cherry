@@ -1,39 +1,40 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { RouteMeta } from './RouteMeta.tsx';
 import { onPresentRequest } from '../cherry/webmcp/present-path.ts';
+import { lazyRoute } from './lazy-route.ts';
 import { Landing } from '../pages/Landing.tsx';
 import { StudioLayout } from '../pages/studio/StudioLayout.tsx';
 import NotFound from '../pages/NotFound.tsx';
 
-const CommandCenter = lazy(() => import('../pages/studio/CommandCenter.tsx'));
-const MissionControl = lazy(() => import('../pages/studio/MissionControl.tsx'));
-const MissionControlDetail = lazy(() => import('../pages/studio/MissionControlDetail.tsx'));
-const Connect = lazy(() => import('../pages/Connect.tsx'));
-const Showcase = lazy(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
-const Compatibility = lazy(() =>
+const CommandCenter = lazyRoute(() => import('../pages/studio/CommandCenter.tsx'));
+const MissionControl = lazyRoute(() => import('../pages/studio/MissionControl.tsx'));
+const MissionControlDetail = lazyRoute(() => import('../pages/studio/MissionControlDetail.tsx'));
+const Connect = lazyRoute(() => import('../pages/Connect.tsx'));
+const Showcase = lazyRoute(() => import('../pages/Showcase.tsx').then((module) => ({ default: module.Showcase })));
+const Compatibility = lazyRoute(() =>
   import('../pages/Compatibility.tsx').then((module) => ({ default: module.Compatibility })),
 );
-const Onboarding = lazy(() => import('../pages/studio/Onboarding.tsx'));
-const MissionNew = lazy(() => import('../pages/studio/MissionNew.tsx'));
-const MissionDetail = lazy(() => import('../pages/studio/MissionDetail.tsx'));
-const Watch = lazy(() => import('../pages/studio/Watch.tsx'));
-const MemoryVault = lazy(() => import('../pages/studio/MemoryVault.tsx'));
-const Skills = lazy(() => import('../pages/studio/Skills.tsx'));
-const SkillDetail = lazy(() => import('../pages/studio/SkillDetail.tsx'));
-const Artifacts = lazy(() => import('../pages/studio/Artifacts.tsx'));
-const Runs = lazy(() => import('../pages/studio/Runs.tsx'));
-const Proof = lazy(() => import('../pages/studio/Proof.tsx'));
-const Connections = lazy(() => import('../pages/studio/Connections.tsx'));
-const AgentView = lazy(() => import('../pages/studio/AgentView.tsx'));
-const QuickSkill = lazy(() => import('../pages/studio/QuickSkill.tsx'));
-const Sources = lazy(() => import('../pages/studio/Sources.tsx'));
-const Creators = lazy(() => import('../pages/studio/Creators.tsx'));
-const WorkInbox = lazy(() => import('../pages/studio/WorkInbox.tsx'));
-const WorkThread = lazy(() => import('../pages/studio/WorkThread.tsx'));
-const CrewPage = lazy(() => import('../pages/studio/CrewPage.tsx'));
-const RoutinesPage = lazy(() => import('../pages/studio/RoutinesPage.tsx'));
-const RoutineDetail = lazy(() => import('../pages/studio/RoutineDetail.tsx'));
+const Onboarding = lazyRoute(() => import('../pages/studio/Onboarding.tsx'));
+const MissionNew = lazyRoute(() => import('../pages/studio/MissionNew.tsx'));
+const MissionDetail = lazyRoute(() => import('../pages/studio/MissionDetail.tsx'));
+const Watch = lazyRoute(() => import('../pages/studio/Watch.tsx'));
+const MemoryVault = lazyRoute(() => import('../pages/studio/MemoryVault.tsx'));
+const Skills = lazyRoute(() => import('../pages/studio/Skills.tsx'));
+const SkillDetail = lazyRoute(() => import('../pages/studio/SkillDetail.tsx'));
+const Artifacts = lazyRoute(() => import('../pages/studio/Artifacts.tsx'));
+const Runs = lazyRoute(() => import('../pages/studio/Runs.tsx'));
+const Proof = lazyRoute(() => import('../pages/studio/Proof.tsx'));
+const Connections = lazyRoute(() => import('../pages/studio/Connections.tsx'));
+const AgentView = lazyRoute(() => import('../pages/studio/AgentView.tsx'));
+const QuickSkill = lazyRoute(() => import('../pages/studio/QuickSkill.tsx'));
+const Sources = lazyRoute(() => import('../pages/studio/Sources.tsx'));
+const Creators = lazyRoute(() => import('../pages/studio/Creators.tsx'));
+const WorkInbox = lazyRoute(() => import('../pages/studio/WorkInbox.tsx'));
+const WorkThread = lazyRoute(() => import('../pages/studio/WorkThread.tsx'));
+const CrewPage = lazyRoute(() => import('../pages/studio/CrewPage.tsx'));
+const RoutinesPage = lazyRoute(() => import('../pages/studio/RoutinesPage.tsx'));
+const RoutineDetail = lazyRoute(() => import('../pages/studio/RoutineDetail.tsx'));
 
 function Loading() {
   return (
