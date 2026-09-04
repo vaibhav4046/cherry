@@ -54,8 +54,16 @@ decided by something other than the worker.
                     └───────────────────────────────┘
 ```
 
-All three read and write the *same* persisted state the UI shows. There is no
-separate agent backend and no divergent code path.
+The in-page WebMCP tools and the UI genuinely share one state: both call the same
+domain services over the same IndexedDB, so a tool call changes exactly what the
+page shows, with no separate agent backend and no divergent code path.
+
+The other two surfaces do not, and it would be wrong to imply otherwise. The
+stdio MCP bridge is a separate Node process and cannot read browser IndexedDB at
+all; it reads a **saved workspace export** and recomputes hashes from its bytes.
+A skills bundle is a file a host installs, pinned to the revision it was
+compiled from. What all three share is the object definitions and the
+verification rules, not one live store.
 
 ### 3.2 The WebMCP surface (the competition-relevant part)
 
@@ -132,7 +140,7 @@ path but not of the product as a whole.
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Unit | `npm run test` | 617 passed, 2 opt-in skips |
+| Unit | `npm run test` | 623 passed, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | 135 passed |
 | End-to-end | `npm run test:e2e` | 130 passed, 0 failed, 0 skipped, 0 flaky |
 | Bundle integrity | `npm run verify:pack` | 6/6, tamper-evident |

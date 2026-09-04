@@ -156,7 +156,7 @@ path.
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **613 passed**, 2 opt-in skips |
+| Unit | `npm run test` | **623 passed**, 2 opt-in skips |
 | Runner and MCP bridge | `npm run test:runner` | **135 passed**, 0 failed (now includes the Chronicle asset verifier's own test) |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
