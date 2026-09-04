@@ -147,9 +147,17 @@ export function guarded<I>(
   schema: z.ZodType<I>,
   handler: (input: I, signal: AbortSignal) => Promise<CherryToolResult>,
 ): (input: unknown, signal: AbortSignal) => Promise<CherryToolResult> {
+  // Every tool advertises additionalProperties:false, but a plain z.object()
+  // silently STRIPS unknown keys rather than rejecting them, so the published
+  // contract and the enforcement disagreed. A live host demonstrated it by
+  // sending {"humanApproved": true} to get_skill and having it accepted and
+  // ignored. Approval-shaped input must never be quietly swallowed: an agent
+  // that sends it should be told no, not left to assume it worked. Applying
+  // .strict() here fixes every tool at one boundary instead of per schema.
+  const enforced = schema instanceof z.ZodObject ? (schema.strict() as unknown as z.ZodType<I>) : schema;
   return async (input, signal) => {
     if (signal.aborted) return toolError('temporary', 'Tool call was cancelled before it started');
-    const parsed = schema.safeParse(input ?? {});
+    const parsed = enforced.safeParse(input ?? {});
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       return toolError('validation', `Invalid arguments: ${issue ? `${issue.path.join('.')}: ${issue.message}` : 'unknown issue'}`);

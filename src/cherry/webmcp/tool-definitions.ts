@@ -758,7 +758,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'start_apprenticeship',
     description:
-      'Start a fresh apprenticeship in one call: creates a local workspace if none is active and a DRAFT mission, then makes them active. Never loads a source — lesson loading stays behind the explicit rights check in load_lesson.',
+      'Start a fresh apprenticeship in one call: creates a local workspace ONLY if none is already active, plus a DRAFT mission, then makes them active. workspaceName names a newly created workspace and is ignored when an active one is reused; the result reports workspaceCreated and the workspace actually in use. Never loads a source — lesson loading stays behind the explicit rights check in load_lesson.',
     inputSchema: objectSchema(
       {
         workspaceName: { type: 'string', description: 'Workspace name when a new one is created (default "My apprenticeship")' },
@@ -772,11 +772,22 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     states: ['empty', 'onboarding'],
     zodSchema: startApprenticeshipSchema,
     execute: guarded(startApprenticeshipSchema, async (input) => {
+      // A caller passing workspaceName reasonably expects that name to mean
+      // something. Reusing the active workspace silently made the tool look as
+      // though it had honoured the name when it had not, so the result now says
+      // which of the two happened and what the workspace is actually called.
       let workspaceId = context.getActiveWorkspaceId();
+      let workspaceCreated = false;
+      let workspaceName = input.workspaceName ?? 'My apprenticeship';
       if (!workspaceId) {
-        const created = await createWorkspace({ name: input.workspaceName ?? 'My apprenticeship' }, 'agent');
+        const created = await createWorkspace({ name: workspaceName }, 'agent');
         if (!created.ok) return toolError(created.error.code, created.error.message);
         workspaceId = created.value.id;
+        workspaceName = created.value.name;
+        workspaceCreated = true;
+      } else {
+        const active = (await listWorkspaces()).find((workspace) => workspace.id === workspaceId);
+        workspaceName = active?.name ?? workspaceName;
       }
       const mission = await createMission(
         {
@@ -795,8 +806,13 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
       context.setActiveIds?.({ workspaceId, missionId: mission.value.id });
       return toolText({
         workspaceId,
+        workspaceName: workspaceName.slice(0, 120),
+        workspaceCreated,
         missionId: mission.value.id,
         state: mission.value.state,
+        note: workspaceCreated
+          ? 'Created a new workspace and made it active.'
+          : `Reused the workspace already active in this browser ("${workspaceName.slice(0, 60)}"). workspaceName was not applied; a person switches workspace in the studio.`,
         nextAction: 'load_lesson — a permitted YouTube URL (permissionAcknowledged=true) or a manual lesson',
       });
     }),
