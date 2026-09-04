@@ -37,10 +37,10 @@ const LESSON_TEXT = [
 const beats = [];
 let t0 = 0;
 const elapsed = () => (t0 ? Number(((Date.now() - t0) / 1000).toFixed(2)) : 0);
-function beat(label) {
+function beat(label, isCard = false) {
   const previous = beats.at(-1);
   if (previous) previous.end = elapsed();
-  beats.push({ start: elapsed(), end: null, label });
+  beats.push({ start: elapsed(), end: null, label, card: isCard });
 }
 
 function card(kicker, headline, sub) {
@@ -127,7 +127,7 @@ async function main() {
   }
 
   await page.goto(card('One unbroken run', 'An agent does the whole job.', 'Real tool calls, real storage, and one step it is not allowed to take.'));
-  beat('Title: an agent does the whole job');
+  beat('Title: an agent does the whole job', true);
   await settle(page, 4200);
 
   await page.goto(`${BASE}/studio`, { waitUntil: 'domcontentloaded' });
@@ -137,7 +137,7 @@ async function main() {
   await settle(page, 3800);
 
   // 1: a space and a mission, in one call.
-  const started = await call(page, 'start_apprenticeship', {
+  const started = await callWhenReady(page, 'start_apprenticeship', {
     workspaceName: 'Judge journey',
     newWorkspace: true,
     title: 'Write a landing page hero that converts',
@@ -160,10 +160,10 @@ async function main() {
     'One call to action above the fold outperformed two in the last test.',
     'Proof placed beside the claim removed the scroll-to-believe problem.',
   ]) {
-    const evidence = await call(page, 'add_source_evidence', { lessonId, claim, sourceType: 'transcript', transferability: 'source_specific' });
+    const evidence = await callWhenReady(page, 'add_source_evidence', { lessonId, claim, sourceType: 'transcript', transferability: 'source_specific' });
     facts.evidenceTrust = String(evidence.payload.trust);
   }
-  await page.goto(`${BASE}/studio/library`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.goto(`${BASE}/studio/sources`, { waitUntil: 'domcontentloaded' });
   await settle(page, 600);
   beat('The source is in, and every claim it recorded is untrusted');
   await settle(page, 4200);
@@ -182,12 +182,12 @@ async function main() {
   // 4: the boundary. Ask for approval, then prove the exports are unreachable.
     const requested = await callWhenReady(page, 'request_skill_approval', { skillGraphId, reason: 'Reviewed the derived steps; ready for your decision.' });
   const approvalUrl = String(requested.payload.approvalUrl);
-  const blocked = await call(page, 'get_skill', { skillId: skillGraphId, format: 'skill-md' });
+  const blocked = await callWhenReady(page, 'get_skill', { skillId: skillGraphId, format: 'skill-md' });
   facts.blockedError = String(blocked.payload.error);
   facts.toolsWhilePending = await page.evaluate(() => globalThis.cherryTools());
   facts.exportRegisteredWhilePending = facts.toolsWhilePending.includes('compile_skill_bundle');
   await page.goto(card('The one step it cannot take', 'get_skill → approval_required', 'While the decision is open, the export tools are not registered at all.'));
-  beat('Blocked: approval_required, and no export tool exists');
+  beat('Blocked: approval_required, and no export tool exists', true);
   await settle(page, 5000);
 
   // 5: a person decides, on Cherry's own screen.
@@ -209,7 +209,7 @@ async function main() {
   await callWhenReady(page, 'write_artifact_file', { path: 'index.html', content: hero, changeSummary: 'First hero draft' });
   await callWhenReady(page, 'write_artifact_file', { path: 'notes.md', content: '# Hero notes\n\nOne call to action, proof beside the claim.\n', changeSummary: 'Working notes' });
   await callWhenReady(page, 'record_task_result', { summary: 'Wrote the hero and the notes', outcome: 'succeeded' });
-  await page.goto(`${BASE}/studio/artifacts`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.goto(`${BASE}${homeSurface}`, { waitUntil: 'domcontentloaded' });
   await settle(page, 700);
   beat('Execution: real files written, with a placeholder still in the hero');
   await settle(page, 4200);
@@ -218,7 +218,7 @@ async function main() {
     const failing = await callWhenReady(page, 'run_verification', {});
   facts.firstVerification = String(failing.payload.status);
   const verificationId = String(failing.payload.verificationId);
-  const failures = await call(page, 'read_failed_assertions', { verificationId });
+  const failures = await callWhenReady(page, 'read_failed_assertions', { verificationId });
   facts.failureCount = Array.isArray(failures.payload.failures) ? failures.payload.failures.length : null;
   await page.goto(`${BASE}/studio/control`, { waitUntil: 'domcontentloaded' });
   await settle(page, 700);
@@ -229,6 +229,10 @@ async function main() {
   const repairedHero = hero.replace('<p>TO' + 'DO: proof block</p>', '<p>Teams shipped 4 skills in their first week.</p>');
   await callWhenReady(page, 'write_artifact_file', { path: 'index.html', content: repairedHero, changeSummary: 'Replace the placeholder with the proof line' });
   const repaired = await callWhenReady(page, 'apply_verified_repair', { verificationId, summary: 'Replaced the placeholder with a real proof line' });
+  facts.repairPayload = repaired.payload;
+  // A repair is a claim until the checks are run again, so they are run again.
+  const rechecked = await callWhenReady(page, 'run_verification', {});
+  facts.secondVerification = String(rechecked.payload.status);
   facts.repairStatus = String(repaired.payload.status ?? repaired.payload.verificationStatus ?? 'unknown');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await settle(page, 900);
@@ -243,11 +247,11 @@ async function main() {
       const bundle = await callWhenReady(page, 'compile_skill_bundle', { skillGraphId });
     facts.bundleFile = String(bundle.payload.fileName);
     const receipt = await callWhenReady(page, 'export_proof_receipt', {});
-    facts.receiptHash = String(receipt.payload.receiptSha256 ?? receipt.payload.payloadSha256 ?? '');
+    facts.receiptHash = String(receipt.payload.receiptHash ?? receipt.payload.receiptSha256 ?? '');
     const archive = await callWhenReady(page, 'export_workspace', {});
     facts.archiveHash = String(archive.payload.payloadSha256 ?? '');
     await page.goto(card('Carry it anywhere', 'A bundle, a receipt, an archive.', 'Hash-pinned to the exact revision a person read and approved.'));
-    beat('compile_skill_bundle, export_proof_receipt, export_workspace');
+    beat('compile_skill_bundle, export_proof_receipt, export_workspace', true);
     await settle(page, 4200);
 
 
@@ -255,7 +259,7 @@ async function main() {
     facts.exportStageReached = false;
     facts.stoppedBecause = String(error).split(String.fromCharCode(10))[0].slice(0, 200);
     await page.goto(card('Where the run stopped', 'The export stage never opened.', 'Those tools exist only after a verification passes, so nothing was exported.'));
-    beat('The run stopped before export, and says so');
+    beat('The run stopped before export, and says so', true);
     await settle(page, 4200);
   }
 

@@ -1,0 +1,14 @@
+[
+  { "kicker": "One unbroken run", "headline": "An agent does the whole job" },
+  { "kicker": "The aperture", "headline": "The page hands over its tools" },
+  { "kicker": "start_apprenticeship", "headline": "A project and a mission, in one call" },
+  { "kicker": "add_source_evidence", "headline": "Every claim it records is untrusted" },
+  { "kicker": "derive_skill", "headline": "A five-step workflow, cited to the source" },
+  { "kicker": "The boundary", "headline": "approval_required — and no export tool exists" },
+  { "kicker": "Human only", "headline": "The decision happens on Cherry's own screen" },
+  { "kicker": "Approved", "headline": "Pinned to this exact revision" },
+  { "kicker": "Execution", "headline": "Real files, written by the agent" },
+  { "kicker": "run_verification", "headline": "It failed, on the placeholder it left behind" },
+  { "kicker": "apply_verified_repair", "headline": "The same checks, now passing" },
+  { "kicker": "Carry it anywhere", "headline": "A bundle, a receipt, an archive" }
+]
