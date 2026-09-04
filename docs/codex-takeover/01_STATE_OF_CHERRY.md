@@ -1,64 +1,43 @@
-# State of Cherry — ground truth as of Tue 1 Sep 2026, 00:15 London
+# State of Cherry — current operating truth
 
-Read this before touching code. Trust the repo over any older report, including your own.
+**Updated:** 4 September 2026, London. Resolve the exact commit with `git rev-parse HEAD`; do not copy a stale SHA or test count into this file.
 
-## Current baseline
+## Product state
 
-- HEAD: `c450b50` (deterministic-deploy fix). Working tree may carry small WIP from either agent;
-  never commit files outside your lane.
-- Live: https://cherry-wine.vercel.app — restored and render-verified at 23:05 UTC from prebuilt
-  output of the committed tree. Alias https://getcherry.vercel.app 307s to it (by design).
-- Gates on the merged tree (both agents' work): typecheck ✓, lint ✓, unit 168 (+2 skips) ✓,
-  runner 42 ✓, build ✓, Playwright e2e 43 ✓.
-- GitHub `vaibhav4046/cherry` is ~100 commits behind local. Pushing is part of your job now
-  (Non-negotiable #4).
+Cherry is a local-first apprenticeship, memory, mission, and verification layer for AI agents. The public app is `https://cherry-wine.vercel.app`; the judge route is `/showcase`, and `/compatibility` separates validated, shipped, experimental, and roadmap claims.
 
-## Tonight's incident (why the deploy rules exist)
+The repository currently contains:
 
-Production served a **blank page** (app never mounted). Contributing causes found in the audit:
-a deploy built remotely with pnpm while HEAD's `package-lock.json` was out of sync with
-`package.json` (the lockfile edit was uncommitted), so the remote build resolved different
-dependency versions than every local gate ran against. Fixed by: deploying locally verified
-prebuilt output, syncing the lockfile, and pinning `installCommand: npm ci` +
-`buildCommand: npm run build` in `vercel.json` (`c450b50`). Single-deployer rule is now in force.
+- state-aware WebMCP tools registered through `document.modelContext`;
+- a full learn → derive → exact-revision human approval → execute → verify → repair → export journey;
+- a cross-workspace skill library with bounded delivery and recomputable content hashes;
+- mission planning, isolated runner work, evidence, receipts, memory, routines, and archive import/export;
+- guest-first operation, with optional sign-in kept outside the judge path;
+- deterministic gates, Playwright journeys, release-pack checks, service-worker checks, and a submission audit.
 
-## What exists and works (do not rebuild any of this)
+Portable output formats remain supported for compatible agent runtimes. That compatibility is a product feature, not an authorship statement.
 
-- **Golden loop**, e2e-proven in one browser session: source → transcript → evidence (trust
-  labels) → versioned skill → exact-revision human approval → artifact → honest fail → repair →
-  verified pass → receipt (SHA-256 over RFC 8785) → memory → routine reuse → export/import.
-- **Sources Inbox** (`/studio/sources`, `src/cherry/source/`): YouTube/article/note/file sources,
-  provenance, content hashes, duplicate detection, archive/recovery, honest fetch states,
-  optional user-triggered Scrapling static fetch through the paired local runner, fail-closed.
-- **Skill Library** (`/studio/skills`, `src/cherry/library/`): cross-workspace aggregation,
-  search, install-ready gating, approval hashes, exports (SKILL.md / AGENTS.md / CLAUDE.md /
-  verified .zip bundle).
-- **WebMCP layer** (`src/cherry/webmcp/`): ~45 state-aware tools; 7 global reads including
-  `list_skills`, `recommend_skills`, `get_skill` (chunked delivery + full-file sha256); bounded
-  aperture; live inspector (Agent View); mock-host e2e through registered closures only.
-- **Workforce + routines**: crew seats, work inbox with legal transitions, routines bound to
-  approved revision + action hash, local runner (42 tests) with receipts, MCP stdio bridge
-  (`runner/mcp/server.mjs`).
-- **Connect** (`/connect`): per-host onboarding with honest status labels.
-- **Auth**: opt-in Privy (email code) — live on production since tonight's CSP fix (`a930f5e`);
-  guest-first is untouched and remains the default and the judge path.
-- **Docs of record**: `docs/CHERRY_NORTHSTAR.md` (positioning/architecture),
-  `docs/release/DEVPOST_SUBMISSION.md`, `docs/release/DEMO_SCRIPT.md`, `docs/CHERRY_DECISIONS.md`
-  (through D-023), `docs/release/WEBMCP_CHANGELOG.md`, `docs/CAPABILITY_MATRIX.md`.
+## Current maintenance baseline
 
-## The honest gap the tickets close
+The authoritative baseline is the latest green GitHub Actions run on the current commit. Use:
 
-A new user currently meets vocabulary and structure before value: workspace, mission, lesson,
-transcript, SkillGraph. The vision ("Cherry watches so you don't have to; skills just appear in
-your workflow") needs the compliant, shippable version of itself:
+```bash
+npm ci
+npm run gates
+npm run verify:all
+npm run health:hourly
+```
 
-- One-paste path from URL to approved skill (T1) instead of a five-noun setup.
-- One-click capture from any tab via bookmarklet + `/ingest` (T2) instead of copy-paste routines.
-- Watch-history import that proposes skills from the user's own exported data (T3) instead of a
-  fantasy of reading their YouTube account.
-- Channel watching via public RSS through the paired runner (T7) instead of scraping.
-- Plain language everywhere a user reads (T6).
+Do not call the repository green from prose alone. A successful pull request requires both jobs in `.github/workflows/verify.yml`; hourly monitoring adds a focused WebMCP/judge path and live-route evidence.
 
-What stays out (and why it stays out is part of the pitch): scraping LinkedIn, downloading
-videos, watching accounts server-side, auto-approval of anything. `05_GUARDRAILS.md` has the
-exact lines.
+## Judge-path regression now protected
+
+The showcase-host regression was corrected on `main`: an approval request presents the dedicated decision screen, the test follows that handoff, and the person clicks Cherry's human-only control. The hourly workflow now locks this behavior together with the complete registered-closure journey.
+
+## Ownership and provenance
+
+Codex is the active implementation and maintenance workflow. Existing Git commits and the append-only status ledger are preserved as historical evidence. Current policy files must not assign live engineering, review, or deployment authority to a retired session.
+
+## Release posture
+
+The original WebMCP Challenge deadline has passed. Keep the repository review-ready: live app reachable, critical journeys green, release evidence present, no stale success claims, and no hidden approval or deployment automation.

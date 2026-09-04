@@ -12,25 +12,27 @@ playwright-report
 test-results
 runner/.cherry-runner
 
-
-# no Claude-named artifacts in the public repo (kept local in the spec pack)
+# Generated compatibility files and local agent-client state
 CLAUDE.md
 docs/spec-pack/CLAUDE.md
 docs/spec-pack/harness/CLAUDE.md
+.claude/
+
+# Generated verification evidence
+artifacts/hourly/
 docs/release/e2e-results.json
 
 .vercel
-.claude/
 
 scraper/__pycache__/
 scraper/tests/__pycache__/
 
-# local scratch, never part of the public repo
+# Local scratch, never part of the public repository
 work/
 .firecrawl/
 *.tgz
 debug.log
 
-# Design canvas working files (published as an Artifact, not part of the app)
+# Design canvas working files (published as an artifact, not part of the app)
 design/
 tsconfig.tsbuildinfo

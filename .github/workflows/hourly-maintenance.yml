@@ -1,0 +1,323 @@
+# Read-only monitoring is always active. Repair is optional, bounded, and can
+# only produce a pull request; this workflow never merges or deploys.
+name: Hourly Cherry maintenance
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cherry-hourly-maintenance
+  cancel-in-progress: false
+
+env:
+  CHERRY_BASE_URL: https://cherry-wine.vercel.app
+
+jobs:
+  monitor:
+    name: Repository, WebMCP and live-app monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Deterministic gates
+        run: npm run gates
+
+      - name: Production build
+        run: npm run build
+
+      - name: Release-pack integrity
+        run: npm run verify:pack
+
+      - name: Service-worker integrity
+        run: npm run verify:sw
+
+      - name: Submission and active-policy audit
+        run: npm run audit:submission
+
+      - name: Critical registered-closure journeys
+        run: npm run test:e2e:critical
+
+      - name: Public-route health
+        run: npm run health:hourly
+
+      - name: Write run summary
+        if: always()
+        run: |
+          {
+            echo '## Hourly Cherry maintenance'
+            echo
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Live base: ${CHERRY_BASE_URL}"
+            echo "- Result: see the job conclusion and uploaded evidence"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload maintenance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hourly-maintenance-${{ github.run_id }}
+          path: |
+            artifacts/hourly/
+            artifacts/release/
+            docs/release/e2e-results.json
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  report-failure:
+    name: Open or update the maintenance incident
+    needs: monitor
+    if: ${{ always() && needs.monitor.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Record one deduplicated incident
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '[hourly] Cherry maintenance failure';
+            const marker = '<!-- cherry-hourly-maintenance-incident -->';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const incident = issues.find((item) => !item.pull_request && item.title === title);
+            const note = [
+              `Hourly maintenance failed on \`${context.sha}\`.`,
+              '',
+              `Run: ${runUrl}`,
+              '',
+              'The run contains deterministic logs, browser traces, and any route-health JSON that was produced.',
+            ].join('\n');
+            if (incident) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: incident.number,
+                body: note,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `${marker}\n\n${note}\n\nThis issue is closed automatically after a fully healthy hourly run.`,
+              });
+            }
+
+  close-recovered-incident:
+    name: Close the incident after recovery
+    needs: monitor
+    if: ${{ always() && needs.monitor.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close any open hourly incident
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '[hourly] Cherry maintenance failure';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const incident = issues.find((item) => !item.pull_request && item.title === title);
+            if (!incident) return;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: incident.number,
+              body: `Recovered on \`${context.sha}\`. Healthy run: ${runUrl}`,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: incident.number,
+              state: 'closed',
+              state_reason: 'completed',
+            });
+
+  codex-repair:
+    name: Bounded Codex repair pull request
+    needs: monitor
+    if: ${{ always() && needs.monitor.result == 'failure' && vars.CODEX_HOURLY_REPAIR != 'disabled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Create an isolated repair branch
+        id: branch
+        shell: bash
+        run: |
+          branch="codex/hourly-repair-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether Codex credentials are configured
+        id: codex-key
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [[ -n "$OPENAI_API_KEY" ]]; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo 'Codex repair skipped: OPENAI_API_KEY is not configured.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Ask Codex for the smallest verified repair
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        id: run-codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/hourly-repair.md
+          permission-profile: ':workspace'
+          allow-bots: true
+          codex-args: '["--ephemeral"]'
+
+      - name: Remove transient output from the Codex worktree
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        shell: bash
+        run: |
+          git restore --worktree docs/release/e2e-results.json 2>/dev/null || true
+          rm -rf artifacts/hourly test-results playwright-report
+
+      - name: Detect a proposed change
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        id: diff
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain=v1)" ]]; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'Codex reproduced no repository change; no repair pull request was opened.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Enforce repair boundaries
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          mapfile -t changed < <({ git diff --name-only HEAD; git ls-files --others --exclude-standard; } | sort -u)
+          printf 'Changed paths:\n%s\n' "${changed[*]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              .github/workflows/*|.env|.env.*|*/.env|*/.env.*|docs/codex-takeover/STATUS.md|artifacts/hourly/*|test-results/*|playwright-report/*)
+                echo "Forbidden automated repair path: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+          git diff --check
+
+      - name: Verify the proposed repair
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        run: npm run verify:repair
+
+      - name: Upload Codex repair evidence
+        if: ${{ always() && steps.codex-key.outputs.available == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-repair-${{ github.run_id }}
+          path: |
+            artifacts/hourly/
+            artifacts/release/
+            docs/release/e2e-results.json
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Remove transient verification output
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          git restore --worktree docs/release/e2e-results.json 2>/dev/null || true
+          rm -rf artifacts/hourly test-results playwright-report
+          git diff --check
+
+      - name: Commit and push the bounded repair
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && { echo 'No persistent repair remained after cleanup.'; exit 0; }
+          git commit -m 'fix: apply verified hourly Codex repair'
+          git push --set-upstream origin '${{ steps.branch.outputs.name }}'
+
+      - name: Open the repair pull request
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --cached --quiet && git log -1 --pretty=%s | grep -q '^fix: apply verified hourly Codex repair$'; then
+            cat > /tmp/cherry-hourly-pr.md <<EOF_BODY
+          ## Automated repair
+
+          Codex produced this bounded repair after hourly maintenance failed on \`${GITHUB_SHA}\`.
+
+          - Source run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          - Static prompt: \`.github/codex/prompts/hourly-repair.md\`
+          - Verification: \`npm run verify:repair\`
+          - Merge: human review required
+          - Deploy: not performed
+
+          This workflow never auto-merges or deploys.
+          EOF_BODY
+            gh pr create \
+              --base '${{ github.event.repository.default_branch }}' \
+              --head '${{ steps.branch.outputs.name }}' \
+              --title 'fix: verified hourly Codex repair' \
+              --body-file /tmp/cherry-hourly-pr.md
+            gh workflow run verify.yml --ref '${{ steps.branch.outputs.name }}'
+          fi
