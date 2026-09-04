@@ -56,6 +56,7 @@ import { generateSkillFromLesson } from '../skillgraph/quick-skill.ts';
 import { createProofReceipt, listReceipts } from '../proof/proof-service.ts';
 import { exportWorkspace } from '../persistence/workspace-archive.ts';
 import { exportSkillFile, listLibraryEntries, rankSkillsForTask } from '../library/library-service.ts';
+import { loadExampleWorkspace } from '../persistence/example-workspace-loader.ts';
 import { sha256Text } from '../core/hash.ts';
 import { archiveSource, createSource, getSource, listSources, requestSourceFetch } from '../source/source-service.ts';
 import { listProposals, syncProposals } from '../source/proposal-service.ts';
@@ -600,7 +601,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         recommendationsTruncated: false,
         note:
           recommendations.length === 0
-            ? 'No skills match this task yet. A human can teach one from a real source via start_apprenticeship, or in the studio.'
+            ? 'No skills match this task yet. Call load_starter_library to install labelled reference methods you can read and install right now, or have the human teach a real one via start_apprenticeship.'
             : 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.',
       };
       for (const recommendation of recommendations) {
@@ -690,6 +691,33 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         return toolError('validation', `part ${part} out of range; the file has ${totalParts} parts`, { totalParts });
       }
       return boundedSkillJson(buildPart(part, totalParts, chunks[part - 1]!));
+    }),
+  });
+
+  const loadStarterLibrarySchema = z.object({});
+  define({
+    name: 'load_starter_library',
+    description:
+      'Install the labelled starter library into this browser so recommend_skills and get_skill have something real to return. These are shipped reference methods, not skills this person approved: every entry reports sample=true and approvalKind synthetic-sample-state. Use it when list_skills or recommend_skills come back empty.',
+    inputSchema: objectSchema({}, []),
+    annotations: { readOnlyHint: false },
+    states: ['empty', 'onboarding'],
+    zodSchema: loadStarterLibrarySchema,
+    execute: guarded(loadStarterLibrarySchema, async () => {
+      const before = await listLibraryEntries();
+      const loaded = await loadExampleWorkspace('starter-library');
+      if (!loaded.ok) return toolError(loaded.error.code, loaded.error.message);
+      const after = await listLibraryEntries();
+      return toolText({
+        workspaceId: loaded.value.workspaceId,
+        workspaceName: loaded.value.name.slice(0, 120),
+        skillsBefore: before.length,
+        skillsAvailable: after.length,
+        sample: true,
+        approvalKind: 'synthetic-sample-state',
+        note:
+          'Installed labelled reference methods. Their approvals are shipped sample state, not a decision this person made, so treat them as worked examples. recommend_skills and get_skill now resolve against them; a real method still has to be taught and approved by the human.',
+      });
     }),
   });
 
@@ -1570,8 +1598,8 @@ export const SAFE_TOOL_NAME_ALIASES = {
 } as const;
 
 export const TOOL_STATE_TABLE: Record<string, string[]> = {
-  empty: ['start_apprenticeship', 'create_workspace', 'create_mission'],
-  onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson'],
+  empty: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_starter_library'],
+  onboarding: ['start_apprenticeship', 'create_workspace', 'create_mission', 'load_lesson', 'load_starter_library'],
   learning: ['load_lesson', 'import_transcript', 'record_observation', 'add_source_evidence', 'derive_skill'],
   planning: ['define_skillgraph', 'propose_memory', 'request_skill_approval', 'revise_checkpoint'],
   execution: ['write_artifact_file', 'record_task_result', 'run_verification'],
