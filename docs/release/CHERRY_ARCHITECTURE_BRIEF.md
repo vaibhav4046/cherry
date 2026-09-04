@@ -111,9 +111,22 @@ previews render hostile HTML inert: empty sandbox, `script-src` and
 ## 4. Stack
 
 Vite 6, React 19, TypeScript strict, IndexedDB via Dexie, Zod, JSZip.
-Dependency-free Node runner. Static deploy on Vercel, `'self'`-only CSP.
-Self-hosted fonts (EB Garamond, Figtree, IBM Plex Mono — all SIL OFL).
-No server, no database, no accounts, no API keys, no telemetry.
+Dependency-free Node runner. Static deploy on Vercel.
+Self-hosted fonts (EB Garamond, Figtree, IBM Plex Mono — all SIL OFL), served
+from our own origin.
+
+The CSP is `default-src 'self'` and is deliberately not `'self'`-only overall:
+it additionally permits YouTube embeds (`frame-src`, `child-src`, and the
+player script), Google Fonts (`style-src`/`font-src`), `https://auth.privy.io`
+for optional sign-in, and `http://127.0.0.1:47821` so the page can reach a
+paired runner on your own machine. `vercel.json` is the authority; read it
+rather than this sentence.
+
+No Cherry-hosted backend stores your work: the core path keeps state in your
+browser and on your paired computer, and Cherry makes no model API calls of its
+own and asks for no model API key. Sign-in is optional and off by default, and
+it uses Privy when configured, so "no accounts" is true of the default local
+path but not of the product as a whole.
 
 ## 5. Verification (measured 2026-09-04, not estimated)
 
