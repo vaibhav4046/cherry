@@ -5,7 +5,7 @@
     "headline": "A page that hands an agent its tools"
   },
   {
-    "at": 4.97,
+    "at": 5.25,
     "kicker": "start_apprenticeship",
     "headline": "A space and a project, in one call"
   },
@@ -15,42 +15,42 @@
     "headline": "Every claim it records starts untrusted"
   },
   {
-    "at": 12.48,
+    "at": 11.13,
     "kicker": "derive_skill",
     "headline": "Five sentences become five cited steps"
   },
   {
-    "at": 14.85,
+    "at": 12.84,
     "kicker": "The boundary",
     "headline": "The agent asks. It cannot decide."
   },
   {
-    "at": 19.2,
+    "at": 17.02,
     "kicker": "Human only",
     "headline": "A person decides, on the product's own screen"
   },
   {
-    "at": 22.65,
+    "at": 20.41,
     "kicker": "Execution",
     "headline": "Approved at this exact revision, so the tools change"
   },
   {
-    "at": 28.64,
+    "at": 26.35,
     "kicker": "run_verification",
     "headline": "It failed, on the placeholder the agent left behind"
   },
   {
-    "at": 33.59,
+    "at": 31.27,
     "kicker": "apply_verified_repair",
     "headline": "The same checks, now passing"
   },
   {
-    "at": 36.9,
+    "at": 34.56,
     "kicker": "Carry it anywhere",
     "headline": "A bundle, a receipt, an archive, each with a hash"
   },
   {
-    "at": 44.56,
+    "at": 41.68,
     "kicker": "Approved",
     "headline": "The skill a person signed off, pinned to r2"
   }

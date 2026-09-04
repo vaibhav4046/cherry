@@ -20,7 +20,7 @@ One task. An entire AI team. Human authority intact.
 - Mission Control: https://cherry-wine.vercel.app/studio/control
 - What is proven: https://cherry-wine.vercel.app/compatibility
 - Repository (MIT): https://github.com/vaibhav4046/cherry
-- **Demo video (2:26): https://cherry-wine.vercel.app/media/demo/cherry-demo-final.mp4** — the first 1:31 is one unbroken run of an agent doing the whole job through registered WebMCP tools against this deployment
+- **Demo video (2:59, narrated): https://cherry-wine.vercel.app/media/demo/cherry-demo-voiced.mp4** — the first 1:31 is one unbroken run of an agent doing the whole job through registered WebMCP tools against this deployment
 - Subtitles for the demo: https://cherry-wine.vercel.app/media/demo/cherry-demo-final.srt
 
 The demo runs 2:26. The first 1:31 is one unbroken capture against this deployment, driven through
