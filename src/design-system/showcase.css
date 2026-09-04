@@ -704,3 +704,61 @@
   border: var(--border);
   border-radius: var(--radius-card);
 }
+
+/* The live host session. This sits directly under the hero because it is the
+   strongest evidence on the page and a judge should not have to scroll or open
+   a repository file to find it. Ink ground so it reads as a distinct exhibit
+   between the cream hero and the wine story section. */
+.winner-showcase__host {
+  padding: clamp(56px, 8vw, 104px) 20px;
+  color: var(--chronicle-paper);
+  background: var(--chronicle-ink);
+}
+
+.winner-showcase__host > * {
+  width: min(760px, 100%);
+  margin-inline: auto;
+}
+
+.winner-showcase__host h2 {
+  margin: 10px 0 18px;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+}
+
+.winner-showcase__host p {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--paper-2, #ddd0c8);
+}
+
+.winner-showcase__host .showcase-kicker { color: #f2b5c2; }
+
+.winner-showcase__host-steps {
+  margin: 0 0 20px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.winner-showcase__host-steps li {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--paper-2, #ddd0c8);
+}
+
+.winner-showcase__host-steps strong { color: var(--chronicle-paper); }
+
+.winner-showcase__host-note {
+  padding-top: 16px;
+  border-top: 1px solid rgba(247, 239, 227, 0.18);
+  font-size: 14px;
+}
+
+.winner-showcase__host a { color: #f2b5c2; }
+.winner-showcase__host a:hover { color: var(--chronicle-paper); }

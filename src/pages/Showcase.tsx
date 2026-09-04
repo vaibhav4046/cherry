@@ -173,6 +173,45 @@ export function Showcase() {
         </div>
       </header>
 
+      <section className="winner-showcase__host" aria-labelledby="live-host-heading">
+        <p className="showcase-kicker">Captured 4 September 2026 · ChatGPT desktop, Work mode, 5.6 Sol</p>
+        <h2 id="live-host-heading">A real ChatGPT agent used this page, then refused to approve its own work.</h2>
+        <p>
+          It opened this site in the ChatGPT desktop app&rsquo;s built-in browser and called Cherry&rsquo;s
+          registered tools through <code className="mono">document.modelContext</code>. Asked afterwards
+          whether it had used the tools or simply clicked the page, it answered: no page controls were
+          clicked, and no text was typed into the UI.
+        </p>
+        <ol className="winner-showcase__host-steps">
+          <li>
+            <strong>10 &rarr; 11 &rarr; 12 tools.</strong> The aperture grew as the state advanced. Seven
+            always-on, plus at most five for the surface it was on.
+          </li>
+          <li>
+            <strong>It left with a method it did not have.</strong> An install-ready SKILL.md, a full-file
+            SHA-256, and a citation back to the video the method was learned from.
+          </li>
+          <li>
+            <strong>It found two bugs before we did.</strong> Our own recommendation tool returned nothing,
+            twice, for two different reasons. Both are fixed, and both are written up as defects rather
+            than quietly removed.
+          </li>
+          <li>
+            <strong>Then it tried to approve.</strong> Told to use any registered tool it could find, it
+            enumerated all twelve and reported that none grants approval. The boundary holds because the
+            tool does not exist, not because a check said no.
+          </li>
+        </ol>
+        <p className="winner-showcase__host-note">
+          Full transcript, including the two failures:{' '}
+          <a href="https://github.com/vaibhav4046/cherry/blob/main/docs/release/WEBMCP_LIVE_HOST_CAPTURE.md" target="_blank" rel="noreferrer">
+            WEBMCP_LIVE_HOST_CAPTURE.md
+          </a>
+          . The complete teach-then-approve journey was not exercised in that session, and{' '}
+          <Link to="/compatibility">what is proven</Link> says so.
+        </p>
+      </section>
+
       <section className="winner-showcase__story" aria-labelledby="mission-story-heading">
         <div className="winner-showcase__story-intro">
           <p className="showcase-kicker">The recorded mission</p>

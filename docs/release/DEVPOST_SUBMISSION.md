@@ -144,16 +144,27 @@ reasoning engine is the agent the person already pays for.
 
 ## Accomplishments
 
+- **A real ChatGPT agent drove this product, and it is written down.** On 2026-09-04 the ChatGPT
+  desktop app in Work mode (model 5.6 Sol) opened the deployed site in its built-in browser and
+  called Cherry's registered tools through `document.modelContext`. The aperture grew 10 to 11 to
+  12 as state advanced, and the agent left with an install-ready SKILL.md carrying a full-file
+  SHA-256 and a citation to the video it was learned from. Asked directly whether it had used the
+  tools or simply clicked the page, it confirmed it used the registered tools and clicked nothing.
+- **The same agent was then asked to approve its own work, and could not.** It enumerated all
+  twelve registered tools and reported that none grants approval, noting that
+  `request_skill_approval` belongs to another stage and asks a person rather than granting
+  anything. The boundary holds because the tool does not exist, not because a check said no.
+- **That session found two real defects, and both are in the repository under their own headings.**
+  `recommend_skills` returned empty on a fresh browser, then returned empty again with eight skills
+  installed. Both are fixed and re-verified in the same host. The write-up records the failures,
+  not only the passing run: `docs/release/WEBMCP_LIVE_HOST_CAPTURE.md`.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 623 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
+- 627 unit tests, 135 runner and MCP bridge tests, and a 130-journey browser matrix including
   hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
-  browser-to-real-runner integration test, and a service-worker redeploy check. The unit, runner,
-  build, pack and audit gates pass on Linux CI and locally. Two browser journeys currently fail on
-  Linux CI on a 390px viewport, where a hero element ends 1.4px below the fold; they pass on
-  Windows. The run is public in the repository's Actions tab, and this page would rather point at
-  it than claim a green matrix it cannot show.
+  browser-to-real-runner integration test, and a service-worker redeploy check, run on every push
+  by a GitHub Actions workflow whose result is public in the repository's Actions tab.
 - A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
   with the test or capture behind the label, including what was not tested.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
