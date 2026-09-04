@@ -9,6 +9,7 @@ import { validateSkillGraph } from '../skillgraph/skillgraph-validator.ts';
 import type { SkillGraph, Evaluation } from '../skillgraph/skillgraph-model.ts';
 import type { ArtifactFile } from '../artifacts/artifact-model.ts';
 import { listArtifactFiles } from '../artifacts/artifact-service.ts';
+import { transitionMission } from '../mission/mission-service.ts';
 import type { AssertionResult, VerificationReport } from './assertion-model.ts';
 
 /**
@@ -356,6 +357,19 @@ export async function runVerification(options: RunVerificationOptions): Promise<
       payload: { status: report.status, blockingFailures, totalAssertions: report.totalAssertions },
     });
   });
+
+  // A pass is the end of the work, so it has to end the mission too.
+  //
+  // Nothing moved VERIFYING to COMPLETE, so a mission that had genuinely
+  // passed its checks sat in VERIFYING forever: the WebMCP aperture stayed on
+  // verification tools and the export tools it unlocks were never registered.
+  // An agent could finish the whole journey and then find no way to hand the
+  // result over. This weakens nothing. The human approval that authorised
+  // execution already happened, transitionMission still runs every guard, and
+  // a failed report moves nothing.
+  if (report.status === 'passed' && mission.state === 'VERIFYING') {
+    await transitionMission(mission.id, 'COMPLETE', options.actorType ?? 'human', 'Verification passed');
+  }
   return ok(report);
 }
 

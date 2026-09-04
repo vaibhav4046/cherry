@@ -424,7 +424,7 @@ export function ShowcaseLearn() {
         <header className="stack" style={{ gap: 'var(--sp-3)' }}>
           <p className="kicker">Learn</p>
           <h2 id="showcase-learn-heading" className="home-headline" style={{ maxWidth: 720 }}>How Cherry learns a procedure</h2>
-          <h1 className="showcase-learn__legacy-title">Watch a lesson become a proven skill</h1>
+          <h2 className="showcase-learn__legacy-title">Watch a lesson become a proven skill</h2>
           <p className="subhead" style={{ maxWidth: 620 }}>Walk the same path by hand, using a labelled offline lesson.</p>
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={() => void startFresh()} disabled={busy} data-testid="showcase-start-fresh">
@@ -674,7 +674,7 @@ export function ShowcaseLearn() {
             className="showcase-recording-video"
             src="/media/demo/golden-loop.webm"
             controls
-            preload="metadata"
+            preload="none"
             playsInline
             aria-label="Watch the real run"
           >
