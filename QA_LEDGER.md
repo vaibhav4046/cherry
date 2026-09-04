@@ -9,8 +9,9 @@ rewrite history. Evidence or it did not happen.
    (the product implements email codes; Google can come after the hackathon). Confirm Allowed
    origins include https://cherry-wine.vercel.app, https://getcherry.vercel.app, and
    http://127.0.0.1:4173 so local sign-in is testable.
-2. After the hackathon: rotate the Privy app secret and the Vercel token (both were pasted in
-   chat during the sprint).
+2. Rotate the Privy app secret and the Vercel deploy token before judging, not after. This is a
+   public repository, so a ledger line describing live credentials is itself a finding. Rotate,
+   then replace this entry with the date it was done.
 
 ## Defect table
 
