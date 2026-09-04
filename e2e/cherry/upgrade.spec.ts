@@ -30,7 +30,11 @@ test.describe('landing upgrade', () => {
     // registered tools through document.modelContext and the page changed. The
     // label may only say Validated while the row still names that capture and
     // still admits what the session did not cover.
-    const chatgptRow = rows.locator('.card', { hasText: 'ChatGPT and Codex built-in browsers' });
+    // The row was retitled on 2026-09-04: its evidence only ever covered the
+    // ChatGPT desktop app, so naming Codex's browser claimed a capture that does
+    // not exist. The assertions below are unchanged — the row must still name the
+    // capture and still admit what the session did not cover.
+    const chatgptRow = rows.locator('.card', { hasText: 'The ChatGPT desktop app built-in browser' });
     await expect(chatgptRow.getByText('Validated')).toBeVisible();
     await expect(chatgptRow).toContainText('WEBMCP_LIVE_HOST_CAPTURE.md');
     await expect(chatgptRow).toContainText('was not exercised in that session');
