@@ -6,6 +6,8 @@ export interface DerivedStep {
   goal: string;
   kind: NodeKind;
   timestampSeconds: number;
+  /** Segment window end, so a node stays traceable to the exact source moment. */
+  endSeconds: number;
   sourceText: string;
   /** Provenance belongs to the segment, not the lesson's last import. */
   transcriptSource: TranscriptSegment['source'];
@@ -17,13 +19,27 @@ export interface DerivedSkillDraft {
 }
 
 const ACTION_VERBS =
-  /^(create|add|open|make|build|write|set|use|wrap|run|click|install|import|export|test|check|verify|start|go|select|drag|drop|copy|paste|type|save|name|choose|apply|configure|enable|disable|remove|delete|update|edit|adjust|place|position|align|group|duplicate|connect|link|draw|fill|style|format|publish|deploy|upload|download)\b/i;
+  /^(create|add|open|make|build|write|set|use|wrap|run|click|install|import|export|test|check|verify|start|go|select|drag|drop|copy|paste|type|save|name|choose|apply|configure|enable|disable|remove|delete|update|edit|adjust|place|position|align|group|duplicate|connect|link|draw|fill|style|format|publish|deploy|upload|download|put|cut|lead|show|keep|move|swap|replace|trim|shorten|rewrite|answer|prove|highlight)\b/i;
 
 const VERIFY_VERBS = /^(check|verify|test|validate|confirm|inspect|review)\b/i;
 const PRINCIPLE_MARKERS = /\b(always|never|important|remember|key is|rule|principle|best practice|make sure|tip)\b/i;
 
+/**
+ * Declarative guidance: prose that states what has to hold without opening on an
+ * imperative verb ("The headline should lead with the outcome"). Most of a real
+ * lesson is shaped this way, and treating it as silence was what collapsed whole
+ * transcripts into a single review node. Narration carries none of these markers,
+ * so filler still falls through instead of becoming an invented step.
+ */
+const GUIDANCE_MARKERS = /\b(should|must|needs?|has to|have to|ought to|avoid|don't|do not)\b/i;
+/** A rule stated as a count, with no verb at all: "One call to action per page." */
+const COUNT_RULE = /^(one|two|three|only one|exactly one|a single|no more than|at most|at least)\b[^.!?]*\bper\b/i;
+
 const MAX_STEPS = 10;
 const MIN_TEXT_LENGTH = 12;
+
+/** The single node a transcript with no derivable workflow still yields. */
+export const FALLBACK_STEP_TITLE = 'Review the lesson material';
 
 function sentenceCase(text: string): string {
   const trimmed = text.trim().replace(/\s+/g, ' ');
@@ -35,9 +51,23 @@ function truncate(text: string, max: number): string {
 }
 
 /**
+ * What kind of workflow node a sentence earns, or null when it is narration.
+ * Verification is checked before the build verbs so "Validate the export"
+ * classifies on its own rather than depending on the build list containing it.
+ */
+function stepKind(sentence: string): NodeKind | null {
+  if (VERIFY_VERBS.test(sentence)) return 'verification';
+  if (ACTION_VERBS.test(sentence)) return 'build';
+  if (GUIDANCE_MARKERS.test(sentence) || COUNT_RULE.test(sentence)) return 'research';
+  return null;
+}
+
+/**
  * Deterministically derives workflow steps and transferable principles from a
  * user-supplied transcript. Heuristic, not AI: imperative sentences become
- * build/verification steps, rule-like sentences become principles. The user
+ * build/verification steps, declarative guidance becomes research steps, and
+ * rule-like sentences become principles. Nothing is paraphrased or invented —
+ * every step keeps its own sentence, timestamp and provenance. The user
  * reviews and approves the result — Cherry never pretends this is
  * understanding, it is structure extraction the human then owns.
  */
@@ -57,12 +87,14 @@ export function deriveSkillFromTranscript(segments: TranscriptSegment[]): Derive
         principles.push(sentenceCase(truncate(sentence, 200)));
         continue;
       }
-      if (ACTION_VERBS.test(sentence) && steps.length < MAX_STEPS * 3) {
+      const kind = stepKind(sentence);
+      if (kind && steps.length < MAX_STEPS * 3) {
         steps.push({
           title: sentenceCase(truncate(sentence, 70)),
           goal: sentenceCase(truncate(sentence, 300)),
-          kind: VERIFY_VERBS.test(sentence) ? 'verification' : 'build',
+          kind,
           timestampSeconds: segment.startSeconds,
+          endSeconds: segment.endSeconds,
           sourceText: sentence,
           transcriptSource: segment.source,
         });
@@ -89,10 +121,11 @@ export function deriveSkillFromTranscript(segments: TranscriptSegment[]): Derive
     if (first) {
       chosen = [
         {
-          title: 'Review the lesson material',
+          title: FALLBACK_STEP_TITLE,
           goal: `Work through the lesson content starting from: "${truncate(first.text.trim(), 140)}"`,
           kind: 'research',
           timestampSeconds: first.startSeconds,
+          endSeconds: first.endSeconds,
           sourceText: first.text.trim(),
           transcriptSource: first.source,
         },

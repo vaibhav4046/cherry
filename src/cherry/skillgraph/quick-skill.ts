@@ -1,11 +1,11 @@
 import { fail, ok, type Result } from '../core/result.ts';
 import { getLesson, listTranscript } from '../watch/lesson-service.ts';
-import { addEvidence } from '../evidence/evidence-service.ts';
+import { addEvidence, listEvidence } from '../evidence/evidence-service.ts';
 import { draftSkillGraph, reviseSkillGraph } from './skillgraph-service.ts';
 import { updateMission } from '../mission/mission-service.ts';
 import type { Evaluation } from './skillgraph-model.ts';
 import type { SkillGraph } from './skillgraph-model.ts';
-import { deriveSkillFromTranscript, type DerivedSkillDraft } from './auto-draft.ts';
+import { deriveSkillFromTranscript, FALLBACK_STEP_TITLE, type DerivedSkillDraft, type DerivedStep } from './auto-draft.ts';
 import type { TranscriptSource } from '../watch/watch-model.ts';
 import type { ProvenanceMethod } from '../evidence/evidence-model.ts';
 
@@ -36,6 +36,8 @@ const WEAK_STEP_OBJECT = /^(your|my|our|their|his|her|its|this|that|these|those|
  * Derive a human-friendly skill name. A lesson title that already reads as a task
  * ("Plan a week of content in one sitting") is the best name there is; otherwise the
  * first concrete step lends its object, unless that object cannot stand alone.
+ * Cherry's own placeholder step never names anything — a lesson that only stated
+ * rules is named from the lesson title, or failing that from the first rule.
  */
 export function autoNameSkill(lessonTitle: string, draft: DerivedSkillDraft): string {
   const title = lessonTitle.replace(/[.!?…]+$/, '').trim();
@@ -43,7 +45,7 @@ export function autoNameSkill(lessonTitle: string, draft: DerivedSkillDraft): st
     return `${title.slice(0, 100)} skill`;
   }
   const step = draft.steps.find((candidate) => candidate.kind === 'build') ?? draft.steps[0];
-  if (step) {
+  if (step && step.title !== FALLBACK_STEP_TITLE) {
     // "Create a new frame for the hero section." becomes "Frame for the hero section workflow"
     const firstClause = step.title.split(/\s+(?:and|then|,)\s+|[;,]\s+/i)[0] ?? step.title;
     const stripped = firstClause
@@ -55,7 +57,21 @@ export function autoNameSkill(lessonTitle: string, draft: DerivedSkillDraft): st
       return `${base.slice(0, 90)} workflow`;
     }
   }
+  const principle = draft.principles[0];
+  if (title.length < 12 && principle) {
+    return `${principle.replace(/[.!?…]+$/, '').slice(0, 90)} skill`;
+  }
   return `${(title || 'Learned').slice(0, 100)} skill`;
+}
+
+/** The claim a step records, bounded the way the evidence service bounds it. */
+function claimFor(step: DerivedStep): string {
+  return step.sourceText.slice(0, 2000).trim();
+}
+
+/** Comparison key only: stored claim text is never rewritten. */
+function claimKey(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 export interface QuickSkillResult {
@@ -100,29 +116,56 @@ export async function generateSkillFromLesson(input: QuickSkillInput): Promise<R
     return fail('validation', 'Keep at least one step — a skill needs a workflow.');
   }
 
+  // Whatever a person or agent already recorded against this lesson counts too:
+  // a record that quotes a step's own sentence is reused instead of stored a
+  // second time, and any other record attaches to the step whose source window
+  // it was taken in. A node never cites evidence from outside its own moment.
+  const stored = await listEvidence(lesson.workspaceId, { lessonId: lesson.id });
+  const attached = new Set<string>();
+
   // One evidence record per kept step, honestly labelled: transcript-derived,
   // untrusted until a human raises it.
-  const nodes: Array<{ kind: (typeof kept)[number]['kind']; title: string; goal: string; evidenceIds: string[] }> = [];
-  let evidenceCount = 0;
+  const nodes: Array<{ kind: DerivedStep['kind']; title: string; goal: string; evidenceIds: string[] }> = [];
   for (const step of kept) {
-    const evidence = await addEvidence(
-      {
-        workspaceId: lesson.workspaceId,
-        missionId: lesson.missionId ?? null,
-        lessonId: lesson.id,
-        sourceType: 'transcript',
-        claim: step.sourceText.slice(0, 2000),
-        provenanceMethod: provenanceForTranscriptSource[step.transcriptSource],
-        timestampSeconds: step.timestampSeconds,
-        transferability: 'unknown',
-        ...(lesson.canonicalUrl ? { sourceUri: lesson.canonicalUrl } : {}),
-      },
-      'system',
-    );
-    if (!evidence.ok) return evidence;
-    evidenceCount += 1;
-    nodes.push({ kind: step.kind, title: step.title, goal: step.goal, evidenceIds: [evidence.value.id] });
+    const claim = claimFor(step);
+    const quoted = stored.find((record) => !attached.has(record.id) && claimKey(record.claim) === claimKey(claim));
+    let evidenceId: string;
+    if (quoted) {
+      attached.add(quoted.id);
+      evidenceId = quoted.id;
+    } else {
+      const evidence = await addEvidence(
+        {
+          workspaceId: lesson.workspaceId,
+          missionId: lesson.missionId ?? null,
+          lessonId: lesson.id,
+          sourceType: 'transcript',
+          claim,
+          provenanceMethod: provenanceForTranscriptSource[step.transcriptSource],
+          timestampSeconds: step.timestampSeconds,
+          transferability: 'unknown',
+          ...(lesson.canonicalUrl ? { sourceUri: lesson.canonicalUrl } : {}),
+        },
+        'system',
+      );
+      if (!evidence.ok) return evidence;
+      evidenceId = evidence.value.id;
+    }
+    nodes.push({ kind: step.kind, title: step.title, goal: step.goal, evidenceIds: [evidenceId] });
   }
+
+  // Second pass, so a record quoting one step is never swallowed by an earlier
+  // step that happens to share its source window.
+  for (const record of stored) {
+    const at = record.timestampSeconds;
+    if (attached.has(record.id) || at === null || at === undefined) continue;
+    const index = kept.findIndex((step) => at >= step.timestampSeconds && at <= step.endSeconds);
+    if (index < 0) continue;
+    attached.add(record.id);
+    nodes[index]!.evidenceIds.push(record.id);
+  }
+
+  const evidenceCount = new Set(nodes.flatMap((node) => node.evidenceIds)).size;
 
   const purpose =
     input.purpose?.trim() ||

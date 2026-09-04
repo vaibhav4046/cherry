@@ -4,7 +4,8 @@ import { deriveSkillFromTranscript } from '../../src/cherry/skillgraph/auto-draf
 import { generateSkillFromLesson, previewQuickSkill } from '../../src/cherry/skillgraph/quick-skill.ts';
 import { createMission, createWorkspace, updateMission } from '../../src/cherry/mission/mission-service.ts';
 import { importTranscript, loadLesson } from '../../src/cherry/watch/lesson-service.ts';
-import { listEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import { addEvidence, listEvidence } from '../../src/cherry/evidence/evidence-service.ts';
+import { LANDING_PAGE_IDEAS, LANDING_PAGE_PRINCIPLE, landingPageTranscript } from '../fixtures/landing-page-transcript.ts';
 import { listProofEvents } from '../../src/cherry/persistence/transactions.ts';
 import { listApprovals, requestSkillGraphApproval, decideSkillGraphApproval } from '../../src/cherry/skillgraph/skillgraph-service.ts';
 import { compileSkillBundle } from '../../src/cherry/compiler/archive-builder.ts';
@@ -226,10 +227,101 @@ describe('autoNameSkill', () => {
     const { autoNameSkill } = await import('../../src/cherry/skillgraph/quick-skill.ts');
     const draft = {
       steps: [{ kind: 'build', title: 'Open your calendar and add three recording slots for the week.' }],
+      principles: [],
     } as unknown as Parameters<typeof autoNameSkill>[1];
     expect(autoNameSkill('Plan a week of content in one sitting', draft)).toBe('Plan a week of content in one sitting skill');
     expect(autoNameSkill('Ep. 12', draft)).toBe('Ep. 12 skill');
-    const hero = { steps: [{ kind: 'build', title: 'Create a new frame for the hero section, then name it.' }] } as unknown as Parameters<typeof autoNameSkill>[1];
+    const hero = {
+      steps: [{ kind: 'build', title: 'Create a new frame for the hero section, then name it.' }],
+      principles: [],
+    } as unknown as Parameters<typeof autoNameSkill>[1];
     expect(autoNameSkill('Ep. 12', hero)).toBe('Frame for the hero section workflow');
+  });
+
+  it('names a guidance-only lesson from its title or its rules, never from the placeholder step', async () => {
+    const { autoNameSkill } = await import('../../src/cherry/skillgraph/quick-skill.ts');
+    const { FALLBACK_STEP_TITLE } = await import('../../src/cherry/skillgraph/auto-draft.ts');
+    const draft = {
+      steps: [{ kind: 'research', title: FALLBACK_STEP_TITLE }],
+      principles: ['Never make a visitor scroll to work out what you sell.'],
+    } as unknown as Parameters<typeof autoNameSkill>[1];
+    expect(autoNameSkill('Landing page teardown', draft)).toBe('Landing page teardown skill');
+    // Too thin a title to name anything: the rule the source insists on names it instead.
+    expect(autoNameSkill('Ep. 12', draft)).toContain('visitor scroll');
+    expect(autoNameSkill('Ep. 12', draft)).not.toContain('Review the lesson material');
+  });
+});
+
+describe('landing-page transcript regression', () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  /** What a person or agent already recorded while watching, before Quick Skill ran. */
+  const RECORDED_WHILE_WATCHING: ReadonlyArray<{ claim: string; timestampSeconds: number }> = [
+    // Two verbatim quotes of transcript lines Quick Skill also turns into steps.
+    { claim: 'The headline should lead with the outcome the visitor gets, not the feature you shipped.', timestampSeconds: 14 },
+    { claim: 'Cut generic copy like innovative solutions and world-class platform, because it says nothing.', timestampSeconds: 134 },
+    // Three notes in the watcher's own words, timed to the moment they came from.
+    { claim: 'One call to action keeps the decision single.', timestampSeconds: 51 },
+    { claim: 'Proof and claim sit side by side on the page.', timestampSeconds: 72 },
+    { claim: 'Five seconds is the comprehension budget.', timestampSeconds: 96 },
+  ];
+
+  async function landingLesson() {
+    const workspace = unwrap(await createWorkspace({ name: 'Landing workspace' }));
+    const lesson = unwrap(await loadLesson({ workspaceId: workspace.id, title: 'Landing page teardown', kind: 'manual' }));
+    unwrap(await importTranscript(lesson.id, landingPageTranscript(), 'user_text'));
+    for (const note of RECORDED_WHILE_WATCHING) {
+      unwrap(
+        await addEvidence(
+          { workspaceId: workspace.id, lessonId: lesson.id, sourceType: 'transcript', provenanceMethod: 'agent_observation', ...note },
+          'agent',
+        ),
+      );
+    }
+    return { workspace, lesson };
+  }
+
+  it('turns declarative prose into a node per idea instead of one review node', async () => {
+    const { lesson } = await landingLesson();
+    const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id }));
+
+    expect(generated.graph.nodes.length).toBeGreaterThan(1);
+    const covered = generated.graph.nodes.map((node) => node.goal).join(' ').toLowerCase();
+    for (const [idea, phrase] of Object.entries(LANDING_PAGE_IDEAS)) {
+      expect(covered, idea).toContain(phrase.toLowerCase());
+    }
+    expect(generated.graph.name).not.toBe('Review the lesson material workflow');
+    expect(generated.graph.purpose).toContain(LANDING_PAGE_PRINCIPLE);
+    // Every node still traces back to the transcript it came from.
+    const transcript = landingPageTranscript();
+    for (const step of generated.draft.steps) {
+      expect(transcript).toContain(step.sourceText);
+    }
+  });
+
+  it('counts the evidence the lesson already carried and stores no claim twice', async () => {
+    const { workspace, lesson } = await landingLesson();
+    const generated = unwrap(await generateSkillFromLesson({ lessonId: lesson.id }));
+
+    const cited = new Set(generated.graph.nodes.flatMap((node) => node.evidenceIds));
+    expect(generated.evidenceCount).toBe(cited.size);
+    expect(generated.evidenceCount).toBeGreaterThan(generated.graph.nodes.length);
+
+    const stored = await listEvidence(workspace.id, { lessonId: lesson.id });
+    // The two verbatim notes are reused, not duplicated.
+    expect(new Set(stored.map((record) => record.claim)).size).toBe(stored.length);
+    for (const id of cited) {
+      expect(stored.some((record) => record.id === id), id).toBe(true);
+    }
+    // A watcher's note is cited by the node built from the moment it was recorded.
+    const proofNode = generated.graph.nodes.find((node) => node.goal.includes('proof next to the claim'));
+    const proofNote = stored.find((record) => record.claim === 'Proof and claim sit side by side on the page.');
+    expect(proofNode?.evidenceIds).toContain(proofNote!.id);
+
+    // Generating a second time reuses the same claims instead of growing the ledger.
+    unwrap(await generateSkillFromLesson({ lessonId: lesson.id }));
+    expect((await listEvidence(workspace.id, { lessonId: lesson.id })).length).toBe(stored.length);
   });
 });
