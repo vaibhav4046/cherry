@@ -132,16 +132,26 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     const afterRequest = await hostTools(page);
     expect(afterRequest.some((name) => /approve|decide/.test(name))).toBe(false);
 
-    // The human decides in the UI — the only path.
-    await expect(page.getByTestId('showcase-approval')).toBeVisible();
-    await page.getByRole('button', { name: 'Approve this exact revision' }).click();
-    await expect(page.getByTestId('showcase-steps')).toContainText(/Approved at exactly r\d+/);
+    // Requesting approval now brings the decision to the person: the tool calls
+    // presentPath, so Cherry navigates to the skill's own approval screen rather
+    // than leaving a pending decision buried on the page the agent happened to
+    // be on. Follow it, and decide there — that screen is the only path.
+    await page.waitForURL(/\/studio\/skills\/[^/?]+\?approval=/, { timeout: 10_000 });
+    const approve = page.getByTestId('approve-skill');
+    await expect(approve).toBeVisible();
+    await approve.click();
+    await expect(page.getByText(/Approved at this exact version/i)).toBeVisible();
+
+    // Back to the judge route to confirm the agent's own view of the decision.
+    await page.goto('/showcase');
 
     // The agent continues: context now reports the approval as decided.
     const context = await callTool(page, 'read_cherry_context', {});
     expect((context.payload as { pendingApprovals: unknown[] }).pendingApprovals).toHaveLength(0);
     const status = await callTool(page, 'get_cherry_status', {});
-    expect((status.payload as Record<string, unknown>).productState).toBe('planning');
+    // Approval is what unlocks execution: the write/verify tools only exist
+    // once a person has approved the exact revision, so the state moves on.
+    expect((status.payload as Record<string, unknown>).productState).toBe('execution');
 
     // The library serves the approved skill back to the visiting agent — the
     // site upgrades the agent. The three read tools are global (available from
