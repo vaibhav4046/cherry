@@ -594,18 +594,46 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         score: match.score,
         matchedOn: match.matchedOn.slice(0, 4),
       }));
+      // Ranking is deliberately strict: an unrelated task must not be answered
+      // with a confident-looking match. But a strict miss used to end the
+      // conversation, so an agent could hold a library of eight installed
+      // skills and still be told nothing. Relevance is the ranker's job;
+      // staying useful on a miss is this tool's job. On a miss we list what is
+      // actually here, under a different key, so a real match and "here is the
+      // shelf" can never be confused.
+      const missed = recommendations.length === 0 && entries.length > 0;
+      const shelf = missed
+        ? entries.slice(0, input.limit ?? 3).map((entry) => ({
+            skillId: entry.skillId,
+            name: entry.name.slice(0, 60),
+            purpose: entry.purpose.slice(0, 120),
+            installReady: entry.installReady,
+            sample: entry.sample,
+            approvalKind: entry.sample ? 'synthetic-sample-state' : 'human-decision',
+            revision: entry.revision,
+          }))
+        : [];
       const payload: Record<string, unknown> = {
         recommendationCount: recommendations.length,
         returnedCount: 0,
         recommendations: [],
         recommendationsTruncated: false,
+        librarySize: entries.length,
         note:
-          recommendations.length === 0
-            ? 'No skills match this task yet. Call load_starter_library to install labelled reference methods you can read and install right now, or have the human teach a real one via start_apprenticeship.'
-            : 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.',
+          recommendations.length > 0
+            ? 'Scores are deterministic lexical matches. Live approvals stay human-only; labelled samples report sample=true.'
+            : missed
+              ? `Nothing matched this task, so recommendations is empty on purpose. The library does hold ${entries.length} skill(s); the closest are listed under availableSkills, unranked and not claimed to fit. get_skill resolves those ids.`
+              : 'The library is empty in this browser. Call load_starter_library to install labelled reference methods you can read and install right now, or have the human teach a real one via start_apprenticeship.',
       };
       for (const recommendation of recommendations) {
         if (!appendIfBounded(payload, 'recommendations', recommendation)) break;
+      }
+      if (missed) {
+        payload.availableSkills = [];
+        for (const entry of shelf) {
+          if (!appendIfBounded(payload, 'availableSkills', entry)) break;
+        }
       }
       payload.returnedCount = (payload.recommendations as unknown[]).length;
       payload.recommendationsTruncated = (payload.recommendations as unknown[]).length < recommendations.length;
