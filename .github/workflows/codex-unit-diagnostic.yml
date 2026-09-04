@@ -1,0 +1,44 @@
+name: codex unit diagnostic
+
+on:
+  push:
+    branches:
+      - codex/webmcp-submission-readiness
+    paths:
+      - .github/workflows/codex-unit-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  unit-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from lockfile
+        run: npm ci
+
+      - name: Run unit tests and keep exact output
+        id: unit
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee unit-test.log
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-unit-diagnostic-${{ github.sha }}
+          path: unit-test.log
+          if-no-files-found: error
+          retention-days: 1
