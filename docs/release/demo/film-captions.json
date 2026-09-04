@@ -1,0 +1,57 @@
+[
+  {
+    "at": 0,
+    "kicker": "The aperture",
+    "headline": "A page that hands an agent its tools"
+  },
+  {
+    "at": 4.97,
+    "kicker": "start_apprenticeship",
+    "headline": "A space and a project, in one call"
+  },
+  {
+    "at": 6.91,
+    "kicker": "add_source_evidence",
+    "headline": "Every claim it records starts untrusted"
+  },
+  {
+    "at": 12.48,
+    "kicker": "derive_skill",
+    "headline": "Five sentences become five cited steps"
+  },
+  {
+    "at": 14.85,
+    "kicker": "The boundary",
+    "headline": "The agent asks. It cannot decide."
+  },
+  {
+    "at": 19.2,
+    "kicker": "Human only",
+    "headline": "A person decides, on the product's own screen"
+  },
+  {
+    "at": 22.65,
+    "kicker": "Execution",
+    "headline": "Approved at this exact revision, so the tools change"
+  },
+  {
+    "at": 28.64,
+    "kicker": "run_verification",
+    "headline": "It failed, on the placeholder the agent left behind"
+  },
+  {
+    "at": 33.59,
+    "kicker": "apply_verified_repair",
+    "headline": "The same checks, now passing"
+  },
+  {
+    "at": 36.9,
+    "kicker": "Carry it anywhere",
+    "headline": "A bundle, a receipt, an archive, each with a hash"
+  },
+  {
+    "at": 44.56,
+    "kicker": "Approved",
+    "headline": "The skill a person signed off, pinned to r2"
+  }
+]

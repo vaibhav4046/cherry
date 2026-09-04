@@ -3,8 +3,7 @@
     "argv": [
       "D:\\node.exe",
       "D:\\project\\cherry\\node_modules\\@playwright\\test\\cli.js",
-      "test",
-      "--list"
+      "test"
     ],
     "configFile": "D:\\project\\cherry\\playwright.config.ts",
     "rootDir": "D:/project/cherry/e2e",
@@ -17,14 +16,18 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 1
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "desktop",
         "name": "desktop",
         "testDir": "D:/project/cherry/e2e",
@@ -40,7 +43,9 @@
         "outputDir": "D:/project/cherry/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "mobile",
         "name": "mobile",
         "testDir": "D:/project/cherry/e2e",
@@ -111,8 +116,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1682,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:34:53.732Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-2518907c97c1ac69d2be",
@@ -131,8 +150,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14265,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:02.856Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-a5dace3749f5e2483849",
@@ -151,8 +184,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9049,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:17.142Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-d7126446aa42c0e6a48b",
@@ -171,8 +218,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2263,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:26.207Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-8eea33411f4c06cf3d01",
@@ -191,8 +252,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3812,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:28.483Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-2cf1ec08d50657b3d71e",
@@ -211,8 +286,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3994,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:32.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-93c45c1631d336b8a860",
@@ -231,8 +320,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3392,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:36.318Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-7377e92522ac1c9afdcd",
@@ -251,8 +354,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3881,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:39.737Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "e98576eb927fec2d7ec6-99939da14062bdb2c30e",
@@ -288,8 +405,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2637,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:43.668Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ad095c448554a5a49b88-a598c10cb0d0e9f59f7d",
@@ -308,8 +439,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10682,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:46.321Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ad095c448554a5a49b88-f3b55ad3f2e9a086400e",
@@ -328,8 +473,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6241,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:35:57.022Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ad095c448554a5a49b88-78cb94ee67ee0d3f5eb9",
@@ -356,17 +515,66 @@
           "specs": [
             {
               "title": "empty state, sample creator, transcript changes readiness, set aside persists, reset removes",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 150000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 74476,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('creator-row')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('creator-row')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('creator-row')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('creator-row')\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts:40:51",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                          "column": 51,
+                          "line": 40
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/\\/studio\\/skills(\\?sample=loaded)?$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/studio/creators'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'creator-row'\u001b[39m))\u001b[33m.\u001b[39mtoHaveCount(\u001b[35m1\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'creator-row'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'Sample Creator (synthetic)'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'creator-row'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'SAMPLE DATA'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 43 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'creator-row'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'1 new upload'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                            "column": 51,
+                            "line": 40
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('creator-row')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('creator-row')\u001b[22m\n\n\n  38 |     await expect(page).toHaveURL(/\\/studio\\/skills(\\?sample=loaded)?$/);\n  39 |     await page.goto('/studio/creators');\n> 40 |     await expect(page.getByTestId('creator-row')).toHaveCount(1);\n     |                                                   ^\n  41 |     await expect(page.getByTestId('creator-row')).toContainText('Sample Creator (synthetic)');\n  42 |     await expect(page.getByTestId('creator-row')).toContainText('SAMPLE DATA');\n  43 |     await expect(page.getByTestId('creator-row')).toContainText('1 new upload');\n    at D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts:40:51"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:36:03.339Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-creators-Creators-w-acfa1-side-persists-reset-removes-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-creators-Creators-w-acfa1-side-persists-reset-removes-desktop\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                        "column": 51,
+                        "line": 40
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "21c89cde5e6780fb818d-09e77ab6f6ef4fad906d",
@@ -376,7 +584,7 @@
             },
             {
               "title": "keyboard-only: Follow a creator reaches the channel-watch dialog",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -385,8 +593,57 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17744,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/studio\\/sources\\?add=channel$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:4173/studio/sources\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 10000ms\u001b[22m\n\u001b[2m    22 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:4173/studio/sources\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/studio\\/sources\\?add=channel$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:4173/studio/sources\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 10000ms\u001b[22m\n\u001b[2m    22 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:4173/studio/sources\"\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts:122:24",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                          "column": 24,
+                          "line": 122
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 120 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'creators-follow'\u001b[39m))\u001b[33m.\u001b[39mtoBeFocused()\u001b[33m;\u001b[39m\n \u001b[90m 121 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Enter'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 122 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/\\/studio\\/sources\\?add=channel$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 123 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'heading'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Start a channel watch'\u001b[39m }))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 124 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 125 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                            "column": 24,
+                            "line": 122
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/studio\\/sources\\?add=channel$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:4173/studio/sources\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 10000ms\u001b[22m\n\u001b[2m    22 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:4173/studio/sources\"\u001b[22m\n\n\n  120 |     await expect(page.getByTestId('creators-follow')).toBeFocused();\n  121 |     await page.keyboard.press('Enter');\n> 122 |     await expect(page).toHaveURL(/\\/studio\\/sources\\?add=channel$/);\n      |                        ^\n  123 |     await expect(page.getByRole('heading', { name: 'Start a channel watch' })).toBeVisible();\n  124 |   });\n  125 | });\n    at D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts:122:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:38:52.484Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-creators-Creators-w-3ca9c-es-the-channel-watch-dialog-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-creators-Creators-w-3ca9c-es-the-channel-watch-dialog-desktop\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\creators.spec.ts",
+                        "column": 24,
+                        "line": 122
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "21c89cde5e6780fb818d-88dd83f87e9d90fcd984",
@@ -410,18 +667,38 @@
           "tags": [],
           "tests": [
             {
-              "timeout": 90000,
+              "timeout": 300000,
               "annotations": [],
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 48154,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T07:02:19.135Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "D:\\project\\cherry\\test-results\\cherry-demo-agent-journey--8c2ec-t-and-the-work-being-proved-desktop\\video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "6e1f0d24d8f67403720a-b5006586a92f762847d9",
           "file": "cherry/demo-agent-journey.spec.ts",
-          "line": 75,
+          "line": 90,
           "column": 1
         }
       ]
@@ -450,8 +727,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3227,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:39:46.341Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "181b0dfd3ae04c5bc467-8480ddcc0eff2491b289",
@@ -470,8 +761,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 685,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:39:59.294Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "181b0dfd3ae04c5bc467-28fcb754cc6dfa8fe4cd",
@@ -498,7 +803,7 @@
           "specs": [
             {
               "title": "fresh IndexedDB reaches a durable mission from one outcome",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -507,8 +812,49 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 95173,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\final-winner-control.spec.ts",
+                            "column": 16,
+                            "line": 38
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n\n\n  36 |     await stubOfflineRunner(page);\n  37 |     await page.setViewportSize({ width: 1440, height: 900 });\n> 38 |     await page.goto('/studio/control');\n     |                ^\n  39 |\n  40 |     await expect(page.getByRole('heading', { level: 1, name: 'What should Cherry take care of?' })).toBeVisible();\n  41 |     await expect(page.getByLabel('Space name')).toHaveCount(0);\n    at D:\\project\\cherry\\e2e\\cherry\\final-winner-control.spec.ts:38:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:40:00.263Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-contro-ae520-le-mission-from-one-outcome-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-contro-ae520-le-mission-from-one-outcome-desktop\\trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-2c1d98987726c3a461ff",
@@ -527,8 +873,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2302,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:42:22.116Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-595d8edff6d22d6bf75c",
@@ -547,8 +907,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3717,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:42:33.664Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-670c3e6fd0528e63a39a",
@@ -567,8 +941,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4196,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:42:37.398Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "108a6f8e6fb82f5b33f1-c1ac3e070e50f380a764",
@@ -588,7 +976,7 @@
       "specs": [
         {
           "title": "desktop-1440 leads with the recorded mission and has no overflow",
-          "ok": true,
+          "ok": false,
           "tags": [],
           "tests": [
             {
@@ -597,8 +985,49 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 95167,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\final-winner-landing.spec.ts",
+                        "column": 16,
+                        "line": 34
+                      },
+                      "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/\", waiting until \"load\"\u001b[22m\n\n\n  32 |     await page.setViewportSize(viewport);\n  33 |     const failures = watchForBrowserFailures(page);\n> 34 |     await page.goto('/');\n     |                ^\n  35 |\n  36 |     const player = page.getByRole('region', { name: 'Recorded real Codex run' });\n  37 |     await expect(player).toBeVisible();\n    at D:\\project\\cherry\\e2e\\cherry\\final-winner-landing.spec.ts:34:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:42:42.655Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-landin-739e8-mission-and-has-no-overflow-desktop\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-landin-739e8-mission-and-has-no-overflow-desktop\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-ea53139829b1777c587c",
@@ -617,8 +1046,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2531,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:46:14.469Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-a44714182d16e3d864f3",
@@ -637,8 +1080,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3311,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:46:24.311Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-e885beb03c8284926426",
@@ -657,8 +1114,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 60522,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:46:27.645Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-b9907c32b3aa2ff9e5d4",
@@ -677,8 +1148,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2996,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:47:28.181Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-c13f98139cd74e33e409",
@@ -697,8 +1182,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27874,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:47:31.192Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "cae50a2b9c4d110d6fc8-2cac199ea290b6f8035c",
@@ -725,8 +1224,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4063,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:47:59.160Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "6bef802e5d6f169dab47-9b45ab57ab380c23fb17",
@@ -736,7 +1249,7 @@
         },
         {
           "title": "recorded mission controls work from the keyboard and expose evidence",
-          "ok": true,
+          "ok": false,
           "tags": [],
           "tests": [
             {
@@ -745,8 +1258,57 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2608,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('status')\nExpected substring: \u001b[32m\"Step 2 of 6: Plan bounded\"\u001b[39m\nError: strict mode violation: getByRole('status') resolved to 2 elements:\n    1) <div role=\"status\" class=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">…</div> aka getByText('Step 2 of 6: Plan bounded')\n    2) <div role=\"status\" aria-live=\"polite\" class=\"empty-state\">…</div> aka getByRole('status').filter({ hasText: 'Loading' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('status')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('status')\nExpected substring: \u001b[32m\"Step 2 of 6: Plan bounded\"\u001b[39m\nError: strict mode violation: getByRole('status') resolved to 2 elements:\n    1) <div role=\"status\" class=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">…</div> aka getByText('Step 2 of 6: Plan bounded')\n    2) <div role=\"status\" aria-live=\"polite\" class=\"empty-state\">…</div> aka getByRole('status').filter({ hasText: 'Loading' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('status')\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\final-winner-showcase.spec.ts:51:42",
+                    "location": {
+                      "file": "D:\\project\\cherry\\e2e\\cherry\\final-winner-showcase.spec.ts",
+                      "column": 42,
+                      "line": 51
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 49 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Enter'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m   \u001b[36mawait\u001b[39m expect(player)\u001b[33m.\u001b[39mtoContainText(\u001b[32m'Step 2 of 6'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'status'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'Step 2 of 6: Plan bounded'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m\n \u001b[90m 53 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Open evidence'\u001b[39m })\u001b[33m.\u001b[39mfocus()\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Enter'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\final-winner-showcase.spec.ts",
+                        "column": 42,
+                        "line": 51
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('status')\nExpected substring: \u001b[32m\"Step 2 of 6: Plan bounded\"\u001b[39m\nError: strict mode violation: getByRole('status') resolved to 2 elements:\n    1) <div role=\"status\" class=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">…</div> aka getByText('Step 2 of 6: Plan bounded')\n    2) <div role=\"status\" aria-live=\"polite\" class=\"empty-state\">…</div> aka getByRole('status').filter({ hasText: 'Loading' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('status')\u001b[22m\n\n\n  49 |   await page.keyboard.press('Enter');\n  50 |   await expect(player).toContainText('Step 2 of 6');\n> 51 |   await expect(page.getByRole('status')).toContainText('Step 2 of 6: Plan bounded');\n     |                                          ^\n  52 |\n  53 |   await page.getByRole('button', { name: 'Open evidence' }).focus();\n  54 |   await page.keyboard.press('Enter');\n    at D:\\project\\cherry\\e2e\\cherry\\final-winner-showcase.spec.ts:51:42"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:48:03.241Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-showca-86876-eyboard-and-expose-evidence-desktop\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\project\\cherry\\test-results\\cherry-final-winner-showca-86876-eyboard-and-expose-evidence-desktop\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\project\\cherry\\e2e\\cherry\\final-winner-showcase.spec.ts",
+                    "column": 42,
+                    "line": 51
+                  }
+                }
+              ],
+              "status": "unexpected"
             }
           ],
           "id": "6bef802e5d6f169dab47-96347d333d862614a234",
@@ -765,8 +1327,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13653,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:48:53.658Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "6bef802e5d6f169dab47-48e2a1cebfc47c9afc35",
@@ -785,8 +1361,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1087,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:49:44.079Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "6bef802e5d6f169dab47-a50c2be81a1a3b46e272",
@@ -820,8 +1410,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2655,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:46.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-cca697f3926d4a5e1daa",
@@ -840,8 +1444,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2615,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:49.059Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-0f49d0d7e01233db1d8f",
@@ -860,8 +1478,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2417,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:51.689Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-fa5d2cf5c6e9a49da327",
@@ -880,8 +1512,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1785,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:54.121Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-b6cf08fb4356054a6ed4",
@@ -900,8 +1546,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2598,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:55.924Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5ff6bc05a8f9da273fa8-89ab4c70084c2add0753",
@@ -937,8 +1597,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5239,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:49:58.598Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ea2267adb04f6488957a-5b8a8d31294bc31682d8",
@@ -948,7 +1622,7 @@
             },
             {
               "title": "keyboard: the composer submits with Enter on the button and mobile has no overflow",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -957,8 +1631,55 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2773,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts:135:16",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                          "column": 16,
+                          "line": 135
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 133 |\u001b[39m   test(\u001b[32m'keyboard: the composer submits with Enter on the button and mobile has no overflow'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 134 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39msetViewportSize({ width\u001b[33m:\u001b[39m \u001b[35m390\u001b[39m\u001b[33m,\u001b[39m height\u001b[33m:\u001b[39m \u001b[35m844\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 135 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/studio/control'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 136 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'outcome-composer'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 137 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'outcome-input'\u001b[39m)\u001b[33m.\u001b[39mfocus()\u001b[33m;\u001b[39m\n \u001b[90m 138 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mtype(\u001b[32m'Research this market and produce an evidence-backed launch brief.'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                            "column": 16,
+                            "line": 135
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n\n\n  133 |   test('keyboard: the composer submits with Enter on the button and mobile has no overflow', async ({ page }) => {\n  134 |     await page.setViewportSize({ width: 390, height: 844 });\n> 135 |     await page.goto('/studio/control');\n      |                ^\n  136 |     await expect(page.getByTestId('outcome-composer')).toBeVisible();\n  137 |     await page.getByTestId('outcome-input').focus();\n  138 |     await page.keyboard.type('Research this market and produce an evidence-backed launch brief.');\n    at D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts:135:16"
+                        },
+                        {
+                          "message": "Error: ENOENT: no such file or directory, open 'D:\\project\\cherry\\test-results\\.playwright-artifacts-5\\cdc51e9d24430e25bc2e664dad8753fd.zip'"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:50:03.856Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-god-mode-mission-Mi-3c8e9--and-mobile-has-no-overflow-desktop\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                        "column": 16,
+                        "line": 135
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "ea2267adb04f6488957a-e35c73a09e7221ac452d",
@@ -976,17 +1697,71 @@
           "specs": [
             {
               "title": "two workers overlap, a failed check repairs once, the human decides, the mission completes",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 180000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2489,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts:172:16",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                          "column": 16,
+                          "line": 172
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 170 |\u001b[39m     \u001b[36mconst\u001b[39m errors \u001b[33m=\u001b[39m watchConsole(page)\u001b[33m;\u001b[39m\n \u001b[90m 171 |\u001b[39m     \u001b[36mawait\u001b[39m pair(page)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 172 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/studio/control'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 173 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'outcome-composer'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 174 |\u001b[39m\n \u001b[90m 175 |\u001b[39m     \u001b[90m// The repository field and the runner line live behind Execution settings, closed by default.\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                            "column": 16,
+                            "line": 172
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/studio/control\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/studio/control\", waiting until \"load\"\u001b[22m\n\n\n  170 |     const errors = watchConsole(page);\n  171 |     await pair(page);\n> 172 |     await page.goto('/studio/control');\n      |                ^\n  173 |     await expect(page.getByTestId('outcome-composer')).toBeVisible();\n  174 |\n  175 |     // The repository field and the runner line live behind Execution settings, closed by default.\n    at D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts:172:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:50:31.674Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-god-mode-mission-Mi-bc018-cides-the-mission-completes-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-god-mode-mission-Mi-bc018-cides-the-mission-completes-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-god-mode-mission-Mi-bc018-cides-the-mission-completes-desktop\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\god-mode-mission.spec.ts",
+                        "column": 16,
+                        "line": 172
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "ea2267adb04f6488957a-91a6f04813e6941734bb",
@@ -1013,17 +1788,66 @@
           "specs": [
             {
               "title": "a fresh user completes the full loop with real persisted state",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 180000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2439,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/\", waiting until \"load\"\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\golden-manual.spec.ts:13:16",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\golden-manual.spec.ts",
+                          "column": 16,
+                          "line": 13
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 11 |\u001b[39m   test(\u001b[32m'a fresh user completes the full loop with real persisted state'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 12 |\u001b[39m     test\u001b[33m.\u001b[39msetTimeout(\u001b[35m180\u001b[39m_000)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Landing → Studio\u001b[39m\n \u001b[90m 16 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'heading'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/One task. An entire AI team./i\u001b[39m }))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\golden-manual.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4173/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4173/\", waiting until \"load\"\u001b[22m\n\n\n  11 |   test('a fresh user completes the full loop with real persisted state', async ({ page }) => {\n  12 |     test.setTimeout(180_000);\n> 13 |     await page.goto('/');\n     |                ^\n  14 |\n  15 |     // Landing → Studio\n  16 |     await expect(page.getByRole('heading', { name: /One task. An entire AI team./i })).toBeVisible();\n    at D:\\project\\cherry\\e2e\\cherry\\golden-manual.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:51:28.068Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-golden-manual-golde-b525b-p-with-real-persisted-state-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-golden-manual-golde-b525b-p-with-real-persisted-state-desktop\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\golden-manual.spec.ts",
+                        "column": 16,
+                        "line": 13
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "417ea86cbde4b6cab3c9-3678f8e5665e0a4349bb",
@@ -1059,8 +1883,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2739,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:51:56.492Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "571b9a2d3f9e79848449-fc6f3da3c8613f820ef7",
@@ -1079,8 +1917,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8628,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:52:00.758Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "571b9a2d3f9e79848449-485d6cae9518651708d5",
@@ -1099,8 +1951,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1330,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:52:09.402Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "571b9a2d3f9e79848449-67bcd43b10bb32d818c2",
@@ -1119,8 +1985,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1179,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:52:10.756Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "571b9a2d3f9e79848449-53daf6b013b994465cac",
@@ -1139,8 +2019,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2078,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:52:11.950Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "571b9a2d3f9e79848449-292d0268b62d05432caf",
@@ -1176,8 +2070,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 56098,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:52:14.422Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "9a5b3e8b82cdca839325-127daa9c5972d39b8b74",
@@ -1213,8 +2121,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5607,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:10.612Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-3d1a9487dcf68bf9c953",
@@ -1233,8 +2155,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6556,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:16.258Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-87abe1a4d2ea083b376f",
@@ -1253,8 +2189,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1165,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:22.828Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-a6a98652683b805b2152",
@@ -1273,8 +2223,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1337,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:24.008Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-da84e163e0239c977c2d",
@@ -1293,8 +2257,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2007,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:25.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-b9271fa26a35b9497e11",
@@ -1313,8 +2291,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1373,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:27.392Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6f318cf4b286eb016bb4-a1d2aff4f5aca50a256e",
@@ -1350,8 +2342,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8443,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:28.809Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f248addefedc6e593dda-5a74e57c2d37e3b32970",
@@ -1370,8 +2376,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6426,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:37.269Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f248addefedc6e593dda-a1ee10744314be1c8225",
@@ -1390,8 +2410,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 955,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:43.710Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f248addefedc6e593dda-8ee6dcd6dbeed1579461",
@@ -1427,8 +2461,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2113,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:44.714Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "49a1ccec214198d092ce-04dd0ed7e189ce28fd93",
@@ -1447,8 +2495,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 651,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:46.840Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "49a1ccec214198d092ce-865ef482495c6c20a4a9",
@@ -1467,8 +2529,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1838,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:47.509Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "49a1ccec214198d092ce-bf3f12bc5e022de33d96",
@@ -1487,8 +2563,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3925,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:49.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "49a1ccec214198d092ce-75052cfb8745009a4fb0",
@@ -1507,8 +2597,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3976,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:53.304Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "49a1ccec214198d092ce-98cf0133ad6871caf726",
@@ -1544,8 +2648,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4294,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:53:57.320Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ba0f12340033bd3c3103-eb90d0ea6897b1672754",
@@ -1572,8 +2690,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4810,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:01.631Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ba0f12340033bd3c3103-895599e630a1da908818",
@@ -1592,8 +2724,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1327,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:06.456Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ba0f12340033bd3c3103-3d1259d5e430048b4adc",
@@ -1612,8 +2758,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1180,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:07.800Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ba0f12340033bd3c3103-b6429e88837089b70b3a",
@@ -1632,8 +2792,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6866,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:09.003Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "ba0f12340033bd3c3103-7b7fa72f7b4d627bc6d9",
@@ -1669,8 +2843,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 28332,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:15.967Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5f506c2edaca99e191ec-6f310afe32563c5323a0",
@@ -1689,8 +2877,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4753,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:44.319Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5f506c2edaca99e191ec-e00cd295bfa985b4a93e",
@@ -1721,13 +2923,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9183,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:49.612Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "3618732b7e1770231ef5-9b0872c709bdbb589e88",
@@ -1763,8 +2979,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1593,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:54:58.842Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-83be1a8ac40d3d0cc905",
@@ -1783,8 +3013,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1700,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:00.449Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-6fb71a046705cb197bac",
@@ -1803,8 +3047,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1631,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:02.163Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-94050cabe6a63f03b966",
@@ -1823,8 +3081,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1638,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:03.807Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-d57f9dc3448256b0c2d4",
@@ -1843,8 +3115,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1331,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:05.461Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-73d4cf23cb3544f69285",
@@ -1863,8 +3149,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 543,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:06.805Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-becf377fd25af46db6bf",
@@ -1883,8 +3183,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2820,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:07.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-46f525ae1967941be55d",
@@ -1903,8 +3217,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2090,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:10.203Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-351936eadf0619388fa7",
@@ -1923,8 +3251,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1225,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:12.311Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-1c39e56adedefe354645",
@@ -1943,8 +3285,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1356,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:03:23.050Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-dc6947ce380c08ef4561",
@@ -1963,8 +3319,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 52769,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:03:25.081Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-4cd0fb3682d24842624a",
@@ -1983,8 +3353,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1563,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:17.876Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-02fb7a072c3c998c8809",
@@ -2003,8 +3387,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1764,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:19.457Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-41368cb6d16e4100f64e",
@@ -2023,8 +3421,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1164,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:21.238Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-65694f3174ba0d979e80",
@@ -2043,8 +3455,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1692,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:22.420Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-0a1345933574ec8a9827",
@@ -2063,8 +3489,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3168,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:24.127Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-5d4f9665739af17041bc",
@@ -2083,8 +3523,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2284,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:27.312Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-3122323984b14f7332cb",
@@ -2103,8 +3557,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2164,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:29.613Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-39496e0e227ebc83b50a",
@@ -2131,8 +3599,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4094,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:13.551Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-48f89aa5f9a9a3ba6b06",
@@ -2151,8 +3633,22 @@
                   "expectedStatus": "passed",
                   "projectId": "mobile",
                   "projectName": "mobile",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2750,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:04:31.795Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "764551a30f0c3008a13d-5292380c48981586da9d",
@@ -2183,13 +3679,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3810,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:17.678Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-e85bfd21a61f8fa64d45",
@@ -2208,8 +3718,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:21.501Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-28a41d1f48be29dec301",
@@ -2228,8 +3752,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2517,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:24.592Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-5e148731d59ddbec2da8",
@@ -2248,8 +3786,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2835,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:27.127Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "6d8e5e06fac85e388c9f-cf79cff17fe77c91d90b",
@@ -2285,8 +3837,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5680,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:29.990Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f974a77bec87ccd83aa8-06b1d88394d7f72e1dd9",
@@ -2305,8 +3871,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2166,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:35.698Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f974a77bec87ccd83aa8-c30fbe2655581b9d6f12",
@@ -2330,13 +3910,27 @@
           "tags": [],
           "tests": [
             {
-              "timeout": 90000,
+              "timeout": 120000,
               "annotations": [],
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5272,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:55:37.895Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "36b8b1979d9c4dbeb8d2-cdc8fc6bfb555676a70e",
@@ -2370,8 +3964,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3037,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:43.202Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-4808fa73cb7c4267f324",
@@ -2390,8 +3998,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:46.256Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-bb2796c39b2c18863c2b",
@@ -2410,8 +4032,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2132,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:48.348Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-b8ebb44c755a48ab4c73",
@@ -2430,8 +4066,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2569,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:50.493Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "32ec064f343afb6ea5b4-9e0655862e7772712c37",
@@ -2460,8 +4110,22 @@
               "expectedStatus": "passed",
               "projectId": "desktop",
               "projectName": "desktop",
-              "results": [],
-              "status": "skipped"
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2395,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-04T06:55:53.101Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
             }
           ],
           "id": "607efd9179298f7330af-c9ebdc50c3aa89172cae",
@@ -2495,8 +4159,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 714,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:55.535Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-43e8c7d5e5382fc836bd",
@@ -2515,8 +4193,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 861,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:56.261Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-def4167e96584a870440",
@@ -2535,8 +4227,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 879,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:57.137Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-d90fc5630af95342741b",
@@ -2558,13 +4264,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3243,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:55:58.028Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-dd6cc1321428442b2c43",
@@ -2583,8 +4303,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2045,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:01.284Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-aedc51a44eede660a3ac",
@@ -2611,8 +4345,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2070,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:03.345Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-bf21e9df9952a90899df",
@@ -2631,8 +4379,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2245,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:05.428Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-4295e3d79de3dd71a1d3",
@@ -2659,8 +4421,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2356,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:07.685Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-f5ececc79a897b84dafa",
@@ -2679,8 +4455,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3322,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:10.053Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-d32e87de9c9d80414232",
@@ -2702,13 +4492,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2493,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:13.393Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-486040bf4604448a3d49",
@@ -2727,8 +4531,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1608,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:15.900Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-9125a997b5c9cea45a43",
@@ -2750,13 +4568,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7134,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:17.526Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "db8d97f7fe057b185ab1-10236cdd3e41512f2113",
@@ -2792,8 +4624,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2071,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:24.701Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-02c4344bb0530b504b8d",
@@ -2812,8 +4658,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1926,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:26.785Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-392c555c7c3978ec142c",
@@ -2832,8 +4692,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1752,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:28.723Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "9936f63d3be36f58fa6a-bb52e0326c6b57b2600c",
@@ -2864,13 +4738,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 38418,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:56:30.508Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "87eaa6935f63575cd504-dea90ad1fc047ad56ad4",
@@ -2880,17 +4768,66 @@
             },
             {
               "title": "studio setup-required states at desktop",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 32964,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\u001b[22m\n\n    at D:\\project\\cherry\\e2e\\cherry\\visual-qa.spec.ts:187:90",
+                        "location": {
+                          "file": "D:\\project\\cherry\\e2e\\cherry\\visual-qa.spec.ts",
+                          "column": 90,
+                          "line": 187
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 185 |\u001b[39m       \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m route \u001b[36mof\u001b[39m \u001b[33mSTUDIO_ROUTES\u001b[39m) {\n \u001b[90m 186 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(route\u001b[33m.\u001b[39mpath)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 187 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'heading'\u001b[39m\u001b[33m,\u001b[39m { level\u001b[33m:\u001b[39m \u001b[35m1\u001b[39m\u001b[33m,\u001b[39m name\u001b[33m:\u001b[39m route\u001b[33m.\u001b[39mready })\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 188 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 189 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mscreenshot({ path\u001b[33m:\u001b[39m screenshotPath(testInfo\u001b[33m,\u001b[39m \u001b[32m`${viewport.name}-${slug(route.path)}-empty.png`\u001b[39m)\u001b[33m,\u001b[39m fullPage\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 190 |\u001b[39m         \u001b[36mawait\u001b[39m assertPageHealth(page\u001b[33m,\u001b[39m \u001b[32m`${route.path} (empty)@${viewport.name}`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\project\\cherry\\e2e\\cherry\\visual-qa.spec.ts",
+                            "column": 90,
+                            "line": 187
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: /Skill Library|Skills/, level: 1 }).first()\u001b[22m\n\n\n  185 |       for (const route of STUDIO_ROUTES) {\n  186 |         await page.goto(route.path);\n> 187 |         await expect(page.getByRole('heading', { level: 1, name: route.ready }).first()).toBeVisible();\n      |                                                                                          ^\n  188 |         await page.waitForLoadState('networkidle');\n  189 |         await page.screenshot({ path: screenshotPath(testInfo, `${viewport.name}-${slug(route.path)}-empty.png`), fullPage: true });\n  190 |         await assertPageHealth(page, `${route.path} (empty)@${viewport.name}`);\n    at D:\\project\\cherry\\e2e\\cherry\\visual-qa.spec.ts:187:90"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:57:08.959Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-visual-qa-final-vis-83f30--required-states-at-desktop-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\project\\cherry\\test-results\\cherry-visual-qa-final-vis-83f30--required-states-at-desktop-desktop\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\project\\cherry\\e2e\\cherry\\visual-qa.spec.ts",
+                        "column": 90,
+                        "line": 187
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
               "id": "87eaa6935f63575cd504-a292d5844d7b0a4369ad",
@@ -2904,13 +4841,31 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 17648,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] populated studio @desktop: 6 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:58:06.053Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "87eaa6935f63575cd504-5a08fe5c9e8abe23cc2b",
@@ -2924,13 +4879,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 163142,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T06:58:25.629Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "87eaa6935f63575cd504-4acf9bc007eea4391008",
@@ -2944,13 +4913,31 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14389,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] empty studio @mobile: 4 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:08.786Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "87eaa6935f63575cd504-0145485f2be03419b296",
@@ -2964,13 +4951,31 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 240000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16877,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[visual-qa] populated studio @mobile: 6 refused runner probe(s) (known, outside lane)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:23.199Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "87eaa6935f63575cd504-d1c3014c73c203504bca",
@@ -3006,8 +5011,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1894,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:40.138Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "c385bb933e96a3fed348-14660f2d1d991448913b",
@@ -3026,8 +5045,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3497,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:42.048Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "c385bb933e96a3fed348-a757b9eee20e1cb3f690",
@@ -3046,8 +5079,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2417,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:45.558Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "c385bb933e96a3fed348-10fe726a7a6555d219fe",
@@ -3078,13 +5125,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 180000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3753,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:48.008Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "f833e959e3a6efe7379e-d57f7abb5c85d75ee352",
@@ -3115,13 +5176,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3901,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:51.788Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "060c5eae5f6f79d24336-f13b1ef77686e3094f60",
@@ -3140,8 +5215,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 630,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:55.703Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "060c5eae5f6f79d24336-62921640e30f5b655046",
@@ -3172,13 +5261,27 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4943,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:01:56.370Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5f7db527ef0c540abae1-ebdc0b57fa04429dabdf",
@@ -3197,8 +5300,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1801,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:02:01.328Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "5f7db527ef0c540abae1-68eb75cbe26bb1df453b",
@@ -3234,8 +5351,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3313,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:02:03.165Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-6ac46e0e5179d8d663e3",
@@ -3254,8 +5385,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1765,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:02:06.492Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-949330eb81d47e84ec1e",
@@ -3274,8 +5419,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1448,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:02:08.269Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-0ac7c0ec2d59779a8686",
@@ -3294,8 +5453,22 @@
                   "expectedStatus": "passed",
                   "projectId": "desktop",
                   "projectName": "desktop",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4048,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T07:02:09.736Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "0ca8cbfcc614ef32dfb6-4c7dacfe6f4c72271506",
@@ -3310,11 +5483,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-04T05:46:18.739Z",
-    "duration": 1665.4400000000005,
-    "expected": 0,
-    "skipped": 132,
-    "unexpected": 0,
+    "startTime": "2026-09-04T06:30:16.302Z",
+    "duration": 2062445.3369999998,
+    "expected": 123,
+    "skipped": 0,
+    "unexpected": 9,
     "flaky": 0
   }
 }
