@@ -83,6 +83,12 @@ human.
 - The application works manually when no WebMCP host is present. The agent path accelerates the same
   product rather than hiding a separate demo.
 
+## Readiness handoff
+
+The readiness branch was rebuilt on the newest `main` with a two-parent merge commit. Concurrent demo
+film work was preserved, temporary audit transport files were removed, and GitHub Actions remains the
+authoritative source for pass/fail status on the exact submission commit.
+
 ## Final checklist
 
 - [x] Public live URL and dedicated judge route
