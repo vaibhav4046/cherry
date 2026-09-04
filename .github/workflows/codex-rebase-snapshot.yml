@@ -1,0 +1,38 @@
+name: codex current-main snapshot
+
+on:
+  push:
+    branches:
+      - codex/main-rebase-snapshot-20260904
+    paths:
+      - .github/workflows/codex-rebase-snapshot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package source tree
+        shell: bash
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude=.github/workflows/codex-rebase-snapshot.yml \
+            -czf /tmp/cherry-current-main.tar.gz .
+          mv /tmp/cherry-current-main.tar.gz .
+
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cherry-current-main-${{ github.sha }}
+          path: cherry-current-main.tar.gz
+          if-no-files-found: error
+          retention-days: 1
