@@ -15,7 +15,9 @@ test.describe('real-run recording presentation', () => {
     const recording = section.locator('video');
     await expect(recording).toHaveAttribute('aria-label', 'Watch the real run');
     await expect(recording).toHaveAttribute('controls', '');
-    await expect(recording).toHaveAttribute('preload', 'metadata');
+    // preload="none": nothing needs the metadata before someone presses play,
+    // and preloading it made the browser abort a 4MB request on every load.
+    await expect(recording).toHaveAttribute('preload', 'none');
     await expect(recording).toHaveAttribute('playsinline', '');
     await expect(recording).toHaveAttribute('src', '/media/demo/golden-loop.webm');
 

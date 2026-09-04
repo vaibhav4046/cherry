@@ -21,7 +21,7 @@ const VIEWPORTS = [
 
 const PUBLIC_ROUTES = [
   { path: '/', ready: 'One task. An entire AI team.' },
-  { path: '/showcase', ready: 'Watch a lesson become a proven skill' },
+  { path: '/showcase', ready: 'Two agents ran one job. Neither could publish.' },
   { path: '/connect', ready: 'Bring the agent you already pay for' },
   { path: '/compatibility', ready: 'What is proven, and what is not' },
 ] as const;
