@@ -113,7 +113,7 @@ const PROBE_KIND_TO_HOST_KIND: Readonly<Record<string, ExecutionHostKind>> = {
 
 const PROBE_KIND_LABEL: Readonly<Record<string, string>> = {
   codex: 'Codex CLI',
-  claude: 'Claude Code',
+  claude: 'Compatible local CLI',
   kilo: 'Kilo',
   kimi: 'Kimi',
   ollama: 'Ollama',

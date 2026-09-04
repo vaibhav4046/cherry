@@ -300,7 +300,7 @@ export async function startMission(workspaceId: string, missionId: string, expec
   const hosts = await currentHosts(workspaceId);
   if (!hosts.ok) return hosts;
   const usable = hosts.value.hosts.filter((host) => host.status === 'available');
-  if (usable.length === 0) return fail('temporary', 'The runner reports no available agent host. Install or sign into Codex or Claude Code, or start the runner with --allow-mock-host for a rehearsal.');
+  if (usable.length === 0) return fail('temporary', 'The runner reports no available agent host. Install or sign into Codex or another supported local agent, or start the runner with --allow-mock-host for a rehearsal.');
 
   if (Object.keys(plan.nodeWorkItemIds).length === 0) {
     const projected = await projectPlanToWorkItems(workspaceId, plan.id);

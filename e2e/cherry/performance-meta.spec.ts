@@ -41,17 +41,17 @@ test.describe('route metadata', () => {
       {
         path: '/connect',
         title: 'Connect your agent · Cherry Wine',
-        description: 'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+        description: 'Bring ChatGPT, Codex, or any compatible MCP and Agent Skills host. Open standards, no API keys.',
       },
       {
         path: '/Connect',
         title: 'Connect your agent · Cherry Wine',
-        description: 'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+        description: 'Bring ChatGPT, Codex, or any compatible MCP and Agent Skills host. Open standards, no API keys.',
       },
       {
         path: '/connec%74',
         title: 'Connect your agent · Cherry Wine',
-        description: 'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+        description: 'Bring ChatGPT, Codex, or any compatible MCP and Agent Skills host. Open standards, no API keys.',
       },
       {
         path: '/studio/missions/new',

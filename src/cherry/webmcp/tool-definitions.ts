@@ -197,7 +197,7 @@ function boundedSkillSummary(
     citations: [],
     citationsTruncated: false,
     ...approvalContext,
-    formats: ['skill-md', 'agents-md', 'claude-md'],
+    formats: ['skill-md', 'agents-md'],
   };
 
   fitStringProperty(payload, 'skillId', graph.id, 96);
@@ -567,7 +567,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     name: 'introduce_agent',
     description:
       'Introduce yourself by name. The attached agent is auto-assigned to the active workspace and mission — there is nothing to create or configure. The name only labels the session for the human; it grants no authority: approvals, trust, and memory stay human-only.',
-    inputSchema: objectSchema({ name: { type: 'string', description: 'How the human should see you, e.g. "ChatGPT" or "Claude — research".' } }, ['name']),
+    inputSchema: objectSchema({ name: { type: 'string', description: 'How the human should see you, e.g. "ChatGPT" or "Codex — research".' } }, ['name']),
     annotations: { readOnlyHint: false },
     states: [],
     zodSchema: z.object({ name: z.string().min(1).max(40) }),
@@ -775,7 +775,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     }),
   });
 
-  const getSkillFormats = ['summary', 'skill-md', 'agents-md', 'claude-md'] as const;
+  const getSkillFormats = ['summary', 'skill-md', 'agents-md'] as const;
   const getSkillSchema = z.object({
     skillId: z.string().min(1),
     format: z.enum(getSkillFormats).optional(),
@@ -788,7 +788,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
     inputSchema: objectSchema(
       {
         skillId: { type: 'string', description: 'Skill id from list_skills or recommend_skills' },
-        format: { type: 'string', enum: [...getSkillFormats], description: "'summary' | 'skill-md' | 'agents-md' | 'claude-md' (default 'summary')" },
+        format: { type: 'string', enum: [...getSkillFormats], description: "'summary' | 'skill-md' | 'agents-md' (default 'summary')" },
         part: { type: 'integer', minimum: 1, description: 'File formats are delivered in bounded parts; request part 1..totalParts (default 1)' },
       },
       ['skillId'],
@@ -830,9 +830,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
         install:
           file.format === 'agents-md'
             ? 'Append to your project AGENTS.md.'
-            : file.format === 'claude-md'
-              ? 'Drop into your project for Claude Code.'
-              : 'Save as SKILL.md in a skills directory.',
+            : 'Save as SKILL.md in a compatible skills directory.',
       };
       const buildPart = (part: number, totalParts: number, content: string) => ({
         ...common,
@@ -1735,7 +1733,7 @@ export function buildToolDefinitions(context: ToolContext): CherryToolDefinition
   define({
     name: 'compile_skill_bundle',
     description:
-      'Compile the approved SkillGraph into a portable Agent Skill ZIP with Codex and Claude Code targets. Requires approval at the current revision.',
+      'Compile the approved SkillGraph into a portable Agent Skill ZIP with a Codex target and standalone verifier. Requires approval at the current revision.',
     inputSchema: objectSchema({ skillGraphId: { type: 'string' } }, ['skillGraphId']),
     annotations: { readOnlyHint: false },
     states: ['passed', 'verification'],

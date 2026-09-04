@@ -25,7 +25,7 @@ This contract is executable policy for every human or agent changing Cherry.
    through the defined pairing flow. Client configuration may contain only public `VITE_`
    identifiers; `.env*`, account tokens, and credentials stay out of Git.
 9. Preserve the public-source boundaries: no LinkedIn scraping, YouTube video/caption downloading,
-   headless automation of ChatGPT, Codex, or Claude accounts or credentials, hidden cloud execution,
+   headless automation of third-party agent accounts or credentials, hidden cloud execution,
    or auto-approval.
 
 ## Layer 2 — Delivery process

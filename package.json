@@ -4,7 +4,7 @@
   "private": false,
   "license": "MIT",
   "type": "module",
-  "description": "Cherry \u2014 the user-owned apprenticeship, memory, mission and verification layer for AI agents.",
+  "description": "Cherry — the user-owned apprenticeship, memory, mission and verification layer for AI agents.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,16 +14,17 @@
     "test": "vitest run",
     "smoke": "npm run typecheck && npm run lint && npm run test",
     "gates": "npm run typecheck && npm run lint && npm run test && npm run test:runner",
-    "verify:all": "npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run verify:sw && npm run audit:submission",
+    "verify:all": "npm run gates && npm run build && npm run test:e2e && npm run verify:pack && npm run verify:sw && npm run audit:submission && npm run audit:codex-submission",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "record:demo": "playwright test --config=playwright.demo.config.ts && node scripts/promote-demo-recording.mjs",
-    "test:runner": "node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs tests/assets/cherry-chronicle-assets.test.mjs",
+    "test:runner": "node --test runner/runner.test.mjs runner/mcp/bridge.test.mjs tests/assets/cherry-chronicle-assets.test.mjs tests/assets/codex-submission-audit.test.mjs",
     "verify:pack": "node scripts/verify-release.mjs",
     "verify:sw": "node scripts/verify-sw.mjs dist",
     "audit:submission": "node scripts/audit-submission.mjs",
     "record:film": "playwright test --config=playwright.film.config.ts",
-    "compose:film": "node scripts/compose-film.mjs"
+    "compose:film": "node scripts/compose-film.mjs",
+    "audit:codex-submission": "node scripts/verify-codex-submission.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

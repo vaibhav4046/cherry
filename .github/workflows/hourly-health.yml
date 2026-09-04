@@ -1,0 +1,136 @@
+# Hourly production-readiness monitor for Cherry.
+#
+# This workflow is intentionally non-authoring: it verifies the current default
+# branch, uploads diagnostics, and maintains one deduplicated repair issue. It
+# never rewrites product code, approves work, merges, deploys, or alters history.
+name: hourly Cherry health
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/hourly-health.yml'
+      - 'scripts/verify-codex-submission.mjs'
+      - 'tests/assets/codex-submission-audit.test.mjs'
+      - 'package.json'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: hourly-cherry-health-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify release surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Deterministic gates
+        run: npm run gates
+
+      - name: Codex and WebMCP judge-surface audit
+        run: npm run audit:codex-submission
+
+      - name: Production build
+        run: npm run build
+
+      - name: Release bundle integrity
+        run: npm run verify:pack
+
+      - name: Service worker verification
+        run: npm run verify:sw
+
+      - name: General submission audit
+        run: npm run audit:submission
+
+      - name: Focused WebMCP, showcase and persistence journeys
+        run: >-
+          npx playwright test
+          e2e/cherry/webmcp-god-mode.spec.ts
+          e2e/cherry/showcase-host.spec.ts
+          e2e/cherry/memory-routine.spec.ts
+          --project=desktop
+
+      - name: Upload hourly evidence and failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hourly-health-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            docs/release/e2e-results.json
+            artifacts/release/
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  repair-queue:
+    name: Maintain repair issue
+    needs: verify
+    if: ${{ always() && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open, update, or close the hourly repair issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '[hourly-health] Cherry verification needs repair';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const checkedAt = new Date().toISOString();
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const issue = openIssues.find((candidate) => !candidate.pull_request && candidate.title === title);
+            const failed = '${{ needs.verify.result }}' !== 'success';
+
+            if (failed) {
+              const body = [
+                'The hourly release monitor found a failing verification gate.',
+                '',
+                `- Result: **${{ needs.verify.result }}**`,
+                `- Commit: \`${context.sha}\``,
+                `- Checked: ${checkedAt}`,
+                `- Run and diagnostics: ${runUrl}`,
+                '',
+                'Repair rule: reproduce the first failing gate, fix its root cause test-first, and keep merge/deploy approval with the release manager.',
+              ].join('\n');
+              if (issue) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body });
+              } else {
+                await github.rest.issues.create({ owner, repo, title, body });
+              }
+              return;
+            }
+
+            if (issue) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.number,
+                body: `Recovered on \`${context.sha}\` at ${checkedAt}. All hourly gates passed: ${runUrl}`,
+              });
+              await github.rest.issues.update({ owner, repo, issue_number: issue.number, state: 'closed' });
+            }

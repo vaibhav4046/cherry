@@ -12,10 +12,10 @@ describe('library workflow links', () => {
     expect(buildConnectUrl(['agent-skills', 'claude-code', 'codex', 'webmcp'])).toBe('/connect#host-chatgpt');
   });
 
-  it('maps Codex, Claude Code, and Agent Skills targets to their existing host cards', () => {
+  it('maps Codex and Agent Skills targets to their current host cards', () => {
     expect(buildConnectUrl(['agent-skills', 'claude-code', 'codex'])).toBe('/connect#host-codex');
-    expect(buildConnectUrl(['agent-skills', 'claude-code'])).toBe('/connect#host-claude');
-    expect(buildConnectUrl(['agent-skills'])).toBe('/connect#host-hermes');
+    expect(buildConnectUrl(['agent-skills', 'claude-code'])).toBe('/connect#host-agent-skills');
+    expect(buildConnectUrl(['agent-skills'])).toBe('/connect#host-agent-skills');
   });
 
   it('uses the honest general Connect section for unsupported or absent targets', () => {

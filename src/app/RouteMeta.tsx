@@ -28,7 +28,7 @@ const META_ROUTES: RouteObject[] = [
     path: '/',
     handle: meta(
       'Cherry · One task. An entire AI team.',
-      'Cherry hands one goal to several agents at once, each in its own workspace on your computer, and checks what comes back. Codex execution is captured. Claude Code and local models are labelled experimental. Open source and local-first.',
+      'Cherry hands one goal to several agents at once, each in its own workspace on your computer, and checks what comes back. Real Codex execution and a live WebMCP host session are captured. Open source and local-first.',
     ),
   },
   {
@@ -39,7 +39,7 @@ const META_ROUTES: RouteObject[] = [
     path: '/connect',
     handle: meta(
       `Connect your agent · ${SITE}`,
-      'Bring ChatGPT, Codex, Claude, or any MCP agent. Open standards, no API keys.',
+      'Bring ChatGPT, Codex, or any compatible MCP and Agent Skills host. Open standards, no API keys.',
     ),
   },
   {

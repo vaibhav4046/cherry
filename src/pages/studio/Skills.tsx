@@ -32,7 +32,7 @@ export default function Skills() {
         <h1 className="display-sm">Skill Library</h1>
         <p className="subhead" style={{ margin: 0 }}>
           Find skills you approved and any labelled samples you chose to load. Download one for
-          Codex or Claude Code, use it in a routine, or send it to a connected agent.
+          Codex or an Agent Skills-compatible host, use it in a routine, or send it to a connected agent.
         </p>
       </header>
 

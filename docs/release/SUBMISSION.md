@@ -56,7 +56,7 @@ The agent cannot cross the line in the middle. That is the product.
    IndexedDB  ── skills · evidence · memory · artifacts · append-only proof ledger
         │
         ▼
-   exports  ── SKILL.md · AGENTS.md · CLAUDE.md · .zip bundle · receipt · archive
+   exports  ── SKILL.md · AGENTS.md · .zip bundle · receipt · archive
 ```
 
 ## Proof it works

@@ -121,7 +121,7 @@ export function GuidedTour() {
     },
     {
       title: 'Take it anywhere',
-      body: 'Approved skills download as a bundle for Codex and Claude Code, including a verification script. You can also export your space as checked JSON. Teach once, approve what you read, and reuse it.',
+      body: 'Approved skills download as a bundle for Codex and Agent Skills-compatible hosts, including a verification script. You can also export your space as checked JSON. Teach once, approve what you read, and reuse it.',
       route: '/studio/skills',
       lookFor: 'The skill card. Open it and download the bundle.',
     },

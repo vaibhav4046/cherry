@@ -133,8 +133,8 @@ directory or a git worktree; the boundary is labelled process or worktree-proces
 runs up to three tasks at once, hands finished artifacts to dependants, and never marks a task
 succeeded on provider completion alone: only its own checks or a person can. A failed check gets
 one bounded repair with the failure as data. Real Codex CLI execution is captured in the repo (two
-workers in two worktrees with measured overlap); Claude Code execution is labelled Experimental
-because it needs a human sign-in that was not available on the build machine.
+workers in two worktrees with measured overlap). No additional host execution is claimed without a
+captured run.
 
 **Creators and skills.** Follow a creator and the paired runner checks the channel's public feed
 daily; each new upload arrives with a deterministic skill proposal. Cherry never downloads a video
@@ -142,8 +142,8 @@ or captions and makes no model API calls of its own: the person adds the transcr
 on-device with Whisper), Cherry drafts the steps, and approval binds to the exact revision the
 person read. Reasoning comes from the agent hosts the person already pays for; Cherry never asks
 for an API key.
-Approved skills live in a cross-workspace Skill Library and export as SKILL.md, AGENTS.md, or
-CLAUDE.md, or as a zip bundle whose standalone verifier fails on tampering.
+Approved skills live in a cross-workspace Skill Library and export as SKILL.md or AGENTS.md, or as
+a zip bundle whose standalone verifier fails on tampering.
 
 **Proof.** Every mutation writes a ProofEvent in the same transaction. Verification runs
 deterministic checks that can genuinely fail; the shipped example's first artifact does fail and is
@@ -228,6 +228,9 @@ reasoning engine is the agent the person already pays for.
   by a GitHub Actions workflow whose result is public in the repository's Actions tab.
 - A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
   with the test or capture behind the label, including what was not tested.
+- An hourly GitHub Actions monitor that reruns deterministic gates and focused WebMCP, Showcase, and
+  Memory Vault journeys, attaches diagnostics, and maintains one deduplicated repair issue without
+  rewriting code or bypassing release approval.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.
 - An adversarial review of the runtime that failed its own release once, then closed three
   critical boundary defects test-first (command execution, link traversal, plan contract parity)
@@ -235,9 +238,10 @@ reasoning engine is the agent the person already pays for.
 
 ## What's next
 
-Claude Code mission execution once a signed-in capture exists, container and remote
-workers behind the same lease interface, connectors behind official APIs only, and a local vision
-model over videos the person owns.
+Deeper live-host journeys across more mission states, container and remote workers behind the same
+lease interface, connectors behind official APIs only, and a local vision model over videos the
+person owns. The 4 September 2026 WebMCP session is already captured in the repository; future host
+claims will follow the same transcript-first rule.
 
 ## Built with
 

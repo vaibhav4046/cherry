@@ -24,6 +24,7 @@ test.describe('memory and routine surfaces', () => {
     await page.goto('/studio');
     await page.getByLabel('Space name').fill('Graph mobile workspace');
     await page.getByRole('button', { name: 'Create space' }).click();
+    await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
     await page.goto('/studio/memory');
     await expect(page.getByRole('heading', { name: 'Memory Vault' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Memory graph' })).toBeVisible();

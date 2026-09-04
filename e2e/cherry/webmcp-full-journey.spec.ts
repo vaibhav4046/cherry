@@ -169,7 +169,7 @@ test.describe('WebMCP end-to-end journey', () => {
     expect(pendingStatus.payload.stale).toBe(false);
 
     // 8: nothing downstream is reachable while the decision is outstanding.
-    for (const format of ['skill-md', 'agents-md', 'claude-md'] as const) {
+    for (const format of ['skill-md', 'agents-md'] as const) {
       const blocked = await callTool(page, 'get_skill', { skillId: skillGraphId, format });
       expect(blocked.isError, format).toBe(true);
       expect(blocked.payload.error, format).toBe('approval_required');
