@@ -13,6 +13,10 @@ const E2E_PRIVY_APP_ID = process.env.VITE_PRIVY_APP_ID?.trim() || 'clp_cherry_e2
  */
 function isFullRun(): boolean {
   const argv = process.argv.slice(2);
+  // argv[0] is Playwright's own subcommand ("test"), not a filename filter.
+  // Treating it as one made every run look filtered, including the full suite,
+  // so the report stopped being written at all.
+  if (argv[0] === 'test') argv.shift();
   const narrowing = ['--grep', '-g', '--grep-invert', '--project', '--shard', '--last-failed', '--only-changed'];
   for (const arg of argv) {
     if (arg.startsWith('-')) {
