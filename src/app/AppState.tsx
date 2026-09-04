@@ -50,6 +50,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(() => readStored(ACTIVE_WORKSPACE_KEY));
   const [activeMissionId, setActiveMissionId] = useState<string | null>(() => readStored(ACTIVE_MISSION_KEY));
+  const mountedRef = useRef(true);
   const [activePlanStatus, setActivePlanStatus] = useState<Parameters<typeof productStateFor>[2]>(null);
   const [webmcpStatus, setWebmcpStatus] = useState<WebMcpStatus>({ supported: false, registered: [], productState: 'empty', recentlyRemoved: [], recentCalls: [], agent: { attached: false, name: null }, surface: 'default', diagnostics: [] });
 
@@ -85,6 +86,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const loadedWorkspaces = await listWorkspaces();
+    // Each await is a point where the provider may have unmounted: refresh now
+    // reads the plan as well, so it outlives short-lived mounts more often.
+    if (!mountedRef.current) return;
     setWorkspaces(loadedWorkspaces);
 
     let workspaceId = workspaceRef.current;
@@ -97,6 +101,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
     if (workspaceId) {
       const loadedMissions = await listMissions(workspaceId);
+      if (!mountedRef.current) return;
       setMissions(loadedMissions);
       let missionId = missionRef.current;
       if (!missionId || !loadedMissions.some((mission) => mission.id === missionId)) {
@@ -109,6 +114,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // A plan-based run never transitions the Mission, so the aperture has to
       // read the plan too or it stays on onboarding tools while work executes.
       const plan = activeMission ? await getPlanForMission(workspaceId, activeMission.id) : null;
+      if (!mountedRef.current) return;
       const planStatus = plan?.status ?? null;
       setActivePlanStatus(planStatus);
       manager.syncState(productStateFor(activeMission?.state ?? null, true, planStatus));
@@ -125,6 +131,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     void refresh();
     const unsubscribe = manager.subscribe(setWebmcpStatus);
     return () => {
+      mountedRef.current = false;
       unsubscribe();
       manager.dispose();
     };

@@ -46,8 +46,8 @@ const ROWS: Row[] = [
   },
   {
     surface: 'ChatGPT and Codex built-in browsers (a live WebMCP host)',
-    status: 'experimental',
-    evidence: 'Implemented against the current registerTool API and feature-detected. Not yet exercised inside a live proprietary client from this environment; the Agent View and Connections diagnostics show live registration state the moment one attaches.',
+    status: 'validated',
+    evidence: 'Captured on 2026-09-04 in the ChatGPT desktop app, Work mode, model 5.6 Sol, against the deployed site. The host registered 10 site tools and called introduce_agent, read_cherry_context and list_cherry_capabilities through document.modelContext; Agent View changed from "Site tools registered, no agent call yet" to "Attached: ChatGPT Work - live capture". The returned tool list was exactly the documented aperture, 7 always-on plus 3 for the empty state. Asked directly, the host confirmed it used the registered tools and that no page control was clicked and no text typed. Full transcript: docs/release/WEBMCP_LIVE_HOST_CAPTURE.md. The complete learn to approve to retrieve journey was not exercised in that session, so the approval rows below stand on their own evidence.',
   },
   {
     surface: 'Chrome with the WebMCP flag',
