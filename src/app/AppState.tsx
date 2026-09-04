@@ -134,6 +134,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   refreshRef.current = refresh;
 
   useEffect(() => {
+    // Re-arm before refreshing. The cleanup below parks this ref at false so an
+    // in-flight refresh cannot setState after teardown, but an effect that runs
+    // again on the SAME ref — StrictMode's double-invoke in development, or any
+    // remount — would then find it already false and bail at the first await,
+    // so `ready` never flipped and the studio sat on "Opening your space…"
+    // forever. Ownership of the flag belongs to whichever run is current.
+    mountedRef.current = true;
     void refresh();
     const unsubscribe = manager.subscribe(setWebmcpStatus);
     return () => {
