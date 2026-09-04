@@ -45,7 +45,7 @@ of the ticket shipped and the rest did not. **NOT DONE** means it was never comp
 | Ticket | What it was | Status | Commit | Evidence |
 |---|---|---|---|---|
 | T15 | Continuous 10/10 rubric loop | **PARTIAL** | none | Marked IN_PROGRESS 2026-09-01 18:37, never closed. The T11 sweep covered the same ground once; the repeating loop did not run. |
-| T16 | Real-usage proof runs with screenshots | **PARTIAL** | none | Marked IN_PROGRESS, never closed. No `PROOF_LOG.md` exists. 81 tracked captures exist in `docs/release/screenshots/` (`git ls-files docs/release/screenshots | wc -l`). |
+| T16 | Real-usage proof runs with screenshots | **PARTIAL** | none | Marked IN_PROGRESS, never closed. No `PROOF_LOG.md` exists. 91 tracked captures exist in `docs/release/screenshots/` (`git ls-files docs/release/screenshots | wc -l`). |
 | T17 | Codify the harness | VERIFIED | `6c03e41` Codex lane, `163e391` owner lane | Layered AGENTS contract, `npm run gates` / `verify:all`; `docs/HARNESS.md` written and cross-linked from README |
 | T18 | Contribution-ready, star-ready repository | VERIFIED | `6c03e41` Codex lane, `7b3b64a` owner lane | `CONTRIBUTING.md`, issue and PR templates, README overhaul, `docs/GOOD_FIRST_ISSUES.md` (10 scoped issues), fresh light landing capture `docs/media/cherry-landing.png` |
 | T19 | Final technical report | DONE (afternoon) | follow-up to `c8e2181` | `docs/release/TECHNICAL_REPORT.md`, assembled in the afternoon amendment from existing evidence. Was NOT DONE at the morning signature. |
@@ -156,19 +156,21 @@ path.
 |---|---|---|
 | Types | `npm run typecheck` | 0 errors |
 | Lint | `npm run lint` | 0 errors, 0 warnings |
-| Unit | `npm run test` | **623 passed**, 2 opt-in skips |
+| Unit | `npm run test` | **774 passed**, 2 opt-in skips (776 total), remeasured 2026-09-04 |
 | Runner and MCP bridge | `npm run test:runner` | **135 passed**, 0 failed (now includes the Chronicle asset verifier's own test) |
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
-| Submission audit | `npm run audit:submission` | **0 FAIL, 0 WARN** |
-| End to end (Playwright) | `npx playwright test` | **130 collected**, 0 failed, 0 flaky (see docs/release/e2e-results.json for the run of record), desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission |
+| Submission audit | `npm run audit:submission` | **1 FAIL** as of 2026-09-04: the committed `docs/release/e2e-results.json` records zero tests run, and the audit fails any report with no executed tests. It has to go back to 0 FAIL on a regenerated report before submission. |
+| End to end (Playwright) | `npx playwright test` | **132 journeys defined**, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission. `docs/release/e2e-results.json` is the report of record; the committed copy is a `--list` dump with zero tests executed, so no pass count is claimed here. Regenerate it from one uncontended `npm run test:e2e` and read the count off the report. |
 | Clean install | `npm ci` | exit 0, 996 packages |
 | Dependency advisories | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 | Service worker behaviour | `npm run verify:sw` | 5/5 (icon fetch never poisons the shell, redeploy reaches returning visitors, offline serves the freshest shell) |
 
 Every row above was measured on 2026-09-03 from a fresh GitHub clone of the signed tree with no
-pre-existing `node_modules`, on Linux with Node 22.22.2. The Playwright JSON report from that
-exact run is committed at `docs/release/e2e-results.json`.
+pre-existing `node_modules`, on Linux with Node 22.22.2, except the unit and submission-audit
+rows, which were remeasured on 2026-09-04 and are dated in the table. `docs/release/e2e-results.json`
+is the Playwright report of record, but the copy currently committed is a `--list` dump with zero
+tests executed, so it does not evidence a passing browser run.
 
 There is no separate "chaos" gate. Sprint 4's breaker work turned each defect it found into a
 permanent unit or e2e regression inside the counts above, which is why unit went from 311 to 385
@@ -198,9 +200,9 @@ Everything a judge or a contributor can open and check for themselves.
 | Compatibility matrix | `docs/release/CHERRY_COMPATIBILITY_MATRIX.md` and the live `/compatibility` page | Every surface labelled Validated / Shipped / Experimental / Roadmap with the test behind the label |
 | WebMCP changelog | `docs/release/WEBMCP_CHANGELOG.md` | Tool aperture history and the register/unregister contract |
 | Uncut recording | `public/media/demo/golden-loop.webm` | The real loop, on the site, at `/showcase` |
-| Playwright report | `docs/release/e2e-results.json` | The JSON report from the committed Playwright run on the signed commit |
+| Playwright report | `docs/release/e2e-results.json` | The report of record for the browser suite (132 journeys defined). The committed copy is a `--list` dump with zero tests executed and has to be regenerated from one uncontended run. |
 | Real Codex mission capture | `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` | codex-cli 0.152.1 running two mission nodes in two worktrees with measured overlap, verified by the runner's own `node --test` |
-| Screenshots | `docs/release/screenshots/` | 81 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
+| Screenshots | `docs/release/screenshots/` | 91 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
 | Landing capture for README | `docs/media/cherry-landing.png` | The shipped landing, 2880x1800, recaptured 2026-09-03 from the deployed build |
 | Sample bundle | `docs/release/sample-bundle.zip` and `.meta.json` | A compiled Agent Skills bundle with its standalone verify script |
 | Coordination log | `docs/codex-takeover/STATUS.md` | Append-only two-agent build record: every ticket, every gate run, every bounce |
@@ -292,8 +294,9 @@ Open `https://webmcp.devpost.com/`, start the submission, and paste each field f
 
 **Hard deadline: Thursday 3 September 2026, 21:00 London (13:00 PT).** Submit by 18:00 London.
 The remaining hours are buffer, not polish time. A submitted entry that is 90 percent polished beats
-a perfect one that missed the form. After 13:00 PT nothing in the repository or the deployment
-changes.
+a perfect one that missed the form. That freeze did not hold: the repository changed again on
+4 September (live WebMCP host capture, skill catalog aperture, doc corrections), so treat the
+signed commit, not the clock, as the boundary of what any given claim was measured against.
 
 ---
 
@@ -307,7 +310,7 @@ changes.
 | Claude Code takeover session | Stopped at 10:54 London with T26 uncommitted; its work was snapshotted and finished by the release manager. | Nothing. The worktree `D:\project\cherry-claude-takeover` and branch the takeover branch can be deleted after the hackathon. |
 | `.gitattributes` line-ending normalisation | Deferred. | Nine tracked files carry CRLF; normalising them mid-flight would have conflicted with the takeover branch. Add `* text=auto eol=lf` after submission and renormalise in one commit, keeping the hash-verified example archives byte-identical. |
 | T24 tribunal | One round of three personas ran on 2026-09-03; see section 2. | A second round after the fixes, and the two missing personas, are post-submission work. |
-| Live WebMCP host capture | Not captured yet; the owner records it Thursday morning (Part A above). | Open the live site in the ChatGPT desktop app's built-in browser (or Chrome 149+ with the WebMCP testing flag), record the site tools and one mission driven through them, send the recording before the freeze. Until then the compatibility page labels the surface Experimental, which is the correct state, not a gap to paper over. |
+| Live WebMCP host capture | **Captured 2026-09-04** in the ChatGPT desktop app's built-in browser (Work mode, model 5.6 Sol) against the deployed site; the host registered the site tools and called them through `document.modelContext`. Transcript: `docs/release/WEBMCP_LIVE_HOST_CAPTURE.md`. | Nothing. The compatibility page labels the surface Validated on that transcript. Chrome 149+ behind the WebMCP flag is still uncaptured and stays Experimental. |
 | Secret rotation | Pending. | The Privy app secret and the Vercel token were shared in a chat during the build. The Privy app secret was never used and is not in the repo or the client bundle; the Vercel token was used only to set `VITE_PRIVY_APP_ID` and to deploy. **Rotate both after the hackathon**, in the Privy dashboard and in Vercel account settings. |
 
 ---

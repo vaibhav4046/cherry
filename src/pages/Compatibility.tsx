@@ -45,9 +45,9 @@ const ROWS: Row[] = [
     evidence: 'Mock-host tests exercise the document.modelContext contract with up to 5 state-specific tools plus 7 always-on tools: AbortController lifecycle (old registrations verifiably aborted), runtime argument re-validation, cancellation, and a full journey through the same persisted state as the UI.',
   },
   {
-    surface: 'ChatGPT and Codex built-in browsers (a live WebMCP host)',
+    surface: 'The ChatGPT desktop app built-in browser (a live WebMCP host)',
     status: 'validated',
-    evidence: 'Captured on 2026-09-04 in the ChatGPT desktop app, Work mode, model 5.6 Sol, against the deployed site. The host registered 10 site tools and called introduce_agent, read_cherry_context and list_cherry_capabilities through document.modelContext; Agent View changed from "Site tools registered, no agent call yet" to "Attached: ChatGPT Work - live capture". The returned tool list was exactly the documented aperture, 7 always-on plus 3 for the empty state. Asked directly, the host confirmed it used the registered tools and that no page control was clicked and no text typed. Full transcript: docs/release/WEBMCP_LIVE_HOST_CAPTURE.md. The complete learn to approve to retrieve journey was not exercised in that session, so the approval rows below stand on their own evidence.',
+    evidence: 'Captured on 2026-09-04 in the ChatGPT desktop app, Work mode, model 5.6 Sol, against the deployed site. The host registered 10 site tools and called introduce_agent, read_cherry_context and list_cherry_capabilities through document.modelContext; Agent View changed from "Site tools registered, no agent call yet" to "Attached: ChatGPT Work - live capture". The returned tool list was exactly the documented aperture at that commit: 7 always-on plus the 3 contextual tools the empty state carried then. The empty state has since grown to 5, so the same capture against the current build would register 12, not 10. Asked directly, the host confirmed it used the registered tools and that no page control was clicked and no text typed. Full transcript: docs/release/WEBMCP_LIVE_HOST_CAPTURE.md. The complete learn to approve to retrieve journey was not exercised in that session, so the approval rows below stand on their own evidence.',
   },
   {
     surface: 'Chrome with the WebMCP flag',
@@ -87,7 +87,7 @@ const ROWS: Row[] = [
   {
     surface: 'The bridge that lets a local agent read and verify your work',
     status: 'validated',
-    evidence: '6 stdio JSON-RPC integration tests, plus two captured live host sessions. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md. On 2026-09-03 a second MCP host executed the bridge tools against the shipped workspace export and the recomputed hashes matched on both the workspace integrity digest and a proof receipt, with a clean refusal on an unknown receipt id: docs/release/LIVE_MCP_HOST_CAPTURE.md.',
+    evidence: '6 stdio JSON-RPC integration tests, plus three captured live host sessions. The Codex CLI registration of 2026-09-01 is captured in full in docs/release/CODEX_MCP_CAPTURE.md. On 2026-09-03 a second MCP host executed the bridge tools against the shipped workspace export and the recomputed hashes matched on both the workspace integrity digest and a proof receipt, with a clean refusal on an unknown receipt id: docs/release/LIVE_MCP_HOST_CAPTURE.md. A third stdio session on commit 3c38684 recomputed both digests again and was refused on approve_skill with JSON-RPC -32602, unknown tool: docs/release/MCP_CAPTURE_3c38684.md.',
   },
   {
     surface: 'The runner on your own computer',

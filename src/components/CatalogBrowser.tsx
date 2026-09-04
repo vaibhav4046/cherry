@@ -50,7 +50,9 @@ export function CatalogBrowser({ onInstalled }: { onInstalled?: () => void }) {
   async function install(entry: CatalogIndexEntry) {
     if (!activeWorkspace) {
       setFailed(true);
-      setMessage('Open or create a workspace first — an imported draft has to live somewhere.');
+      // "space", not "workspace": the studio's plain-language vocabulary, which
+      // e2e/cherry/plain-language.spec.ts pins for every other surface.
+      setMessage('Open or create a space first — an imported draft has to live somewhere.');
       return;
     }
     setBusyId(entry.id);

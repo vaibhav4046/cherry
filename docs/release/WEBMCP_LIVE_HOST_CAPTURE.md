@@ -71,8 +71,15 @@ introduce_agent
 ```
 
 That is the documented aperture with nothing extra: **7 always-on tools plus 3
-contextual tools** for the `empty` state. The bound is 7 + at most 5, and an
-empty workspace offers 3 of those 5.
+contextual tools** for the `empty` state. The bound is 7 + at most 5, and at the
+captured commit an empty workspace offered 3 of those 5.
+
+> **Note, 2026-09-04 (after this capture):** the `empty` aperture has since grown
+> to the full 5 — `start_apprenticeship`, `create_workspace`, `create_mission`,
+> `load_starter_library` and `install_catalog_skill`, the last added with the
+> skill catalog. A reader comparing this transcript against today's build will
+> see 12 registered tools where this session saw 10. The 7 + at most 5 bound is
+> unchanged; only the empty state's occupancy of it moved.
 
 ## What this capture does and does not prove
 

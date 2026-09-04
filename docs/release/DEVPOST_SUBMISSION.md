@@ -1,7 +1,9 @@
 # Devpost submission kit (paste-ready)
 
-Submit at https://webmcp.devpost.com/ before 3 Sep 2026, 1:00 PM PT (21:00 London). Every claim
-below is backed by a test, a capture, or a live page; the compatibility page says which.
+Submit at https://webmcp.devpost.com/. The deadline recorded when this kit was written was
+3 Sep 2026, 1:00 PM PT (21:00 London); that date has now passed, so check the live Devpost page for
+the current deadline or extension before relying on this line. Every claim below is backed by a
+test, a capture, or a live page, and the compatibility page says which.
 
 ## Project name
 
@@ -21,25 +23,27 @@ One task. An entire AI team. Human authority intact.
 - **Demo video (2:26): https://cherry-wine.vercel.app/media/demo/cherry-demo-final.mp4** — the first 1:31 is one unbroken run of an agent doing the whole job through registered WebMCP tools against this deployment
 - Subtitles for the demo: https://cherry-wine.vercel.app/media/demo/cherry-demo-final.srt
 
-### >>> UNFILLED: Devpost "Video demo link" field <<<
+The demo runs 2:26. The first 1:31 is one unbroken capture against this deployment, driven through
+registered WebMCP tools; its beat times were measured during that capture and are recorded in
+`docs/release/demo/journey-capture.json`, so any subtitle cue can be checked against the second it
+claims. The tail is the registered aperture and the live-host evidence, framed rather than filmed
+in one take.
+
+### >>> UNFILLED: the Devpost "Video demo link" field <<<
 
 ```
-PASTE HERE: <public YouTube or Vimeo URL>
+PASTE HERE ─────► <public YouTube or Vimeo URL for cherry-demo-final.mp4>
 ```
 
 **This is the one field in this kit that is still empty, and Devpost will not accept the entry
-without it.** Devpost's video field takes only a YouTube, Vimeo, Facebook Video or Youku link. The
-three URLs above are `.mp4` and `.srt` files served from our own deployment, so they are the source
-material, not a valid value for that field.
+without it.** Devpost's video field accepts only a YouTube, Vimeo, Facebook Video or Youku link.
+The two demo URLs above are an `.mp4` and an `.srt` served from our own deployment, so they are the
+source material, not a valid value for that field.
 
-To fill it: upload `public/media/demo/cherry-demo-subtitled.mp4` (1:43, subtitled) to YouTube as
-**Unlisted** or Public, then paste the resulting `https://www.youtube.com/watch?v=...` URL both
-into the Devpost video field and over the placeholder line above. Nothing else in this document
-needs to change.
-
-The video is a single unedited browser session against this deployment. The beat times in
-`docs/release/demo-capture.json` were measured during the capture, and every subtitle cue is
-pinned to one of them, so any cue can be checked against the second it claims.
+To fill it: upload `public/media/demo/cherry-demo-final.mp4` (2:26; captions in
+`cherry-demo-final.srt`) to YouTube as **Unlisted** or Public, then paste the resulting
+`https://www.youtube.com/watch?v=...` URL twice: into the Devpost video field, and over the
+`PASTE HERE` line above. Nothing else in this document needs to change.
 
 ## Open with this (the first paragraph of the Devpost description)
 
@@ -165,7 +169,7 @@ The inversion: most agent-ready sites let an agent operate them. Cherry's site u
 `recommend_skills` returns the person's approved skills for the task at hand, and `get_skill`
 streams the install file in bounded parts with a full-file sha256, pinned to the approved
 revision. The same skills reach a local agent host through the stdio MCP bridge, captured in three
-live sessions: Codex CLI 0.152.1 (`docs/release/CODEX_MCP_CAPTURE.md`); a host on 3 Sep that
+live sessions: Codex CLI 0.151.0-alpha.7.2 (`docs/release/CODEX_MCP_CAPTURE.md`); a host on 3 Sep that
 recomputed the workspace integrity digest and a proof receipt, both matching
 (`docs/release/LIVE_MCP_HOST_CAPTURE.md`); and a stdio session on commit `3c38684` that recomputed
 both digests again and then tried `approve_skill`, receiving JSON-RPC `-32602`, unknown tool
@@ -222,10 +226,16 @@ reasoning engine is the agent the person already pays for.
 - A real mission on film: Codex CLI 0.152.1 running two nodes in two worktrees with a measured
   overlap, success decided by the runner's own checks, replayed on the showcase from a pinned and
   validated evidence fixture.
-- 762 unit tests, 133 runner and MCP bridge tests, and a 130-journey browser matrix including
-  hostile-artifact sandboxing, axe audits, keyboard-only journeys, mobile overflow checks, a
-  browser-to-real-runner integration test, and a service-worker redeploy check, run on every push
-  by a GitHub Actions workflow whose result is public in the repository's Actions tab.
+- 774 unit tests and 135 runner and MCP bridge tests, both counted from a real run on 2026-09-04 at
+  commit `e0d2850`, plus a 132-journey browser matrix including hostile-artifact sandboxing, axe
+  audits, keyboard-only journeys, mobile overflow checks, a browser-to-real-runner integration
+  test, and a service-worker redeploy check. All three suites run on every push in a GitHub Actions
+  workflow whose result is public in the repository's Actions tab. One caveat we would rather state
+  than have found: the Playwright report committed at `docs/release/e2e-results.json` was
+  overwritten by a partial run and currently records no executed tests, so
+  `npm run audit:submission` fails on it until a full `npm run test:e2e` regenerates it. The unit
+  and runner numbers above are measured; the browser matrix is a count of the journeys that exist,
+  not a claim that the committed report is green.
 - A compatibility page that labels every surface Validated, Shipped, Experimental, or Roadmap
   with the test or capture behind the label, including what was not tested.
 - Receipts a stranger can recompute; `npm run verify:pack` proves a one-byte tamper fails.

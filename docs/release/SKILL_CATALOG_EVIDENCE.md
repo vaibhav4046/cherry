@@ -136,7 +136,7 @@ there is no tool that would let it try.
   fetchedChars: 11769, repo: "mukul975/Anthropic-Cybersecurity-Skills", license: "Apache-2.0" }
 ```
 
-**Tests:** 758 unit tests pass, including 9 new catalog tests that assert the aperture bound, the
+**Tests:** 774 unit tests pass, including 9 new catalog tests that assert the aperture bound, the
 license allowlist, graceful degradation when the assets are unreachable, and that a no-overlap query
 returns nothing rather than a confident guess.
 

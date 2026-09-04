@@ -136,21 +136,37 @@ own and asks for no model API key. Sign-in is optional and off by default, and
 it uses Privy when configured, so "no accounts" is true of the default local
 path but not of the product as a whole.
 
-## 5. Verification (measured 2026-09-04, not estimated)
+## 5. Verification (measured 2026-09-04 at commit `e0d2850`, not estimated)
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Unit | `npm run test` | 623 passed, 2 opt-in skips |
-| Runner and MCP bridge | `npm run test:runner` | 135 passed |
-| End-to-end | `npm run test:e2e` | 130 passed, 0 failed, 0 skipped, 0 flaky |
+| Unit | `npm run test` | 774 passed, 2 opt-in skips |
+| Runner and MCP bridge | `npm run test:runner` | 135 passed, 0 failed |
+| End-to-end | `npm run test:e2e` | 132 journeys defined; see the note below |
 | Bundle integrity | `npm run verify:pack` | 6/6, tamper-evident |
 | Service worker | `npm run verify:sw` | 5/5 |
-| Submission audit | `npm run audit:submission` | 0 failures, 0 warnings |
+| Submission audit | `npm run audit:submission` | 1 failure, 0 warnings (see the note below) |
 
 Playwright covers desktop 1440x1024 and Pixel 7, including hostile-artifact
 sandboxing, axe accessibility audits, keyboard-only journeys, a
 browser-to-real-runner mission, and a WebMCP journey that asserts the
 *registered closures* actually execute.
+
+**The end-to-end row, stated honestly.** The browser suite is not currently
+"all green" on the evidence in this repository, and that is worth spelling out
+rather than rounding up. `playwright.config.ts` writes
+`docs/release/e2e-results.json` on every `playwright test` invocation, including
+a filtered single-spec run, so a partial run overwrites the committed report.
+That is what happened: the report on record executed no tests, and
+`npm run audit:submission` fails on it by design, because a report where
+everything was skipped parses perfectly and proves nothing. The suite defines
+132 journeys, and no committed artifact records a passing run of them, so no
+pass count is quoted here. A full run attempted on 2026-09-04
+returned 111 passed and 21 failed, but it shared the machine with two other
+Playwright runs and a production build, so it is not a clean signal in either
+direction. Regenerating the report from one uncontended `npm run test:e2e` is
+the outstanding item; nothing here claims the suite passed until that report
+says so.
 
 ## 6. What is proven, and what is not
 

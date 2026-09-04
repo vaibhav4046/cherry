@@ -27,7 +27,8 @@ recompute, and then serves the finished skill back to every agent you use.
 - **What is actually proven:** https://cherry-wine.vercel.app/compatibility
 
 Built for the **OpenAI WebMCP Challenge 2026**. MIT licensed. Free and open source, with no paid
-tier, no account required, and no telemetry.
+tier and no telemetry. No account is required: the whole product works as a guest, and the optional
+email sign-in (Privy) is off unless `VITE_PRIVY_APP_ID` is set at build time.
 
 ## The inversion
 
@@ -44,6 +45,16 @@ Seven tools are registered on every page. Three of them serve your library to an
 Only human-approved exact revisions are installable. An agent can request an approval; it can never
 grant one. Everything else stays state-gated behind a bounded aperture: at most five contextual
 mutation tools per surface, registered and unregistered live as the work advances.
+
+A real host has now done this, not only a test. On 2026-09-04 the ChatGPT desktop app in Work mode
+(model 5.6 Sol) called these tools against the deployed site through `document.modelContext`,
+watched the aperture grow 10 to 11 to 12 as state advanced, and left with an install-ready
+`SKILL.md` carrying a full-file SHA-256. Asked in a later session to approve a skill using any tool
+it could find, it enumerated all twelve and reported that none grants approval. Both sessions,
+including the two defects the first one exposed, are written up in
+[docs/release/WEBMCP_LIVE_HOST_CAPTURE.md](docs/release/WEBMCP_LIVE_HOST_CAPTURE.md). The stdio MCP
+bridge refuses the same thing from the other side: `approve_skill` returns JSON-RPC `-32602`,
+unknown tool ([docs/release/MCP_CAPTURE_3c38684.md](docs/release/MCP_CAPTURE_3c38684.md)).
 
 ## How it works
 
@@ -72,22 +83,34 @@ npm run verify:all # gates + build + e2e + pack verification + submission audit
 
 ## Verification
 
-Cherry's claims are meant to survive checking. Current gates on `main` (measured 2026-09-03 from a
-fresh clone):
+Cherry's claims are meant to survive checking. Gates on `main`, measured 2026-09-04 at commit
+`e0d2850`. These are counts from a run, not estimates, and `main` moves, so re-run them rather than
+trusting the table:
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Unit | `npm run test` | 762 passed, 2 opt-in skips |
-| Runner and MCP bridge | `npm run test:runner` | 133 passed |
-| End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | see `docs/release/e2e-results.json` |
-| Bundle verification | `npm run verify:pack` | tamper-evident, evidence-complete |
+| Unit | `npm run test` | 774 passed, 2 opt-in skips |
+| Runner and MCP bridge | `npm run test:runner` | 135 passed, 0 failed |
+| End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | 132 journeys defined; the run itself is recorded in `docs/release/e2e-results.json` |
+| Bundle verification | `npm run verify:pack` | 6 of 6, tamper-evident, evidence-complete |
 | Service worker verification | `npm run verify:sw` | 5 of 5 |
-| Submission audit | `npm run audit:submission` | 0 failures, 0 warnings |
+| Submission audit | `npm run audit:submission` | see the note below |
 
 Run them all with `npm run verify:all`. The end-to-end row deliberately points at the committed
 Playwright report rather than a number typed into prose: the report is the evidence, and
 `audit:submission` fails the build if that report records zero tests run, any unexpected failure,
 or more skips than passes.
+
+That check is doing its job right now, and the honest thing is to say so. Every `playwright test`
+invocation, including a filtered one-spec run, rewrites `docs/release/e2e-results.json` through the
+shared JSON reporter in `playwright.config.ts`. A recent partial run left the committed report with
+zero tests executed, so `npm run audit:submission` currently reports **1 failure** on that file.
+The suite currently defines 132 journeys, and no committed artifact records a passing run of them,
+so this README does not quote one. Whether the suite is green has not been established: a full run attempted on 2026-09-04 shared the machine
+with two other Playwright runs and a production build, and came back 111 passed and 21 failed,
+which under that much contention is not a clean signal in either direction. The report has to be
+regenerated from one uncontended `npm run test:e2e` before the entry is submitted, and this README
+will not claim the browser suite is green until it is.
 
 Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.
 Every compiled bundle ships its own standalone `scripts/verify.mjs` so a stranger can check it

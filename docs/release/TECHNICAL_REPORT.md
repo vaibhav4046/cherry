@@ -143,18 +143,18 @@ Historical baseline gates on `c8e2181` from a fresh GitHub clone with no pre-exi
 | `npm ci` | exit 0, 996 packages |
 | `npm run typecheck` | 0 errors |
 | `npm run lint` | 0 errors |
-| `npm run test` | 406 passed, 2 opt-in skips |
-| `npm run test:runner` | 69 passed |
+| `npm run test` | 774 passed, 2 opt-in skips (776 total) |
+| `npm run test:runner` | 135 passed, 0 failed |
 | `npm run build` | 0 errors |
 | `npm run verify:pack` | pass |
 | `npm run verify:sw` | 5 of 5 |
 | `npm run audit:submission` | 0 FAIL, 0 WARN |
-| `npx playwright test` | 105 passed, 0 flaky (desktop 1440x1024 and Pixel 7) |
+| `npx playwright test` | 132 journeys defined (desktop 1440x1024 and Pixel 7). `docs/release/e2e-results.json` is the report of record; the committed copy executed zero tests, so no pass count is claimed. |
 | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 
-Growth during the final three days, for context: unit tests went from 135 to 406, runner tests
-from 42 to 69, and browser journeys from 39 to 105, almost entirely by turning found defects into
-permanent regressions.
+Growth over the build, for context: unit tests went from 135 to 774, runner tests from 42 to 135,
+and browser journeys from 39 to 132, almost entirely by turning found defects into permanent
+regressions.
 
 ## 8. What is not proven
 

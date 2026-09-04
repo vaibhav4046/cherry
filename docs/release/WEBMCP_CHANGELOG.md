@@ -78,10 +78,10 @@ maps `record_observation`, `derive_skill`, `request_skill_approval`, `propose_me
 `run_verification` to the longer original definition names, which `executeLocal` also accepts)
 | State | Tools |
 |---|---|
-| empty | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission` |
-| onboarding | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission`, `load_lesson` *(added to this aperture 2026-08-31 — fixes the DRAFT deadlock)* |
+| empty | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission`, `load_starter_library`, `install_catalog_skill` *(added with the skill catalog)* |
+| onboarding | `start_apprenticeship` *(added 2026-08-31)*, `create_workspace`, `create_mission`, `load_lesson` *(added to this aperture 2026-08-31 — fixes the DRAFT deadlock)*, `load_starter_library` |
 | learning | `load_lesson`, `import_transcript`, `record_observation`, `add_source_evidence`, `derive_skill` |
-| planning | `define_skillgraph`, `propose_memory`, `request_skill_approval`, `revise_checkpoint` |
+| planning | `define_skillgraph`, `propose_memory`, `request_skill_approval`, `get_approval_status`, `revise_checkpoint` |
 | execution | `write_artifact_file`, `record_task_result`, `run_verification` |
 | verification | `run_verification`, `apply_verified_repair`, `read_failed_assertions`, `propose_memory`, `write_artifact_file` |
 | passed | `compile_skill_bundle`, `export_proof_receipt`, `export_workspace`, `prepare_runner_job` |
