@@ -26,7 +26,7 @@ This contract is executable policy for every human or agent changing Cherry. Cod
 7. Inspect `git diff --check`, the complete staged diff, generated output, new network origins, and changed claims before committing.
 8. Never rewrite `docs/codex-takeover/STATUS.md`; it is append-only historical evidence. Current ownership belongs in the numbered active directives.
 9. Push a narrow pull request. Conventional commit messages and PR text state only checks and capabilities actually observed.
-10. Automated repair may create a branch and pull request only. It may not edit workflow files, merge, deploy, approve, publish, spend, send, or handle secrets.
+10. Automated repair is split across isolated jobs. Codex runs last in a credential-free proposal job; a fresh read-only job validates and verifies a bounded textual patch; a third job may publish only the hash-matched verified patch. The repair cannot edit `.github/**`, this contract, package metadata, trusted validators/audits, guardrails, or the historical ledger. It may not merge, deploy, approve, publish product actions, spend, send, or handle secrets.
 11. A human reviews and merges. Production deployment is a separate explicit human action; a local build or pushed commit is not called deployed.
 
 ## Layer 3 — Sources of truth

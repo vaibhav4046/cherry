@@ -55,6 +55,7 @@ jobs:
         run: npm run test:e2e:critical
 
       - name: Public-route health
+        if: always()
         run: npm run health:hourly
 
       - name: Write run summary
@@ -163,55 +164,63 @@ jobs:
               state_reason: 'completed',
             });
 
-  codex-repair:
-    name: Bounded Codex repair pull request
+  codex-propose:
+    name: Ask Codex for a bounded patch
     needs: monitor
     if: ${{ always() && needs.monitor.result == 'failure' && vars.CODEX_HOURLY_REPAIR != 'disabled' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 55
     permissions:
-      actions: write
-      contents: write
-      pull-requests: write
+      contents: read
+    outputs:
+      base_sha: ${{ steps.base.outputs.sha }}
+      proposal: ${{ steps.run-codex.outputs.final-message }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install from the lockfile
-        run: npm ci
-
-      - name: Install pinned Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Create an isolated repair branch
-        id: branch
+      - name: Record the exact repair base
+        id: base
         shell: bash
-        run: |
-          branch="codex/hourly-repair-${GITHUB_RUN_ID}"
-          git switch -c "$branch"
-          echo "name=$branch" >> "$GITHUB_OUTPUT"
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Check whether Codex credentials are configured
         id: codex-key
         shell: bash
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HAS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
         run: |
-          if [[ -n "$OPENAI_API_KEY" ]]; then
+          if [[ "$HAS_OPENAI_API_KEY" == 'true' ]]; then
             echo 'available=true' >> "$GITHUB_OUTPUT"
           else
             echo 'available=false' >> "$GITHUB_OUTPUT"
             echo 'Codex repair skipped: OPENAI_API_KEY is not configured.' >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Ask Codex for the smallest verified repair
+      - uses: actions/setup-node@v4
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install from the lockfile before Codex loses network access
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        run: npm ci
+
+      - name: Install pinned Chromium before Codex loses network access
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Remove the repository remote from the agent workspace
+        if: ${{ steps.codex-key.outputs.available == 'true' }}
+        run: git remote remove origin
+
+      # Keep this as the last step in this job. No credentialed or trusted
+      # command runs on a host after Codex has been able to mutate it.
+      - name: Ask Codex for the smallest repair proposal
         if: ${{ steps.codex-key.outputs.available == 'true' }}
         id: run-codex
         uses: openai/codex-action@v1
@@ -219,55 +228,70 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt-file: .github/codex/prompts/hourly-repair.md
           permission-profile: ':workspace'
+          safety-strategy: drop-sudo
           allow-bots: true
           codex-args: '["--ephemeral"]'
+          output-schema: |
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "status": { "type": "string", "enum": ["repair", "no_change"] },
+                "summary": { "type": "string", "maxLength": 2000 },
+                "patch": { "type": "string", "maxLength": 200000 }
+              },
+              "required": ["status", "summary", "patch"]
+            }
 
-      - name: Remove transient output from the Codex worktree
-        if: ${{ steps.codex-key.outputs.available == 'true' }}
-        shell: bash
-        run: |
-          git restore --worktree docs/release/e2e-results.json 2>/dev/null || true
-          rm -rf artifacts/hourly test-results playwright-report
+  repair-verify:
+    name: Verify the Codex patch without write credentials
+    needs: [monitor, codex-propose]
+    if: ${{ always() && needs.codex-propose.result == 'success' && needs.codex-propose.outputs.proposal != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      status: ${{ steps.proposal.outputs.status }}
+      verified: ${{ steps.attest.outputs.verified }}
+      patch_sha256: ${{ steps.proposal.outputs.patch_sha256 }}
+      staged_diff_sha256: ${{ steps.proposal.outputs.staged_diff_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.codex-propose.outputs.base_sha }}
+          fetch-depth: 1
+          persist-credentials: false
 
-      - name: Detect a proposed change
-        if: ${{ steps.codex-key.outputs.available == 'true' }}
-        id: diff
-        shell: bash
-        run: |
-          if [[ -n "$(git status --porcelain=v1)" ]]; then
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-            echo 'Codex reproduced no repository change; no repair pull request was opened.' >> "$GITHUB_STEP_SUMMARY"
-          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
 
-      - name: Enforce repair boundaries
-        if: ${{ steps.diff.outputs.changed == 'true' }}
-        shell: bash
-        run: |
-          mapfile -t changed < <({ git diff --name-only HEAD; git ls-files --others --exclude-standard; } | sort -u)
-          printf 'Changed paths:\n%s\n' "${changed[*]}"
-          for path in "${changed[@]}"; do
-            case "$path" in
-              .github/workflows/*|.env|.env.*|*/.env|*/.env.*|docs/codex-takeover/STATUS.md|artifacts/hourly/*|test-results/*|playwright-report/*)
-                echo "Forbidden automated repair path: $path" >&2
-                exit 1
-                ;;
-            esac
-          done
-          git diff --check
+      - name: Validate and apply the proposed textual patch
+        id: proposal
+        env:
+          CODEX_PROPOSAL_JSON: ${{ needs.codex-propose.outputs.proposal }}
+        run: node scripts/apply-codex-proposal.mjs apply
+
+      - name: Install from the unchanged lockfile
+        if: ${{ steps.proposal.outputs.status == 'repair' }}
+        run: npm ci
+
+      - name: Install pinned Chromium
+        if: ${{ steps.proposal.outputs.status == 'repair' }}
+        run: npx playwright install --with-deps chromium
 
       - name: Verify the proposed repair
-        if: ${{ steps.diff.outputs.changed == 'true' }}
+        if: ${{ steps.proposal.outputs.status == 'repair' }}
         run: npm run verify:repair
 
-      - name: Upload Codex repair evidence
-        if: ${{ always() && steps.codex-key.outputs.available == 'true' }}
+      - name: Upload isolated verification evidence
+        if: ${{ always() && steps.proposal.outputs.status == 'repair' }}
         uses: actions/upload-artifact@v4
         with:
-          name: codex-repair-${{ github.run_id }}
+          name: codex-repair-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            artifacts/hourly/
             artifacts/release/
             docs/release/e2e-results.json
             test-results/
@@ -275,49 +299,85 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-      - name: Remove transient verification output
-        if: ${{ steps.diff.outputs.changed == 'true' }}
+      - name: Remove known transient verification output
+        if: ${{ steps.proposal.outputs.status == 'repair' }}
         shell: bash
         run: |
           git restore --worktree docs/release/e2e-results.json 2>/dev/null || true
-          rm -rf artifacts/hourly test-results playwright-report
-          git diff --check
+          rm -rf artifacts/hourly artifacts/release test-results playwright-report
 
-      - name: Commit and push the bounded repair
-        if: ${{ steps.diff.outputs.changed == 'true' }}
+      - name: Attest that verification did not alter the proposal
+        if: ${{ steps.proposal.outputs.status == 'repair' }}
+        id: attest
+        env:
+          EXPECTED_STAGED_DIFF_SHA256: ${{ steps.proposal.outputs.staged_diff_sha256 }}
+        run: node scripts/apply-codex-proposal.mjs attest
+
+  repair-publish:
+    name: Publish the already-verified repair pull request
+    needs: [codex-propose, repair-verify]
+    if: ${{ always() && needs.repair-verify.outputs.verified == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH_NAME: codex/hourly-repair-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.codex-propose.outputs.base_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Create the isolated repair branch
+        run: git switch -c "$BRANCH_NAME"
+
+      - name: Reapply the exact verified patch
+        env:
+          CODEX_PROPOSAL_JSON: ${{ needs.codex-propose.outputs.proposal }}
+          EXPECTED_PATCH_SHA256: ${{ needs.repair-verify.outputs.patch_sha256 }}
+          EXPECTED_STAGED_DIFF_SHA256: ${{ needs.repair-verify.outputs.staged_diff_sha256 }}
+        run: node scripts/apply-codex-proposal.mjs apply
+
+      - name: Commit without running repository hooks
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --quiet && { echo 'No persistent repair remained after cleanup.'; exit 0; }
+          git config core.hooksPath /dev/null
           git commit -m 'fix: apply verified hourly Codex repair'
-          git push --set-upstream origin '${{ steps.branch.outputs.name }}'
 
-      - name: Open the repair pull request
-        if: ${{ steps.diff.outputs.changed == 'true' }}
+      - name: Push and open the human-reviewed pull request
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --cached --quiet && git log -1 --pretty=%s | grep -q '^fix: apply verified hourly Codex repair$'; then
-            cat > /tmp/cherry-hourly-pr.md <<EOF_BODY
-          ## Automated repair
-
-          Codex produced this bounded repair after hourly maintenance failed on \`${GITHUB_SHA}\`.
-
-          - Source run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-          - Static prompt: \`.github/codex/prompts/hourly-repair.md\`
-          - Verification: \`npm run verify:repair\`
-          - Merge: human review required
-          - Deploy: not performed
-
-          This workflow never auto-merges or deploys.
-          EOF_BODY
-            gh pr create \
-              --base '${{ github.event.repository.default_branch }}' \
-              --head '${{ steps.branch.outputs.name }}' \
-              --title 'fix: verified hourly Codex repair' \
-              --body-file /tmp/cherry-hourly-pr.md
-            gh workflow run verify.yml --ref '${{ steps.branch.outputs.name }}'
-          fi
+          gh auth setup-git
+          git push --set-upstream origin "$BRANCH_NAME"
+          {
+            echo '## Automated repair'
+            echo
+            echo "Codex proposed this bounded repair after hourly maintenance failed on \`${GITHUB_SHA}\`."
+            echo
+            echo "- Source run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Base commit: \`${{ needs.codex-propose.outputs.base_sha }}\`"
+            echo "- Patch SHA-256: \`${{ needs.repair-verify.outputs.patch_sha256 }}\`"
+            echo '- Verification: isolated job, `npm run verify:repair`'
+            echo '- Merge: human review required'
+            echo '- Deploy: not performed'
+            echo
+            echo 'This workflow never auto-merges or deploys.'
+          } > /tmp/cherry-hourly-pr.md
+          gh pr create \
+            --base '${{ github.event.repository.default_branch }}' \
+            --head "$BRANCH_NAME" \
+            --title 'fix: verified hourly Codex repair' \
+            --body-file /tmp/cherry-hourly-pr.md
+          gh workflow run verify.yml --ref "$BRANCH_NAME"

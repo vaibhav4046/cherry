@@ -219,25 +219,66 @@ requireNonEmpty('docs/CODEX_AUTOMATION.md');
   else fail('showcase host journey does not follow the real approval deep link');
 }
 
-// 11. Hourly monitor and bounded Codex repair contract
+// 11. Hourly monitor and isolated Codex repair contract
 {
   const workflow = requireNonEmpty('.github/workflows/hourly-maintenance.yml');
   const prompt = requireNonEmpty('.github/codex/prompts/hourly-repair.md');
   const health = requireNonEmpty('scripts/hourly-health.mjs');
   const healthTest = requireNonEmpty('scripts/hourly-health.test.mjs');
+  const proposalValidator = requireNonEmpty('scripts/apply-codex-proposal.mjs');
+  const proposalValidatorTest = requireNonEmpty('scripts/apply-codex-proposal.test.mjs');
   const packageText = readText('package.json') ?? '';
+
+  const proposeStart = workflow.indexOf('\n  codex-propose:');
+  const verifyStart = workflow.indexOf('\n  repair-verify:');
+  const publishStart = workflow.indexOf('\n  repair-publish:');
+  const proposeBlock = proposeStart >= 0 && verifyStart > proposeStart ? workflow.slice(proposeStart, verifyStart) : '';
+  const verifyBlock = verifyStart >= 0 && publishStart > verifyStart ? workflow.slice(verifyStart, publishStart) : '';
+  const publishBlock = publishStart >= 0 ? workflow.slice(publishStart) : '';
+  const actionPosition = proposeBlock.indexOf('uses: openai/codex-action@v1');
+  const laterStepPosition = actionPosition >= 0
+    ? proposeBlock.slice(actionPosition).search(/\n      - (?:name:|uses:)/)
+    : 0;
+
   const checks = {
     hourlySchedule: /cron:\s*['"]17 \* \* \* \*['"]/.test(workflow),
-    codexAction: workflow.includes('openai/codex-action@v1'),
+    codexAction: actionPosition >= 0,
     noAutoMerge: !/gh pr merge|mergePullRequest|enablePullRequestAutoMerge/.test(workflow),
     noDeploy: !/vercel deploy|deploy --prod/.test(workflow),
-    staticPrompt: workflow.includes('prompt-file: .github/codex/prompts/hourly-repair.md'),
+    actionsWriteOnlyAtPublish: !proposeBlock.includes('actions: write')
+      && !verifyBlock.includes('actions: write')
+      && publishBlock.includes('actions: write'),
+    staticPrompt: proposeBlock.includes('prompt-file: .github/codex/prompts/hourly-repair.md'),
+    schemaConstrained: proposeBlock.includes('output-schema: |')
+      && proposeBlock.includes('"enum": ["repair", "no_change"]')
+      && proposeBlock.includes('"maxLength": 200000'),
+    actionIsLast: actionPosition >= 0 && laterStepPosition < 0,
+    isolatedJobs: proposeStart >= 0 && verifyStart > proposeStart && publishStart > verifyStart,
+    credentialFreeCheckouts: [proposeBlock, verifyBlock, publishBlock]
+      .every((block) => block.includes('persist-credentials: false')),
+    remoteRemovedBeforeAgent: proposeBlock.includes('git remote remove origin'),
+    readOnlyProposalAndVerify: [proposeBlock, verifyBlock]
+      .every((block) => /permissions:\n\s+contents: read/.test(block)),
+    noGithubTokenBeforePublish: !proposeBlock.includes('GH_TOKEN:') && !verifyBlock.includes('GH_TOKEN:'),
+    hashMatchedPublication: publishBlock.includes('EXPECTED_PATCH_SHA256:')
+      && publishBlock.includes('EXPECTED_STAGED_DIFF_SHA256:'),
+    publishDoesNotExecuteCandidate: !/^\s+npm (?:ci|run)\b/m.test(publishBlock),
+    explicitVerificationDispatch: publishBlock.includes('gh workflow run verify.yml --ref'),
+    liveHealthAlways: /- name: Public-route health\n\s+if: always\(\)/.test(workflow),
     healthScript: packageText.includes('"health:hourly"') && health.includes('DEFAULT_ROUTES'),
     healthTest: healthTest.includes("node:test") && healthTest.includes("'/showcase'") && healthTest.includes("'/connect'"),
-    repairBoundary: prompt.includes('Do not auto-approve, auto-merge, deploy'),
+    validatorInGate: packageText.includes('scripts/apply-codex-proposal.test.mjs')
+      && proposalValidator.includes('MAX_PATCH_BYTES')
+      && proposalValidator.includes('EXPECTED_STAGED_DIFF_SHA256')
+      && proposalValidatorTest.includes('protected control-plane'),
+    protectedControlPlane: prompt.includes('Protected control plane')
+      && prompt.includes('`.github/**`')
+      && prompt.includes('package manifests or lockfiles')
+      && prompt.includes('scripts/apply-codex-proposal.mjs'),
+    repairBoundary: prompt.includes('Do not auto-approve, merge, deploy'),
   };
   const failedChecks = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
-  if (failedChecks.length === 0) pass('hourly monitoring and bounded Codex repair contract is complete');
+  if (failedChecks.length === 0) pass('hourly monitoring and isolated Codex repair contract is complete');
   else fail(`hourly monitoring contract failed: ${failedChecks.join(', ')}`);
 }
 

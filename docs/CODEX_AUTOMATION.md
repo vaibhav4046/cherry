@@ -1,6 +1,6 @@
 # Codex hourly maintenance
 
-Cherry has two separate automation layers. They deliberately do not share authority.
+Cherry has separate monitoring, proposal, verification, and publication boundaries. They deliberately do not share authority.
 
 ## 1. Verification on every change
 
@@ -15,28 +15,50 @@ The monitor performs:
 1. `npm ci` from the committed lockfile;
 2. typecheck, lint, unit tests, runner/MCP tests, build, release-pack verification, service-worker verification, and the submission audit;
 3. the focused registered-closure journeys in `showcase-host.spec.ts` and `webmcp-full-journey.spec.ts`;
-4. read-only HTTP checks of `/`, `/showcase`, `/compatibility`, and `/connect` on `https://cherry-wine.vercel.app`;
+4. read-only HTTP checks of `/`, `/showcase`, `/compatibility`, and `/connect` on `https://cherry-wine.vercel.app`, even when an earlier repository check failed;
 5. artifact upload of Playwright traces, the JSON health report, and release evidence.
 
 A failure opens or updates one issue named `[hourly] Cherry maintenance failure`. The next fully healthy run closes that issue. The issue points to the exact workflow run rather than copying a partial log into prose.
 
 ## Optional Codex repair
 
-The monitor always works without secrets. Automated repair is enabled only when the repository has an `OPENAI_API_KEY` Actions secret. Set the repository variable `CODEX_HOURLY_REPAIR=disabled` to turn repair off while leaving monitoring active.
+Monitoring needs no secret. Repair is attempted only when the repository has an `OPENAI_API_KEY` Actions secret. Set the repository variable `CODEX_HOURLY_REPAIR=disabled` to leave monitoring active while disabling repair.
 
-When enabled after a failed monitor run, `openai/codex-action@v1` receives only the committed static prompt at `.github/codex/prompts/hourly-repair.md`. It does not receive issue bodies, pull-request descriptions, commit messages, production HTML, or other untrusted text as instructions.
+The repair path has three isolated jobs.
 
-The repair job:
+### A. Propose
 
-- starts from the current default branch;
-- creates `codex/hourly-repair-<run-id>`;
-- runs Codex with the built-in `:workspace` permission profile and the default sudo-dropping safety strategy;
-- rejects edits to `.github/workflows/**`, `.env*`, generated health artifacts, and the historical status ledger;
-- runs `git diff --check`, deterministic gates, integrity checks, the focused WebMCP journeys, and the submission audit;
-- restores transient reports before committing;
-- opens a pull request only when the bounded diff passes.
+- Checks out the exact default-branch commit with `persist-credentials: false`.
+- Installs dependencies and Chromium before Codex starts, because the `:workspace` profile has no network access.
+- Removes the Git remote from the agent workspace.
+- Gives `openai/codex-action@v1` only the committed static prompt at `.github/codex/prompts/hourly-repair.md`.
+- Uses the built-in `:workspace` permission profile, the action's default sudo-dropping strategy, and a strict JSON output schema.
+- Runs Codex as the final step of the job. No trusted or credentialed command runs on that host afterward.
 
-It never auto-merges and never deploys. A person still reviews the diff, merges it, and performs any production release.
+Codex may investigate and test in the disposable workspace. It returns either `no_change` or one bounded textual Git patch. It cannot publish anything from this job.
+
+### B. Verify
+
+A fresh job with read-only repository permission checks out the exact proposal base. The trusted `scripts/apply-codex-proposal.mjs` validator rejects malformed JSON, binary or oversized patches, more than 25 changed paths, symlinks, protected control-plane files, dependency metadata, credentials, and generated reports. It hashes the raw patch and canonical staged diff.
+
+Only then does the job install from the unchanged lockfile and run `npm run verify:repair`. After removing known transient output, it proves the staged diff did not change during verification. This job has no repository write credential.
+
+### C. Publish
+
+A third fresh job runs only after the verification attestation. It reapplies the same proposal and requires both the raw-patch and staged-diff SHA-256 values to match. It does not execute candidate code. Only after the commit exists does the job introduce the GitHub token, push a unique branch, and open a pull request.
+
+After opening the pull request, the publish job explicitly dispatches `verify.yml` on the repair branch. This avoids relying on recursive push/PR events created by `GITHUB_TOKEN`. Nothing auto-merges or deploys.
+
+## Protected surfaces
+
+Automated repair cannot edit:
+
+- `.github/**`, `.git/**`, `.env*`, or account material;
+- `AGENTS.md`, package manifests/lockfiles, and root build/test configuration;
+- the automation prompt, validator, audit, guardrails, or historical status ledger;
+- generated health, release, Playwright, or test output.
+
+A failure requiring one of these surfaces remains an incident for human repair.
 
 ## Manual run
 
@@ -53,8 +75,9 @@ The live check writes `artifacts/hourly/health.json`. That directory is transien
 
 ## Failure handling
 
-- A dependency-install failure stops the monitor immediately and still creates the incident issue.
+- A dependency-install failure stops repository checks but the `always()` live health step still records public-route evidence.
 - A deterministic or browser failure keeps its logs and traces in the workflow run.
 - A live-route failure records status, content type, same-origin redirect behavior, app-shell marker, and Cherry title marker for each route.
-- A repair that cannot pass verification remains uncommitted; the incident issue and run logs are the evidence.
-- Missing or invalid OpenAI credentials skip repair but do not suppress monitoring or incident reporting.
+- Missing OpenAI credentials skip proposal generation without suppressing monitoring or incident reporting.
+- An unsafe, malformed, protected, or unverifiable patch is never pushed.
+- A production-only outage or repair requiring credentials remains an incident rather than becoming a fabricated code change.
