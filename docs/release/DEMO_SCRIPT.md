@@ -1,8 +1,14 @@
-# Cherry demo video: 2:40 shooting script
+# Cherry demo video: shooting script
+
+> **The shipped cut runs 2:26 (145.8 s)** — `public/media/demo/cherry-demo-final.mp4`, with
+> `cherry-demo-final.srt` (20 cues, none running past the end of the video). The per-beat timings
+> below are the **planning budget** that cut was shot against; the finished edit came in tighter
+> than the budget. Where this file and the shipped video disagree on a timestamp, the video is the
+> truth, and `DEVPOST_SUBMISSION.md` quotes the video's 2:26.
 
 Hard limit: the OpenAI WebMCP Challenge requires **under 3:00**, and judges are not required to
-watch past 3:00. This script is cut to land at **2:40** so titles, a top card and an export fade
-still fit under the wire.
+watch past 3:00. This script was budgeted to land at **2:40** so titles, a top card and an export
+fade still fit under the wire.
 
 Everything here is shootable today, on this machine, in an ordinary browser, with no live WebMCP
 host, no dev server dependency and no live Codex run. Record at 1440x900 or larger against

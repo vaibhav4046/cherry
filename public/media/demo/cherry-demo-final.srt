@@ -75,5 +75,5 @@ It fetched the aperture and called the tools. The row says Validated because it 
 What ships, says ships. What does not, says that too.
 
 20
-00:02:16,570 --> 00:02:33,830
+00:02:16,570 --> 00:02:25,600
 Every claim here is checkable, and an agent cannot approve its own work.

@@ -4,6 +4,7 @@ import { useAppState } from '../../app/AppState.tsx';
 import { filterLibraryEntries, listLibraryEntries, type LibraryEntry } from '../../cherry/library/library-service.ts';
 import { buildConnectUrl, buildRoutineDraftUrl } from '../../cherry/library/library-links.ts';
 import { StickerCluster } from '../../components/Ribbon.tsx';
+import { CatalogBrowser } from '../../components/CatalogBrowser.tsx';
 
 export default function Skills() {
   const { activeWorkspace } = useAppState();
@@ -138,6 +139,11 @@ export default function Skills() {
           </article>
         ))}
       </div>
+
+      {/* The catalog was reachable only through agent tool calls, so the shelf a
+          person is told about was invisible to that person. Reloading the library
+          after an import keeps the two lists honest about what is now installed. */}
+      {loaded ? <CatalogBrowser onInstalled={() => { void listLibraryEntries().then(setEntries); }} /> : null}
     </div>
   );
 }
