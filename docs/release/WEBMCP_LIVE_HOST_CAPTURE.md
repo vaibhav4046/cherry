@@ -84,3 +84,89 @@ It does not prove the full learn → approve → retrieve journey. No skill was
 derived and no human approval was exercised in this session, so the approval
 boundary remains covered by tests and by the stdio capture in which
 `approve_skill` does not exist. Those rows keep their existing labels.
+
+---
+
+# Second session: the full inversion, and two defects it exposed
+
+Same host and model, 2026-09-04 04:20-04:47 UTC, against the deployed site.
+The first session proved the protocol. This one asked whether the product is
+worth connecting to, which is a different question, and it initially answered no.
+
+## What the host did
+
+| # | Call | Result |
+| --- | --- | --- |
+| 1 | `create_workspace` | Created `Live host proof`. Page header changed, phase moved to "Space ready, project drafting" |
+| 2 | `list_cherry_capabilities` | Aperture grew 10 → 11: `load_lesson` registered for the new state |
+| 3 | `recommend_skills` | **Empty.** Every call reported `ok` |
+| 4 | `get_skill` | Not called; there was no id to call it with |
+
+The aperture changing with state is the WebMCP claim, and it held. The rest did
+not: the tool the entry is actually built on returned nothing.
+
+## Defect 1 — first contact was a dead end
+
+A fresh browser has an empty cross-workspace library, so `recommend_skills`
+correctly matched nothing. Correct is not the same as useful: the site claims it
+sends an agent away more capable, and it was sending it away with a suggestion
+that a human go and do some work.
+
+Returning the shipped library without installing it was not an option, because
+`get_skill` resolves against the local database and the agent would have
+received dangling ids. So `load_starter_library` was added, registered only in
+the `empty` and `onboarding` states, taking those to four and five tools against
+the bound of five. It is not a global tool; seven always-on is a published bound
+asserted in four tests.
+
+Re-tested live: the aperture grew 11 → 12, and the call returned
+`skillsBefore: 0`, `skillsAvailable: 8`, `sample: true`.
+
+## Defect 2 — a strict miss ended the conversation
+
+With eight skills installed, `recommend_skills` **still** returned empty for
+"write a landing page that converts". The host reported it exactly:
+
+> "No tool call failed; Cherry recorded all three as ok. However,
+> recommend_skills returned empty despite load_starter_library reporting eight
+> available skills, an apparent state or matching inconsistency."
+
+The ranker drops entries with no lexical overlap, deliberately, and a test pins
+that: "bake a sourdough loaf" must not surface a thumbnail skill. That is right.
+The bug was one layer up. Relevance is the ranker's job; staying useful on a miss
+is the tool's job. `recommendations` still comes back empty on a miss, so a miss
+is never dressed as a hit, and the payload now carries `librarySize` and
+`availableSkills`: the closest entries, unranked, explicitly not claimed to fit,
+with ids `get_skill` resolves.
+
+## The journey, after both fixes
+
+Re-tested live in the same host:
+
+```
+recommendationCount 0 · librarySize 8
+note: "Nothing matched this task, so recommendations is empty on purpose.
+       The library does hold 8 skill(s); the closest are listed under
+       availableSkills, unranked and not claimed to fit."
+availableSkills: Thumbnail design review · YouTube publishing checklist ·
+                 YouTube SEO research and packaging
+```
+
+The host picked the first id and called `get_skill`:
+
+| Field | Value |
+| --- | --- |
+| File | `thumbnail-design-review-SKILL.md`, format `skill-md` |
+| Revision | 2 |
+| Full-file SHA-256 | `f33d299...da26` (delivered as part 1 of 6) |
+| Citation | TubeBuddy, "11 Thumbnail Design Hacks Top Creators Use on YouTube", with URL |
+| Label | `sample: true`, `approvalKind: synthetic-sample-state` |
+| Notice | "Labelled sample state. This file uses a synthetic approval to demonstrate Cherry's boundary; it is not proof of a live human decision. Review and approve your own revision before use." |
+
+That is the inversion the entry claims, performed by a real host: an agent
+arrived with nothing and left with an install-ready, source-cited, hash-verified
+method it could not have written itself, and the file says out loud that its
+approval is sample state rather than this person's decision.
+
+Both defects were found by pointing a real agent at the product and watching it
+fail, not by reading the code.
