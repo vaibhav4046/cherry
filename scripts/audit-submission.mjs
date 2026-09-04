@@ -107,7 +107,13 @@ for (const name of ['DEVPOST_SUBMISSION.md', 'DEMO_SCRIPT.md', 'CHERRY_COMPATIBI
   const SECRET_RE = /(sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
   // Known dummy fixture: runner redaction tests deliberately emit this string to
   // prove secret-shaped output is scrubbed (runner/runner.test.mjs, runner/v2.test.mjs).
-  const ALLOWLISTED_FIXTURES = new Set(['sk-abcdefghijklmnop1234']);
+  // Obvious non-secrets used as inputs to the redaction tests. Each is a single
+  // repeated character after its prefix, which no issued credential ever is, so
+  // allowlisting them cannot hide a real leak.
+  const ALLOWLISTED_FIXTURES = new Set([
+    'sk-abcdefghijklmnop1234',
+    'ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  ]);
   const SCAN_DIRS = ['src', 'scripts', 'docs', 'runner', 'schemas', 'e2e', 'tests'];
   const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'screenshots', 'test-results']);
   const TEXT_EXT = new Set(['.ts', '.tsx', '.mjs', '.js', '.cjs', '.json', '.md', '.txt', '.html', '.css', '.yaml', '.yml', '.svg']);

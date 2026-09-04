@@ -146,6 +146,9 @@ test.describe('showcase: fresh journey through registered WebMCP closures', () =
     await page.goto('/showcase');
 
     // The agent continues: context now reports the approval as decided.
+    // The navigation retired every registration; Cherry registers again on boot
+    // and a real host re-reads the aperture before calling, so the test does too.
+    await expect.poll(() => hostTools(page)).toContain('read_cherry_context');
     const context = await callTool(page, 'read_cherry_context', {});
     expect((context.payload as { pendingApprovals: unknown[] }).pendingApprovals).toHaveLength(0);
     const status = await callTool(page, 'get_cherry_status', {});

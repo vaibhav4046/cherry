@@ -35,6 +35,19 @@ export default defineConfig({
   testIgnore: /demo-recording\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
+  /**
+   * Retry once, twice on CI. Two consecutive full runs on this machine failed
+   * three and four tests respectively, with almost no overlap between the two
+   * sets, and every one of those tests passed when run in isolation immediately
+   * afterwards. That is machine load, not defect: the suite already runs serially
+   * on a single worker, so the contention comes from whatever else shares the box
+   * (a production build, a deploy, another suite).
+   *
+   * A retried test is reported as `flaky`, never as passed, so the committed
+   * report still shows exactly how many needed a second attempt. This makes a
+   * loaded run recoverable; it does not make a failing test look green.
+   */
+  retries: process.env.CI ? 2 : 1,
   timeout: 90_000,
   expect: { timeout: 10_000 },
   // docs/release/e2e-results.json is the submission's browser-suite evidence, and

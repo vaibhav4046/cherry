@@ -119,7 +119,8 @@ test.describe('Creators watch engine', () => {
     await page.getByTestId('creators-follow').focus();
     await expect(page.getByTestId('creators-follow')).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/studio\/sources\?add=channel$/);
+    // Sources consumes ?add=channel and replaces the URL so Back does not reopen
+    // the dialog, so the dialog itself is the evidence, not the query string.
     await expect(page.getByRole('heading', { name: 'Start a channel watch' })).toBeVisible();
   });
 });
