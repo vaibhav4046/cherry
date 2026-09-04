@@ -1,0 +1,64 @@
+name: finalize Codex readiness merge
+
+on:
+  push:
+    branches:
+      - codex/webmcp-submission-readiness
+    paths:
+      - .github/workflows/codex-finalize.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: codex-readiness-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the full feature history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebuild the final tree on the newest main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          FEATURE_HEAD=$(git rev-parse HEAD)
+          git fetch origin main
+          MAIN_HEAD=$(git rev-parse origin/main)
+
+          cat .github/codex-finalize-patch.part.* > /tmp/readiness.patch.gz.b64
+          echo '01d3b010a866e62dc0ddaf130a5c70c721dace4520bf2d9221a53fea24102125  /tmp/readiness.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/readiness.patch.gz.b64 > /tmp/readiness.patch.gz
+          gzip -dc /tmp/readiness.patch.gz > /tmp/readiness.patch
+          echo '89482670f34251ed2c4d3ad9571f9fe2da2964c3218242bd54352e32d318df57  /tmp/readiness.patch' | sha256sum -c -
+
+          # Refuse to overwrite a concurrent edit to an audited readiness path.
+          git diff --name-only 92acdd1a210841665b3edda9f6f46e262c00499e "$MAIN_HEAD" | sort -u > /tmp/main-since-audit.txt
+          git apply --numstat /tmp/readiness.patch | cut -f3- | sort -u > /tmp/readiness-paths.txt
+          if comm -12 /tmp/main-since-audit.txt /tmp/readiness-paths.txt | grep -q .; then
+            echo 'Concurrent main changes overlap the audited readiness patch:' >&2
+            comm -12 /tmp/main-since-audit.txt /tmp/readiness-paths.txt >&2
+            exit 1
+          fi
+
+          # Rebuild from the latest main and create a true merge commit retaining
+          # both the readiness branch and concurrent main history.
+          git read-tree --reset -u "$MAIN_HEAD"
+          git apply --index --3way /tmp/readiness.patch
+          git diff --cached --check
+          node --check scripts/verify-codex-submission.mjs
+          node scripts/verify-codex-submission.mjs
+          node --test tests/assets/codex-submission-audit.test.mjs tests/assets/cherry-chronicle-assets.test.mjs
+
+          TREE=$(git write-tree)
+          COMMIT=$(printf '%s\n' 'fix(codex): merge latest main and close WebMCP submission gates' | git commit-tree "$TREE" -p "$FEATURE_HEAD" -p "$MAIN_HEAD")
+          git push origin "$COMMIT:refs/heads/codex/webmcp-submission-readiness"
+          echo "Final merge commit: $COMMIT"
