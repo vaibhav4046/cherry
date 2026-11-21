@@ -149,7 +149,7 @@ Historical baseline gates on `c8e2181` from a fresh GitHub clone with no pre-exi
 | `npm run verify:pack` | pass |
 | `npm run verify:sw` | 5 of 5 |
 | `npm run audit:submission` | 0 FAIL, 0 WARN |
-| `npx playwright test` | 132 journeys defined (desktop 1440x1024 and Pixel 7). `docs/release/e2e-results.json` is the report of record; the committed copy executed zero tests, so no pass count is claimed. |
+| `npx playwright test` | 132 journeys (desktop 1440x1024 and Pixel 7). `docs/release/e2e-results.json` is the report of record: a full CI run on commit `c363178` with 130 passed, 2 flaky (passed on retry), 0 failed, 0 skipped. |
 | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 
 Growth over the build, for context: unit tests went from 135 to 774, runner tests from 42 to 135,

@@ -161,7 +161,7 @@ path.
 | Production build | `npm run build` | built, 0 errors |
 | Bundle and receipt verification | `npm run verify:pack` | pass |
 | Submission audit | `npm run audit:submission` | **1 FAIL** as of 2026-09-04: the committed `docs/release/e2e-results.json` records zero tests run, and the audit fails any report with no executed tests. It has to go back to 0 FAIL on a regenerated report before submission. |
-| End to end (Playwright) | `npx playwright test` | **132 journeys defined**, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission. `docs/release/e2e-results.json` is the report of record; the committed copy is a `--list` dump with zero tests executed, so no pass count is claimed here. Regenerate it from one uncontended `npm run test:e2e` and read the count off the report. |
+| End to end (Playwright) | `npx playwright test` | **132 journeys**, desktop 1440x1024 plus Pixel 7, including a browser-to-real-runner mission. `docs/release/e2e-results.json` is the report of record: a full CI run on commit `c363178` with 130 passed, 2 flaky (passed on retry), 0 failed, 0 skipped. |
 | Clean install | `npm ci` | exit 0, 996 packages |
 | Dependency advisories | `npm audit --omit=dev --audit-level=high` | exit 0 (0 critical, 0 high, 10 moderate) |
 | Service worker behaviour | `npm run verify:sw` | 5/5 (icon fetch never poisons the shell, redeploy reaches returning visitors, offline serves the freshest shell) |
@@ -200,7 +200,7 @@ Everything a judge or a contributor can open and check for themselves.
 | Compatibility matrix | `docs/release/CHERRY_COMPATIBILITY_MATRIX.md` and the live `/compatibility` page | Every surface labelled Validated / Shipped / Experimental / Roadmap with the test behind the label |
 | WebMCP changelog | `docs/release/WEBMCP_CHANGELOG.md` | Tool aperture history and the register/unregister contract |
 | Uncut recording | `public/media/demo/golden-loop.webm` | The real loop, on the site, at `/showcase` |
-| Playwright report | `docs/release/e2e-results.json` | The report of record for the browser suite (132 journeys defined). The committed copy is a `--list` dump with zero tests executed and has to be regenerated from one uncontended run. |
+| Playwright report | `docs/release/e2e-results.json` | The report of record for the browser suite (132 journeys): a full CI run on commit `c363178`, 0 unexpected failures, 2 flaky. |
 | Real Codex mission capture | `docs/release/GOD_MODE_REAL_HOST_CAPTURE.md` | codex-cli 0.152.1 running two mission nodes in two worktrees with measured overlap, verified by the runner's own `node --test` |
 | Screenshots | `docs/release/screenshots/` | 91 tracked captures across landing, studio, showcase, agent view, compatibility, creators, God Mode and final QA |
 | Landing capture for README | `docs/media/cherry-landing.png` | The shipped landing, 2880x1800, recaptured 2026-09-03 from the deployed build |
