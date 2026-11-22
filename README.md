@@ -88,9 +88,33 @@ unknown tool ([docs/release/MCP_CAPTURE_3c38684.md](docs/release/MCP_CAPTURE_3c3
 3. **Use it everywhere.** Install into Codex (`AGENTS.md`), Claude Code (`SKILL.md`), or any agent
    reading Agent Skills bundles. Or let a visiting agent pull it live over WebMCP.
 
+## Architecture
+
+The UI, the WebMCP tools and the MCP bridge all go through the same domain services, so an agent
+cannot do anything the UI would refuse. More detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+```mermaid
+flowchart LR
+  Person["Person in the browser"] --> UI["React pages<br/>src/pages, src/app"]
+  Agent["Visiting AI agent"] -->|document.modelContext| WebMCP["WebMCP tools<br/>src/cherry/webmcp"]
+  UI --> Domain["Domain services<br/>src/cherry/*"]
+  WebMCP --> Domain
+  Domain --> DB[("IndexedDB via Dexie<br/>src/cherry/persistence")]
+  Domain --> Proof["Proof ledger and receipts<br/>src/cherry/proof"]
+  Domain -->|export| Bundle["Skill bundle + verify.mjs<br/>src/cherry/compiler"]
+  Bundle --> MCP["stdio MCP bridge<br/>runner/mcp/server.mjs"]
+  MCP --> Agent
+  UI -->|"127.0.0.1 + pairing token<br/>src/cherry/runner-client"| Runner["Local runner<br/>runner/server.mjs"]
+  Runner --> Exec["Mission executor, checks, worktrees<br/>runner/lib"]
+  Exec --> Codex["Codex CLI"]
+```
+
 ## Quickstart
 
+Needs Node 24 (the version CI uses). No API key is needed for anything below.
+
 ```bash
+git clone https://github.com/vaibhav4046/cherry.git && cd cherry
 npm ci
 npm run dev        # http://127.0.0.1:5273
 ```
@@ -99,9 +123,15 @@ Everything works as a guest with zero configuration. Sign-in (Privy, email) is o
 activates when `VITE_PRIVY_APP_ID` is set at build time; guests never download the auth SDK.
 
 ```bash
+npx playwright install chromium  # one unit test decodes the demo video in a real browser
 npm run gates      # typecheck + lint + unit + runner
 npm run verify:all # gates + build + e2e + pack verification + submission audit
 ```
+
+Optional pieces, none of which need a key: the local runner (`node runner/server.mjs --root <path>`,
+prints a one-time pairing token) and the stdio MCP bridge
+(`node runner/mcp/server.mjs --workspace <export.json> --bundles <dir>`). Running real agent work
+through the runner needs the Codex CLI installed and signed in on your machine.
 
 ## Verification
 
