@@ -133,27 +133,31 @@ prints a one-time pairing token) and the stdio MCP bridge
 (`node runner/mcp/server.mjs --workspace <export.json> --bundles <dir>`). Running real agent work
 through the runner needs the Codex CLI installed and signed in on your machine.
 
-## Verification
+## Results
 
-Cherry's claims are meant to survive checking. Gates on `main`, measured 2026-09-04 at commit
-`e0d2850`. These are counts from a run, not estimates, and `main` moves, so re-run them rather than
-trusting the table:
+Every number here comes from one run of the `verify` GitHub Actions workflow on commit `c56af20`
+([run 44934785773](https://github.com/vaibhav4046/cherry/actions/runs/44934785773), 2026-11-21).
+Re-run any row with its command; `main` moves, so trust the command, not the table.
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Unit | `npm run test` | 774 passed, 2 opt-in skips |
+| Unit | `npm run test` | 783 passed, 2 opt-in skips (785) |
 | Runner and MCP bridge | `npm run test:runner` | 135 passed, 0 failed |
-| End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | 132 journeys defined; the run itself is recorded in `docs/release/e2e-results.json` |
-| Bundle verification | `npm run verify:pack` | 6 of 6, tamper-evident, evidence-complete |
-| Service worker verification | `npm run verify:sw` | 5 of 5 |
+| End-to-end (Playwright, desktop plus Pixel 7) | `npm run test:e2e` | 132 passed |
+| Bundle verification | `npm run verify:pack` | 6 of 6 checks, tamper-evident |
+| Service worker verification | `npm run verify:sw` | 5 of 5 checks |
 | Submission audit | `npm run audit:submission` | 0 failures, 0 warnings |
 
-Run them all with `npm run verify:all`. The end-to-end row deliberately points at the committed
-Playwright report rather than a number typed into prose: the report is the evidence, and
-`audit:submission` fails the build if that report records zero tests run, any unexpected failure,
-or more skips than passes.
+Run them all with `npm run verify:all`. The committed Playwright report
+(`docs/release/e2e-results.json`) is checked by `audit:submission`, which fails the build if it
+records zero tests run, any unexpected failure, or more skips than passes.
 
-The committed report records one full, unfiltered run of the suite on a clean CI runner (GitHub Actions, `verify` workflow, commit `c363178`, 2026-11-21): 132 journeys, 130 passed first time, 2 passed only on retry and are recorded as `flaky`, 0 failed, 0 skipped. Only a whole-suite run writes that file, so a filtered `playwright test <spec>` cannot overwrite it with a partial result. An earlier local run on a loaded machine recorded 3 failures that all passed in isolation; that is why the config now retries, and a retried test is reported as flaky rather than passed.
+That committed report is one full, unfiltered run on a clean CI runner (commit `c363178`,
+2026-11-21): 132 journeys, 130 passed first time, 2 passed only on retry and are recorded as
+`flaky`, 0 failed, 0 skipped. Only a whole-suite run writes that file, so a filtered
+`playwright test <spec>` cannot overwrite it with a partial result. Runs on a heavily loaded
+laptop can time out on loopback HTTP (the runner-process tests and `verify:sw`); the config retries
+browser journeys, and a retried test is reported as flaky rather than passed.
 
 Proof receipts are SHA-256 over RFC 8785 canonical JSON. Change one byte and verification fails.
 Every compiled bundle ships its own standalone `scripts/verify.mjs` so a stranger can check it
