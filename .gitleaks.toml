@@ -1,0 +1,23 @@
+# Gitleaks config: default rules, plus an allowlist of the exact values that were
+# reviewed by hand on 2026-11-22 and are not credentials. Each value is matched
+# exactly, so a new secret in the same files is still reported.
+# - public/catalog/shards/*.json quote public security tutorials: AWS's documented
+#   example key, a made-up "exposed" key, the jwt.io sample token, and a canary
+#   file name that the generic rule mistakes for a key.
+# - tests/cherry/webmcp*.test.ts use fake Stripe-shaped strings that the redaction
+#   tests assert are scrubbed before they reach an agent host.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed documentation examples and redaction-test fixtures, not credentials"
+regexes = [
+  '''^AKIAIOSFODNN7EXAMPLE$''',
+  '''^AKIAEXPOSEDKEY123456$''',
+  '''^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lI''',
+  '''^Q4_Revenue_2024\.xlsx$''',
+  '''^sk_live_(example123|abcdef1234567890|super-secret|secret)$''',
+  '''^rk_live_(deadbeef)+$''',
+  # A Docker --user uid:gid (the "nobody" user) that the curl rule reads as user:password.
+  '''^65534:65534$''',
+]
