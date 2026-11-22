@@ -1,8 +1,30 @@
+# Cherry 🍒
+
+[![verify](https://github.com/vaibhav4046/cherry/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/vaibhav4046/cherry/actions/workflows/verify.yml)
+
+**A browser app that turns a goal into a checked plan for coding agents, and serves human-approved
+skills to any agent over WebMCP and MCP.** Live: **https://cherry-wine.vercel.app**
+
 <p align="center">
-  <img src="docs/media/cherry-landing.png" alt="Cherry landing page: one task, an entire AI team, with the recorded real Codex run playing beside it" width="820">
+  <img src="docs/assets/cherry-live-1440.png" alt="Cherry live homepage at 1440x900: one task, an entire AI team" width="820">
+  <br><sub>The live homepage, captured with Playwright at 1440x900 on 2026-11-22.</sub>
 </p>
 
-# Cherry 🍒
+### What this demonstrates
+
+- **An agent tool surface with a human-only approval path.** Site tools are registered on
+  `document.modelContext` (WebMCP) and exposed again through a dependency-free stdio MCP server
+  (`runner/mcp/server.mjs`). Agents can list, rank and fetch approved skills and can *request* an
+  approval, but no tool can grant one; the hostile-input and refusal cases are unit-tested in
+  `tests/cherry/webmcp*.test.ts` and `runner/mcp/bridge.test.mjs`.
+- **"Done" means a check passed, not that a model said so.** Missions compile to a dependency graph
+  with deterministic checks per node; a failed required check schedules one repair and the node
+  cannot reach `succeeded` otherwise (`runner/lib/mission-executor.mjs`). Proof receipts are SHA-256
+  over RFC 8785 canonical JSON and every exported bundle ships a standalone `verify.mjs`.
+- **A local agent runner built to be safe by default.** Binds 127.0.0.1 only, requires a one-time
+  pairing token, spawns with `shell:false` and argument arrays, and gives each agent its own git
+  worktree (`runner/server.mjs`, `runner/lib/sandbox-manager.mjs`). The Codex CLI is the runnable
+  host; Claude Code is detection-only.
 
 **One task. An entire AI team. Human authority intact.**
 
@@ -22,11 +44,11 @@ verifies the result with checks that can genuinely fail, seals it with a receipt
 recompute, and then serves the finished skill back to every agent you use.
 
 - **Live:** https://cherry-wine.vercel.app
-- **Judge route:** https://cherry-wine.vercel.app/showcase, a recorded real Codex run with two agents
+- **Recorded run:** https://cherry-wine.vercel.app/showcase, a recorded real Codex run with two agents
   working at once in separate worktrees, replayed from evidence checked against its fingerprint
 - **What is actually proven:** https://cherry-wine.vercel.app/compatibility
 
-Built for the **OpenAI WebMCP Challenge 2026**. MIT licensed. Free and open source, with no paid
+Started as an entry to the **OpenAI WebMCP Challenge 2026** (judging has closed). MIT licensed. Free and open source, with no paid
 tier and no telemetry. No account is required: the whole product works as a guest, and the optional
 email sign-in (Privy) is off unless `VITE_PRIVY_APP_ID` is set at build time.
 
